@@ -408,7 +408,7 @@
                         </div>
                     </div>
                     <div class="input-group identity">
-                        <label for="valuation_date">평가 기준일</label>
+                        <label for="valuation_date">미팅일자</label>
                         <div class="input-field">
                             <input type="date" id="valuation_date">
                             <i class="fas fa-check check-icon"></i>
@@ -434,13 +434,15 @@
                             <i class="fas fa-check check-icon"></i>
                         </div>
                     </div>
-                    <div class="input-group identity">
-                        <label for="founding_year">창업년도</label>
-                        <div class="input-field">
-                            <input type="number" id="founding_year" placeholder="2000" min="1900" max="2025">
-                            <i class="fas fa-check check-icon"></i>
-                        </div>
-                    </div>
+<div class="input-group identity">
+    <label for="founding_year">창업년도</label>
+    <div class="input-field">
+        <select id="founding_year">
+            <option value="">선택</option>
+        </select>
+        <i class="fas fa-check check-icon"></i>
+    </div>
+</div>
                     <div class="input-group identity">
                         <label for="founding_date">창립기념일</label>
                         <div class="input-field">
@@ -480,7 +482,7 @@
                     <div class="input-group identity">
                         <label for="spouse_age">배우자 연령</label>
                         <div class="input-field">
-                            <input type="number" id="spouse_age" placeholder="45" min="0" max="150">
+                            <input type="number" id="spouse_age" placeholder="" min="0" max="150">
                             <span>세</span>
                             <i class="fas fa-check check-icon"></i>
                         </div>
@@ -488,7 +490,7 @@
                     <div class="input-group identity">
                         <label for="retirement_age">희망 은퇴 연령</label>
                         <div class="input-field">
-                            <input type="number" id="retirement_age" placeholder="65" min="0" max="100">
+                            <input type="number" id="retirement_age" placeholder="" min="0" max="100">
                             <span>세</span>
                             <i class="fas fa-check check-icon"></i>
                         </div>
@@ -536,7 +538,7 @@
                     </span>
                 </label>
                 <div class="input-field">
-                    <select id="capital_return_rate" onchange="updateMultiplier(); debouncedUpdate();">
+<select id="capital_return_rate" onchange="updateMultiplier(); updateAnalysis();">
                         <option value="5">5% (배수 20배 - 초성장기업)</option>
                         <option value="6">6% (배수 16.67배)</option>
                         <option value="7">7% (배수 14.29배)</option>
@@ -573,12 +575,12 @@
                 </div>
             </div>
             <h4 class="input-divider">💰 재무 기초 데이터</h4>
-            <div class="input-group"><label for="capital">자본금</label><div class="input-field"><input type="text" id="capital" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+<div class="input-group"><label for="capital">자본금 (초기 설정 후 변경 주의)</label><div class="input-field"><input type="text" id="capital" inputmode="numeric" data-initial=""><span>원</span><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group"><label for="total_shares">발행주식 총수</label><div class="input-field"><input type="text" id="total_shares" inputmode="numeric" readonly style="background-color: #f0f0f0; cursor: not-allowed;"><span>주</span><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group">
-                <label for="par_value">
-                    액면가 (1주당)
-                    <span class="tooltip-container">
+<label for="par_value">
+    액면가 (초기 설정 후 변경 주의)
+    <span class="tooltip-container">
                         <i class="fas fa-info-circle info-icon"></i>
                         <span class="tooltip-text">
                             <strong>액면가란?</strong><br>
@@ -672,7 +674,7 @@
             </div>
             
             <h4 class="input-divider">🏦 지분 및 인력 구조</h4>
-            <div class="input-group"><label for="ceo_share">대표이사 지분율</label><div class="input-field"><input type="number" id="ceo_share" min="0" max="100" step="0.1"><span>%</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="ceo_share">대표이사 지분율</label><div class="input-field"><input type="number" id="ceo_share" placeholder="" min="0" max="100" step="0.1"><span>%</span><i class="fas fa-check check-icon"></i></div></div>
             
             <div class="input-group">
                 <label>특수관계인 지분 현황</label>
@@ -708,7 +710,7 @@
             <div class="input-group"><label for="life_insurance">생명보험 사망보험금 총액</label><div class="input-field"><input type="text" id="life_insurance" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group"><label for="gift_history">자녀 증여 이력 (총액)</label><div class="input-field"><input type="text" id="gift_history" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group"><label for="spouse_assets">배우자 재산 규모</label><div class="input-field"><input type="text" id="spouse_assets" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
-            <div class="input-group"><label for="co_heirs">공동상속인 수</label><div class="input-field"><input type="number" id="co_heirs" placeholder="3" min="0"><span>명</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="co_heirs">공동상속인 수</label><div class="input-field"><input type="number" id="co_heirs" placeholder="" min="0"><span>명</span><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group"><label for="succession_plan">가업승계 계획 유무</label><div class="input-field"><select id="succession_plan"><option value="no">아니오</option><option value="yes">예</option></select><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group">
                 <label for="succession_qualify">
@@ -806,11 +808,23 @@
         <div id="consultant_summary" class="card"></div>
     </section>
 </main>
-
+<div style="max-width: 1700px; margin: 2rem auto; padding: 0 2rem;">
+    <div style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 2rem;">
+        <h3 style="margin: 0 0 1rem 0; color: #0c2c54;"><i class="fas fa-sticky-note"></i> 메모</h3>
+        <textarea id="consultant-memo" placeholder="메모를 입력하세요..." oninput="autoSave()" style="width: 100%; min-height: 120px; padding: 1rem; border: 1px solid #ced4da; border-radius: 8px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+        <div style="margin-top: 1rem; text-align: right;">
+            <button class="btn danger" onclick="if(confirm('메모 전체가 삭제됩니다. 정말로 메모를 삭제하시겠습니까?')){document.getElementById('consultant-memo').value=''; autoSave();}">
+                <i class="fas fa-trash"></i> 삭제
+            </button>
+        </div>
+    </div>
+</div>
 <footer>
-    <div class="disclaimer">
+    <div class="disclaimer" style="max-width: 1700px; margin: 1rem auto; padding: 0 2rem;">
+        <div style="background: #e9ecef; padding: 2rem; border-radius: 8px;">
         <h3>※ 면책 조항 (Disclaimer)</h3>
         <p>본 진단 결과 및 보험 설계안은 제공된 정보를 바탕으로 한 가상 시뮬레이션이며, 실제 상품과 다를 수 있습니다. 구체적인 사실관계 및 상품 설계에 따라 실제 세법 해석 및 적용 결과는 달라질 수 있으므로, 실제 의사결정 시에는 반드시 세무사, 회계사, 재무 컨설턴트 등 전문가와 직접 상담하여 진행하시기 바랍니다.</p>
+    </div>
     </div>
     <p class="copyright">Copyright © 2025 (주)한국FP센터. All Rights Reserved.</p>
 </footer>
@@ -936,7 +950,9 @@ function collectFormData() {
             data.shareholders.push({ name, relation, share });
         }
     }
-    
+        const memo = document.getElementById('consultant-memo');
+    if (memo) data['consultant_memo'] = memo.value;
+
     data.timestamp = new Date().toISOString();
     return data;
 }
@@ -976,7 +992,10 @@ function loadFormData(data) {
             document.getElementById(`shareholder_share_${idx}`).value = sh.share || '';
         });
     }
-    
+    if (data['consultant_memo']) {
+    const memo = document.getElementById('consultant-memo');
+    if (memo) memo.value = data['consultant_memo'];
+}
     updateIdentityDisplay();
     updateProgress();
     updateAnalysis();
@@ -988,7 +1007,7 @@ function saveToFile() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `consulting_${data.company_name || 'data'}_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `${data.company_name || '기업명없음'}_${data.consultant_name || '대표이름없음'}_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1045,7 +1064,7 @@ function addChild() {
             </div>
             <div class="input-group" style="margin-bottom:0;">
                 <label>나이</label>
-                <input type="number" id="child_age_${idx}" placeholder="25" min="0" max="100" onchange="autoSave()">
+                <input type="number" id="child_age_${idx}" placeholder="" min="0" max="100" onchange="autoSave()">
             </div>
         </div>
     `;
@@ -1093,7 +1112,7 @@ function addShareholder() {
             </div>
             <div class="input-group" style="margin-bottom:0;">
                 <label>지분율 (%)</label>
-                <input type="number" id="shareholder_share_${idx}" placeholder="20" min="0" max="100" step="0.1" onchange="autoSave()">
+                <input type="number" id="shareholder_share_${idx}" placeholder="" min="0" max="100" step="0.1" onchange="autoSave()">
             </div>
         </div>
     `;
@@ -1164,9 +1183,13 @@ function calculateStockValue(inputs) {
     const income2year = prevIncomeEl ? parseFloat(prevIncomeEl.value.replace(/,/g, '')) || 0 : 0;
     const income1year = prevPrevIncomeEl ? parseFloat(prevPrevIncomeEl.value.replace(/,/g, '')) || 0 : 0;
     
-    const weightedAvgIncome = (income3year * 3 + income2year * 2 + income1year * 1) / 6;
-    
-    const earningsValue = Math.max(0, weightedAvgIncome * 10);
+const weightedAvgIncome = (income3year * 3 + income2year * 2 + income1year * 1) / 6;
+
+// 사용자가 선택한 자본환원율 적용
+const capitalReturnRateEl = document.getElementById('capital_return_rate');
+const capitalReturnRate = capitalReturnRateEl ? parseFloat(capitalReturnRateEl.value) || 10 : 10;
+const multiplier = 100 / capitalReturnRate;
+const earningsValue = Math.max(0, weightedAvgIncome * multiplier);
     
     const sales = inputs.sales || 0;
     let stockValue = 0;
@@ -1180,6 +1203,8 @@ function calculateStockValue(inputs) {
             method: '순자산가치 100%',
             netAssets: netAssets,
             earningsValue: 0,
+            capitalReturnRate: capitalReturnRate,
+            multiplier: multiplier,
             formula: '순자산가치만 적용'
         };
     } else if (sales < 100000000000) {
@@ -1189,6 +1214,8 @@ function calculateStockValue(inputs) {
             method: '(순자산 × 2 + 수익 × 3) ÷ 5',
             netAssets: netAssets,
             earningsValue: earningsValue,
+            capitalReturnRate: capitalReturnRate,
+            multiplier: multiplier,
             formula: `(${formatNumber(netAssets)} × 2 + ${formatNumber(earningsValue)} × 3) ÷ 5`,
             netAssetWeight: '40%',
             earningsWeight: '60%'
@@ -1200,6 +1227,8 @@ function calculateStockValue(inputs) {
             method: '(순자산 × 3 + 수익 × 2) ÷ 5',
             netAssets: netAssets,
             earningsValue: earningsValue,
+            capitalReturnRate: capitalReturnRate,
+            multiplier: multiplier,
             formula: `(${formatNumber(netAssets)} × 3 + ${formatNumber(earningsValue)} × 2) ÷ 5`,
             netAssetWeight: '60%',
             earningsWeight: '40%'
@@ -1515,9 +1544,6 @@ function updateAnalysis() {
         generateInsuranceProposal(inputs);
         generateConsultantSummary(inputs);
 
-        // 자동 스크롤 실행
-        setTimeout(scrollToAnalysis, 300);
-
         const strategicSection = document.getElementById('strategic_consulting');
         if (strategicSection && strategicSection.innerHTML.trim() !== '') {
             strategicSection.style.transition = 'background-color 0.3s ease';
@@ -1527,7 +1553,6 @@ function updateAnalysis() {
                 strategicSection.style.backgroundColor = '';
             }, 500);
             
-            scrollToAnalysis();
         }
     } catch (e) { 
         console.error("분석 중 오류 발생:", e); 
@@ -3120,61 +3145,102 @@ window.onload = function() {
             }, 3000);
         }
     }, 1000);
-};
-// 자본환원율 배수 계산
-window.updateMultiplier = function() {
-    const capitalRateInput = document.getElementById('capital_return_rate');
-    const multiplierDisplay = document.getElementById('multiplier_display');
+    // 자본금/액면가 변경 시 주식수 자동 계산
+    const capitalInput = document.getElementById('capital');
+    const parValueInput = document.getElementById('par_value');
+    const totalSharesInput = document.getElementById('total_shares');
     
-    if (!capitalRateInput || !multiplierDisplay) return;
-    
-    const rate = parseFloat(capitalRateInput.value) || 10;
-    const multiplier = (100 / rate).toFixed(2);
-    multiplierDisplay.value = multiplier;
-};
-
-// 페이지 로드 시 초기값 설정
-setTimeout(function() {
-    if (typeof updateMultiplier === 'function') {
-        updateMultiplier();
-    }
-}, 100);
-
-// 자본금/액면가 변경 시 주식수 자동 계산
-const capitalInput = document.getElementById('capital');
-const parValueInput = document.getElementById('par_value');
-const totalSharesInput = document.getElementById('total_shares');
-
-function updateTotalShares() {
-    const capital = parseFloat(capitalInput?.value.replace(/,/g, '')) || 0;
-    const parValue = parseFloat(parValueInput?.value.replace(/,/g, '')) || 0;
-    
-    if (capital > 0 && parValue > 0) {
-        const shares = Math.round(capital / parValue);
-        if (totalSharesInput) {
+    function calculateShares() {
+        const capital = parseFloat(unformat(capitalInput.value)) || 0;
+        const parValue = parseFloat(unformat(parValueInput.value)) || 0;
+        
+        if (capital > 0 && parValue > 0) {
+            const shares = Math.round(capital / parValue);
             totalSharesInput.value = formatNumber(shares);
-            totalSharesInput.style.background = '#fff9e6';
-            setTimeout(() => {
-                totalSharesInput.style.background = '#f0f0f0';
-            }, 1000);
+            currentInputs.total_shares = shares;
+        } else {
+            totalSharesInput.value = '';
+            currentInputs.total_shares = 0;
         }
-    }
-    
-    if (typeof debouncedUpdate === 'function') {
+        
         debouncedUpdate();
     }
+    
+    if (capitalInput) {
+        capitalInput.addEventListener('input', calculateShares);
+    }
+    
+    if (parValueInput) {
+        parValueInput.addEventListener('input', calculateShares);
+    }
+// 자본금/액면가 변경 경고
+function setupChangeWarning(input, fieldName) {
+    let originalValue = '';
+    let hasWarned = false;
+    
+    // 포커스 시 초기값 저장
+    input.addEventListener('focus', function() {
+        originalValue = unformat(this.value) || '';
+        hasWarned = false;  // 포커스할 때마다 리셋
+    });
+    
+    // 입력 즉시 감지
+    input.addEventListener('input', function(e) {
+        const currentValue = unformat(this.value) || '';
+        
+        // 초기값이 있고, 값이 변경되었고, 아직 경고 안 했으면
+        if (originalValue && currentValue && originalValue !== currentValue && !hasWarned) {
+            hasWarned = true;  // 중복 방지
+            
+            // 사용자 응답 받기
+            const userConfirmed = confirm(`⚠️ ${fieldName} 변경 경고\n\n${fieldName}을(를) 변경하면 주식수가 재계산되어 1주당 평가액이 변동됩니다.\n\n• 실제 증자/감자/액면분할이 아니라면 변경을 권장하지 않습니다.\n• 잘못 입력한 경우 "취소"를 눌러 되돌리세요.\n\n계속 변경하시겠습니까?`);
+            
+            if (!userConfirmed) {
+                // 취소 → 원래 값으로 복원
+                this.value = formatNumber(originalValue);
+                calculateShares();
+            } else {
+                // 확인 → 현재 값을 새 초기값으로
+                originalValue = currentValue;
+            }
+        }
+    });
+    
+    // 포커스 벗어날 때 리셋
+    input.addEventListener('blur', function() {
+        hasWarned = false;
+    });
 }
+if (capitalInput) setupChangeWarning(capitalInput, '자본금');
+if (parValueInput) setupChangeWarning(parValueInput, '액면가');
 
-if (capitalInput) {
-    capitalInput.addEventListener('input', updateTotalShares);
-    capitalInput.addEventListener('change', updateTotalShares);
+    // 창업연도 드롭다운 자동 생성
+    const foundingYearSelect = document.getElementById('founding_year');
+    if (foundingYearSelect) {
+        const currentYear = new Date().getFullYear();
+        const startYear = 1950;
+        
+        for (let year = currentYear; year >= startYear; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year + '년';
+            foundingYearSelect.appendChild(option);
+        }
+    }
+};
+// 자본환원율 배수 계산
+function updateMultiplier() {  // ← 전역 함수로 즉시 정의
+    const rate = parseFloat(document.getElementById('capital_return_rate').value) || 10;
+    const multiplier = (100 / rate).toFixed(2);
+    document.getElementById('multiplier_display').value = multiplier;
+    setTimeout(() => {
+        updateAnalysis();
+    }, 100);
 }
+window.updateMultiplier = updateMultiplier;  // ← window에도 등록
 
-if (parValueInput) {
-    parValueInput.addEventListener('input', updateTotalShares);
-    parValueInput.addEventListener('change', updateTotalShares);
-}
-
-</script>
+document.addEventListener('DOMContentLoaded', function() {  // ← DOM 준비되면 즉시
+    updateMultiplier();
+});</script>
 </body>
 </html>
