@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Consulting Solution - 전문가판</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    :root {
+        --bg-color: #f0f2f5;
+        --card-bg: #ffffff;
+        --primary-navy: #0c2c54;
+        --secondary-blue: #2a5a8a;
+        --accent-gold: #c5a05b;
+        --text-primary: #212529;
+        --text-secondary: #5a6169;
+        --border-color: #dee2e6;
+        --success-color: #1e8449;
+        --warning-color: #d68910;
+        --danger-color: #b03a2e;
+        --opportunity-color: #2980b9;
+        --info-color: #3498db;
+    }
+
+    * { box-sizing: border-box; }
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; padding: 2rem; line-height: 1.8; }
+    .container { max-width: 1700px; margin: auto; }
+    
+    .progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0,0,0,0.1); z-index: 1000; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary-navy), var(--accent-gold)); width: 0%; transition: width 0.3s ease; }
+    
+    .save-status { position: fixed; top: 20px; right: 20px; background: var(--success-color); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; z-index: 1000; opacity: 0; transition: opacity 0.3s ease; }
+    .save-status.show { opacity: 1; }
+    .save-status.saving { background: var(--warning-color); }
+    .save-status.danger { background: var(--danger-color); }
+    
+    header { text-align: center; margin-bottom: 3rem; }
+    .header-content { background: linear-gradient(135deg, var(--primary-navy), var(--secondary-blue)); color: white; padding: 2.5rem 2rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(12, 44, 84, 0.2); }
+    header h1 { font-size: 2.8rem; font-weight: 700; letter-spacing: -1px; margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: center; }
+    header h1 i { margin-right: 1rem; color: var(--accent-gold); }
+    header .producer { font-size: 1rem; font-weight: 500; opacity: 0.8; margin: 0; }
+    
+    .toolbar { background: white; padding: 1rem 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .toolbar-left { display: flex; align-items: center; gap: 1rem; }
+    .toolbar-right { display: flex; gap: 0.5rem; }
+    .btn { background: var(--primary-navy); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn:hover { background: var(--secondary-blue); transform: translateY(-1px); }
+    .btn.success { background: var(--success-color); }
+    .btn.warning { background: var(--warning-color); }
+    .btn.info { background: var(--info-color); }
+    .btn.danger { background: var(--danger-color); }
+    .btn.small { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+    
+    .mobile-tabs { display: none; background: white; padding: 0.5rem; border-radius: 12px; margin-bottom: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .mobile-tabs button { flex: 1; padding: 0.8rem; border: none; background: transparent; color: var(--text-secondary); font-weight: 500; cursor: pointer; border-radius: 8px; transition: all 0.3s; }
+    .mobile-tabs button.active { background: var(--primary-navy); color: white; }
+    
+    .main-grid { display: grid; grid-template-columns: 42% 58%; gap: 2.5rem; align-items: start; }
+    .input-section { max-height: 100vh; overflow-y: auto; position: sticky; top: 0; padding-right: 1rem; }
+    .analysis-section { min-height: 100vh; }
+    
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 2.5rem; box-shadow: 0 8px 32px rgba(12, 44, 84, 0.08); margin-bottom: 2.5rem; }
+    .card h2 { font-size: 1.6rem; font-weight: 700; color: var(--primary-navy); margin-top: 0; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; }
+    .card h2 i { margin-right: 0.75rem; color: var(--secondary-blue); }
+
+    .identity-section { background: linear-gradient(135deg, var(--accent-gold), #d4a574); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; }
+    .identity-section h3 { margin: 0 0 1.5rem 0; font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; }
+    .identity-section h3 i { margin-right: 0.75rem; }
+    .identity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+    .input-group { margin-bottom: 1.25rem; }
+    .input-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 1rem; color: var(--text-secondary); }
+    .input-group.identity label { color: white; font-weight: 600; }
+    .input-field { display: flex; align-items: center; }
+    .input-field input, .input-field select, .input-field textarea { width: 100%; padding: 0.8rem 1rem; border: 1px solid #ced4da; border-radius: 8px; font-size: 1rem; font-weight: 500; transition: border-color 0.3s ease; font-family: 'Noto Sans KR', sans-serif; }
+    .input-field textarea { min-height: 80px; resize: vertical; }
+    .input-field input:focus, .input-field select:focus, .input-field textarea:focus { outline: none; border-color: var(--primary-navy); box-shadow: 0 0 0 3px rgba(12, 44, 84, 0.1); }
+    
+    .input-field input[type="text"]:not(.no-align-right),
+    .input-field input[inputmode="numeric"] { text-align: right; }
+    
+    .input-field span { margin-left: 0.75rem; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
+    .input-field .check-icon { margin-left: 0.5rem; color: var(--success-color); opacity: 0; transition: opacity 0.3s ease; }
+    .input-field .check-icon.show { opacity: 1; }
+    
+    .info-icon { margin-left: 0.5rem; color: var(--info-color); cursor: help; font-size: 0.9rem; }
+    .tooltip-container { position: relative; display: inline-block; }
+    .tooltip-text { visibility: hidden; width: 300px; background-color: rgba(0,0,0,0.9); color: white; text-align: left; border-radius: 8px; padding: 1rem; position: absolute; z-index: 1000; bottom: 125%; left: 50%; margin-left: -150px; opacity: 0; transition: opacity 0.3s; font-size: 0.9rem; line-height: 1.6; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: rgba(0,0,0,0.9) transparent transparent transparent; }
+    .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+    
+.stock-price-display { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    color: white !important; 
+    padding: 1rem; 
+    border-radius: 8px; 
+    margin: 1rem 0; 
+    text-align: center; 
+}
+
+.stock-price-display * {
+    color: white !important;
+}
+
+.stock-price-display h4 { 
+    margin: 0 0 0.5rem 0; 
+    font-size: 0.9rem; 
+    opacity: 0.9; 
+    color: white !important;
+}
+
+.stock-price-display .price { 
+    font-size: 1.8rem; 
+    font-weight: 700; 
+    color: #f1c40f !important;
+}
+
+.stock-price-display strong {
+    color: white !important;
+}
+
+.stock-price-display div {
+    color: white !important;
+}    
+    h4.input-divider { color: var(--primary-navy); font-weight: 700; margin: 2.5rem 0 1.5rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent-gold); }
+
+    .dynamic-container { border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; background: #f8f9fa; position: relative; }
+    .dynamic-item { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: end; margin-bottom: 0.75rem; }
+    .dynamic-item:last-child { margin-bottom: 0; }
+    .btn-add { margin-top: 0.5rem; }
+    .btn-remove { position: absolute; top: 0.5rem; right: 0.5rem; }
+
+    .score-dashboard { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5rem; margin: 2rem 0; }
+    .score-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .score-card.financial { background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); }
+    .score-card.tax { background: linear-gradient(135deg, #d68910 0%, #e59400 100%); }
+    .score-card.inheritance { background: linear-gradient(135deg, #b03a2e 0%, #cb4335 100%); }
+    .score-card.succession { background: linear-gradient(135deg, #2980b9 0%, #3498db 100%); }
+    .score-card.retirement { background: linear-gradient(135deg, #1e8449 0%, #27ae60 100%); }
+    .score-card h3 { margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 500; opacity: 0.9; }
+    .score-value { font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; }
+    .score-grade { font-size: 1.1rem; font-weight: 600; opacity: 0.95; }
+
+    .result-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+    .result-box { padding: 1.2rem; border-radius: 12px; text-align: center; background: #fdfdff; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.3s ease; }
+    .result-box:hover { transform: translateY(-2px); }
+    .result-box h3 { margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 500; color: var(--text-secondary); }
+    .result-value { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary-navy); flex-grow: 1; display:flex; align-items:center; justify-content:center; }
+    .result-status { font-size: 1rem; font-weight: bold; padding: 0.3rem 1rem; border-radius: 20px; color: white; }
+    .status-safe { background-color: var(--success-color); }
+    .status-good { background-color: #27ae60; }
+    .status-warning { background-color: var(--warning-color); }
+    .status-danger { background-color: var(--danger-color); }
+    .status-info { background-color: var(--info-color); }
+    
+    .chart-container { min-height: 350px; margin: 2rem 0; background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
+    .chart-grid .chart-container { height: 300px; margin: 0; }
+    .chart-toggle { margin-bottom: 1rem; text-align: center; }
+    
+    .consulting-topic { margin-bottom: 2.5rem; padding: 2rem; border-radius: 16px; border-left: 8px solid; background-color: var(--card-bg); box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+    .consulting-topic:last-child { margin-bottom: 0; }
+    .topic-danger { border-color: var(--danger-color); }
+    .topic-warning { border-color: var(--warning-color); }
+    .topic-good { border-color: var(--success-color); }
+    .topic-opportunity { border-color: var(--opportunity-color); }
+    .topic-info { border-color: var(--info-color); }
+    .consulting-topic > h3 { font-size: 1.5rem; font-weight: 700; margin:0 0 1.5rem 0; display: flex; align-items: center; }
+    .consulting-topic h3 i { margin-right: 0.8rem; }
+    .consulting-topic h3.danger { color: var(--danger-color); }
+    .consulting-topic h3.warning { color: var(--warning-color); }
+    .consulting-topic h3.good { color: var(--success-color); }
+    .consulting-topic h3.opportunity { color: var(--opportunity-color); }
+    .consulting-topic h3.info { color: var(--info-color); }
+    .consulting-topic h3 .topic-value { color: var(--text-secondary); font-weight: 500; margin-left: 8px;}
+    .consulting-section { margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+    .consulting-section h4 { display: flex; align-items: center; font-size: 1.25rem; font-weight: 600; color: var(--secondary-blue); margin: 0 0 1rem 0; }
+    .consulting-section h4 i { margin-right: 0.5rem; }
+    .consulting-section ul { list-style-type: none; padding-left: 0; margin: 0; }
+    .consulting-section li { position: relative; padding-left: 1.75rem; margin-bottom: 0.5rem; font-size: 1.05rem; }
+    .consulting-section li::before { content: '•'; position: absolute; left: 0.25rem; font-weight: bold; color: var(--secondary-blue); font-size: 1.5rem; line-height: 1; top: 0.2rem; }
+    .consulting-section li strong { font-weight: 600; color: #2c3e50; }
+    
+    .calc-box { background: #f8f9fa; border-left: 4px solid var(--info-color); padding: 1rem; margin: 1rem 0; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.95rem; }
+    .calc-box .calc-line { margin: 0.3rem 0; }
+    .calc-box .calc-result { font-weight: 700; color: var(--danger-color); margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #dee2e6; }
+    
+    .proposal-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .proposal-table th, .proposal-table td { border: 1px solid var(--border-color); padding: 0.8rem; }
+    .proposal-table th { background-color: #f8f9fa; font-weight: 600; text-align: center; }
+    .proposal-table td { font-weight: 500; text-align: right; }
+    .proposal-table .text-left { text-align: left !important; }
+    .proposal-table .highlight { color: var(--danger-color); font-weight: 700; }
+    
+    .action-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; }
+    .action-box h5 { margin: 0 0 1rem 0; font-size: 1.2rem; }
+    .action-box ul { margin: 0; padding-left: 1.5rem; }
+    .action-box li { margin: 0.5rem 0; }
+    
+    #consultant_summary { padding: 2.5rem; background: linear-gradient(135deg, var(--primary-navy), var(--secondary-blue)); color: white; border-radius: 16px; }
+    #consultant_summary h2 { color: var(--accent-gold); border-bottom-color: rgba(255,255,255,0.3); }
+    #consultant_summary h2 i { color: var(--accent-gold); }
+    #consultant_summary p { font-size: 1.15rem; margin-bottom: 1.5rem; line-height: 1.9; }
+    #consultant_summary .summary-point { font-weight: 700; color: #f1c40f; background-color: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 5px; }
+
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color);}
+    .disclaimer { font-size: 0.9rem; color: #6c757d; background-color: #e9ecef; padding: 2rem; border-radius: 8px; max-width: 900px; margin: 1rem auto; text-align: center; }
+    .disclaimer h3 { margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--text-primary); }
+    .disclaimer p { margin: 0; line-height: 1.7; }
+    .copyright { text-align: center; font-size: 0.9rem; color: #6c757d; }
+
+    .file-input { display: none; }
+    
+    .keyboard-help { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 1rem; border-radius: 8px; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s ease; z-index: 1000; }
+    .keyboard-help.show { opacity: 1; }
+
+    @media print {
+        body { background: white !important; color: black !important; font-size: 12px !important; padding: 0 !important; margin: 0 !important; }
+        .container { max-width: none !important; margin: 0 !important; }
+        .progress-container, .save-status, .toolbar, .keyboard-help, .mobile-tabs { display: none !important; }
+        .main-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; padding: 1rem !important; margin-bottom: 1rem !important; page-break-inside: avoid; }
+        .chart-container { height: 300px !important; page-break-inside: avoid; }
+        .header-content, .identity-section, #consultant_summary, .action-box { background: #f8f9fa !important; color: black !important; border: 2px solid #333 !important; }
+        .consulting-topic { page-break-inside: avoid; }
+    }
+@media (max-width: 1600px) { 
+    .main-grid { 
+        grid-template-columns: 45% 55%;
+    }
+}
+    @media (max-width: 1400px) { 
+        .main-grid { grid-template-columns: 1fr !important; gap: 1rem; }
+        .input-section { max-height: none; overflow-y: visible !important; position: static !important; padding-right: 0; }
+        .analysis-section { position: static !important; max-height: none !important; overflow-y: visible !important; }
+        .chart-grid { grid-template-columns: 1fr; }
+        .score-dashboard { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        html, body { overflow-x: hidden; width: 100%; }
+        body { padding: 0.5rem; -webkit-text-size-adjust: 100%; }
+        .mobile-tabs { display: flex; position: sticky; top: 0; z-index: 100; margin-bottom: 1rem; }
+        .main-grid { display: block; }
+        .input-section, .analysis-section { display: none; height: auto !important; overflow-y: visible !important; position: static !important; padding-right: 0; }
+        .input-section.active, .analysis-section.active { display: block; }
+        .header-content { padding: 1.5rem 1rem; }
+        header h1 { font-size: 1.8rem; flex-direction: column; }
+        header h1 i { margin-right: 0; margin-bottom: 0.5rem; font-size: 2rem; }
+        .card { padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+        .card h2 { font-size: 1.2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; }
+        .result-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+        .score-dashboard { grid-template-columns: 1fr; gap: 1rem; }
+        .toolbar { flex-direction: column; align-items: stretch; text-align: center; padding: 0.75rem; gap: 0.5rem; }
+        .toolbar-left, .toolbar-right { justify-content: center; flex-wrap: wrap; width: 100%; }
+        .identity-grid { grid-template-columns: 1fr; gap: 1rem; }
+        .identity-section { padding: 1rem; margin-bottom: 1rem; }
+        .chart-container { height: 250px; padding: 0.75rem; }
+        .chart-grid { grid-template-columns: 1fr; }
+        .chart-grid .chart-container { height: 200px; }
+        .dynamic-item { grid-template-columns: 1fr; gap: 0.5rem; }
+        .dynamic-item button { width: 100%; margin-top: 0.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { font-size: 0.9rem; }
+        .input-field input, .input-field select, .input-field textarea { font-size: 16px !important; padding: 0.6rem 0.8rem; }
+        h4.input-divider { font-size: 1rem; margin: 1.5rem 0 1rem 0; }
+        .consulting-topic { padding: 1rem; margin-bottom: 1.5rem; }
+        .consulting-topic > h3 { font-size: 1.2rem; }
+        .consulting-section h4 { font-size: 1.1rem; }
+        .btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
+        .btn.small { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .stock-price-display .price { font-size: 1.4rem; }
+        .score-value { font-size: 2rem; }
+        .result-value { font-size: 1.5rem; }
+        * { -webkit-overflow-scrolling: touch; }
+    }
+.stock-price-display div[style*="background: white"] {
+    color: #212529 !important;
+}
+
+.stock-price-display div[style*="background: white"] * {
+    color: #212529 !important;
+}
+
+.stock-price-display div[style*="background: #fff3cd"] {
+    color: #856404 !important;
+}
+
+.stock-price-display div[style*="background: #fff3cd"] * {
+    color: #856404 !important;
+}
+
+.stock-price-display div[style*="background: #fff3cd"] strong {
+    color: #856404 !important;
+}
+.stock-price-display h5 {
+    color: #495057 !important;
+}
+
+.stock-price-display div[style*="color: #6c757d"] {
+    color: #6c757d !important;
+}
+
+.stock-price-display div[style*="font-size: 0.75rem"] {
+    color: #6c757d !important;
+}
+</style>
+</head>
+<body>
+<div id="mobile-warning-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.95); color: white; z-index: 10001; display: none; align-items: center; justify-content: center; text-align: center; padding: 1rem;">
+    <div style="background: white; color: #212529; padding: 2rem 1.5rem; border-radius: 12px; max-width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <h2 style="color: #d68910; margin: 0 0 1rem 0; font-size: 1.5rem;"><i class="fas fa-mobile-alt"></i> 안내</h2>
+        <p style="font-size: 1.1rem; line-height: 1.6; margin: 0 0 1.5rem 0;"><strong>PC 및 패드 전용프로그램입니다.</strong></p>
+        <button type="button" class="btn success" id="close-mobile-warning-btn" style="min-width: 100px;">확인</button>
+    </div>
+</div>
+<div class="progress-container">
+    <div class="progress-bar" id="progress-bar"></div>
+</div>
+<div class="save-status" id="save-status">
+    <i class="fas fa-save"></i> 자동 저장됨
+</div>
+<div class="keyboard-help" id="keyboard-help">
+    <div><strong>키보드 단축키:</strong></div>
+    <div>Ctrl+S: 저장 | Ctrl+O: 불러오기 | Ctrl+P: 인쇄</div>
+</div>
+<div class="container">
+    <header>
+        <div class="header-content">
+            <h1><i class="fas fa-chart-line"></i>Executive Consulting Solution</h1>
+            <p class="producer">제작 : (주)한국FP센터 부설 중소기업경영연구소</p>
+        </div>
+    </header>
+<div class="toolbar">
+    <div class="toolbar-left">
+        <div class="company-info" id="company-info-display">
+            <strong>분석 대상:</strong> <span id="display-name">정보 없음</span> | <span id="display-company">정보 없음</span>
+        </div>
+    </div>
+    <div class="toolbar-right">
+        <button class="btn success" id="save-btn"><i class="fas fa-save"></i> 저장</button>
+        <button class="btn info" id="load-btn"><i class="fas fa-upload"></i> 불러오기</button>
+        <button class="btn warning" id="new-btn"><i class="fas fa-plus"></i> 새문서</button>
+    </div>
+</div>
+
+<div class="mobile-tabs">
+    <button class="active" data-tab="input"><i class="fas fa-edit"></i> 입력</button>
+    <button data-tab="analysis"><i class="fas fa-chart-bar"></i> 분석</button>
+</div>
+
+<main class="main-grid">
+    <section class="input-section active">
+        <div class="card">
+            <h2><i class="fas fa-edit"></i>Step 1. 핵심 데이터 입력</h2>
+            
+            <div class="identity-section">
+                <h3><i class="fas fa-building"></i> 기업 기본 정보</h3>
+                <div class="identity-grid">
+                    <div class="input-group identity">
+                        <label for="company_name">기업명</label>
+                        <div class="input-field">
+                            <input type="text" id="company_name" class="no-align-right" placeholder="기업명을 입력하세요">
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="company_type">법인형태</label>
+                        <div class="input-field">
+                            <select id="company_type">
+                                <option value="">선택</option>
+                                <option value="주식회사">주식회사</option>
+                                <option value="유한회사">유한회사</option>
+                                <option value="합자회사">합자회사</option>
+                                <option value="개인사업자">개인사업자</option>
+                            </select>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="industry">업종 분류</label>
+                        <div class="input-field">
+                            <select id="industry">
+                                <option value="">선택</option>
+                                <option value="제조업">제조업</option>
+                                <option value="도소매업">도소매업</option>
+                                <option value="서비스업">서비스업</option>
+                                <option value="건설업">건설업</option>
+                                <option value="IT/소프트웨어">IT/소프트웨어</option>
+                                <option value="음식숙박업">음식숙박업</option>
+                                <option value="기타">기타</option>
+                            </select>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="listing_status">상장 여부</label>
+                        <div class="input-field">
+                            <select id="listing_status">
+                                <option value="비상장" selected>비상장</option>
+                                <option value="코스피">코스피</option>
+                                <option value="코스닥">코스닥</option>
+                                <option value="코넥스">코넥스</option>
+                            </select>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="valuation_date">평가 기준일</label>
+                        <div class="input-field">
+                            <input type="date" id="valuation_date">
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="fiscal_month">결산월</label>
+                        <div class="input-field">
+                            <select id="fiscal_month">
+                                <option value="12" selected>12월</option>
+                                <option value="1">1월</option>
+                                <option value="2">2월</option>
+                                <option value="3">3월</option>
+                                <option value="4">4월</option>
+                                <option value="5">5월</option>
+                                <option value="6">6월</option>
+                                <option value="7">7월</option>
+                                <option value="8">8월</option>
+                                <option value="9">9월</option>
+                                <option value="10">10월</option>
+                                <option value="11">11월</option>
+                            </select>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="founding_year">창업년도</label>
+                        <div class="input-field">
+                            <input type="number" id="founding_year" placeholder="2000" min="1900" max="2025">
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="founding_date">창립기념일</label>
+                        <div class="input-field">
+                            <input type="date" id="founding_date">
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <div class="input-group identity">
+                        <label for="business_description">주요 사업내용</label>
+                        <div class="input-field">
+                            <textarea id="business_description" placeholder="주요 사업내용을 입력하세요"></textarea>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="identity-section" style="background: linear-gradient(135deg, #2a5a8a, #3d7cb5);">
+                <h3><i class="fas fa-user"></i> CEO 기본 정보</h3>
+                <div class="identity-grid">
+                    <div class="input-group identity">
+                        <label for="consultant_name">CEO 성명</label>
+                        <div class="input-field">
+                            <input type="text" id="consultant_name" class="no-align-right" placeholder="대표자 성명">
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="ceo_birth">CEO 생년월일</label>
+                        <div class="input-field">
+                            <input type="date" id="ceo_birth">
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="spouse_age">배우자 연령</label>
+                        <div class="input-field">
+                            <input type="number" id="spouse_age" placeholder="45" min="0" max="150">
+                            <span>세</span>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                    <div class="input-group identity">
+                        <label for="retirement_age">희망 은퇴 연령</label>
+                        <div class="input-field">
+                            <input type="number" id="retirement_age" placeholder="65" min="0" max="100">
+                            <span>세</span>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 class="input-divider">👨‍👩‍👧‍👦 가족 정보</h4>
+            <div class="input-group">
+                <label>자녀 정보</label>
+                <div id="children-container"></div>
+                <button type="button" class="btn btn-add small" id="add-child-btn"><i class="fas fa-plus"></i> 자녀 추가</button>
+            </div>
+            
+            <div class="input-group">
+                <label for="successor">승계예정 후계자 유무</label>
+                <div class="input-field">
+                    <select id="successor">
+                        <option value="no">아니오</option>
+                        <option value="yes">예</option>
+                    </select>
+                    <i class="fas fa-check check-icon"></i>
+                </div>
+            </div>
+          <h4 class="input-divider">📈 주식 가치평가 설정</h4>
+            
+            <div class="input-group">
+                <label for="capital_return_rate">
+                    자본환원율 (수익가치 계산용)
+                    <span class="tooltip-container">
+                        <i class="fas fa-info-circle info-icon"></i>
+                        <span class="tooltip-text">
+                            <strong>자본환원율이란?</strong><br>
+                            투자자가 기대하는 연간 수익률입니다.<br><br>
+                            <strong>배수 = 100 ÷ 자본환원율</strong><br><br>
+                            <strong>실무 기준:</strong><br>
+                            • 상속세법: 10% (배수 10배)<br>
+                            • 일반 기업: 15% (배수 6.67배)<br>
+                            • 보수적 평가: 20% (배수 5배)<br>
+                            • M&A 실사: 20~25%<br><br>
+                            <strong>예시:</strong><br>
+                            • 10% 선택 → 순이익 × 10배<br>
+                            • 20% 선택 → 순이익 × 5배
+                        </span>
+                    </span>
+                </label>
+                <div class="input-field">
+                    <select id="capital_return_rate" onchange="updateMultiplier(); debouncedUpdate();">
+                        <option value="5">5% (배수 20배 - 초성장기업)</option>
+                        <option value="6">6% (배수 16.67배)</option>
+                        <option value="7">7% (배수 14.29배)</option>
+                        <option value="8">8% (배수 12.5배)</option>
+                        <option value="9">9% (배수 11.11배)</option>
+                        <option value="10" selected>10% (배수 10배 - 상속세법 기준)</option>
+                        <option value="11">11% (배수 9.09배)</option>
+                        <option value="12">12% (배수 8.33배)</option>
+                        <option value="13">13% (배수 7.69배)</option>
+                        <option value="14">14% (배수 7.14배)</option>
+                        <option value="15">15% (배수 6.67배 - 일반기업)</option>
+                        <option value="16">16% (배수 6.25배)</option>
+                        <option value="17">17% (배수 5.88배)</option>
+                        <option value="18">18% (배수 5.56배)</option>
+                        <option value="19">19% (배수 5.26배)</option>
+                        <option value="20">20% (배수 5배 - 보수적)</option>
+                        <option value="21">21% (배수 4.76배)</option>
+                        <option value="22">22% (배수 4.55배)</option>
+                        <option value="23">23% (배수 4.35배)</option>
+                        <option value="24">24% (배수 4.17배)</option>
+                        <option value="25">25% (배수 4배 - 매우 보수적)</option>
+                    </select>
+                    <i class="fas fa-check check-icon"></i>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>
+                    <i class="fas fa-calculator"></i> 적용 배수
+                </label>
+                <div class="input-field">
+                    <input type="text" id="multiplier_display" readonly style="background: #f8f9fa; font-weight: 700; color: #2980b9; text-align: center;">
+                    <span>배</span>
+                </div>
+            </div>
+            <h4 class="input-divider">💰 재무 기초 데이터</h4>
+            <div class="input-group"><label for="capital">자본금</label><div class="input-field"><input type="text" id="capital" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="total_shares">발행주식 총수</label><div class="input-field"><input type="text" id="total_shares" inputmode="numeric" readonly style="background-color: #f0f0f0; cursor: not-allowed;"><span>주</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group">
+                <label for="par_value">
+                    액면가 (1주당)
+                    <span class="tooltip-container">
+                        <i class="fas fa-info-circle info-icon"></i>
+                        <span class="tooltip-text">
+                            <strong>액면가란?</strong><br>
+                            주식 1주의 기본 가격입니다. 일반적으로 500원 또는 5,000원이며, 자본금을 발행주식수로 나눈 값입니다.<br><br>
+                            <strong>예시:</strong><br>
+                            • 자본금 5천만원 ÷ 10만주 = 액면가 500원<br><br>
+                            자본금과 주식수를 입력하면 자동 계산되지만, 직접 입력할 수도 있습니다.
+                        </span>
+                    </span>
+                </label>
+                <div class="input-field"><input type="text" id="par_value" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div>
+            </div>
+            <div id="stock-price-container"></div>
+            <div id="tax-saving-alert" style="margin-top: 1rem;"></div>
+            <div class="input-group"><label for="sales">당기 매출액</label><div class="input-field"><input type="text" id="sales" value="5,000,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="previous_sales">전기 매출액</label><div class="input-field"><input type="text" id="previous_sales" value="4,500,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="op_profit">영업이익</label><div class="input-field"><input type="text" id="op_profit" value="500,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group">
+                <label for="ebt">법인세차감전순이익 (당기)</label>
+                <div class="input-field">
+                    <input type="text" id="ebt" value="0" inputmode="numeric">
+                    <span>원</span>
+                    <i class="fas fa-check check-icon"></i>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="tax_expense">법인세 (예상)</label>
+                <div class="input-field">
+                    <input type="text" id="tax_expense" value="0" inputmode="numeric">
+                    <span>원</span>
+                    <i class="fas fa-check check-icon"></i>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="net_income">당기순이익 (예상) 
+                    <span class="tooltip-container">
+                        <i class="fas fa-info-circle info-icon"></i>
+                        <span class="tooltip-text">법인세차감전순이익 - 법인세(예상)</span>
+                    </span>
+                </label>
+                <div class="input-field">
+                    <input type="text" id="net_income" value="0" inputmode="numeric" readonly style="background: #f0f0f0;">
+                    <span>원</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="previous_net_income">전기 순이익</label>
+                <div class="input-field">
+                    <input type="text" id="previous_net_income" value="0" inputmode="numeric">
+                    <span>원</span>
+                    <i class="fas fa-check check-icon"></i>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="previous_previous_net_income">전전기 순이익</label>
+                <div class="input-field">
+                    <input type="text" id="previous_previous_net_income" value="0" inputmode="numeric">
+                    <span>원</span>
+                    <i class="fas fa-check check-icon"></i>
+                </div>
+            </div>
+            <div class="input-group"><label for="total_assets">자산 총계</label><div class="input-field"><input type="text" id="total_assets" value="5,000,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="liabilities">부채 총계</label><div class="input-field"><input type="text" id="liabilities" value="4,000,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="equity">자본 총계</label><div class="input-field"><input type="text" id="equity" value="1,000,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="cash_assets">현금 및 현금성자산</label><div class="input-field"><input type="text" id="cash_assets" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="short_debt">단기차입금</label><div class="input-field"><input type="text" id="short_debt" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="long_debt">장기차입금</label><div class="input-field"><input type="text" id="long_debt" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="interest_expense">이자비용 (연)</label><div class="input-field"><input type="text" id="interest_expense" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group">
+                <label for="operating_cashflow">
+                    영업활동 현금흐름
+                    <span class="tooltip-container">
+                        <i class="fas fa-info-circle info-icon"></i>
+                        <span class="tooltip-text">
+                            <strong>영업활동 현금흐름이란?</strong><br>
+                            기업이 본업(영업)에서 실제로 벌어들인 현금입니다.<br><br>
+                            <strong>예시:</strong><br>
+                            • 순이익 5억원인데 현금흐름 -2억원?<br>
+                            → 외상 매출이 많아 현금이 안 들어옴 (흑자도산 위험!)<br><br>
+                            <strong>어디서 찾나요?</strong><br>
+                            재무제표 중 "현금흐름표"의 첫 번째 항목입니다.<br><br>
+                            <strong>없으면?</strong><br>
+                            대략 "당기순이익 + 감가상각비 - 재고·매출채권 증가분"으로 추정하거나 세무사에게 문의하세요.
+                        </span>
+                    </span>
+                </label>
+                <div class="input-field"><input type="text" id="operating_cashflow" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div>
+            </div>
+            
+            <h4 class="input-divider">🏦 지분 및 인력 구조</h4>
+            <div class="input-group"><label for="ceo_share">대표이사 지분율</label><div class="input-field"><input type="number" id="ceo_share" min="0" max="100" step="0.1"><span>%</span><i class="fas fa-check check-icon"></i></div></div>
+            
+            <div class="input-group">
+                <label>특수관계인 지분 현황</label>
+                <div id="shareholders-container"></div>
+                <button type="button" class="btn btn-add small" id="add-shareholder-btn"><i class="fas fa-plus"></i> 특수관계인 추가</button>
+            </div>
+            
+            <div class="input-group"><label for="total_employees">총 임직원 수</label><div class="input-field"><input type="number" id="total_employees" min="0"><span>명</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="family_salary">가족 임직원 급여 총액 (연)</label><div class="input-field"><input type="text" id="family_salary" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            
+            <h4 class="input-divider">🎯 CEO 컨설팅 핵심 항목</h4>
+            <div class="input-group"><label for="adv_payments">가지급금</label><div class="input-field"><input type="text" id="adv_payments" value="300,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="retained_earnings">미처분이익잉여금</label><div class="input-field"><input type="text" id="retained_earnings" value="800,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="dividend_3years">배당금 지급 내역 (최근 3년 합계)</label><div class="input-field"><input type="text" id="dividend_3years" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="corporate_card">법인카드 연간 사용액</label><div class="input-field"><input type="text" id="corporate_card" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="entertainment">접대비 총액 (연)</label><div class="input-field"><input type="text" id="entertainment" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            
+            <h4 class="input-divider">🏢 부동산 및 지배구조</h4>
+            <div class="input-group"><label for="corp_real_estate_value">법인명의 부동산 평가액</label><div class="input-field"><input type="text" id="corp_real_estate_value" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="personal_real_estate_value">개인명의 부동산 평가액</label><div class="input-field"><input type="text" id="personal_real_estate_value" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="nominee_stock">명의신탁주식 보유 여부</label><div class="input-field"><select id="nominee_stock"><option value="no">아니오</option><option value="yes">예</option></select><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="ip_ownership">대표이사/주주 명의 특허권 등 보유 여부</label><div class="input-field"><select id="ip_ownership"><option value="no">아니오</option><option value="yes">예</option></select><i class="fas fa-check check-icon"></i></div></div>
+
+            <h4 class="input-divider">🏦 세무 및 절세 전략</h4>
+            <div class="input-group"><label for="tax_return_review">최근 5년간 세무신고 전문가 검토 여부</label><div class="input-field"><select id="tax_return_review"><option value="yes">예</option><option value="no">아니오</option></select><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="sme_benefit">중소기업 특례 적용 여부</label><div class="input-field"><select id="sme_benefit"><option value="no">아니오</option><option value="yes">예</option></select><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="employment_credit">고용증대 세액공제 수혜 여부</label><div class="input-field"><select id="employment_credit"><option value="no">아니오</option><option value="yes">예</option></select><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="rnd_credit">R&D 세액공제 신청 이력</label><div class="input-field"><select id="rnd_credit"><option value="no">아니오</option><option value="yes">예</option></select><i class="fas fa-check check-icon"></i></div></div>
+
+            <h4 class="input-divider">👨‍👩‍👧‍👦 상속증여 계획</h4>
+            <div class="input-group"><label for="personal_financial">개인 금융자산 규모</label><div class="input-field"><input type="text" id="personal_financial" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="personal_debt">개인 부채 현황</label><div class="input-field"><input type="text" id="personal_debt" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="life_insurance">생명보험 사망보험금 총액</label><div class="input-field"><input type="text" id="life_insurance" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="gift_history">자녀 증여 이력 (총액)</label><div class="input-field"><input type="text" id="gift_history" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="spouse_assets">배우자 재산 규모</label><div class="input-field"><input type="text" id="spouse_assets" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="co_heirs">공동상속인 수</label><div class="input-field"><input type="number" id="co_heirs" placeholder="3" min="0"><span>명</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="succession_plan">가업승계 계획 유무</label><div class="input-field"><select id="succession_plan"><option value="no">아니오</option><option value="yes">예</option></select><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group">
+                <label for="succession_qualify">
+                    가업승계 요건 충족 여부
+                    <span class="tooltip-container">
+                        <i class="fas fa-info-circle info-icon"></i>
+                        <span class="tooltip-text">
+                            <strong>가업승계 공제 요건:</strong><br>
+                            ✓ 업력 10년 이상<br>
+                            ✓ 피상속인이 10년 이상 경영<br>
+                            ✓ 최대주주 + 지분 50% 이상<br>
+                            ✓ 후계자 2년 이상 근무<br>
+                            ✓ 후계자 임원 경력 보유<br>
+                            ✓ 상속 후 7년간 업종·정규직 유지
+                        </span>
+                    </span>
+                </label>
+                <div class="input-field"><select id="succession_qualify"><option value="no">미충족</option><option value="yes">충족</option></select><i class="fas fa-check check-icon"></i></div>
+            </div>
+
+            <h4 class="input-divider">🏖️ CEO 은퇴 설계</h4>
+            <div class="input-group"><label for="monthly_living">월평균 개인 생활비</label><div class="input-field"><input type="text" id="monthly_living" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="retirement_living">은퇴 후 월 생활비</label><div class="input-field"><input type="text" id="retirement_living" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="national_pension">국민연금 예상 수령액 (월)</label><div class="input-field"><input type="text" id="national_pension" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="private_pension_value">개인연금 적립액 (현재가치)</label><div class="input-field"><input type="text" id="private_pension_value" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="spouse_income">배우자 소득 유무</label><div class="input-field"><select id="spouse_income"><option value="no">없음</option><option value="yes">있음</option></select><i class="fas fa-check check-icon"></i></div></div>
+
+            <h4 class="input-divider">🛡️ CEO 보험 플랜 설계</h4>
+            <div class="input-group"><label for="ceo_age">CEO 현재 연령 (자동계산)</label><div class="input-field"><input type="number" id="ceo_age" readonly style="background:#f8f9fa;"><span>세</span></div></div>
+            <div class="input-group"><label for="existing_insurance">기존 CEO 보험 가입 여부</label><div class="input-field"><select id="existing_insurance"><option value="no">없음</option><option value="yes">있음</option></select><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group"><label for="insurance_target_amount">목표 준비자금 (퇴직금, 상속세 재원 등)</label><div class="input-field"><input type="text" id="insurance_target_amount" value="500,000,000" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
+            <div class="input-group">
+                <label for="insurance_payment_period">희망 납입기간</label>
+                <div class="input-field">
+                    <select id="insurance_payment_period">
+                        <option value="5">5년</option>
+                        <option value="6">6년</option>
+                        <option value="7">7년</option>
+                        <option value="8">8년</option>
+                        <option value="9">9년</option>
+                        <option value="10" selected>10년</option>
+                        <option value="11">11년</option>
+                        <option value="12">12년</option>
+                        <option value="13">13년</option>
+                        <option value="14">14년</option>
+                        <option value="15">15년</option>
+                        <option value="16">16년</option>
+                        <option value="17">17년</option>
+                        <option value="18">18년</option>
+                        <option value="19">19년</option>
+                        <option value="20">20년</option>
+                    </select>
+<i class="fas fa-check check-icon"></i>
+                </div>
+            </div>
+            <div class="input-group"><label for="consolation_regulation">임원 유족 위로금 규정 유무</label><div class="input-field"><select id="consolation_regulation"><option value="yes">있음</option><option value="no">없음</option></select><i class="fas fa-check check-icon"></i></div></div>
+        </div>
+    </section>
+    
+    <section class="analysis-section">
+        <div class="card">
+            <h2><i class="fas fa-tachometer-alt"></i>종합 경영 건강도 점수</h2>
+            <div class="score-dashboard" id="score-dashboard"></div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-chart-bar"></i>Step 2. 재무상태 및 리스크 종합 진단</h2>
+            <div id="metrics_container"></div>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-toggle">
+                        <button class="btn small" id="ratio-toggle-btn" onclick="toggleRatioChart()">권장 재무비율</button>
+                    </div>
+                    <canvas id="ratioChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><i class="fas fa-search"></i>Step 3. 전문가 진단 및 분석</h2>
+            <div id="strategic_consulting"></div>
+        </div>
+
+        <div class="card" id="solution_proposal_card" style="display:none;">
+            <h2><i class="fas fa-lightbulb"></i>Step 4. 맞춤형 보험 솔루션 상세 제안</h2>
+            <div id="solution_proposal"></div>
+        </div>
+        
+        <div id="consultant_summary" class="card"></div>
+    </section>
+</main>
+
+<footer>
+    <div class="disclaimer">
+        <h3>※ 면책 조항 (Disclaimer)</h3>
+        <p>본 진단 결과 및 보험 설계안은 제공된 정보를 바탕으로 한 가상 시뮬레이션이며, 실제 상품과 다를 수 있습니다. 구체적인 사실관계 및 상품 설계에 따라 실제 세법 해석 및 적용 결과는 달라질 수 있으므로, 실제 의사결정 시에는 반드시 세무사, 회계사, 재무 컨설턴트 등 전문가와 직접 상담하여 진행하시기 바랍니다.</p>
+    </div>
+    <p class="copyright">Copyright © 2025 (주)한국FP센터. All Rights Reserved.</p>
+</footer>
+</div>
+<input type="file" id="file-input" class="file-input" accept=".json">
+<script>
+let savedData = null;
+const analysisResult = { risks: new Set(), opportunities: new Set(), solutions: new Set(), insurancePlan: null, taxSavings: 0, estimatedInheritanceTax: 0 };
+let charts = {};
+let saveTimeout;
+let childrenCount = 0;
+let shareholdersCount = 0;
+let ratioChartMode = 'current';
+let currentInputs = {};
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+const debouncedUpdate = debounce(() => {
+    updateIdentityDisplay();
+    updateProgress();
+    updateAnalysis();
+    autoSave();
+}, 300);
+
+function validateNumber(value, min = 0, max = Infinity) {
+    const num = parseFloat(unformat(value));
+    if (isNaN(num)) return 0;
+    return Math.max(min, Math.min(max, num));
+}
+
+const unformat = str => (str || '').toString().replace(/,/g, '');
+const formatNumber = num => new Intl.NumberFormat('ko-KR').format(Math.round(Number(num) || 0));
+const formatPercent = num => `${(Number(num) || 0).toFixed(1)}%`;
+const formatTurnover = num => `${(Number(num) || 0).toFixed(2)}회`;
+
+function showSaveStatus(message = '자동 저장됨', type = 'success') {
+    const status = document.getElementById('save-status');
+    status.innerHTML = `<i class="fas fa-${type === 'saving' ? 'spinner fa-spin' : type === 'danger' ? 'exclamation-triangle' : 'save'}"></i> ${message}`;
+    status.className = `save-status ${type} show`;
+    setTimeout(() => status.classList.remove('show'), 2000);
+}
+
+function updateProgress() {
+    const inputs = document.querySelectorAll('input:not([readonly]), select, textarea');
+    const filled = Array.from(inputs).filter(input => {
+        if (input.type === 'text' || input.type === 'number' || input.type === 'date' || input.tagName === 'TEXTAREA') {
+            return input.value.trim() !== '';
+        }
+        return input.value !== '';
+    }).length;
+    
+    const percentage = Math.round((filled / inputs.length) * 100);
+    document.getElementById('progress-bar').style.width = percentage + '%';
+    
+    inputs.forEach(input => {
+        const checkIcon = input.parentElement.querySelector('.check-icon');
+        if (checkIcon) {
+            if (input.value.trim() !== '') {
+                checkIcon.classList.add('show');
+            } else {
+                checkIcon.classList.remove('show');
+            }
+        }
+    });
+}
+
+function updateIdentityDisplay() {
+    const name = document.getElementById('consultant_name').value || '정보 없음';
+    const company = document.getElementById('company_name').value || '정보 없음';
+    document.getElementById('display-name').textContent = name;
+    document.getElementById('display-company').textContent = company;
+}
+
+function autoSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        savedData = collectFormData();
+        showSaveStatus('자동 저장됨', 'success');
+    }, 1000);
+}
+
+function collectFormData() {
+    const data = { children: [], shareholders: [] };
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        if (element && element.id && 
+            !element.id.startsWith('child_') && 
+            !element.id.startsWith('shareholder_') && 
+            element.id !== 'ceo_age' &&
+            element.id !== 'total_shares') {            
+            try {
+                if (element && element.id) {
+                    data[element.id] = element.value || '';
+                }
+            } catch (e) {
+                console.warn('Error reading element:', element.id, e);
+            }
+        }
+    });    
+    for (let i = 0; i < childrenCount; i++) {
+        const name = document.getElementById(`child_name_${i}`)?.value;
+        const gender = document.getElementById(`child_gender_${i}`)?.value;
+        const age = document.getElementById(`child_age_${i}`)?.value;
+        if (name || gender || age) {
+            data.children.push({ name, gender, age });
+        }
+    }
+    
+    for (let i = 0; i < shareholdersCount; i++) {
+        const name = document.getElementById(`shareholder_name_${i}`)?.value;
+        const relation = document.getElementById(`shareholder_relation_${i}`)?.value;
+        const share = document.getElementById(`shareholder_share_${i}`)?.value;
+        if (name || relation || share) {
+            data.shareholders.push({ name, relation, share });
+        }
+    }
+    
+    data.timestamp = new Date().toISOString();
+    return data;
+}
+
+function loadFormData(data) {
+    Object.keys(data).forEach(key => {
+        if (key === 'children' || key === 'shareholders') return;
+        const element = document.getElementById(key);
+        if (element && key !== 'ceo_age') {
+            element.value = data[key];
+            if (element.inputmode === 'numeric' && element.value) {
+                element.value = formatNumber(unformat(element.value));
+            }
+        }
+    });
+    
+    if (data.children) {
+        document.getElementById('children-container').innerHTML = '';
+        childrenCount = 0;
+        data.children.forEach(child => {
+            addChild();
+            const idx = childrenCount - 1;
+            document.getElementById(`child_name_${idx}`).value = child.name || '';
+            document.getElementById(`child_gender_${idx}`).value = child.gender || '';
+            document.getElementById(`child_age_${idx}`).value = child.age || '';
+        });
+    }
+    
+    if (data.shareholders) {
+        document.getElementById('shareholders-container').innerHTML = '';
+        shareholdersCount = 0;
+        data.shareholders.forEach(sh => {
+            addShareholder();
+            const idx = shareholdersCount - 1;
+            document.getElementById(`shareholder_name_${idx}`).value = sh.name || '';
+            document.getElementById(`shareholder_relation_${idx}`).value = sh.relation || '';
+            document.getElementById(`shareholder_share_${idx}`).value = sh.share || '';
+        });
+    }
+    
+    updateIdentityDisplay();
+    updateProgress();
+    updateAnalysis();
+}
+
+function saveToFile() {
+    const data = collectFormData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `consulting_${data.company_name || 'data'}_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showSaveStatus('파일로 저장됨', 'success');
+}
+
+function loadFromFile() {
+    document.getElementById('file-input').click();
+}
+
+function newDocument() {
+    if (confirm('현재 작업 중인 내용이 모두 삭제됩니다. 계속하시겠습니까?')) {
+        document.querySelectorAll('input:not([readonly]), select, textarea').forEach(element => {
+            if (element.type === 'text' || element.type === 'number' || element.type === 'date' || element.tagName === 'TEXTAREA') {
+                element.value = '';
+            } else if (element.type === 'select-one') {
+                element.selectedIndex = 0;
+            }
+        });
+        document.getElementById('children-container').innerHTML = '';
+        document.getElementById('shareholders-container').innerHTML = '';
+        childrenCount = 0;
+        shareholdersCount = 0;
+        savedData = null;
+        updateIdentityDisplay();
+        updateProgress();
+        updateAnalysis();
+        showSaveStatus('새 문서 생성됨', 'success');
+    }
+}
+
+function addChild() {
+    const container = document.getElementById('children-container');
+    const idx = childrenCount++;
+    const div = document.createElement('div');
+    div.className = 'dynamic-container';
+    div.dataset.index = idx;
+    div.innerHTML = `
+        <button type="button" class="btn danger small btn-remove" data-type="child" data-index="${idx}">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="dynamic-item">
+            <div class="input-group" style="margin-bottom:0;">
+                <label>이름</label>
+                <input type="text" id="child_name_${idx}" class="no-align-right" placeholder="자녀 이름" oninput="autoSave()">
+            </div>
+            <div class="input-group" style="margin-bottom:0;">
+                <label>성별</label>
+                <select id="child_gender_${idx}" onchange="autoSave()">
+                    <option value="남">남</option>
+                    <option value="여">여</option>
+                </select>
+            </div>
+            <div class="input-group" style="margin-bottom:0;">
+                <label>나이</label>
+                <input type="number" id="child_age_${idx}" placeholder="25" min="0" max="100" onchange="autoSave()">
+            </div>
+        </div>
+    `;
+    container.appendChild(div);
+    div.querySelector('.btn-remove').addEventListener('click', function() { removeChild(this); });
+    updateProgress();
+}
+
+function removeChild(btn) {
+    const container = btn.closest('.dynamic-container');
+    if (container) {
+        container.remove();
+        const containers = document.querySelectorAll('#children-container .dynamic-container');
+        childrenCount = containers.length;
+        updateProgress();
+        updateAnalysis();
+        autoSave();
+    }
+}
+
+function addShareholder() {
+    const container = document.getElementById('shareholders-container');
+    const idx = shareholdersCount++;
+    const div = document.createElement('div');
+    div.className = 'dynamic-container';
+    div.dataset.index = idx;
+    div.innerHTML = `
+        <button type="button" class="btn danger small btn-remove" data-type="shareholder" data-index="${idx}">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="dynamic-item">
+            <div class="input-group" style="margin-bottom:0;">
+                <label>이름</label>
+                <input type="text" id="shareholder_name_${idx}" class="no-align-right" placeholder="특수관계인 이름" oninput="autoSave()">
+            </div>
+            <div class="input-group" style="margin-bottom:0;">
+                <label>관계</label>
+                <select id="shareholder_relation_${idx}" onchange="autoSave()">
+                    <option value="배우자">배우자</option>
+                    <option value="자녀">자녀</option>
+                    <option value="부모">부모</option>
+                    <option value="형제자매">형제자매</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            <div class="input-group" style="margin-bottom:0;">
+                <label>지분율 (%)</label>
+                <input type="number" id="shareholder_share_${idx}" placeholder="20" min="0" max="100" step="0.1" onchange="autoSave()">
+            </div>
+        </div>
+    `;
+    container.appendChild(div);
+    div.querySelector('.btn-remove').addEventListener('click', function() { removeShareholder(this); });
+    updateProgress();
+}
+
+function removeShareholder(btn) {
+    const container = btn.closest('.dynamic-container');
+    if (container) {
+        container.remove();
+        const containers = document.querySelectorAll('#shareholders-container .dynamic-container');
+        shareholdersCount = containers.length;
+        updateProgress();
+        updateAnalysis();
+        autoSave();
+    }
+}
+
+function formatInputWithCommas(element) {
+    if (!element || !element.value) return;
+    
+    const numbers = element.value.replace(/[^\d]/g, '');
+    if (!numbers) {
+        element.value = '';
+        return;
+    }
+    
+    const formatted = formatNumber(numbers);
+    
+    if (element.value === formatted) return;
+    
+    element.value = formatted;
+}    
+
+function formatAndAnalyze(element) {
+    if (!element) return;
+    
+    if (element.inputmode === 'numeric' || element.getAttribute('inputmode') === 'numeric') {
+        formatInputWithCommas(element);
+    }
+    
+    updateIdentityDisplay();
+    updateProgress();
+    debouncedUpdate();
+    autoSave();
+}
+
+function calculateAge(birthDate) {
+    if (!birthDate) return 0;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+}
+
+function calculateStockValue(inputs) {
+    if (inputs.listing_status !== '비상장') return 0;
+    
+    const netAssets = Math.max(0, inputs.total_assets - inputs.liabilities);
+    
+    const income3year = inputs.net_income || 0;
+    const prevIncomeEl = document.getElementById('previous_net_income');
+    const prevPrevIncomeEl = document.getElementById('previous_previous_net_income');
+    const income2year = prevIncomeEl ? parseFloat(prevIncomeEl.value.replace(/,/g, '')) || 0 : 0;
+    const income1year = prevPrevIncomeEl ? parseFloat(prevPrevIncomeEl.value.replace(/,/g, '')) || 0 : 0;
+    
+    const weightedAvgIncome = (income3year * 3 + income2year * 2 + income1year * 1) / 6;
+    
+    const earningsValue = Math.max(0, weightedAvgIncome * 10);
+    
+    const sales = inputs.sales || 0;
+    let stockValue = 0;
+    let method = '';
+    let calculation = {};
+    
+    if (sales < 300000000) {
+        stockValue = netAssets;
+        method = '소규모 회사 (매출 3억 미만)';
+        calculation = {
+            method: '순자산가치 100%',
+            netAssets: netAssets,
+            earningsValue: 0,
+            formula: '순자산가치만 적용'
+        };
+    } else if (sales < 100000000000) {
+        stockValue = (netAssets * 2 + earningsValue * 3) / 5;
+        method = '중소기업 (매출 3억~1000억)';
+        calculation = {
+            method: '(순자산 × 2 + 수익 × 3) ÷ 5',
+            netAssets: netAssets,
+            earningsValue: earningsValue,
+            formula: `(${formatNumber(netAssets)} × 2 + ${formatNumber(earningsValue)} × 3) ÷ 5`,
+            netAssetWeight: '40%',
+            earningsWeight: '60%'
+        };
+    } else {
+        stockValue = (netAssets * 3 + earningsValue * 2) / 5;
+        method = '대기업 (매출 1000억 이상)';
+        calculation = {
+            method: '(순자산 × 3 + 수익 × 2) ÷ 5',
+            netAssets: netAssets,
+            earningsValue: earningsValue,
+            formula: `(${formatNumber(netAssets)} × 3 + ${formatNumber(earningsValue)} × 2) ÷ 5`,
+            netAssetWeight: '60%',
+            earningsWeight: '40%'
+        };
+    }
+    
+    inputs.stockValueCalculation = {
+        totalValue: stockValue,
+        method: method,
+        sales: sales,
+        calculation: calculation,
+        avgIncome: weightedAvgIncome,
+        incomeDetails: {
+            current: income3year,
+            previous: income2year,
+            previousPrevious: income1year
+        }
+    };
+    
+    return stockValue;
+}
+
+function estimateInheritanceTax(totalAssets, coHeirs) {
+    const spouseDeduction = Math.min(3000000000, totalAssets * 0.5);
+    const childDeduction = Math.min(500000000, coHeirs * 50000000);
+    const basicDeduction = 500000000;
+    const taxableAmount = Math.max(0, totalAssets - spouseDeduction - childDeduction - basicDeduction);
+    let tax = 0;
+    if (taxableAmount <= 100000000) tax = taxableAmount * 0.1;
+    else if (taxableAmount <= 500000000) tax = 10000000 + (taxableAmount - 100000000) * 0.2;
+    else if (taxableAmount <= 1000000000) tax = 90000000 + (taxableAmount - 500000000) * 0.3;
+    else if (taxableAmount <= 3000000000) tax = 240000000 + (taxableAmount - 1000000000) * 0.4;
+    else tax = 1040000000 + (taxableAmount - 3000000000) * 0.5;
+    return { tax, taxableAmount, spouseDeduction, childDeduction, basicDeduction };
+}
+function scrollToAnalysis() {
+    if (window.innerWidth < 1024) return;
+    
+    const analysisSection = document.querySelector('.analysis-section');
+    
+    if (analysisSection) {
+        setTimeout(() => {
+            analysisSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start',
+                inline: 'nearest'
+            });
+            
+            setTimeout(() => {
+                window.scrollBy({ top: -80, behavior: 'smooth' });
+            }, 600);
+        }, 300);
+    }
+}
+
+function updateTaxSavingAlert(inputs) {
+    const alertDiv = document.getElementById('tax-saving-alert');
+    
+    if (!alertDiv || inputs.listing_status !== '비상장' || !inputs.total_shares || inputs.total_shares === 0) {
+        if (alertDiv) alertDiv.innerHTML = '';
+        return;
+    }
+    const currentValue = calculateStockValue(inputs);
+    if (!currentValue) {
+        alertDiv.innerHTML = '';
+        return;
+    }
+    
+    const valuePerShare = Math.round(currentValue / inputs.total_shares);
+    
+    if (valuePerShare <= 20000) {
+        alertDiv.innerHTML = '';
+        return;
+    }
+    
+    const targetNetIncome = Math.round(inputs.net_income * 0.8);
+    const adjustment = inputs.net_income - targetNetIncome;
+    
+    const simulatedInputs = {...inputs};
+    simulatedInputs.net_income = targetNetIncome;
+    const targetValue = calculateStockValue(simulatedInputs);
+    
+    const valueDiff = currentValue - targetValue;
+    const valueChangePercent = Math.round((valueDiff / currentValue) * 100);
+    
+    const giftTaxSavings = Math.round(valueDiff * 0.3);
+    const inheritanceTaxSavings = Math.round(valueDiff * 0.4);
+    
+    let alertHTML = '';
+    
+    if (valuePerShare > 50000) {
+        alertHTML = `<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border-left: 4px solid #dc3545; padding: 1.5rem; border-radius: 8px;">
+            <h4 style="margin: 0 0 1rem 0; color: #721c24;">🚨 긴급! 즉시 조치가 필요합니다</h4>
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529;">
+                <strong style="color: #dc3545;">현재 위험 수준</strong><br>
+                주식 평가액 (1주당): <strong style="color: #dc3545;">${formatNumber(valuePerShare)}원</strong><br>
+                총 평가액: <strong style="color: #dc3545;">${formatNumber(currentValue)}원</strong><br>
+                예상 증여세: 약 <strong style="color: #dc3545;">${formatNumber(Math.round(currentValue * 0.3))}원</strong>
+            </div>
+            <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border: 2px solid #28a745; color: #212529;">
+                <strong style="color: #155724; font-size: 1.1em;">🎯 긴급 절세 전략</strong><br><br>
+                <strong style="color: #212529;">법인세차감전순이익을 ${formatNumber(adjustment)}원 감소시키면:</strong><br><br>
+                ✅ 주식 평가액: ${formatNumber(currentValue)}원 → ${formatNumber(targetValue)}원 <strong style="color: #28a745;">(${valueChangePercent}% ↓)</strong><br>
+                ✅ 증여세 절감 예상: 약 ${formatNumber(giftTaxSavings)}원<br>
+                ✅ 상속세 절감 예상: 약 ${formatNumber(inheritanceTaxSavings)}원<br><br>
+                <strong style="font-size: 1.2em; color: #28a745;">💰 예상 절세액: ${formatNumber(giftTaxSavings + inheritanceTaxSavings)}원</strong>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9em; color: #212529;">
+                <strong style="color: #212529;">📋 구체적 조정 방법:</strong><br>
+                • R&D 투자 확대 (세액공제 + 비용 증가)<br>
+                • 설비 투자 선집행 (감가상각비 증가)<br>
+                • 직원 성과급/복리후생 증액<br>
+                • 퇴직금 선지급 검토<br>
+                • 광고·마케팅 비용 확대
+            </div>
+        </div>`;
+    } else {
+        alertHTML = `<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #ffc107; padding: 1.5rem; border-radius: 8px;">
+            <h4 style="margin: 0 0 1rem 0; color: #856404;">⚠️ 주식 평가액 조정 권장</h4>
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529;">
+                <strong style="color: #0c2c54;">현재 상황</strong><br>
+                주식 평가액 (1주당): ${formatNumber(valuePerShare)}원<br>
+                총 평가액: ${formatNumber(currentValue)}원
+            </div>
+            <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border: 1px solid #28a745; color: #212529;">
+                <strong style="color: #155724;">💡 절세 전략 제안</strong><br><br>
+                ✅ 주식 평가액: ${formatNumber(currentValue)}원 → ${formatNumber(targetValue)}원<br>
+                ✅ 증여세 절감: 약 ${formatNumber(giftTaxSavings)}원<br>
+                ✅ 상속세 절감: 약 ${formatNumber(inheritanceTaxSavings)}원
+            </div>
+        </div>`;
+    }
+    
+    alertDiv.innerHTML = alertHTML;
+}
+function scrollToAnalysis() {
+    try {
+        const strategicSection = document.getElementById('strategic_consulting');
+        if (!strategicSection) return;
+        if (!strategicSection.innerHTML.trim()) return;
+        
+        console.log('스크롤 시작!');  // ← 디버깅 메시지
+        
+        // 직접 스크롤 (카드 안 찾음)
+        strategicSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center'  // ← 화면 중앙
+        });
+        
+        // 노란색 표시
+        strategicSection.style.backgroundColor = '#fff9e6';
+        setTimeout(() => {
+            strategicSection.style.backgroundColor = '';
+        }, 2000);
+        
+    } catch (e) {
+        console.error('스크롤 에러:', e);  // ← 에러 확인
+    }
+}
+function parseValue(id) {
+    const element = document.getElementById(id);
+    if (!element) return 0;
+    const value = element.value.replace(/,/g, '');
+    return parseFloat(value) || 0;
+}
+
+function getInputs() {
+    return {
+        ceo_name: document.getElementById('ceo_name')?.value || '',
+        company_name: document.getElementById('company_name')?.value || '',
+        ceo_age: parseInt(document.getElementById('ceo_age')?.value) || 0,
+        ceo_birth: document.getElementById('ceo_birth')?.value || '',
+        
+        capital: parseValue('capital'),
+        par_value: parseValue('par_value'),
+        total_shares: parseValue('total_shares'),
+        total_assets: parseValue('total_assets'),
+        liabilities: parseValue('liabilities'),
+        equity: parseValue('equity'),
+        sales: parseValue('sales'),
+        op_profit: parseValue('op_profit'),
+        net_income: parseValue('net_income'),
+        
+        adv_payments: parseValue('adv_payments'),
+        retained_earnings: parseValue('retained_earnings'),
+        corporate_card: parseValue('corporate_card'),
+        entertainment: parseValue('entertainment'),
+        
+        corp_real_estate_value: parseValue('corp_real_estate_value'),
+        personal_real_estate_value: parseValue('personal_real_estate_value'),
+        
+        listing_status: document.getElementById('listing_status')?.value || '비상장',
+        nominee_stock: document.getElementById('nominee_stock')?.value || 'no',
+        ceo_share: parseFloat(document.getElementById('ceo_share')?.value) || 0,
+        family_share: parseFloat(document.getElementById('family_share')?.value) || 0,
+        
+        short_debt: parseValue('short_debt'),
+        long_debt: parseValue('long_debt'),
+        interest_expense: parseValue('interest_expense'),
+        
+        tax_expense: parseValue('tax_expense'),
+        operating_cashflow: parseValue('operating_cashflow'),
+        
+        insurance_target_amount: parseValue('insurance_target_amount'),
+        current_insurance: parseValue('current_insurance'),
+        
+        dividend_3years: parseValue('dividend_3years'),
+        
+        total_employees: parseInt(document.getElementById('total_employees')?.value) || 0,
+        family_salary: parseValue('family_salary'),
+        
+        previous_sales: parseValue('previous_sales'),
+    };
+}
+
+function updateAnalysis() {
+    Object.values(analysisResult).forEach(val => { if (val instanceof Set) val.clear(); });
+    analysisResult.insurancePlan = null;
+    analysisResult.taxSavings = 0;
+    analysisResult.estimatedInheritanceTax = 0;
+
+    try {
+        const ebtEl = document.getElementById('ebt');
+        const taxExpenseEl = document.getElementById('tax_expense');
+        const netIncomeEl = document.getElementById('net_income');
+        
+        if (ebtEl && taxExpenseEl && netIncomeEl) {
+            const ebt = parseFloat(ebtEl.value.replace(/,/g, '')) || 0;
+            const taxExpense = parseFloat(taxExpenseEl.value.replace(/,/g, '')) || 0;
+            const calculatedNetIncome = Math.max(0, ebt - taxExpense);
+            netIncomeEl.value = formatNumber(calculatedNetIncome);
+        }
+        
+        const ceoBirth = document.getElementById('ceo_birth').value;
+        const ceoAgeFromBirth = calculateAge(ceoBirth);
+        if (ceoAgeFromBirth > 0) document.getElementById('ceo_age').value = ceoAgeFromBirth;
+
+        const inputs = {
+            sales: validateNumber(document.getElementById('sales').value),
+            previous_sales: validateNumber(document.getElementById('previous_sales').value),
+            op_profit: validateNumber(document.getElementById('op_profit').value, -Infinity),
+            ebt: validateNumber(document.getElementById('ebt')?.value || 0, -Infinity),
+            tax_expense: validateNumber(document.getElementById('tax_expense')?.value || 0),
+            net_income: validateNumber(document.getElementById('net_income')?.value || 0, -Infinity),            
+            total_assets: validateNumber(document.getElementById('total_assets').value),
+            liabilities: validateNumber(document.getElementById('liabilities').value),
+            equity: validateNumber(document.getElementById('equity').value, -Infinity),
+            adv_payments: validateNumber(document.getElementById('adv_payments').value),
+            retained_earnings: validateNumber(document.getElementById('retained_earnings').value, -Infinity),
+            cash_assets: validateNumber(document.getElementById('cash_assets').value),
+            short_debt: validateNumber(document.getElementById('short_debt').value),
+            long_debt: validateNumber(document.getElementById('long_debt').value),
+            interest_expense: validateNumber(document.getElementById('interest_expense').value),
+            operating_cashflow: validateNumber(document.getElementById('operating_cashflow').value, -Infinity),
+            ceo_share: validateNumber(document.getElementById('ceo_share').value, 0, 100),
+            total_employees: parseInt(document.getElementById('total_employees').value) || 0,
+            family_salary: validateNumber(document.getElementById('family_salary').value),
+            dividend_3years: validateNumber(document.getElementById('dividend_3years').value),
+            corporate_card: validateNumber(document.getElementById('corporate_card').value),
+            entertainment: validateNumber(document.getElementById('entertainment').value),
+            personal_financial: validateNumber(document.getElementById('personal_financial').value),
+            personal_debt: validateNumber(document.getElementById('personal_debt').value),
+            life_insurance: validateNumber(document.getElementById('life_insurance').value),
+            spouse_assets: validateNumber(document.getElementById('spouse_assets').value),
+            co_heirs: parseInt(document.getElementById('co_heirs').value) || 0,
+            retirement_age: parseInt(document.getElementById('retirement_age').value) || 65,
+            monthly_living: validateNumber(document.getElementById('monthly_living').value),
+            retirement_living: validateNumber(document.getElementById('retirement_living').value),
+            national_pension: validateNumber(document.getElementById('national_pension').value),
+            private_pension_value: validateNumber(document.getElementById('private_pension_value').value),
+            gift_history: validateNumber(document.getElementById('gift_history').value),
+            corp_real_estate_value: validateNumber(document.getElementById('corp_real_estate_value').value),
+            personal_real_estate_value: validateNumber(document.getElementById('personal_real_estate_value').value),
+            capital: validateNumber(document.getElementById('capital').value),
+            total_shares: (() => {
+                const cap = validateNumber(document.getElementById('capital').value);
+                const par = validateNumber(document.getElementById('par_value').value);
+                return (cap > 0 && par > 0) ? Math.round(cap / par) : 0;
+            })(),            
+            par_value: validateNumber(document.getElementById('par_value').value),
+            ceo_age: ceoAgeFromBirth || 50,
+            insurance_target_amount: validateNumber(document.getElementById('insurance_target_amount').value),
+            insurance_payment_period: parseInt(document.getElementById('insurance_payment_period').value) || 10,
+            consolation_regulation: document.getElementById('consolation_regulation').value,
+            nominee_stock: document.getElementById('nominee_stock').value,
+            ip_ownership: document.getElementById('ip_ownership').value,
+            tax_return_review: document.getElementById('tax_return_review').value,
+            succession_plan: document.getElementById('succession_plan').value,
+            successor: document.getElementById('successor').value,
+            sme_benefit: document.getElementById('sme_benefit').value,
+            employment_credit: document.getElementById('employment_credit').value,
+            rnd_credit: document.getElementById('rnd_credit').value,
+            succession_qualify: document.getElementById('succession_qualify').value,
+            spouse_income: document.getElementById('spouse_income').value,
+            existing_insurance: document.getElementById('existing_insurance').value,
+            listing_status: document.getElementById('listing_status').value,
+            valuation_date: document.getElementById('valuation_date')?.value || '',
+            industry: document.getElementById('industry').value,
+        };
+        
+        const stockValue = calculateStockValue(inputs);
+        const inheritanceAssets = inputs.personal_financial + inputs.personal_real_estate_value + stockValue * (inputs.ceo_share / 100) + inputs.life_insurance - inputs.personal_debt;
+        inputs.inheritance_assets = Math.max(0, inheritanceAssets);
+        inputs.severance_est = inputs.insurance_target_amount;
+        
+        currentInputs = inputs;
+        
+        updateStockPrice(inputs);
+        generateScoreDashboard(inputs);
+        generateMetrics(inputs);
+        generateCharts(inputs);
+        generateStrategicConsulting(inputs);
+        generateInsuranceProposal(inputs);
+        generateConsultantSummary(inputs);
+
+        // 자동 스크롤 실행
+        setTimeout(scrollToAnalysis, 300);
+
+        const strategicSection = document.getElementById('strategic_consulting');
+        if (strategicSection && strategicSection.innerHTML.trim() !== '') {
+            strategicSection.style.transition = 'background-color 0.3s ease';
+            strategicSection.style.backgroundColor = '#fff3cd';
+            
+            setTimeout(() => {
+                strategicSection.style.backgroundColor = '';
+            }, 500);
+            
+            scrollToAnalysis();
+        }
+    } catch (e) { 
+        console.error("분석 중 오류 발생:", e); 
+        showSaveStatus('분석 중 오류가 발생했습니다', 'danger');
+    }
+}
+
+function updateStockPrice(inputs) {
+    const container = document.getElementById('stock-price-container');
+    
+    if (inputs.capital > 0 && inputs.par_value > 0) {
+        const calculatedShares = Math.round(inputs.capital / inputs.par_value);
+        const sharesInput = document.getElementById('total_shares');
+        if (sharesInput && sharesInput.value === '') {
+            sharesInput.value = formatNumber(calculatedShares);
+            inputs.total_shares = calculatedShares;
+        }
+    }
+    
+    let pricePerShare = inputs.par_value;
+    if (!pricePerShare && inputs.capital && inputs.total_shares && inputs.total_shares > 0) {
+        pricePerShare = Math.round(inputs.capital / inputs.total_shares);
+        const parValueInput = document.getElementById('par_value');
+        if (parValueInput && !parValueInput.value) {
+            parValueInput.value = formatNumber(pricePerShare);
+        }
+    }
+    
+    if (!pricePerShare || !inputs.total_shares || inputs.total_shares === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const stockValue = calculateStockValue(inputs);
+    const valuePerShare = inputs.total_shares > 0 ? Math.round(stockValue / inputs.total_shares) : 0;
+    
+    let detailHTML = '';
+    if (inputs.stockValueCalculation && inputs.listing_status === '비상장') {
+        const calc = inputs.stockValueCalculation;
+        
+        detailHTML = `
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
+            <h5 style="margin: 0 0 1rem 0; color: #0c2c54; font-size: 1.1rem;">
+                📋 비상장주식 평가 상세
+            </h5>
+            
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div><strong>회사 규모:</strong></div>
+                    <div style="color: #2980b9; font-weight: 600;">${calc.method}</div>
+                    
+                    <div><strong>매출액:</strong></div>
+                    <div>${formatNumber(calc.sales)}원</div>
+                    
+                    ${calc.calculation.capitalReturnRate > 0 ? `
+                    <div><strong>자본환원율:</strong></div>
+                    <div style="color: #e67e22; font-weight: 600;">${calc.calculation.capitalReturnRate}%</div>
+                    
+                    <div><strong>적용 배수:</strong></div>
+                    <div style="color: #e67e22; font-weight: 600;">${calc.calculation.multiplier}배</div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #27ae60;">
+                <div style="font-weight: 600; color: #27ae60; margin-bottom: 0.5rem;">📌 순자산가치</div>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; font-size: 0.95rem;">
+                    <div>총자산:</div>
+                    <div style="text-align: right;">${formatNumber(inputs.total_assets)}원</div>
+                    
+                    <div>(-) 부채:</div>
+                    <div style="text-align: right;">${formatNumber(inputs.liabilities)}원</div>
+                    
+                    <div style="border-top: 2px solid #dee2e6; padding-top: 0.5rem; font-weight: 600;">순자산가치:</div>
+                    <div style="border-top: 2px solid #dee2e6; padding-top: 0.5rem; text-align: right; font-weight: 700; color: #27ae60;">
+                        ${formatNumber(calc.calculation.netAssets)}원
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #3498db;">
+                <div style="font-weight: 600; color: #3498db; margin-bottom: 0.5rem;">💰 수익가치 (3개년 가중평균)</div>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; font-size: 0.95rem;">
+                    <div>당기 순이익 (×3):</div>
+                    <div style="text-align: right;">${formatNumber(calc.incomeDetails.current)}원</div>
+                    
+                    <div>전기 순이익 (×2):</div>
+                    <div style="text-align: right;">${formatNumber(calc.incomeDetails.previous)}원</div>
+                    
+                    <div>전전기 순이익 (×1):</div>
+                    <div style="text-align: right;">${formatNumber(calc.incomeDetails.previousPrevious)}원</div>
+                    
+                    <div style="border-top: 1px solid #dee2e6; padding-top: 0.5rem;">가중평균 순이익:</div>
+                    <div style="border-top: 1px solid #dee2e6; padding-top: 0.5rem; text-align: right;">${formatNumber(calc.avgIncome)}원</div>
+                    
+                    ${calc.calculation.multiplier > 0 ? `
+                    <div style="font-weight: 600;">수익가치 (×${calc.calculation.multiplier}배):</div>
+                    <div style="text-align: right; font-weight: 700; color: #3498db;">
+                        ${formatNumber(calc.calculation.earningsValue)}원
+                    </div>
+                    ` : `
+                    <div style="font-weight: 600;">수익가치:</div>
+                    <div style="text-align: right; font-weight: 700; color: #95a5a6;">
+                        적용 안 됨
+                    </div>
+                    `}
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+                <div style="font-weight: 600; margin-bottom: 1rem; font-size: 1.1rem;">🎯 최종 평가액 계산</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 6px; font-family: 'Courier New', monospace; margin-bottom: 1rem;">
+                    ${calc.calculation.formula}
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem;">
+                    ${calc.calculation.netAssetWeight ? `
+                    <div>순자산 비중:</div>
+                    <div style="text-align: right; font-weight: 600;">${calc.calculation.netAssetWeight}</div>
+                    
+                    <div>수익 비중:</div>
+                    <div style="text-align: right; font-weight: 600;">${calc.calculation.earningsWeight}</div>
+                    ` : ''}
+                    
+                    <div style="border-top: 2px solid rgba(255,255,255,0.3); padding-top: 0.5rem; font-size: 1.2rem; font-weight: 700;">
+                        총 평가액:
+                    </div>
+                    <div style="border-top: 2px solid rgba(255,255,255,0.3); padding-top: 0.5rem; text-align: right; font-size: 1.2rem; font-weight: 700; color: #f1c40f;">
+                        ${formatNumber(calc.totalValue)}원
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    container.innerHTML = `
+    <div class="stock-price-display">
+        <h4>📊 주식 정보</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; text-align:center;">
+            <div>
+                <div style="font-size:0.85rem; opacity:0.8;">액면가 (1주당)</div>
+                <div class="price">${formatNumber(pricePerShare)}원</div>
+            </div>
+            <div>
+                <div style="font-size:0.85rem; opacity:0.8;">평가액 (1주당)</div>
+                <div class="price" style="color: #f1c40f;">${formatNumber(valuePerShare)}원</div>
+            </div>
+        </div>
+        ${detailHTML}
+    </div>`;
+}
+function toggleRatioChart() {
+    const btn = document.getElementById('ratio-toggle-btn');
+    if (ratioChartMode === 'current') {
+        ratioChartMode = 'ideal';
+        btn.textContent = '현재';
+        btn.classList.add('success');
+        generateCharts(currentInputs);
+    } else {
+        ratioChartMode = 'current';
+        btn.textContent = '권장 재무비율';
+        btn.classList.remove('success');
+        generateCharts(currentInputs);
+    }
+}
+function generateScoreDashboard(inputs) {
+    const container = document.getElementById('score-dashboard');
+    const financialScore = calculateFinancialScore(inputs);
+    const taxGrade = calculateTaxGrade(inputs);
+    const inheritanceScore = calculateInheritanceScore(inputs);
+    const successionScore = calculateSuccessionScore(inputs);
+    const retirementScore = calculateRetirementScore(inputs);
+    container.innerHTML = `<div class="score-card financial"><h3>재무건전성</h3><div class="score-value">${financialScore}</div><div class="score-grade">점</div></div><div class="score-card tax"><h3>세무리스크</h3><div class="score-value">${taxGrade}</div><div class="score-grade">등급</div></div><div class="score-card inheritance"><h3>상속준비도</h3><div class="score-value">${inheritanceScore}</div><div class="score-grade">점</div></div><div class="score-card succession"><h3>승계준비도</h3><div class="score-value">${successionScore}</div><div class="score-grade">점</div></div><div class="score-card retirement"><h3>은퇴준비도</h3><div class="score-value">${retirementScore}</div><div class="score-grade">점</div></div>`;
+}
+
+function calculateFinancialScore(inputs) {
+    let score = 50;
+    const debtRatio = inputs.equity > 0 ? (inputs.liabilities / inputs.equity) * 100 : 999;
+    if (debtRatio < 100) score += 20;
+    else if (debtRatio < 200) score += 10;
+    else if (debtRatio > 400) score -= 20;
+    if (inputs.operating_cashflow > 0) score += 15;
+    else if (inputs.operating_cashflow < 0 && inputs.net_income > 0) score -= 20;
+    const interestCoverage = inputs.interest_expense > 0 ? inputs.op_profit / inputs.interest_expense : 99;
+    if (interestCoverage >= 3) score += 15;
+    else if (interestCoverage < 1) score -= 15;
+    return Math.max(0, Math.min(100, score));
+}
+
+function calculateTaxGrade(inputs) {
+    let penalty = 0;
+    if (inputs.corporate_card > inputs.sales * 0.02) penalty += 2;
+    if (inputs.entertainment > inputs.sales * 0.03) penalty += 2;
+    if (inputs.family_salary > inputs.op_profit * 0.3 && inputs.family_salary > 50000000) penalty += 1;
+    if (inputs.sme_benefit === 'no') penalty += 1;
+    if (inputs.employment_credit === 'no' && inputs.total_employees >= 10) penalty += 1;
+    if (inputs.rnd_credit === 'no') penalty += 1;
+    const grades = ['A', 'B', 'C', 'D', 'F'];
+    return grades[Math.min(penalty, 4)];
+}
+
+function calculateInheritanceScore(inputs) {
+    if (inputs.inheritance_assets === 0) return 50;
+    const taxInfo = estimateInheritanceTax(inputs.inheritance_assets, inputs.co_heirs);
+    const liquidAssets = inputs.personal_financial + inputs.life_insurance;
+    const paymentCapacity = taxInfo.tax > 0 ? liquidAssets / taxInfo.tax : 1;
+    let score = Math.min(100, paymentCapacity * 100);
+    if (inputs.spouse_assets < 500000000) score -= 10;
+    if (inputs.life_insurance < taxInfo.tax * 0.5) score -= 10;
+    return Math.max(0, Math.round(score));
+}
+
+function calculateSuccessionScore(inputs) {
+    let score = 50;
+    if (inputs.ceo_share >= 50) score += 20;
+    else if (inputs.ceo_share < 30) score -= 20;
+    if (inputs.successor === 'yes') score += 20;
+    else score -= 10;
+    if (inputs.succession_plan === 'yes') score += 10;
+    if (inputs.succession_qualify === 'yes') score += 10;
+    if (inputs.nominee_stock === 'yes') score -= 20;
+    return Math.max(0, Math.min(100, score));
+}
+
+function calculateRetirementScore(inputs) {
+    if (inputs.retirement_living === 0) return 50;
+    const yearsToRetirement = Math.max(1, inputs.retirement_age - inputs.ceo_age);
+    const lifeExpectancy = 85;
+    const retirementYears = lifeExpectancy - inputs.retirement_age;
+    const totalNeeded = inputs.retirement_living * 12 * retirementYears;
+    const currentAssets = inputs.personal_financial + inputs.life_insurance + inputs.private_pension_value;
+    const pensionIncome = (inputs.national_pension * 12 * retirementYears);
+    const gap = totalNeeded - currentAssets - pensionIncome;
+    let score = 100;
+    if (gap > 0) {
+        const gapRatio = gap / totalNeeded;
+        score -= gapRatio * 50;
+    }
+    if (inputs.spouse_income === 'no' && inputs.spouse_assets < 200000000) score -= 10;
+    if (inputs.existing_insurance === 'no') score -= 10;
+    return Math.max(0, Math.round(score));
+}
+
+function generateMetrics(inputs) {
+    const container = document.getElementById('metrics_container');
+    let html = '<div class="result-grid">';
+    
+    const debtRatioRaw = inputs.equity > 0 ? (inputs.liabilities / inputs.equity) * 100 : 999;
+    const debtRatio = Math.min(999, debtRatioRaw);
+    
+    const metrics_row1 = [
+        { title: '안정성 (부채비율)', tooltip: '부채총계 ÷ 자본총계 × 100', value: debtRatio, formatter: formatPercent, getStatus: v => (v > 400) ? { text: '위험', class: 'status-danger', risk: '재무구조 악화' } : (v > 200) ? { text: '주의', class: 'status-warning', risk: '높은 부채비율' } : { text: '양호', class: 'status-good' } },
+        { title: '수익성 (영업이익률)', tooltip: '영업이익 ÷ 매출액 × 100', value: inputs.sales > 0 ? (inputs.op_profit / inputs.sales) * 100 : 0, formatter: formatPercent, getStatus: v => v < 5 ? { text: '개선 필요', class: 'status-warning' } : (v < 10 ? { text: '양호', class: 'status-good' } : { text: '우수', class: 'status-safe' }) },
+        { title: '성장성 (매출증가율)', tooltip: '(당기매출 - 전기매출) ÷ 전기매출 × 100', value: inputs.previous_sales > 0 ? ((inputs.sales - inputs.previous_sales) / inputs.previous_sales) * 100 : 0, formatter: formatPercent, getStatus: v => v < 5 ? { text: '저성장', class: 'status-warning' } : (v < 15 ? { text: '안정 성장', class: 'status-good' } : { text: '고성장', class: 'status-safe' }) },
+        { title: '활동성 (총자산회전율)', tooltip: '매출액 ÷ 총자산', value: inputs.total_assets > 0 ? inputs.sales / inputs.total_assets : 0, formatter: formatTurnover, getStatus: v => v < 1 ? { text: '개선 필요', class: 'status-warning' } : { text: '우수', class: 'status-safe' } }
+    ];
+    metrics_row1.forEach(m => { const status = m.getStatus(m.value); if (status.risk) analysisResult.risks.add(status.risk); html += `<div class="result-box"><h3>${m.title} <span class="tooltip-container"><i class="fas fa-info-circle info-icon" style="font-size:0.8rem;"></i><span class="tooltip-text">${m.tooltip}</span></span></h3><p class="result-value">${m.formatter(m.value)}</p><span class="result-status ${status.class}">${status.text}</span></div>`; });
+    html += '</div><div class="result-grid" style="margin-top: 1.5rem;">';
+    const metrics_row2 = [
+        { title: '세율 리스크', value: inputs.net_income > 0 ? (inputs.tax_expense / inputs.net_income) * 100 : 0, formatter: formatPercent, getStatus: v => v > 20 ? { text: '절세 필요', class: 'status-warning', opportunity: '법인세 절감' } : { text: '절세 양호', class: 'status-good' } },
+        { title: '가지급금 리스크', value: inputs.adv_payments, formatter: formatNumber, getStatus: v => (v > 50000000) ? { text: '시급', class: 'status-danger', risk: '고액 가지급금' } : (v > 1000000) ? { text: '주의', class: 'status-warning', risk: '가지급금' } : { text: '없음', class: 'status-safe' } },
+        { title: '잉여금 리스크', value: inputs.retained_earnings, formatter: formatNumber, getStatus: v => (v > inputs.equity) ? { text: '전략 시급', class: 'status-danger', risk: '과다 이익잉여금' } : (v > inputs.equity * 0.5) ? { text: '관리 필요', class: 'status-warning', risk: '이익잉여금' } : { text: '적정', class: 'status-good' } },
+        { title: 'CEO 퇴직금 재원', value: inputs.severance_est, formatter: formatNumber, getStatus: v => (v > inputs.equity * 2 && v > 100000000) ? { text: '설정 과다', class: 'status-danger' } : v > 0 ? { text: '재원 마련', class: 'status-warning' } : { text: '해당 없음', class: 'status-safe' } }
+    ];
+    metrics_row2.forEach(m => { const status = m.getStatus(m.value); if (status.risk) analysisResult.risks.add(status.risk); if (status.opportunity) analysisResult.opportunities.add(status.opportunity); html += `<div class="result-box"><h3>${m.title}</h3><p class="result-value">${m.formatter(m.value)}</p><span class="result-status ${status.class}">${status.text}</span></div>`; });
+    html += `</div>`; 
+    container.innerHTML = html;
+}
+
+function generateCharts(inputs) {
+    try {
+        Object.keys(charts).forEach(key => {
+            if (charts[key] && typeof charts[key].destroy === 'function') {
+                charts[key].destroy();
+            }
+        });
+        charts = {};
+
+        const mainCtx = document.getElementById('mainChart')?.getContext('2d');
+        if (mainCtx) {
+            charts.main = new Chart(mainCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['매출액', '영업이익', '순이익', '자산총계', '부채총계', '자본총계'],
+                    datasets: [{
+                        label: '금액 (백만원)',
+                        data: [inputs.sales / 1000000, inputs.op_profit / 1000000, inputs.net_income / 1000000, inputs.total_assets / 1000000, inputs.liabilities / 1000000, inputs.equity / 1000000],
+                        backgroundColor: ['rgba(12, 44, 84, 0.8)', 'rgba(42, 90, 138, 0.8)', 'rgba(197, 160, 91, 0.8)', 'rgba(30, 132, 73, 0.8)', 'rgba(214, 137, 16, 0.8)', 'rgba(176, 58, 46, 0.8)'],
+                        borderColor: ['rgba(12, 44, 84, 1)', 'rgba(42, 90, 138, 1)', 'rgba(197, 160, 91, 1)', 'rgba(30, 132, 73, 1)', 'rgba(214, 137, 16, 1)', 'rgba(176, 58, 46, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: '재무 현황 종합' }, legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return value.toLocaleString() + '백만원'; } } } }
+                }
+            });
+        }
+
+        const ratioCtx = document.getElementById('ratioChart')?.getContext('2d');
+        if (ratioCtx) {
+            const debtRatio = inputs.equity > 0 ? Math.min(999, (inputs.liabilities / inputs.equity) * 100) : 0;
+            const profitMargin = inputs.sales > 0 ? (inputs.op_profit / inputs.sales) * 100 : 0;
+            const growthRate = inputs.previous_sales > 0 ? ((inputs.sales - inputs.previous_sales) / inputs.previous_sales) * 100 : 0;
+            const assetTurnover = inputs.total_assets > 0 ? (inputs.sales / inputs.total_assets) * 100 : 0;
+            const datasets = [];
+            if (ratioChartMode === 'ideal') {
+                datasets.push({ label: '권장 재무비율', data: [10, 15, 10, 100], backgroundColor: 'rgba(30, 132, 73, 0.2)', borderColor: 'rgba(30, 132, 73, 1)', borderWidth: 2 });
+            }
+            datasets.push({ label: '현재 수치', data: [Math.min(debtRatio / 10, 50), profitMargin, Math.max(0, growthRate), assetTurnover], backgroundColor: 'rgba(42, 90, 138, 0.2)', borderColor: 'rgba(42, 90, 138, 1)', borderWidth: 2 });
+            charts.ratio = new Chart(ratioCtx, {
+                type: 'radar',
+                data: { labels: ['부채비율', '영업이익률', '매출성장률', '자산회전율'], datasets: datasets },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '재무비율 분석' }, legend: { display: ratioChartMode === 'ideal', position: 'bottom' } }, scales: { r: { beginAtZero: true, max: 50 } } }
+            });
+        }
+
+        const riskCtx = document.getElementById('riskChart')?.getContext('2d');
+        if (riskCtx) {
+            charts.risk = new Chart(riskCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['가지급금', '이익잉여금', '퇴직금재원', '기타'],
+                    datasets: [{ data: [inputs.adv_payments / 1000000, inputs.retained_earnings / 1000000, inputs.insurance_target_amount / 1000000, 0], backgroundColor: ['rgba(176, 58, 46, 0.8)', 'rgba(214, 137, 16, 0.8)', 'rgba(52, 152, 219, 0.8)', 'rgba(155, 89, 182, 0.8)'], borderColor: ['rgba(176, 58, 46, 1)', 'rgba(214, 137, 16, 1)', 'rgba(52, 152, 219, 1)', 'rgba(155, 89, 182, 1)'], borderWidth: 1 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '리스크 구성 (백만원)' }, legend: { position: 'bottom' } } }
+            });
+        }
+    } catch (e) {
+        console.error('차트 생성 중 오류:', e);
+    }
+    
+    try {
+        updateTaxSavingAlert(inputs);
+    } catch (e) {
+        console.error('절세 알림 생성 중 오류:', e);
+    }
+}
+
+function generateStrategicConsulting(inputs) {
+    const container = document.getElementById('strategic_consulting');
+    let html = '';
+    let totalTaxSavings = 0;
+    
+    // 📊 1. 단기차입금 리스크
+    if (inputs.short_debt > inputs.sales * 0.3) {
+        const excessDebt = inputs.short_debt - (inputs.sales * 0.3);
+        analysisResult.risks.add('과도한 단기차입금');
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-exclamation-circle"></i>단기차입금 과다 (${formatNumber(inputs.short_debt)}원)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">단기차입금: ${formatNumber(inputs.short_debt)}원</div>
+                <div class="calc-line">연매출 대비: ${((inputs.short_debt/inputs.sales)*100).toFixed(1)}%</div>
+                <div class="calc-line">적정 수준: 매출의 30% 이하 (${formatNumber(inputs.sales * 0.3)}원)</div>
+                <div class="calc-result">⚠️ 초과액: ${formatNumber(excessDebt)}원 - 유동성 위험</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>💡 유동성 개선 전략</h5>
+                <ul>
+                    <li><strong>단기 전략:</strong> 매출채권 회수 강화 + 재고 자산 감축</li>
+                    <li><strong>중기 전략:</strong> 단기차입 ${formatNumber(excessDebt * 0.5)}원을 장기대출로 전환</li>
+                    <li><strong>장기 전략:</strong> 영업현금흐름 개선으로 차입금 상환</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+    
+    // 📊 2. 장기차입금 & 이자비용 - 이자보상배율 분석
+    if (inputs.long_debt > 0 && inputs.interest_expense > 0) {
+        const interestCoverage = inputs.op_profit > 0 ? inputs.op_profit / inputs.interest_expense : 0;
+        const totalDebt = inputs.short_debt + inputs.long_debt;
+        
+        if (interestCoverage < 2) {
+            analysisResult.risks.add('낮은 이자보상배율');
+            
+            html += `<div class="consulting-topic topic-danger">
+                <h3 class="danger"><i class="fas fa-chart-line"></i>이자보상배율 위험 (${interestCoverage.toFixed(2)}배)</h3>
+                
+                <div class="calc-box">
+                    <div class="calc-line">총 차입금: ${formatNumber(totalDebt)}원</div>
+                    <div class="calc-line">- 단기차입금: ${formatNumber(inputs.short_debt)}원</div>
+                    <div class="calc-line">- 장기차입금: ${formatNumber(inputs.long_debt)}원</div>
+                    <div class="calc-line">연간 이자비용: ${formatNumber(inputs.interest_expense)}원</div>
+                    <div class="calc-line">영업이익: ${formatNumber(inputs.op_profit)}원</div>
+                    <div class="calc-result">⚠️ 이자보상배율: ${interestCoverage.toFixed(2)}배 (안전: 3배 이상)</div>
+                </div>
+                
+                <p><strong>위험 신호:</strong> 영업이익으로 이자를 ${interestCoverage.toFixed(1)}번밖에 못 갚습니다. 금리 상승 시 부도 위험!</p>
+                
+                <div class="action-box">
+                    <h5>🚨 긴급 재무구조 개선안</h5>
+                    <ul>
+                        <li><strong>즉시:</strong> 이자율이 높은 대출부터 상환 (연 ${formatNumber(inputs.interest_expense * 0.2)}원 절감)</li>
+                        <li><strong>1개월 내:</strong> 정책자금·저금리 대출로 대환 검토</li>
+                        <li><strong>3개월 내:</strong> 영업이익률 5%p 개선 목표 (이자보상배율 ${(interestCoverage * 1.5).toFixed(1)}배로 상승)</li>
+                    </ul>
+                </div>
+            </div>`;
+        }
+    }
+    
+    // 📊 3. 영업활동 현금흐름 적자
+    if (inputs.operating_cashflow < 0 && inputs.net_income > 0) {
+        analysisResult.risks.add('흑자도산 위험');
+        
+        html += `<div class="consulting-topic topic-danger">
+            <h3 class="danger"><i class="fas fa-exclamation-triangle"></i>흑자도산 위험 - 현금흐름 적자</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">당기순이익: ${formatNumber(inputs.net_income)}원 (장부상 흑자)</div>
+                <div class="calc-line">영업활동 현금흐름: ${formatNumber(inputs.operating_cashflow)}원</div>
+                <div class="calc-result">💣 실제 현금은 ${formatNumber(Math.abs(inputs.operating_cashflow))}원 감소!</div>
+            </div>
+            
+            <p><strong>흑자도산이란?</strong> 장부상 이익이 나지만 실제 현금이 없어 부도나는 상황입니다.</p>
+            
+            <div class="action-box">
+                <h5>🆘 현금흐름 긴급 처방</h5>
+                <ul>
+                    <li><strong>매출채권:</strong> 회수기간 단축 (30일 → 15일 목표)</li>
+                    <li><strong>재고자산:</strong> 회전율 2배 향상 (묵은 재고 처분)</li>
+                    <li><strong>매입채무:</strong> 결제조건 협상 (30일 → 45일 연장)</li>
+                    <li><strong>목표:</strong> 3개월 내 영업현금흐름 플러스 전환</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+        // 📊 2-1. 이익잉여금 과다 적립 리스크
+    if (inputs.retained_earnings > inputs.equity && inputs.retained_earnings > 500000000) {
+        const dividendOption = inputs.retained_earnings * 0.3;
+        const dividendTax = dividendOption * 0.154;
+        const corporateTaxIfKept = dividendOption * 0.21;
+        
+        analysisResult.risks.add('과다 이익잉여금');
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-coins"></i>이익잉여금 과다 적립 리스크 (${formatNumber(inputs.retained_earnings)}원)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">미처분이익잉여금: ${formatNumber(inputs.retained_earnings)}원</div>
+                <div class="calc-line">자본이계: ${formatNumber(inputs.equity)}원</div>
+                <div class="calc-line">비율: ${((inputs.retained_earnings/inputs.equity)*100).toFixed(1)}% (정상: 50% 이하)</div>
+                <div class="calc-result">⚠️ 법인세 vs 배당세 비교 필수!</div>
+            </div>
+            
+            <div class="calc-box">
+                <div class="calc-line"><strong>시나리오 A: 법인에 계속 쌓기</strong></div>
+                <div class="calc-line">법인세 (21%): ${formatNumber(corporateTaxIfKept)}원</div>
+                <div class="calc-line">+ 향후 배당 시 배당소득세 추가</div>
+                
+                <div class="calc-line" style="margin-top:0.5rem;"><strong>시나리오 B: 지금 배당</strong></div>
+                <div class="calc-line">배당소득세 (15.4%): ${formatNumber(dividendTax)}원</div>
+                <div class="calc-result">✅ 즉시 배당 시 ${formatNumber(corporateTaxIfKept - dividendTax)}원 절세</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>💎 이익잉여금 출구전략 (4가지)</h5>
+                <ul>
+                    <li><strong>전략 1:</strong> 배당 (종합소득 5억 이하 시 유리)</li>
+                    <li><strong>전략 2:</strong> 특허권 현물출자로 자본금 증액 (이익잉여금 → 자본금 전환)</li>
+                    <li><strong>전략 3:</strong> 임직원 성과급 지급 (손금산입)</li>
+                    <li><strong>전략 4:</strong> 준비금 설정 (퇴직급여충당금, 대손충당금 등)</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += Math.max(0, corporateTaxIfKept - dividendTax);
+    }
+    
+    // 📊 3-1. 법인카드 사적사용
+    if (inputs.corporate_card > inputs.sales * 0.02 && inputs.corporate_card > 50000000) {
+        analysisResult.risks.add('법인카드 사적사용 의심');
+        const excessAmount = inputs.corporate_card - (inputs.sales * 0.02);
+        const penaltyRisk = excessAmount * 0.45;
+        
+        html += `<div class="consulting-topic topic-danger">
+            <h3 class="danger"><i class="fas fa-credit-card"></i>법인카드 세무조사 고위험 (${formatNumber(inputs.corporate_card)}원)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">법인카드 사용액: ${formatNumber(inputs.corporate_card)}원</div>
+                <div class="calc-line">매출액 대비 비율: ${((inputs.corporate_card/inputs.sales)*100).toFixed(2)}% (정상 범위: 2% 이하)</div>
+                <div class="calc-line">초과 의심액: ${formatNumber(excessAmount)}원</div>
+                <div class="calc-result">💣 적발 시 예상 추징세액: 약 ${formatNumber(penaltyRisk)}원 (소득세 45% + 가산세)</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>🛡️ 즉시 대응 로드맵</h5>
+                <ul>
+                    <li><strong>지금:</strong> 최근 3년 법인카드 전체 내역 증빙 확보 (영수증, 계약서, 회의록)</li>
+                    <li><strong>1주일 내:</strong> 개인 사용 의심 건 ${formatNumber(excessAmount * 0.3)}원 자진 반납 및 소득 신고</li>
+                    <li><strong>즉시:</strong> 개인카드 완전 분리 사용 원칙 수립</li>
+                    <li><strong>예상 절감:</strong> 자진신고 시 가산세 면제로 약 ${formatNumber(penaltyRisk * 0.3)}원 절감</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += penaltyRisk * 0.3;
+    }
+    
+    // 📊 3-2. 접대비 과다
+    if (inputs.entertainment > inputs.sales * 0.03 && inputs.entertainment > 30000000) {
+        analysisResult.risks.add('접대비 과다');
+        const excessEntertainment = inputs.entertainment - (inputs.sales * 0.03);
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-utensils"></i>접대비 한도 초과 (${formatNumber(inputs.entertainment)}원)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">접대비 총액: ${formatNumber(inputs.entertainment)}원</div>
+                <div class="calc-line">매출액 대비: ${((inputs.entertainment/inputs.sales)*100).toFixed(2)}% (적정: 3% 이하)</div>
+                <div class="calc-line">초과 의심액: ${formatNumber(excessEntertainment)}원</div>
+                <div class="calc-result">⚠️ 손금불산입 시 법인세 ${formatNumber(excessEntertainment * 0.21)}원 추가</div>
+            </div>
+            
+            <p><strong>접대비 한도:</strong> 중소기업은 1,200만원 + 매출액의 0.3% 범위 내에서만 손금인정</p>
+            
+            <div class="action-box">
+                <h5>📋 접대비 정리 방안</h5>
+                <ul>
+                    <li><strong>1단계:</strong> 실제 업무 관련성 증빙 재확인 (거래처, 계약 관련 여부)</li>
+                    <li><strong>2단계:</strong> 초과분은 복리후생비나 회의비로 재분류 검토</li>
+                    <li><strong>3단계:</strong> 향후 월별 접대비 한도 관리 (월 ${formatNumber(inputs.sales * 0.003 / 12)}원)</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+    // 📊 4. CEO 지분율 리스크
+    if (inputs.ceo_share < 30) {
+        analysisResult.risks.add('낮은 CEO 지분율');
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-user-shield"></i>경영권 불안정 - CEO 지분 ${inputs.ceo_share}%</h3>
+            
+            <p><strong>위험:</strong> 지분 30% 미만은 적대적 M&A나 주주분쟁에 취약합니다.</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">현재 CEO 지분: ${inputs.ceo_share}%</div>
+                <div class="calc-line">안전 지분율: 50% 이상 (경영권 방어)</div>
+                <div class="calc-line">최소 필요: 30% 이상 (거부권 확보)</div>
+                <div class="calc-result">⚠️ 추가 확보 필요: 최소 ${(30 - inputs.ceo_share).toFixed(1)}%p</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>🛡️ 경영권 방어 전략</h5>
+                <ul>
+                    <li><strong>1단계:</strong> 배우자·자녀에게 10년 주기 증여 (5천만원×인원수)</li>
+                    <li><strong>2단계:</strong> 우호지분 확보 (가족·임원 지분 합산 50% 목표)</li>
+                    <li><strong>3단계:</strong> 정관 개정 (중요 의사결정 특별결의 조항)</li>
+                    <li><strong>절세 효과:</strong> 증여세 공제로 최대 수억원 절감</li>
+                </ul>
+            </div>
+        </div>`;
+    } else if (inputs.ceo_share >= 30 && inputs.ceo_share < 50) {
+        analysisResult.opportunities.add('지분율 최적화');
+        
+        html += `<div class="consulting-topic topic-opportunity">
+            <h3 class="opportunity"><i class="fas fa-chess-king"></i>경영권 강화 기회 - 현재 ${inputs.ceo_share}%</h3>
+            
+            <p><strong>현황:</strong> 현재 지분율은 양호하나, 50% 이상 확보 시 완전한 경영권을 행사할 수 있습니다.</p>
+            
+            <div class="action-box">
+                <h5>💎 지분율 50% 달성 로드맵</h5>
+                <ul>
+                    <li><strong>목표:</strong> 현재 ${inputs.ceo_share}% → 50% (추가 ${(50 - inputs.ceo_share).toFixed(1)}%p)</li>
+                    <li><strong>방법:</strong> 자녀·배우자 증여 + 우호지분 합산</li>
+                    <li><strong>기간:</strong> 향후 5년 계획</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+    
+    // 📊 5. 가족임직원 급여 과다
+    if (inputs.family_salary > inputs.op_profit * 0.3 && inputs.family_salary > 50000000) {
+        analysisResult.risks.add('과다 가족 급여');
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-users"></i>가족 급여 세무리스크 (${formatNumber(inputs.family_salary)}원)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">가족 임직원 급여: ${formatNumber(inputs.family_salary)}원</div>
+                <div class="calc-line">영업이익 대비: ${((inputs.family_salary/inputs.op_profit)*100).toFixed(1)}%</div>
+                <div class="calc-line">세무조사 기준: 영업이익의 30% 초과 시 주의</div>
+                <div class="calc-result">⚠️ 부당행위계산부인 위험</div>
+            </div>
+            
+            <p><strong>세무조사 시:</strong> 과다 급여 인정 안 되면 법인세 ${formatNumber(inputs.family_salary * 0.21)}원 추가 납부!</p>
+            
+            <div class="action-box">
+                <h5>📋 적정 급여 조정안</h5>
+                <ul>
+                    <li><strong>원칙:</strong> 동종업계 유사직급 급여 수준 맞춤</li>
+                    <li><strong>증빙:</strong> 직무기술서·근무기록 확보 필수</li>
+                    <li><strong>대안:</strong> 초과분은 배당으로 전환 (세율 15.4%)</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+    
+    // 📊 6. 배당금 전략 분석
+    if (inputs.dividend_3years === 0 && inputs.retained_earnings > inputs.equity * 0.5) {
+        analysisResult.opportunities.add('배당 전략');
+        
+        html += `<div class="consulting-topic topic-opportunity">
+            <h3 class="opportunity"><i class="fas fa-coins"></i>배당 절세 기회 - 3년간 무배당</h3>
+            
+            <p><strong>발견:</strong> 최근 3년간 배당을 하지 않았고, 이익잉여금이 ${formatNumber(inputs.retained_earnings)}원 적립되어 있습니다.</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">미처분이익잉여금: ${formatNumber(inputs.retained_earnings)}원</div>
+                <div class="calc-line">권장 배당액: ${formatNumber(inputs.retained_earnings * 0.3)}원</div>
+                <div class="calc-line">배당소득세 (15.4%): ${formatNumber(inputs.retained_earnings * 0.3 * 0.154)}원</div>
+                <div class="calc-line">법인에 보유 시 향후 법인세: ${formatNumber(inputs.retained_earnings * 0.3 * 0.21)}원</div>
+                <div class="calc-result">✅ 지금 배당 시 ${formatNumber(inputs.retained_earnings * 0.3 * 0.056)}원 절세</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>💰 배당 vs 내부 유보 시뮬레이션</h5>
+                <ul>
+                    <li><strong>시나리오 1:</strong> 연 ${formatNumber(inputs.retained_earnings * 0.1)}원 배당 (10년 계획)</li>
+                    <li><strong>시나리오 2:</strong> 종합소득 5억 이하 구간 활용 최대 배당</li>
+                    <li><strong>추천:</strong> 세무사와 최적 배당 시기·금액 설계</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += inputs.retained_earnings * 0.3 * 0.056;
+    }
+    
+    // 📊 7. 부동산 명의 최적화
+    if (inputs.corp_real_estate_value > 0 || inputs.personal_real_estate_value > 0) {
+        const totalRealEstate = inputs.corp_real_estate_value + inputs.personal_real_estate_value;
+        const corpRatio = totalRealEstate > 0 ? (inputs.corp_real_estate_value / totalRealEstate) * 100 : 0;
+        
+        if (corpRatio > 70) {
+            analysisResult.risks.add('법인 부동산 집중');
+            
+            html += `<div class="consulting-topic topic-warning">
+                <h3 class="warning"><i class="fas fa-building"></i>부동산 명의 불균형 - 법인 집중 ${corpRatio.toFixed(0)}%</h3>
+                
+                <div class="calc-box">
+                    <div class="calc-line">법인 부동산: ${formatNumber(inputs.corp_real_estate_value)}원 (${corpRatio.toFixed(0)}%)</div>
+                    <div class="calc-line">개인 부동산: ${formatNumber(inputs.personal_real_estate_value)}원 (${(100-corpRatio).toFixed(0)}%)</div>
+                    <div class="calc-result">⚠️ 법인 청산 시 양도세 폭탄 위험</div>
+                </div>
+                
+                <div class="action-box">
+                    <h5>🏢 부동산 명의 재배치 전략</h5>
+                    <ul>
+                        <li><strong>업무용:</strong> 법인 보유 (감가상각 손금 인정)</li>
+                        <li><strong>투자용:</strong> 개인 보유 (1세대 1주택 비과세 활용)</li>
+                        <li><strong>주의:</strong> 법인→개인 이전 시 부당행위계산 검토 필수</li>
+                    </ul>
+                </div>
+            </div>`;
+        } else if (corpRatio < 30 && inputs.corp_real_estate_value > 0) {
+            analysisResult.opportunities.add('부동산 전략');
+        }
+    }
+    
+    // 📊 8. 특허권 등 지식재산권
+    if (inputs.ip_ownership === 'yes') {
+        analysisResult.risks.add('개인 보유 지재권');
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-lightbulb"></i>지식재산권 명의 리스크</h3>
+            
+            <p><strong>문제:</strong> 특허권·상표권을 개인이 보유하고 법인이 사용하면 <span style="color:#b03a2e;">로열티 소득세</span> 발생!</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">예상 로열티: 매출의 3~5% (${formatNumber(inputs.sales * 0.04)}원)</div>
+                <div class="calc-line">개인 소득세 (종합과세): 최대 45%</div>
+                <div class="calc-result">⚠️ 연간 세금 부담: 약 ${formatNumber(inputs.sales * 0.04 * 0.45)}원</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>💡 지재권 이전 전략</h5>
+                <ul>
+                    <li><strong>방법 1:</strong> 현물출자로 법인 이전 (증여세 절감)</li>
+                    <li><strong>방법 2:</strong> 법인이 매입 (장기 분할 지급)</li>
+                    <li><strong>효과:</strong> 로열티 소득세 ${formatNumber(inputs.sales * 0.04 * 0.45)}원 → 0원</li>
+                    <li><strong>주의:</strong> 시가 평가 필수 (세무사 감정)</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += inputs.sales * 0.04 * 0.45;
+    }
+    
+    // 📊 9. 고용증대 세액공제 미신청
+    if (inputs.employment_credit === 'no' && inputs.total_employees >= 10) {
+        const estimatedCredit = Math.min(inputs.total_employees * 3000000, 50000000);
+        analysisResult.opportunities.add('고용증대 세액공제');
+        
+        html += `<div class="consulting-topic topic-opportunity">
+            <h3 class="opportunity"><i class="fas fa-user-plus"></i>고용증대 세액공제 미신청 (${formatNumber(estimatedCredit)}원 손실)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">현재 임직원: ${inputs.total_employees}명</div>
+                <div class="calc-line">고용증대 1인당 공제: 최대 300만원</div>
+                <div class="calc-result">💰 예상 환급액: ${formatNumber(estimatedCredit)}원</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>📝 즉시 신청 프로세스</h5>
+                <ul>
+                    <li><strong>1단계:</strong> 전년 대비 고용 증가 인원 확인</li>
+                    <li><strong>2단계:</strong> 법인세 신고 시 세액공제 신청</li>
+                    <li><strong>3단계:</strong> 최근 3년치 경정청구 가능</li>
+                    <li><strong>예상 환급:</strong> ${formatNumber(estimatedCredit * 3)}원 (3년분)</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += estimatedCredit * 3;
+    }
+    
+    // 📊 10. R&D 세액공제 미신청
+    if (inputs.rnd_credit === 'no' && (inputs.industry === 'IT/소프트웨어' || inputs.industry === '제조업')) {
+        const estimatedRnD = inputs.sales * 0.02;
+        const rnDCredit = estimatedRnD * 0.25;
+        analysisResult.opportunities.add('R&D 세액공제');
+        
+        html += `<div class="consulting-topic topic-opportunity">
+            <h3 class="opportunity"><i class="fas fa-flask"></i>R&D 세액공제 미신청 - ${inputs.industry}</h3>
+            
+            <p><strong>${inputs.industry} 업종</strong>은 R&D 세액공제 대상입니다!</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">추정 R&D 비용: ${formatNumber(estimatedRnD)}원 (매출의 2%)</div>
+                <div class="calc-line">세액공제율: 일반 25% / 중소기업 특례 최대 40%</div>
+                <div class="calc-result">💰 예상 공제액: ${formatNumber(rnDCredit)}원</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>🔬 R&D 세액공제 대상</h5>
+                <ul>
+                    <li><strong>인건비:</strong> 연구개발 인력 급여</li>
+                    <li><strong>재료비:</strong> 시제품 제작비용</li>
+                    <li><strong>위탁비:</strong> 외부 연구기관 용역</li>
+                    <li><strong>감가상각비:</strong> 연구용 장비</li>
+                    <li><strong>신청:</strong> 국세청 R&D 세액공제 신청서 제출</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += rnDCredit;
+    }
+    
+    // 📊 11. 개인 부채 과다
+    if (inputs.personal_debt > inputs.personal_financial) {
+        analysisResult.risks.add('개인 부채 과다');
+        
+        html += `<div class="consulting-topic topic-danger">
+            <h3 class="danger"><i class="fas fa-exclamation-triangle"></i>개인 부채 부실 위험</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">개인 부채: ${formatNumber(inputs.personal_debt)}원</div>
+                <div class="calc-line">개인 금융자산: ${formatNumber(inputs.personal_financial)}원</div>
+                <div class="calc-result">⚠️ 순부채: ${formatNumber(inputs.personal_debt - inputs.personal_financial)}원</div>
+            </div>
+            
+            <p><strong>위험:</strong> 개인 부채가 자산을 초과하면 CEO 신용도 하락 → 법인 대출에도 악영향!</p>
+            
+            <div class="action-box">
+                <h5>💳 개인 부채 정리 전략</h5>
+                <ul>
+                    <li><strong>단기:</strong> 고금리 부채부터 상환 (연 10% 이상 대출)</li>
+                    <li><strong>중기:</strong> 법인 배당으로 개인 부채 상환</li>
+                    <li><strong>장기:</strong> 개인 자산 매각 또는 법인 퇴직금 활용</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+    
+    // 📊 12. 자녀 증여 계획
+    if (inputs.gift_history === 0 && inputs.inheritance_assets > 1000000000) {
+        analysisResult.opportunities.add('증여 절세');
+        
+        const childrenCount = document.querySelectorAll('#children-container .dynamic-container').length;
+        const giftPotential = childrenCount * 50000000;
+        
+        html += `<div class="consulting-topic topic-opportunity">
+            <h3 class="opportunity"><i class="fas fa-gift"></i>자녀 증여 절세 기회</h3>
+            
+            <p><strong>발견:</strong> 자녀에게 증여 이력이 없습니다. 10년 주기 증여로 상속세를 대폭 절감할 수 있습니다!</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">자녀 수: ${childrenCount}명</div>
+                <div class="calc-line">1인당 10년 공제: 5천만원</div>
+                <div class="calc-line">총 증여 가능액 (무세): ${formatNumber(giftPotential)}원</div>
+                <div class="calc-result">💰 상속세 절감 효과: 약 ${formatNumber(giftPotential * 0.4)}원</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>🎁 10년 증여 플랜</h5>
+                <ul>
+                    <li><strong>1차 증여 (올해):</strong> 자녀당 5천만원 (총 ${formatNumber(giftPotential)}원)</li>
+                    <li><strong>2차 증여 (10년 후):</strong> 자녀당 5천만원</li>
+                    <li><strong>3차 증여 (20년 후):</strong> 자녀당 5천만원</li>
+                    <li><strong>총 절세액:</strong> 30년간 약 ${formatNumber(giftPotential * 0.4 * 3)}원</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += giftPotential * 0.4;
+    }
+    
+    // 📊 13. 가업승계 준비 상태
+    if (inputs.successor === 'yes' && inputs.succession_plan === 'no') {
+        analysisResult.risks.add('가업승계 미준비');
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-handshake"></i>후계자는 있지만 승계 계획 없음</h3>
+            
+            <p><strong>모순:</strong> 승계 예정 후계자가 있지만 구체적 계획이 없습니다.</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">가업승계 공제 한도: 최대 600억원</div>
+                <div class="calc-line">상속세 절감: 최대 50% (300억원)</div>
+                <div class="calc-result">⚠️ 계획 없으면 공제 못 받음!</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>📋 가업승계 7년 체크리스트</h5>
+                <ul>
+                    <li><strong>요건 1:</strong> 업력 10년 이상 (현재: ${inputs.founding_year ? new Date().getFullYear() - inputs.founding_year : 0}년)</li>
+                    <li><strong>요건 2:</strong> CEO 10년 이상 경영</li>
+                    <li><strong>요건 3:</strong> 후계자 2년 이상 근무</li>
+                    <li><strong>요건 4:</strong> 최대주주 + 지분 50% 이상</li>
+                    <li><strong>요건 5:</strong> 상속 후 7년간 업종·정규직 유지</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+    
+    // 기존 컨설팅 내용 추가 (가지급금, 이익잉여금 등)
+    if (inputs.adv_payments > 1000000) {
+        const annualInterest = inputs.adv_payments * 0.046;
+        const taxOnInterest = annualInterest * 0.45;
+        const corporateTaxLoss = annualInterest * 0.21;
+        const type = inputs.adv_payments > 50000000 ? 'danger' : 'warning';
+        
+        html += `<div class="consulting-topic topic-${type}">
+            <h3 class="${type}"><i class="fas fa-exclamation-triangle"></i>가지급금 시한폭탄 (${formatNumber(inputs.adv_payments)}원)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">가지급금: ${formatNumber(inputs.adv_payments)}원</div>
+                <div class="calc-line">연간 인정이자 (4.6%): ${formatNumber(annualInterest)}원</div>
+                <div class="calc-line">대표이사 소득세 (45%): ${formatNumber(taxOnInterest)}원</div>
+                <div class="calc-line">법인세 가산 (이자비용 부인): ${formatNumber(corporateTaxLoss)}원</div>
+                <div class="calc-result">💣 매년 세금 손실: ${formatNumber(taxOnInterest + corporateTaxLoss)}원</div>
+            </div>
+            
+            <p><strong>상속 시 충격:</strong> 가지급금 ${formatNumber(inputs.adv_payments)}원은 상속재산에 포함되어 상속세 약 ${formatNumber(inputs.adv_payments * 0.4)}원 추가 발생!</p>
+            
+            <div class="action-box">
+                <h5>🔥 긴급 정리 솔루션</h5>
+                <ul>
+                    <li><strong>방법 1:</strong> 즉시 현금 상환 (개인 자금 활용)</li>
+                    <li><strong>방법 2:</strong> 향후 상여/배당으로 상계 (연 ${formatNumber(inputs.adv_payments * 0.2)}원씩 5년)</li>
+                    <li><strong>방법 3:</strong> 법인 보험 해약환급금으로 상계 (10년 후)</li>
+                    <li><strong>절세 효과:</strong> 전액 정리 시 매년 ${formatNumber(taxOnInterest + corporateTaxLoss)}원 × 10년 = <strong>${formatNumber((taxOnInterest + corporateTaxLoss) * 10)}원 절감</strong></li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += (taxOnInterest + corporateTaxLoss) * 10;
+    }
+    
+    // 2. 이익잉여금 과다 적립 리스크
+    if (inputs.retained_earnings > inputs.equity && inputs.retained_earnings > 500000000) {
+        const dividendOption = inputs.retained_earnings * 0.3;
+        const dividendTax = dividendOption * 0.154;
+        const corporateTaxIfKept = dividendOption * 0.21;
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-coins"></i>이익잉여금 과다 적립 리스크</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">미처분이익잉여금: ${formatNumber(inputs.retained_earnings)}원</div>
+                <div class="calc-line">자본이계: ${formatNumber(inputs.equity)}원</div>
+                <div class="calc-line">비율: ${((inputs.retained_earnings/inputs.equity)*100).toFixed(1)}% (정상: 50% 이하)</div>
+                <div class="calc-result">⚠️ 법인세 vs 배당세 비교 필수!</div>
+            </div>
+            
+            <div class="calc-box">
+                <div class="calc-line"><strong>시나리오 A: 법인에 계속 쌓기</strong></div>
+                <div class="calc-line">법인세 (21%): ${formatNumber(corporateTaxIfKept)}원</div>
+                <div class="calc-line">+ 향후 배당 시 배당소득세 추가</div>
+                
+                <div class="calc-line" style="margin-top:0.5rem;"><strong>시나리오 B: 지금 배당</strong></div>
+                <div class="calc-line">배당소득세 (15.4%): ${formatNumber(dividendTax)}원</div>
+                <div class="calc-result">✅ 즉시 배당 시 ${formatNumber(corporateTaxIfKept - dividendTax)}원 절세</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>💎 이익잉여금 출구전략 (4가지)</h5>
+                <ul>
+                    <li><strong>전략 1:</strong> 배당 (종합소득 5억 이하 시 유리)</li>
+                    <li><strong>전략 2:</strong> 특허권 현물출자로 자본금 증액 (이익잉여금 → 자본금 전환)</li>
+                    <li><strong>전략 3:</strong> 임직원 성과급 지급 (손금산입)</li>
+                    <li><strong>전략 4:</strong> 준비금 설정 (퇴직급여충당금, 대손충당금 등)</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += Math.max(0, corporateTaxIfKept - dividendTax);
+    }
+    
+    // 3. 법인카드 사적사용
+    if (inputs.corporate_card > inputs.sales * 0.02 && inputs.corporate_card > 50000000) {
+        analysisResult.risks.add('법인카드 사적사용 의심');
+        const excessAmount = inputs.corporate_card - (inputs.sales * 0.02);
+        const penaltyRisk = excessAmount * 0.45;
+        
+        html += `<div class="consulting-topic topic-danger">
+            <h3 class="danger"><i class="fas fa-credit-card"></i>법인카드 세무조사 고위험 (1순위 검토대상)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">법인카드 사용액: ${formatNumber(inputs.corporate_card)}원</div>
+                <div class="calc-line">매출액 대비 비율: ${((inputs.corporate_card/inputs.sales)*100).toFixed(2)}% (정상 범위: 2% 이하)</div>
+                <div class="calc-line">초과 의심액: ${formatNumber(excessAmount)}원</div>
+                <div class="calc-result">💣 적발 시 예상 추징세액: 약 ${formatNumber(penaltyRisk)}원 (소득세 45% + 가산세)</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>🛡️ 즉시 대응 로드맵</h5>
+                <ul>
+                    <li><strong>지금:</strong> 최근 3년 법인카드 전체 내역 증빙 확보 (영수증, 계약서, 회의록)</li>
+                    <li><strong>1주일 내:</strong> 개인 사용 의심 건 ${formatNumber(excessAmount * 0.3)}원 자진 반납 및 소득 신고</li>
+                    <li><strong>즉시:</strong> 개인카드 완전 분리 사용 원칙 수립</li>
+                    <li><strong>예상 절감:</strong> 자진신고 시 가산세 면제로 약 ${formatNumber(penaltyRisk * 0.3)}원 절감</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += penaltyRisk * 0.3;
+    }
+    
+    // 4. 명의신탁
+    if (inputs.nominee_stock === 'yes') {
+        const stockValue = calculateStockValue(inputs);
+        const giftTax = stockValue * 0.5;
+        analysisResult.risks.add('명의신탁');
+        
+        html += `<div class="consulting-topic topic-danger">
+            <h3 class="danger"><i class="fas fa-bomb"></i>명의신탁주식 = 최악의 시한폭탄 (즉시 해결 필수)</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">추정 주식 가치: ${formatNumber(stockValue)}원</div>
+                <div class="calc-line">증여세 (최대 50%): ${formatNumber(giftTax)}원</div>
+                <div class="calc-line">+ 과태료 (5억 한도)</div>
+                <div class="calc-line">+ 조세포탈죄 (5년 이하 징역 or 포탈세액의 3배)</div>
+                <div class="calc-result">💀 총 세금폭탄: 최소 ${formatNumber(giftTax * 1.2)}원</div>
+            </div>
+            
+            <p><strong>실제 판례:</strong> E사 대표는 명의신탁 적발되어 증여세 18억 + 과태료 3억 + 징역 2년 집행유예 선고</p>
+            
+            <div class="action-box">
+                <h5>🚨 72시간 내 실행할 것 (진짜입니다)</h5>
+                <ul>
+                    <li><strong>즉시:</strong> 세무사와 긴급 미팅</li>
+                    <li><strong>3일 내:</strong> 명의신탁주식 실제소유자 확인 신청 (국세청)</li>
+                    <li><strong>효과:</strong> 확인 신청 시 증여세 면제, 과태료만 납부 (약 ${formatNumber(giftTax * 0.05)}원)</li>
+                    <li><strong>절감액:</strong> ${formatNumber(giftTax * 0.95)}원 (단, 지금 바로 해야 함!)</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += giftTax * 0.95;
+    }
+    
+    // 5. 5개년 세금환급 (경정청구) 기회
+    if (inputs.tax_return_review === 'no') {
+        const potentialRefund = inputs.tax_expense * 0.15;
+        analysisResult.opportunities.add('경정청구');
+        
+        html += `<div class="consulting-topic topic-opportunity">
+            <h3 class="opportunity"><i class="fas fa-search-dollar"></i>5개년 세금환급 (경정청구) 기회</h3>
+            
+            <div class="calc-box">
+                <div class="calc-line">최근 5년 납부 세액: 약 ${formatNumber(inputs.tax_expense * 5)}원</div>
+                <div class="calc-line">일반적 과오납률: 10~20%</div>
+                <div class="calc-result">💰 예상 환급액: ${formatNumber(potentialRefund)}원 ~ ${formatNumber(potentialRefund * 1.3)}원</div>
+            </div>
+            
+            <p><strong>실제 환급 사례:</strong></p>
+            <ul style="margin-left: 1.5rem;">
+                <li>B제조사: 통합투자세액공제 누락 → <strong>1.8억원 환급</strong></li>
+                <li>C유통사: 고용증대 세액공제 미신청 → <strong>9,500만원 환급</strong></li>
+                <li>D건설사: 준비금 설정 오류 → <strong>1.2억원 환급</strong></li>
+            </ul>
+            
+            <div class="action-box">
+                <h5>📋 경정청구 프로세스</h5>
+                <ul>
+                    <li><strong>1단계:</strong> 전문 세무법인 의뢰 (보통 환급액의 20~30% 성공보수)</li>
+                    <li><strong>2단계:</strong> 5년치 세무신고 전수 검토 (소요기간: 2~3개월)</li>
+                    <li><strong>3단계:</strong> 경정청구서 제출 및 환급 (3~6개월)</li>
+                    <li><strong>비용 대비 효과:</strong> 수수료 ${formatNumber(potentialRefund * 0.25)}원 지불해도 순수익 ${formatNumber(potentialRefund * 0.75)}원</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += potentialRefund * 0.75;
+    }
+    
+    // 6. 임원 유족 위로금 규정 미비
+    if (inputs.consolation_regulation === 'no') {
+        analysisResult.risks.add('유족 보상 재원');
+        const consolationAmount = inputs.op_profit * 3;
+        
+        html += `<div class="consulting-topic topic-warning">
+            <h3 class="warning"><i class="fas fa-file-contract"></i>임원 유족 위로금 규정 미비</h3>
+            
+            <p><strong>문제:</strong> CEO 유고 시 유족에게 지급하는 위로금이 규정 없이는 손금(비용)으로 인정받지 못합니다.</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">통상 위로금 규모: 평균 보수의 3배</div>
+                <div class="calc-line">예상 금액: 약 ${formatNumber(consolationAmount)}원</div>
+                <div class="calc-result">💸 규정 없이 지급 시 법인세: ${formatNumber(consolationAmount * 0.21)}원 추가 부담</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>📝 즉시 조치 사항</h5>
+                <ul>
+                    <li><strong>1주일 내:</strong> 임원보수규정에 유족위로금 조항 신설</li>
+                    <li><strong>2주일 내:</strong> 법인 명의 생명보험으로 재원 확보</li>
+                    <li><strong>효과:</strong> 법인세 ${formatNumber(consolationAmount * 0.21)}원 절감 + 유족 보호</li>
+                </ul>
+            </div>
+        </div>`;
+    }
+    
+    // 7. 상속세
+    if (inputs.inheritance_assets > 1000000000) {
+        const taxInfo = estimateInheritanceTax(inputs.inheritance_assets, inputs.co_heirs);
+        analysisResult.estimatedInheritanceTax = taxInfo.tax;
+        const liquidAssets = inputs.personal_financial + inputs.life_insurance;
+        const gap = taxInfo.tax - liquidAssets;
+        
+        if (gap > 0) {
+            analysisResult.risks.add('상속세 폭탄');
+            
+            html += `<div class="consulting-topic topic-danger">
+                <h3 class="danger"><i class="fas fa-skull-crossbones"></i>상속세 폭탄 (현금 납부 불가능)</h3>
+                
+                <div class="calc-box">
+                    <div class="calc-line"><strong>상속재산 구성</strong></div>
+                    <div class="calc-line">개인 금융자산: ${formatNumber(inputs.personal_financial)}원</div>
+                    <div class="calc-line">개인 부동산: ${formatNumber(inputs.personal_real_estate_value)}원</div>
+                    <div class="calc-line">법인 주식: ${formatNumber(calculateStockValue(inputs) * (inputs.ceo_share / 100))}원</div>
+                    <div class="calc-line">생명보험: ${formatNumber(inputs.life_insurance)}원</div>
+                    <div class="calc-line">개인 부채: -${formatNumber(inputs.personal_debt)}원</div>
+                    <div class="calc-line" style="border-top:1px solid #dee2e6; margin-top:0.5rem; padding-top:0.5rem;"><strong>총 상속재산: ${formatNumber(inputs.inheritance_assets)}원</strong></div>
+                </div>
+                
+                <div class="calc-box">
+                    <div class="calc-line"><strong>상속세 계산</strong></div>
+                    <div class="calc-line">배우자 공제: -${formatNumber(taxInfo.spouseDeduction)}원</div>
+                    <div class="calc-line">자녀 공제: -${formatNumber(taxInfo.childDeduction)}원</div>
+                    <div class="calc-line">기초 공제: -${formatNumber(taxInfo.basicDeduction)}원</div>
+                    <div class="calc-line" style="border-top:1px solid #dee2e6; margin-top:0.5rem; padding-top:0.5rem;">과세표준: ${formatNumber(taxInfo.taxableAmount)}원</div>
+                    <div class="calc-result">💀 추정 상속세: ${formatNumber(taxInfo.tax)}원</div>
+                </div>
+                
+                <div class="calc-box">
+                    <div class="calc-line"><strong>납부 능력 분석</strong></div>
+                    <div class="calc-line">현금 + 보험금: ${formatNumber(liquidAssets)}원</div>
+                    <div class="calc-line">추정 상속세: ${formatNumber(taxInfo.tax)}원</div>
+                    <div class="calc-result" style="color: #b03a2e;">⚠️ 부족액: ${formatNumber(gap)}원 (${((gap/taxInfo.tax)*100).toFixed(1)}%)</div>
+                </div>
+                
+                <p><strong>💀 최악의 시나리오:</strong> 상속세를 낼 돈이 없어 상속받은 부동산이나 주식을 급매각 → 시세보다 ${formatNumber(gap * 0.3)}원 손해</p>
+                
+                <div class="action-box">
+                    <h5>🚨 10년 로드맵 (지금 시작 필수)</h5>
+                    <ul>
+                        <li><strong>1년차:</strong> 법인 명의 생명보험 ${formatNumber(gap)}원 가입</li>
+                        <li><strong>2~10년차:</strong> 자녀에게 10년 주기 증여 (자녀당 5억 공제)</li>
+                        <li><strong>5년차:</strong> 배우자에게 6억 증여 (배우자 공제 극대화)</li>
+                        <li><strong>7년차:</strong> 가업승계 요건 충족 확인 (최대 500억 공제)</li>
+                        <li><strong>예상 절감:</strong> 상속세 ${formatNumber(taxInfo.tax)}원 → ${formatNumber(taxInfo.tax * 0.3)}원 (70% 절감 = <strong>${formatNumber(taxInfo.tax * 0.7)}원</strong>)</li>
+                    </ul>
+                </div>
+            </div>`;
+        }
+    }
+    
+    // 8. 중소기업 특례 미적용
+    if (inputs.sme_benefit === 'no' && inputs.sales > 0 && inputs.sales < 40000000000) {
+        const potentialCredit = inputs.tax_expense * 0.1;
+        analysisResult.opportunities.add('중소기업 특례');
+        
+        html += `<div class="consulting-topic topic-opportunity">
+            <h3 class="opportunity"><i class="fas fa-gift"></i>중소기업 특별세액감면 미적용 (${formatNumber(potentialCredit)}원 손실)</h3>
+            
+            <p><strong>💰 즉시 환급 기회:</strong> 중소기업 특별세액감면을 적용받지 않아 최대 <span style="color:#1e8449;font-weight:700;">${formatNumber(potentialCredit)}원</span>을 불필요하게 납부하고 있습니다.</p>
+            
+            <div class="calc-box">
+                <div class="calc-line">현재 법인세: ${formatNumber(inputs.tax_expense)}원</div>
+                <div class="calc-line">감면율: 업종에 따라 5~20%</div>
+                <div class="calc-result">✅ 예상 환급액: ${formatNumber(potentialCredit)}원 (경정청구 5년분)</div>
+            </div>
+            
+            <div class="action-box">
+                <h5>💎 즉시 실행 Action</h5>
+                <ul>
+                    <li><strong>이번 달:</strong> 세무사 통해 적용 요건 검토 및 경정청구</li>
+                    <li><strong>향후:</strong> 매년 자동 적용으로 연 ${formatNumber(potentialCredit / 5)}원 절세</li>
+                </ul>
+            </div>
+        </div>`;
+        totalTaxSavings += potentialCredit;
+    }
+    
+    // 최종 요약이 없으면 기본 메시지
+    if (!html) {
+        html = `<div class="consulting-topic topic-good">
+            <h3 class="good"><i class="fas fa-check-circle"></i>주요 리스크 미발견</h3>
+            <p>입력된 데이터를 기반으로 한 주요 경영 리스크는 발견되지 않았습니다. 다만, 지금처럼 안정적일 때가 오히려 미래 불확실성에 대비할 최적의 시기임을 기억하시기 바랍니다.</p>
+        </div>`;
+    }
+    
+    // 총 절세 효과 요약
+    html += `<div class="summary-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+        <h3 style="color: white; border: none; margin: 0 0 1rem 0;"><i class="fas fa-trophy"></i> 종합 절세 효과</h3>
+        <div class="total-savings" style="font-size: 2rem; font-weight: 700; text-align: center; margin: 1.5rem 0;">
+            총 예상 절감액: <span class="highlight" style="color: #f1c40f;">${formatNumber(totalTaxSavings)}원</span>
+        </div>
+        <p class="cta-text" style="text-align: center; font-size: 1.1rem; margin: 0;">💡 지금 바로 실행하면 위 금액을 절감할 수 있습니다!</p>
+    </div>`;
+    
+    analysisResult.taxSavings = totalTaxSavings;
+    container.innerHTML = html;
+}
+function calculateInsurancePlan(inputs) {
+    if (inputs.op_profit <= 0 || inputs.insurance_target_amount <= 0) return null;
+    
+    const periodInMonths = inputs.insurance_payment_period * 12;
+    const ageFactor = 1 + (Math.max(0, inputs.ceo_age - 40) * 0.045);
+    const monthlyPremium = (inputs.insurance_target_amount / periodInMonths) * 1.15 * ageFactor;
+    const totalPremium = monthlyPremium * periodInMonths;
+    const taxRate = (inputs.net_income > 200000000) ? 0.21 : 0.099;
+    const taxSavings = (monthlyPremium * 12) * taxRate;
+    
+    const plan = { 
+        coverage: inputs.insurance_target_amount, 
+        monthlyPremium: monthlyPremium, 
+        totalPremium: totalPremium, 
+        paymentPeriod: inputs.insurance_payment_period, 
+        taxSavings: taxSavings, 
+        surrenderRates: [] 
+    };
+    
+    for (let i = 5; i <= 20; i += 5) { 
+        if(i <= inputs.insurance_payment_period) { 
+            let rate = (i / inputs.insurance_payment_period) * 95 + (i > 5 ? (i-5) * 1.5 : 0); 
+            plan.surrenderRates.push({ year: i, rate: Math.min(120, rate) }); 
+        } 
+    }
+    
+    return plan;
+}
+
+function generateInsuranceProposal(inputs) {
+    const container = document.getElementById('solution_proposal');
+    const card = document.getElementById('solution_proposal_card');
+    analysisResult.insurancePlan = calculateInsurancePlan(inputs);
+    const plan = analysisResult.insurancePlan;
+    
+    if (!plan) { 
+        card.style.display = 'none'; 
+        return; 
+    }
+    
+    card.style.display = 'block';
+    
+    let surrenderTableHtml = '';
+    plan.surrenderRates.forEach(item => {
+        const surrenderValue = plan.coverage * (item.rate / 100);
+        surrenderTableHtml += `<tr><td class="text-left">${item.year}년 경과</td><td class="text-right">${item.rate.toFixed(1)}%</td><td class="text-right">${formatNumber(surrenderValue)} 원</td></tr>`;
+    });
+    
+    container.innerHTML = `
+        <div class="consulting-topic topic-good">
+            <h3 class="good"><i class="fas fa-rocket"></i>CEO 보험 솔루션</h3>
+            <table class="proposal-table">
+                <tr><th colspan="2">기본 설계</th></tr>
+                <tr><td class="text-left">보험금</td><td class="text-right">${formatNumber(plan.coverage)} 원</td></tr>
+                <tr><td class="text-left">월 납입</td><td class="text-right highlight">${formatNumber(plan.monthlyPremium)} 원</td></tr>
+            </table>
+            <h4>기간별 환급금</h4>
+            <table class="proposal-table">
+                <tr><th>기간</th><th>환급률</th><th>환급금</th></tr>
+                ${surrenderTableHtml}
+            </table>
+        </div>`;
+}
+
+function generateConsultantSummary(inputs) {
+    const container = document.getElementById('consultant_summary');
+    const { risks, opportunities, solutions, insurancePlan, taxSavings, estimatedInheritanceTax } = analysisResult;
+    
+    const name = document.getElementById('consultant_name').value || '대표님';
+    const company = document.getElementById('company_name').value || '귀하의 기업';
+    
+    const riskArray = Array.from(risks);
+    const opportunityArray = Array.from(opportunities);
+    const riskCount = riskArray.length;
+    const riskText = riskArray.slice(0, 3).map(r => `<span class="summary-point">${r}</span>`).join(', ');
+    
+    // 📊 핵심 리스크 우선순위 선정
+    let criticalRisks = [];
+    if (riskArray.includes('흑자도산 위험')) criticalRisks.push('흑자도산 위험');
+    if (riskArray.includes('고액 가지급금')) criticalRisks.push('고액 가지급금');
+    if (riskArray.includes('명의신탁')) criticalRisks.push('명의신탁');
+    if (riskArray.includes('상속세 폭탄')) criticalRisks.push('상속세 폭탄');
+    if (riskArray.includes('낮은 이자보상배율')) criticalRisks.push('이자보상배율');
+    
+    // 📊 핵심 기회 우선순위
+    let topOpportunities = [];
+    if (opportunityArray.includes('경정청구')) topOpportunities.push('경정청구');
+    if (opportunityArray.includes('중소기업 특례')) topOpportunities.push('중소기업 특례');
+    if (opportunityArray.includes('증여 절세')) topOpportunities.push('증여 절세');
+    if (opportunityArray.includes('배당 전략')) topOpportunities.push('배당 전략');
+    
+    let summary = '';
+    let actionItems = '';
+    
+    // 시나리오 1: 심각한 위기 (치명적 리스크 3개 이상)
+    if (criticalRisks.length >= 3) {
+        summary = `${name} 대표님, ${company}의 현재 상황을 한 단어로 표현하면 <span class="summary-point" style="color:#e74c3c;">"빨간불"</span>입니다.
+
+</p><p>발견된 <strong style="color:#e74c3c;">${criticalRisks.length}개의 치명적 리스크</strong> - ${criticalRisks.map(r => `<span class="summary-point">${r}</span>`).join(', ')} - 는 각각 단독으로도 기업을 위협할 수 있는 수준입니다.
+
+</p><p>특히 ${criticalRisks[0]}은(는) <strong>즉시 해결하지 않으면 1년 내 심각한 경영 위기</strong>로 이어질 수 있습니다. ${estimatedInheritanceTax > 1000000000 ? `추정 상속세 ${formatNumber(estimatedInheritanceTax)}원은 가족의 미래를 위협하는 시한폭탄이며, ` : ''}${inputs.operating_cashflow < 0 ? '현금흐름 적자는 흑자도산의 전조 증상입니다.' : ''}
+
+</p><p>하지만 희망은 있습니다. 오늘 제시된 전략들을 <strong>72시간 내 실행</strong>하면 <span style="color:#27ae60;font-weight:700;">총 ${formatNumber(taxSavings)}원의 절세</span>와 함께 위기를 기회로 전환할 수 있습니다.`;
+
+        actionItems = `
+        <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+            <h3 style="color: white; margin: 0 0 1rem 0; border: none;"><i class="fas fa-fire"></i> 72시간 긴급 액션 플랜</h3>
+            <ol style="margin: 0; padding-left: 1.5rem; line-height: 2;">
+                ${criticalRisks.includes('명의신탁') ? '<li><strong>즉시:</strong> 세무사 긴급 미팅 (명의신탁 실제소유자 확인 신청)</li>' : ''}
+                ${criticalRisks.includes('흑자도산 위험') ? '<li><strong>24시간 내:</strong> CFO 소집 - 현금흐름 개선 비상회의</li>' : ''}
+                ${criticalRisks.includes('고액 가지급금') ? '<li><strong>1주일 내:</strong> 가지급금 ' + formatNumber(inputs.adv_payments * 0.3) + '원 자진 상환</li>' : ''}
+                ${criticalRisks.includes('낮은 이자보상배율') ? '<li><strong>1개월 내:</strong> 고금리 대출 저금리 대환 추진</li>' : ''}
+                ${insurancePlan ? '<li><strong>2주일 내:</strong> CEO 보험 3사 견적 (월 ' + formatNumber(insurancePlan.monthlyPremium) + '원)</li>' : ''}
+                <li><strong>1개월 내:</strong> 재무구조 개선 마스터플랜 수립</li>
+            </ol>
+        </div>`;
+    }
+    // 시나리오 2: 중대 리스크 + 큰 절세 기회
+    else if (riskCount >= 3 && taxSavings > 100000000) {
+        summary = `${name} 대표님, ${company}를 진단한 결과는 <span class="summary-point">"위기이자 기회"</span>입니다.
+
+</p><p>${riskCount}개의 리스크(${riskText})가 발견되었으나, 동시에 <strong style="color:#27ae60;">향후 10년간 ${formatNumber(taxSavings)}원을 절감</strong>할 수 있는 구체적인 기회도 함께 보입니다.
+
+</p><p>${topOpportunities.length > 0 ? `특히 ${topOpportunities.join(', ')} 분야에서 즉시 실행 가능한 절세 전략이 있으며, ` : ''}${insurancePlan ? `월 ${formatNumber(insurancePlan.monthlyPremium)}원의 CEO 보험 플랜으로 연 ${formatNumber(insurancePlan.taxSavings)}원을 즉시 절감하면서 ${insurancePlan.paymentPeriod}년 후 ${formatNumber(insurancePlan.coverage)}원의 재무 안전망을 구축할 수 있습니다.` : '이를 통해 재무 구조를 근본적으로 개선할 수 있습니다.'}
+
+</p><p>${inputs.short_debt > inputs.sales * 0.3 ? '단기차입금 과다와 ' : ''}${inputs.family_salary > inputs.op_profit * 0.3 ? '가족 급여 구조는 ' : ''}즉시 조정이 필요하지만, 이는 오히려 <strong>재무제표를 건강하게 만드는 전환점</strong>이 될 것입니다.`;
+
+        actionItems = `
+        <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+            <h3 style="color: white; margin: 0 0 1rem 0; border: none;"><i class="fas fa-rocket"></i> 이번 달 실행 로드맵</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <h4 style="color: #f1c40f; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🔥 리스크 제거</h4>
+                    <ul style="margin: 0; padding-left: 1rem;">
+                        ${riskArray.slice(0, 3).map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #2ecc71; margin: 0 0 0.5rem 0; font-size: 1.1rem;">💎 기회 포착</h4>
+                    <ul style="margin: 0; padding-left: 1rem;">
+                        ${topOpportunities.slice(0, 3).map(o => `<li>${o}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            <p style="margin: 1rem 0 0 0; font-size: 0.95rem; opacity: 0.9;">
+                <strong>목표:</strong> 3개월 내 재무제표 정상화 + 연 ${formatNumber(taxSavings / 10)}원 절세 구조 확립
+            </p>
+        </div>`;
+    }
+    // 시나리오 3: 소수 리스크 + 개선 기회
+    else if (riskCount > 0 && riskCount < 3) {
+        const specificAdvice = [];
+        if (inputs.ceo_share < 30) specificAdvice.push('CEO 지분율을 30% 이상으로 확보하여 경영권을 안정화');
+        if (inputs.dividend_3years === 0 && inputs.retained_earnings > 500000000) specificAdvice.push('이익잉여금 배당으로 법인세 vs 배당세 절세 효과');
+        if (inputs.gift_history === 0) specificAdvice.push('자녀 증여로 10년 주기 상속세 절감 전략');
+        
+        summary = `${name} 대표님, ${company}는 <span class="summary-point">전반적으로 안정적</span>이나 ${riskCount}개의 개선 포인트가 있습니다.
+
+</p><p>${riskText} ${riskCount === 1 ? '은' : '등은'} 지금 해결하면 비용도 적게 들고 효과도 큽니다. 반대로 방치하면 ${inputs.operating_cashflow < 0 ? '현금흐름 악화나 ' : ''}세무조사 시 치명적 약점이 될 수 있습니다.
+
+</p><p>${specificAdvice.length > 0 ? `구체적으로 ${specificAdvice[0]}하고, ${specificAdvice.length > 1 ? specificAdvice[1] + '를 검토하면' : ''} ` : ''}${taxSavings > 0 ? `<strong>${formatNumber(taxSavings)}원의 절세 효과</strong>를 얻을 수 있으니, 이는 ` : ''}그야말로 "발견된 보물"입니다.
+
+</p><p>특히 ${inputs.ceo_age}세 CEO 나이를 고려할 때, ${insurancePlan ? `월 ${formatNumber(insurancePlan.monthlyPremium)}원의 보험료로 ` : ''}지금이 ${inputs.successor === 'yes' ? '가업승계와 ' : ''}은퇴 준비를 시작할 적기입니다.`;
+
+        actionItems = `
+        <div style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+            <h3 style="color: white; margin: 0 0 1rem 0; border: none;"><i class="fas fa-check-circle"></i> 분기별 개선 플랜</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Q1</div>
+                    <div style="font-size: 0.9rem;">${riskArray[0] || '현황 유지'} 해결</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Q2</div>
+                    <div style="font-size: 0.9rem;">${topOpportunities[0] || insurancePlan ? 'CEO 보험 가입' : '절세 전략'} 실행</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Q3-4</div>
+                    <div style="font-size: 0.9rem;">선순환 구조 확립</div>
+                </div>
+            </div>
+        </div>`;
+    }
+    // 시나리오 4: 우수 기업
+    else {
+        summary = `${name} 대표님, 축하드립니다! ${company}는 <span class="summary-point" style="color:#27ae60;">재무적으로 매우 건강</span>합니다.
+
+</p><p>발견된 리스크가 ${riskCount}개에 불과하며, 이는 대표님의 <strong>탁월한 경영 능력</strong>을 증명합니다. ${inputs.operating_cashflow > 0 ? '양호한 현금흐름, ' : ''}${inputs.ceo_share >= 50 ? '안정적인 지배구조, ' : ''}${inputs.op_profit > 0 ? '건전한 수익성' : ''}이 이를 뒷받침합니다.
+
+</p><p>다만 <strong>"좋을 때가 미래를 준비할 때"</strong>라는 점을 강조하고 싶습니다. ${inputs.ceo_age}세는 ${insurancePlan ? `보험료가 저렴한 골든타임이며, 월 ${formatNumber(insurancePlan.monthlyPremium)}원으로 ${formatNumber(insurancePlan.coverage)}원의 안전망을 구축할 수 있습니다.` : '은퇴 준비를 시작할 적기입니다.'}
+
+</p><p>${inputs.successor === 'yes' ? '후계자가 있으니 ' : ''}지금부터 ${inputs.founding_year && (new Date().getFullYear() - inputs.founding_year) >= 10 ? '가업승계 공제(최대 600억), ' : ''}${inputs.gift_history === 0 ? '10년 주기 증여 전략, ' : ''}배우자·자녀 지분 이전을 체계적으로 진행하면 <strong>세대를 이어가는 장수 기업</strong>의 기반을 다질 수 있습니다.`;
+
+        actionItems = `
+        <div style="background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%); color: white; padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+            <h3 style="color: white; margin: 0 0 1rem 0; border: none;"><i class="fas fa-crown"></i> 프리미엄 최적화 전략</h3>
+            <div style="line-height: 2;">
+                <p style="margin: 0 0 1rem 0;"><strong>단기(1년):</strong> ${insurancePlan ? `CEO 보험 ${formatNumber(insurancePlan.coverage)}원 가입` : '재무 구조 최적화'}</p>
+                <p style="margin: 0 0 1rem 0;"><strong>중기(3~5년):</strong> ${inputs.successor === 'yes' ? '후계자 육성 + ' : ''}가족 지분 재배치 (증여세 최소화)</p>
+                <p style="margin: 0 0 1rem 0;"><strong>장기(10년):</strong> ${inputs.founding_year && (new Date().getFullYear() - inputs.founding_year) >= 10 ? '가업승계 공제 활용 + ' : ''}100세 기업 로드맵</p>
+            </div>
+            <p style="margin: 1.5rem 0 0 0; font-size: 0.95rem; opacity: 0.9; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 1rem;">
+                💡 <strong>Insight:</strong> 위기 때 대응하는 것보다, 안정적일 때 미래를 설계하는 것이 10배 효율적입니다.
+            </p>
+        </div>`;
+    }
+    
+    container.innerHTML = `
+        <h2 style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; padding-bottom: 0;">
+            <span><i class="fas fa-user-tie"></i>컨설턴트 최종 소견</span>
+            <button class="btn warning" id="premium-report-btn" style="font-size: 1rem; padding: 0.8rem 1.5rem; display: flex; align-items: center; justify-content: center;">
+                특급보고서
+            </button>
+        </h2>
+        <p>${summary}</p>
+        
+        ${actionItems}
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.3);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                <div>
+                    <h4 style="color: #f1c40f; margin: 0 0 1rem 0;"><i class="fas fa-exclamation-triangle"></i> 발견된 리스크 (${riskCount}개)</h4>
+                    ${riskCount > 0 ? `<ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">${riskArray.map(r => `<li>${r}</li>`).join('')}</ul>` : '<p style="color: rgba(255,255,255,0.7);">리스크가 발견되지 않았습니다.</p>'}
+                </div>
+                <div>
+                    <h4 style="color: #2ecc71; margin: 0 0 1rem 0;"><i class="fas fa-lightbulb"></i> 절세 기회 (${opportunityArray.length}개)</h4>
+                    ${opportunityArray.length > 0 ? `<ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">${opportunityArray.map(o => `<li>${o}</li>`).join('')}</ul>` : '<p style="color: rgba(255,255,255,0.7);">추가 기회를 탐색중입니다.</p>'}
+                </div>
+            </div>
+            
+            ${taxSavings > 0 ? `
+            <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem;">💰 총 예상 절세액</div>
+                <div style="font-size: 2.5rem; font-weight: 700; color: #f1c40f;">${formatNumber(taxSavings)}원</div>
+                <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 0.5rem;">향후 10년 누적 효과</div>
+            </div>
+            ` : ''}
+            
+            <p style="font-size: 1rem; opacity: 0.9; font-style: italic; margin-top: 2rem; text-align: center;">
+                "기업 컨설팅의 핵심은 문제를 발견하는 것이 아니라, 그 문제를 <strong>돈으로 환산</strong>하고, 해결책을 <strong>구체적인 액션 플랜</strong>으로 제시하는 것입니다."
+            </p>
+        </div>
+    `;
+    
+    // 특급보고서 버튼 이벤트 리스너
+    const premiumBtn = document.getElementById('premium-report-btn');
+    if (premiumBtn) {
+        premiumBtn.addEventListener('click', function() {
+            const reportData = {
+                company: document.getElementById('company_name').value || '미입력',
+                ceo: document.getElementById('consultant_name').value || '미입력',
+                risks: riskArray,
+                opportunities: opportunityArray,
+                taxSavings: taxSavings,
+                inputs: inputs
+            };
+            alert(`특급보고서 기능은 AI 연동 후 제공될 예정입니다.\n\n현재 분석 데이터:\n• 기업명: ${reportData.company}\n• CEO: ${reportData.ceo}\n• 리스크: ${riskCount}개\n• 기회: ${opportunityArray.length}개\n• 예상 절세: ${formatNumber(taxSavings)}원`);
+            console.log('특급보고서 데이터:', reportData);
+        });
+    }
+}document.addEventListener('DOMContentLoaded', function() {
+    const mobileTabs = document.querySelectorAll('.mobile-tabs button');
+    const inputSection = document.querySelector('.input-section');
+    const analysisSection = document.querySelector('.analysis-section');
+    
+    mobileTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            mobileTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const tabType = this.getAttribute('data-tab');
+            if (tabType === 'input') {
+                inputSection.classList.add('active');
+                analysisSection.classList.remove('active');
+            } else {
+                inputSection.classList.remove('active');
+                analysisSection.classList.add('active');
+            }
+        });
+    });
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 's':
+                e.preventDefault();
+                saveToFile();
+                break;
+            case 'o':
+                e.preventDefault();
+                loadFromFile();
+                break;
+            case 'h':
+                e.preventDefault();
+                const keyboardHelp = document.getElementById('keyboard-help');
+                if (keyboardHelp) {
+                    keyboardHelp.classList.toggle('show');
+                }
+                break;
+        }
+    }
+});
+
+window.onload = function() {
+    function isMobile() {
+        return /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+            && window.innerWidth < 768;
+    }
+    
+    if (isMobile()) {
+        const overlay = document.getElementById('mobile-warning-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            const closeBtn = document.getElementById('close-mobile-warning-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    overlay.style.display = 'none';
+                });
+            }
+        }
+    }
+    
+    const saveBtn = document.getElementById('save-btn');
+    const loadBtn = document.getElementById('load-btn');
+    const newBtn = document.getElementById('new-btn');
+    
+    if (saveBtn) saveBtn.addEventListener('click', saveToFile);
+    if (loadBtn) loadBtn.addEventListener('click', loadFromFile);
+    if (newBtn) newBtn.addEventListener('click', newDocument);
+    
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        loadFormData(data);
+                        showSaveStatus('파일에서 불러옴', 'success');
+                    } catch (error) {
+                        alert('파일을 읽는 중 오류가 발생했습니다.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+    }
+    
+    document.querySelectorAll('input[inputmode="numeric"]').forEach(element => {
+        if (element.value) {
+            element.value = formatNumber(unformat(element.value));
+        }
+        
+        element.addEventListener('input', function(e) {
+            const input = e.target;
+            const cursorPos = input.selectionStart;
+            const oldValue = input.value;
+            
+            const numbers = oldValue.replace(/[^\d]/g, '');
+            
+            if (numbers === '') {
+                input.value = '';
+                debouncedUpdate();
+                autoSave();
+                return;
+            }
+            
+            const formatted = formatNumber(numbers);
+            
+            if (oldValue !== formatted) {
+                input.value = formatted;
+                
+                const diff = formatted.length - oldValue.length;
+                const newPos = Math.max(0, Math.min(formatted.length, cursorPos + diff));
+                
+                setTimeout(() => {
+                    input.setSelectionRange(newPos, newPos);
+                }, 0);
+            }
+            
+            debouncedUpdate();
+            autoSave();
+        });
+        
+        element.addEventListener('blur', function() {
+            if (this.value) {
+                this.value = formatNumber(unformat(this.value));
+            }
+        });
+    });
+
+    document.querySelectorAll('input:not([inputmode="numeric"]):not([readonly]), select, textarea').forEach(element => {
+        element.addEventListener('input', function() {
+            updateIdentityDisplay();
+            updateProgress();
+            autoSave();
+        });
+        
+        element.addEventListener('change', function() {
+            updateIdentityDisplay();
+            updateProgress();
+            debouncedUpdate();
+            autoSave();
+        });
+    });
+
+    const ceoBirthInput = document.getElementById('ceo_birth');
+    if (ceoBirthInput) {
+        ceoBirthInput.addEventListener('change', function() {
+            debouncedUpdate();
+        });
+    }
+    
+    const valuationDateInput = document.getElementById('valuation_date');
+    if (valuationDateInput && !valuationDateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        valuationDateInput.value = today;
+    }
+    
+    for (let i = 0; i < 3; i++) {
+        addChild();
+    }
+    addShareholder();
+    
+    const addChildBtn = document.getElementById('add-child-btn');
+    const addShareholderBtn = document.getElementById('add-shareholder-btn');
+    
+    if (addChildBtn) addChildBtn.addEventListener('click', addChild);
+    if (addShareholderBtn) addShareholderBtn.addEventListener('click', addShareholder);
+    
+    if (savedData) {
+        try {
+            loadFormData(savedData);
+            showSaveStatus('이전 작업 복원됨', 'success');
+        } catch (error) {
+            console.error('저장된 데이터 불러오기 오류:', error);
+        }
+    } else {
+        updateIdentityDisplay();
+        updateProgress();
+    }
+    
+    setTimeout(() => {
+        try {
+            if (typeof updateAnalysis === 'function') {
+                updateAnalysis();
+            }
+        } catch (e) {
+            console.error('초기 분석 실행 오류:', e);
+        }
+    }, 200);
+ 
+    setTimeout(() => {
+        const keyboardHelp = document.getElementById('keyboard-help');
+        if (keyboardHelp) {
+            keyboardHelp.classList.add('show');
+            setTimeout(() => {
+                keyboardHelp.classList.remove('show');
+            }, 3000);
+        }
+    }, 1000);
+};
+// 자본환원율 배수 계산
+window.updateMultiplier = function() {
+    const capitalRateInput = document.getElementById('capital_return_rate');
+    const multiplierDisplay = document.getElementById('multiplier_display');
+    
+    if (!capitalRateInput || !multiplierDisplay) return;
+    
+    const rate = parseFloat(capitalRateInput.value) || 10;
+    const multiplier = (100 / rate).toFixed(2);
+    multiplierDisplay.value = multiplier;
+};
+
+// 페이지 로드 시 초기값 설정
+setTimeout(function() {
+    if (typeof updateMultiplier === 'function') {
+        updateMultiplier();
+    }
+}, 100);
+</script>
+</body>
+</html>
