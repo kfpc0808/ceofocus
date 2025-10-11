@@ -3139,6 +3139,42 @@ setTimeout(function() {
         updateMultiplier();
     }
 }, 100);
+
+// 자본금/액면가 변경 시 주식수 자동 계산
+const capitalInput = document.getElementById('capital');
+const parValueInput = document.getElementById('par_value');
+const totalSharesInput = document.getElementById('total_shares');
+
+function updateTotalShares() {
+    const capital = parseFloat(capitalInput?.value.replace(/,/g, '')) || 0;
+    const parValue = parseFloat(parValueInput?.value.replace(/,/g, '')) || 0;
+    
+    if (capital > 0 && parValue > 0) {
+        const shares = Math.round(capital / parValue);
+        if (totalSharesInput) {
+            totalSharesInput.value = formatNumber(shares);
+            totalSharesInput.style.background = '#fff9e6';
+            setTimeout(() => {
+                totalSharesInput.style.background = '#f0f0f0';
+            }, 1000);
+        }
+    }
+    
+    if (typeof debouncedUpdate === 'function') {
+        debouncedUpdate();
+    }
+}
+
+if (capitalInput) {
+    capitalInput.addEventListener('input', updateTotalShares);
+    capitalInput.addEventListener('change', updateTotalShares);
+}
+
+if (parValueInput) {
+    parValueInput.addEventListener('input', updateTotalShares);
+    parValueInput.addEventListener('change', updateTotalShares);
+}
+
 </script>
 </body>
 </html>
