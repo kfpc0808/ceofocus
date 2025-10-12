@@ -217,80 +217,54 @@
                 // 관리자 계정 체크
                 if (userId === 'admin') {
                     try {
-                        // Firestore에서 관리자 정보 가져오기
-                        const adminSnapshot = await db.collection('users')
-                            .where('userId', '==', 'admin')
-                            .where('role', '==', 'admin')
-                            .get();
+                        const email = 'admin@system.local';
                         
-                        if (!adminSnapshot.empty) {
-                            const adminData = adminSnapshot.docs[0].data();
-                            const adminPassword = adminData.phone; // Firestore에 저장된 실제 비밀번호
+                        // 1. 먼저 기본 비밀번호로 시도
+                        try {
+                            await auth.signInWithEmailAndPassword(email, '01091198211');
+                            showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                            setTimeout(() => {
+                                window.location.href = 'admin-dashboard.html';
+                            }, 1000);
+                            return;
+                        } catch (error1) {
+                            console.log('기본 비밀번호 실패, 입력한 비밀번호로 시도:', error1.code);
+                        }
+                        
+                        // 2. 입력한 비밀번호로 시도
+                        try {
+                            await auth.signInWithEmailAndPassword(email, phone);
+                            showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                            setTimeout(() => {
+                                window.location.href = 'admin-dashboard.html';
+                            }, 1000);
+                            return;
+                        } catch (error2) {
+                            console.log('입력한 비밀번호 실패, 관리자 계정 생성 시도:', error2.code);
+                        }
+                        
+                        // 3. 관리자 계정이 없으면 생성
+                        try {
+                            const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
+                            const user = userCredential.user;
                             
-                            // 입력한 비밀번호와 Firestore의 비밀번호 비교
-                            if (phone !== adminPassword) {
-                                showMessage('비밀번호가 일치하지 않습니다.', 'error');
-                                return;
-                            }
+                            await db.collection('users').doc(user.uid).set({
+                                userId: 'admin',
+                                name: '관리자',
+                                phone: phone,
+                                role: 'admin',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
                             
-                            // Firebase Authentication 로그인
-                            const email = 'admin@system.local';
-                            try {
-                                await auth.signInWithEmailAndPassword(email, phone);
-                                
-                                showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
-                                setTimeout(() => {
-                                    window.location.href = 'admin-dashboard.html';
-                                }, 1000);
-                                return;
-                            } catch (authError) {
-                                // Firebase Auth 비밀번호가 다른 경우 - 업데이트 필요
-                                showMessage('계정 정보를 동기화하는 중입니다...', 'warning');
-                                
-                                // 기존 방식으로 시도 (초기 비밀번호)
-                                try {
-                                    await auth.signInWithEmailAndPassword(email, '01091198211');
-                                    
-                                    // 로그인 성공 후 비밀번호를 Firestore 값으로 업데이트
-                                    const user = auth.currentUser;
-                                    await user.updatePassword(adminPassword);
-                                    
-                                    showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
-                                    setTimeout(() => {
-                                        window.location.href = 'admin-dashboard.html';
-                                    }, 1000);
-                                    return;
-                                } catch (fallbackError) {
-                                    console.error('로그인 실패:', fallbackError);
-                                    showMessage('비밀번호가 일치하지 않습니다.', 'error');
-                                    return;
-                                }
-                            }
-                        } else {
-                            // 관리자 계정이 없으면 생성 (초기 설정)
-                            try {
-                                const email = 'admin@system.local';
-                                const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
-                                const user = userCredential.user;
-                                
-                                await db.collection('users').doc(user.uid).set({
-                                    userId: 'admin',
-                                    name: '관리자',
-                                    phone: phone,
-                                    role: 'admin',
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                                
-                                showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
-                                setTimeout(() => {
-                                    window.location.href = 'admin-dashboard.html';
-                                }, 1000);
-                                return;
-                            } catch (createError) {
-                                console.error('관리자 계정 생성 오류:', createError);
-                                showMessage('로그인에 실패했습니다.', 'error');
-                                return;
-                            }
+                            showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                            setTimeout(() => {
+                                window.location.href = 'admin-dashboard.html';
+                            }, 1000);
+                            return;
+                        } catch (error3) {
+                            console.error('관리자 계정 생성 실패:', error3);
+                            showMessage('관리자 로그인에 실패했습니다.\n비밀번호를 확인하세요.', 'error');
+                            return;
                         }
                     } catch (error) {
                         console.error('관리자 로그인 오류:', error);
