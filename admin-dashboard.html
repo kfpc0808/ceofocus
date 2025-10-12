@@ -414,27 +414,47 @@
 
         let allUsers = [];
 
+        let retryCount = 0;
+        const maxRetries = 3;
+
         // 관리자 권한 확인
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
+                console.log('로그인된 사용자 없음');
                 window.location.href = 'login.html';
                 return;
             }
 
+            console.log('로그인된 사용자:', user.uid);
+            console.log('이메일:', user.email);
+
+            // admin 계정이면 바로 통과 (추가 보안)
+            if (user.email === 'admin@system.local') {
+                console.log('관리자 이메일 확인 완료');
+                await ensureAdminAccount(user.uid);
+                loadUsers();
+                return;
+            }
+
             try {
+                // Firestore 연결 대기
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 
                 if (!userDoc.exists) {
-                    // 관리자 문서가 없으면 생성
-                    await db.collection('users').doc(user.uid).set({
-                        userId: 'admin',
-                        name: '관리자',
-                        phone: '01091198211',
-                        role: 'admin',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    console.log('관리자 계정 생성 완료');
-                    loadUsers();
+                    console.log('사용자 문서 없음');
+                    
+                    if (user.email === 'admin@system.local') {
+                        console.log('관리자 계정 생성 시도');
+                        await ensureAdminAccount(user.uid);
+                        loadUsers();
+                        return;
+                    }
+                    
+                    alert('사용자 정보를 찾을 수 없습니다.');
+                    await auth.signOut();
+                    window.location.href = 'login.html';
                     return;
                 }
                 
@@ -442,19 +462,55 @@
                 console.log('사용자 데이터:', userData);
 
                 if (!userData || userData.role !== 'admin') {
+                    console.log('관리자 권한 없음:', userData);
                     alert('관리자 권한이 필요합니다.');
                     await auth.signOut();
                     window.location.href = 'login.html';
                     return;
                 }
 
+                console.log('관리자 권한 확인 완료');
                 loadUsers();
             } catch (error) {
                 console.error('권한 확인 오류:', error);
-                alert('권한 확인 중 오류가 발생했습니다.');
-                window.location.href = 'login.html';
+                
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    console.log(`재시도 중... (${retryCount}/${maxRetries})`);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    alert('권한 확인에 실패했습니다. 다시 로그인해주세요.');
+                    await auth.signOut();
+                    window.location.href = 'login.html';
+                }
             }
         });
+
+        // 관리자 계정 확실하게 생성
+        async function ensureAdminAccount(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                
+                if (!userDoc.exists) {
+                    console.log('관리자 계정 생성 중...');
+                    await db.collection('users').doc(uid).set({
+                        userId: 'admin',
+                        name: '관리자',
+                        phone: '01091198211',
+                        role: 'admin',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('관리자 계정 생성 완료');
+                    
+                    // 생성 확인
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            } catch (error) {
+                console.error('관리자 계정 생성 오류:', error);
+            }
+        }
 
         function showMessage(text, type) {
             const messageDiv = document.getElementById('message');
