@@ -230,6 +230,26 @@
         .account-item strong {
             color: #0c2c54;
         }
+        .pagination-btn {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .pagination-btn:hover {
+            background: #f0f0f0;
+        }
+        .pagination-btn.active {
+            background: #0c2c54;
+            color: white;
+            border-color: #0c2c54;
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -454,16 +474,30 @@
             
             <!-- 등록된 사전 회원 목록 -->
             <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                     <h3 style="font-size: 1.1rem; margin: 0;">등록된 사전 회원 목록</h3>
-                    <button type="button" class="btn btn-secondary" onclick="switchToUserList()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
-                        👥 전체 회원 목록으로
-                    </button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <select id="preRegPageSize" style="padding: 0.5rem; border: 2px solid #dee2e6; border-radius: 8px; font-size: 0.9rem;">
+                            <option value="10">10개씩</option>
+                            <option value="20">20개씩</option>
+                            <option value="50">50개씩</option>
+                            <option value="100">100개씩</option>
+                        </select>
+                        <button type="button" class="btn btn-primary" onclick="moveSelectedToUserList()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            선택 회원 리스트로
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="switchToUserList()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            👥 전체 회원 목록으로
+                        </button>
+                    </div>
                 </div>
-                <div style="overflow-x: auto; max-height: 300px;">
+                <div style="overflow-x: auto; max-height: 400px;">
                     <table style="font-size: 0.9rem;">
                         <thead>
                             <tr>
+                                <th style="width: 50px;">
+                                    <input type="checkbox" id="selectAllPreReg" onclick="toggleAllPreReg(this)">
+                                </th>
                                 <th>성명</th>
                                 <th>아이디</th>
                                 <th>전화번호</th>
@@ -474,10 +508,14 @@
                         </thead>
                         <tbody id="preRegTableBody">
                             <tr>
-                                <td colspan="6" class="no-data">로딩 중...</td>
+                                <td colspan="7" class="no-data">로딩 중...</td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- 페이지네이션 -->
+                <div id="preRegPagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
                 </div>
             </div>
             
