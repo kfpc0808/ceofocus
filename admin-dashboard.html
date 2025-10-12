@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -194,6 +193,10 @@
             margin-bottom: 1.5rem;
             color: #0c2c54;
         }
+        .modal-content h3 {
+            color: #0c2c54;
+            font-size: 1.1rem;
+        }
         .form-group {
             margin-bottom: 1rem;
         }
@@ -215,6 +218,16 @@
             padding: 3rem;
             color: #6c757d;
         }
+        .account-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-family: monospace;
+        }
+        .account-item strong {
+            color: #0c2c54;
+        }
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -233,6 +246,7 @@
     <div class="header">
         <h1>🛠️ 관리자 대시보드</h1>
         <div class="header-buttons">
+            <button class="btn btn-secondary" onclick="openTestAccountModal()">테스트 계정 생성</button>
             <button class="btn btn-secondary" onclick="location.href='index.html'">메인 페이지</button>
             <button class="btn btn-primary" onclick="logout()">로그아웃</button>
         </div>
@@ -340,6 +354,44 @@
         </div>
     </div>
 
+    <!-- 테스트 계정 생성 모달 -->
+    <div id="testAccountModal" class="modal">
+        <div class="modal-content">
+            <h2>🎁 테스트 계정 생성</h2>
+            
+            <div id="testMessage" class="message"></div>
+            
+            <form id="testAccountForm">
+                <div class="form-group">
+                    <label>생성 개수</label>
+                    <input type="number" id="accountCount" value="10" min="1" max="50" required>
+                    <small>최대 50개까지 생성 가능</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>유효 기간</label>
+                    <select id="validPeriod" required>
+                        <option value="1">1일</option>
+                        <option value="3">3일</option>
+                        <option value="7">7일</option>
+                        <option value="30">30일</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">계정 생성</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeTestAccountModal()" style="flex: 1;">취소</button>
+                </div>
+            </form>
+            
+            <div id="generatedAccounts" style="display: none; margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem;">생성된 계정 목록</h3>
+                <div id="accountList" style="max-height: 300px; overflow-y: auto;"></div>
+                <button type="button" class="btn btn-primary" onclick="copyAllAccounts()" style="margin-top: 1rem;">전체 복사</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -369,16 +421,39 @@
                 return;
             }
 
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            const userData = userDoc.data();
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // 관리자 문서가 없으면 생성
+                    await db.collection('users').doc(user.uid).set({
+                        userId: 'admin',
+                        name: '관리자',
+                        phone: '01091198211',
+                        role: 'admin',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('관리자 계정 생성 완료');
+                    loadUsers();
+                    return;
+                }
+                
+                const userData = userDoc.data();
+                console.log('사용자 데이터:', userData);
 
-            if (!userData || userData.role !== 'admin') {
-                alert('관리자 권한이 필요합니다.');
+                if (!userData || userData.role !== 'admin') {
+                    alert('관리자 권한이 필요합니다.');
+                    await auth.signOut();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                loadUsers();
+            } catch (error) {
+                console.error('권한 확인 오류:', error);
+                alert('권한 확인 중 오류가 발생했습니다.');
                 window.location.href = 'login.html';
-                return;
             }
-
-            loadUsers();
         });
 
         function showMessage(text, type) {
@@ -593,10 +668,131 @@
 
         // 모달 외부 클릭시 닫기
         window.onclick = function(event) {
-            const modal = document.getElementById('editModal');
-            if (event.target === modal) {
+            const editModal = document.getElementById('editModal');
+            const testModal = document.getElementById('testAccountModal');
+            if (event.target === editModal) {
                 closeEditModal();
             }
+            if (event.target === testModal) {
+                closeTestAccountModal();
+            }
+        }
+
+        // 테스트 계정 생성 모달
+        function openTestAccountModal() {
+            document.getElementById('testAccountModal').style.display = 'flex';
+            document.getElementById('generatedAccounts').style.display = 'none';
+            document.getElementById('testMessage').style.display = 'none';
+        }
+
+        function closeTestAccountModal() {
+            document.getElementById('testAccountModal').style.display = 'none';
+        }
+
+        function showTestMessage(text, type) {
+            const messageDiv = document.getElementById('testMessage');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+
+        // 랜덤 문자열 생성
+        function generateRandomString(length) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // 랜덤 전화번호 생성
+        function generateRandomPhone() {
+            const prefix = '010';
+            const middle = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            const last = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            return prefix + middle + last;
+        }
+
+        let generatedAccountsData = [];
+
+        // 테스트 계정 생성
+        document.getElementById('testAccountForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const count = parseInt(document.getElementById('accountCount').value);
+            const days = parseInt(document.getElementById('validPeriod').value);
+
+            showTestMessage('계정 생성 중...', 'success');
+
+            try {
+                generatedAccountsData = [];
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + days);
+
+                for (let i = 0; i < count; i++) {
+                    const userId = 'TEST' + generateRandomString(6);
+                    const phone = generateRandomPhone();
+                    const email = `${userId}@system.local`;
+
+                    // Firebase Authentication 계정 생성
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
+                    const user = userCredential.user;
+
+                    // Firestore에 사용자 정보 저장
+                    await db.collection('users').doc(user.uid).set({
+                        userId: userId,
+                        phone: phone,
+                        name: `테스트${i + 1}`,
+                        memberType: 'test',
+                        isTestAccount: true,
+                        expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    generatedAccountsData.push({
+                        number: i + 1,
+                        userId: userId,
+                        phone: phone
+                    });
+                }
+
+                showTestMessage(`${count}개 계정 생성 완료!`, 'success');
+                displayGeneratedAccounts();
+                loadUsers(); // 회원 목록 새로고침
+
+            } catch (error) {
+                console.error('계정 생성 오류:', error);
+                showTestMessage('계정 생성 중 오류가 발생했습니다: ' + error.message, 'error');
+            }
+        });
+
+        function displayGeneratedAccounts() {
+            const accountList = document.getElementById('accountList');
+            const generatedDiv = document.getElementById('generatedAccounts');
+
+            accountList.innerHTML = generatedAccountsData.map(account => `
+                <div class="account-item">
+                    <strong>계정 ${account.number}</strong><br>
+                    아이디: ${account.userId}<br>
+                    비밀번호: ${account.phone}
+                </div>
+            `).join('');
+
+            generatedDiv.style.display = 'block';
+        }
+
+        function copyAllAccounts() {
+            const text = generatedAccountsData.map(account => 
+                `계정 ${account.number}\n아이디: ${account.userId}\n비밀번호: ${account.phone}`
+            ).join('\n\n');
+
+            navigator.clipboard.writeText(text).then(() => {
+                showTestMessage('전체 계정 정보가 클립보드에 복사되었습니다!', 'success');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                showTestMessage('복사에 실패했습니다.', 'error');
+            });
         }
     </script>
 </body>
