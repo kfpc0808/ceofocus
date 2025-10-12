@@ -246,6 +246,7 @@
     <div class="header">
         <h1>🛠️ 관리자 대시보드</h1>
         <div class="header-buttons">
+            <button class="btn btn-secondary" onclick="openPreRegisterModal()">사전 등록 관리</button>
             <button class="btn btn-secondary" onclick="openTestAccountModal()">테스트 계정 생성</button>
             <button class="btn btn-secondary" onclick="location.href='index.html'">메인 페이지</button>
             <button class="btn btn-primary" onclick="logout()">로그아웃</button>
@@ -389,6 +390,88 @@
                 <div id="accountList" style="max-height: 300px; overflow-y: auto;"></div>
                 <button type="button" class="btn btn-primary" onclick="copyAllAccounts()" style="margin-top: 1rem;">전체 복사</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 사전 등록 회원 관리 모달 -->
+    <div id="preRegisterModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <h2>👥 사전 등록 회원 관리</h2>
+            
+            <div id="preRegMessage" class="message"></div>
+            
+            <!-- 단일 등록 -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">단일 등록</h3>
+                <form id="singlePreRegForm">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div class="form-group">
+                            <label>성명</label>
+                            <input type="text" id="pre_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>아이디</label>
+                            <input type="text" id="pre_userId" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>전화번호</label>
+                            <input type="tel" id="pre_phone" placeholder="01012345678" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>회원 유형</label>
+                            <select id="pre_memberType" required>
+                                <option value="">선택</option>
+                                <option value="branch">지사장</option>
+                                <option value="inner">이너회원</option>
+                                <option value="consultant">컨홈회원</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">등록</button>
+                </form>
+            </div>
+            
+            <!-- 엑셀/CSV 업로드 -->
+            <div style="background: #e7f3ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">📄 엑셀/CSV 일괄 등록</h3>
+                <p style="font-size: 0.9rem; color: #6c757d; margin-bottom: 1rem;">
+                    형식: 성명, 아이디, 전화번호, 회원유형(branch/inner/consultant)
+                </p>
+                <textarea id="bulkInput" rows="5" style="width: 100%; padding: 0.75rem; border: 2px solid #dee2e6; border-radius: 8px; font-family: monospace;" placeholder="홍길동,hong123,01012345678,branch
+김철수,kim456,01098765432,inner
+이영희,lee789,01055556666,consultant"></textarea>
+                <button type="button" class="btn btn-primary" onclick="bulkPreRegister()" style="margin-top: 1rem;">일괄 등록</button>
+            </div>
+            
+            <!-- 등록된 사전 회원 목록 -->
+            <div>
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">등록된 사전 회원 목록</h3>
+                <div style="overflow-x: auto; max-height: 300px;">
+                    <table style="font-size: 0.9rem;">
+                        <thead>
+                            <tr>
+                                <th>성명</th>
+                                <th>아이디</th>
+                                <th>전화번호</th>
+                                <th>유형</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preRegTableBody">
+                            <tr>
+                                <td colspan="6" class="no-data">로딩 중...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <button type="button" class="btn btn-secondary" onclick="closePreRegisterModal()" style="margin-top: 1.5rem;">닫기</button>
         </div>
     </div>
 
