@@ -502,29 +502,12 @@
                         return;
                     }
                     
-                    // 이미 가입이 완료된 회원인지 확인
-                    // movedFromPreReg가 true이고 createdAt이 있으면 가입 완료
-                    if (foundUser.movedFromPreReg && foundUser.createdAt) {
+                    // 회원가입 완료 여부 확인: email 필드가 있으면 가입 완료
+                    if (foundUser.email && foundUser.email.trim() !== '') {
                         statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다. 로그인 페이지에서 로그인하세요.';
                         statusDiv.className = 'id-status error';
                         document.getElementById('verifiedInfo').classList.add('hidden');
                         return;
-                    }
-                    
-                    // Firebase Auth에 이미 등록되어 있는지 확인
-                    try {
-                        const authEmail = `${foundUser.userId}@system.local`;
-                        const signInMethods = await auth.fetchSignInMethodsForEmail(authEmail);
-                        
-                        if (signInMethods.length > 0) {
-                            statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다. 로그인 페이지에서 로그인하세요.';
-                            statusDiv.className = 'id-status error';
-                            document.getElementById('verifiedInfo').classList.add('hidden');
-                            return;
-                        }
-                    } catch (authCheckError) {
-                        // fetchSignInMethodsForEmail 오류는 무시 (계정이 없다는 의미)
-                        console.log('Auth 확인:', authCheckError.code);
                     }
                     
                     // 인증 성공
