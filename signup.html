@@ -470,24 +470,40 @@
                     statusDiv.textContent = '확인 중...';
                     statusDiv.className = 'id-status';
                     
-                    // users 컬렉션에서 해당 유형의 회원 조회
-                    const snapshot = await db.collection('users')
-                        .where('name', '==', name)
+                    // 먼저 userId로만 조회
+                    const userIdSnapshot = await db.collection('users')
                         .where('userId', '==', userId)
-                        .where('memberType', '==', selectedMemberType)
                         .get();
                     
-                    if (snapshot.empty) {
-                        statusDiv.textContent = '❌ 등록된 회원 정보가 없습니다. 성명과 아이디를 확인해주세요.';
+                    if (userIdSnapshot.empty) {
+                        statusDiv.textContent = '❌ 등록된 아이디가 없습니다. 관리자에게 문의하세요.';
                         statusDiv.className = 'id-status error';
                         document.getElementById('verifiedInfo').classList.add('hidden');
                         return;
                     }
                     
-                    const userData = snapshot.docs[0].data();
+                    // userId로 찾은 회원 확인
+                    let foundUser = null;
+                    let foundDocId = null;
+                    
+                    userIdSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        // 성명과 회원유형이 일치하는지 확인
+                        if (data.name === name && data.memberType === selectedMemberType) {
+                            foundUser = data;
+                            foundDocId = doc.id;
+                        }
+                    });
+                    
+                    if (!foundUser) {
+                        statusDiv.textContent = '❌ 성명 또는 회원유형이 일치하지 않습니다.';
+                        statusDiv.className = 'id-status error';
+                        document.getElementById('verifiedInfo').classList.add('hidden');
+                        return;
+                    }
                     
                     // 이미 가입이 완료된 회원인지 확인 (createdAt이 있으면 가입 완료)
-                    if (userData.createdAt) {
+                    if (foundUser.createdAt) {
                         statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다. 로그인 페이지에서 로그인하세요.';
                         statusDiv.className = 'id-status error';
                         document.getElementById('verifiedInfo').classList.add('hidden');
@@ -496,25 +512,25 @@
                     
                     // 인증 성공
                     preRegData = {
-                        userId: userData.userId,
-                        name: userData.name,
-                        phone: userData.phone,
-                        memberType: userData.memberType,
-                        docId: snapshot.docs[0].id
+                        userId: foundUser.userId,
+                        name: foundUser.name,
+                        phone: foundUser.phone,
+                        memberType: foundUser.memberType,
+                        docId: foundDocId
                     };
                     
                     statusDiv.textContent = '✅ 인증 성공! 추가 정보를 입력해주세요.';
                     statusDiv.className = 'id-status success';
                     
                     // 자동 채우기
-                    document.getElementById('verified_phone').value = userData.phone;
+                    document.getElementById('verified_phone').value = foundUser.phone;
                     
                     const memberTypeText = {
                         'branch': '지사장',
                         'inner': '이너회원',
                         'consultant': '컨홈회원'
                     };
-                    document.getElementById('verified_type').value = memberTypeText[userData.memberType] || userData.memberType;
+                    document.getElementById('verified_type').value = memberTypeText[foundUser.memberType] || foundUser.memberType;
                     
                     // 추가 정보 입력란 표시
                     document.getElementById('verifiedInfo').classList.remove('hidden');
@@ -525,7 +541,16 @@
                     
                 } catch (error) {
                     console.error('확인 오류:', error);
-                    statusDiv.textContent = '❌ 확인 중 오류가 발생했습니다.';
+                    console.error('오류 상세:', error.message);
+                    
+                    let errorMsg = '❌ 확인 중 오류가 발생했습니다.';
+                    if (error.code === 'permission-denied') {
+                        errorMsg = '❌ 데이터베이스 권한이 없습니다. 관리자에게 문의하세요.';
+                    } else if (error.message.includes('index')) {
+                        errorMsg = '❌ 데이터베이스 인덱스 설정이 필요합니다.';
+                    }
+                    
+                    statusDiv.textContent = errorMsg;
                     statusDiv.className = 'id-status error';
                 }
             }
