@@ -309,23 +309,24 @@
         
         <form id="preRegisteredForm" class="hidden">
             <div class="form-group">
+                <label>성명</label>
+                <input type="text" id="pre_name" placeholder="성명 입력" required>
+                <small>관리자가 등록한 성명을 정확히 입력하세요</small>
+            </div>
+            
+            <div class="form-group">
                 <label>아이디 (ID)</label>
                 <div class="id-check-container">
-                    <input type="text" id="pre_userId" placeholder="사전 등록된 아이디 입력" required>
+                    <input type="text" id="pre_userId" placeholder="영문소문자 또는 영문소문자+숫자" required>
                     <button type="button" class="btn-check" onclick="verifyPreRegistered()">확인</button>
                 </div>
-                <small>관리자가 등록한 아이디를 입력하세요</small>
+                <small>영문 소문자만 또는 영문 소문자+숫자 조합 (4~12자)</small>
                 <div id="preIdStatus" class="id-status"></div>
             </div>
             
             <div id="verifiedInfo" class="hidden">
                 <div class="form-group">
-                    <label>성명</label>
-                    <input type="text" id="verified_name" disabled style="background: #f0f0f0;">
-                </div>
-                
-                <div class="form-group">
-                    <label>전화번호 (비밀번호)</label>
+                    <label>전화번호</label>
                     <input type="tel" id="verified_phone" disabled style="background: #f0f0f0;">
                     <small>로그인 시 비밀번호로 사용됩니다</small>
                 </div>
@@ -370,10 +371,10 @@
                         <option value="">선택하세요</option>
                         <option value="서울">서울</option>
                         <option value="인천">인천</option>
-                        <option value="대전">대전</option>
-                        <option value="광주">광주</option>
                         <option value="대구">대구</option>
                         <option value="부산">부산</option>
+                        <option value="광주">광주</option>
+                        <option value="대전">대전</option>
                         <option value="울산">울산</option>
                         <option value="경기">경기</option>
                         <option value="강원">강원</option>
@@ -401,7 +402,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Firebase 스크립트 로드 완료 대기
         window.addEventListener('load', function() {
             if (typeof firebase === 'undefined') {
                 alert('Firebase 로드에 실패했습니다. 페이지를 새로고침해주세요.');
@@ -428,145 +428,159 @@
             let checkedUserId = '';
             let preRegData = null;
         
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-            window.scrollTo(0, 0);
-        }
+            function showMessage(text, type) {
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
+                window.scrollTo(0, 0);
+            }
         
-        // 사전 등록 회원 확인 (수정됨)
-        async function verifyPreRegistered() {
-            const userId = document.getElementById('pre_userId').value.trim();
-            const statusDiv = document.getElementById('preIdStatus');
-            
-            if (!userId) {
-                statusDiv.textContent = '❌ 아이디를 입력하세요.';
-                statusDiv.className = 'id-status error';
-                return;
-            }
-            
-            try {
-                statusDiv.textContent = '확인 중...';
-                statusDiv.className = 'id-status';
+            // 사전 등록 회원 확인 - users 컬렉션에서 직접 조회
+            window.verifyPreRegistered = async function() {
+                const name = document.getElementById('pre_name').value.trim();
+                const userId = document.getElementById('pre_userId').value.trim();
+                const statusDiv = document.getElementById('preIdStatus');
                 
-                // 1. 먼저 이미 가입된 회원인지 확인
-                const existingUser = await db.collection('users')
-                    .where('userId', '==', userId)
-                    .get();
-                
-                if (!existingUser.empty) {
-                    statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다.';
+                if (!name) {
+                    statusDiv.textContent = '❌ 성명을 입력하세요.';
                     statusDiv.className = 'id-status error';
-                    document.getElementById('verifiedInfo').classList.add('hidden');
                     return;
                 }
                 
-                // 2. 사전등록 확인 (registered 상관없이 모두 검색)
-                const snapshot = await db.collection('preRegistered')
-                    .where('userId', '==', userId)
-                    .where('memberType', '==', selectedMemberType)
-                    .get();
-                
-                if (snapshot.empty) {
-                    statusDiv.textContent = '❌ 사전 등록된 회원이 아닙니다.';
+                if (!userId) {
+                    statusDiv.textContent = '❌ 아이디를 입력하세요.';
                     statusDiv.className = 'id-status error';
-                    document.getElementById('verifiedInfo').classList.add('hidden');
                     return;
                 }
                 
-                preRegData = snapshot.docs[0].data();
-                preRegData.docId = snapshot.docs[0].id;
-                
-                // 3. registered가 true인지 다시 한번 확인
-                if (preRegData.registered) {
-                    statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다.';
+                // 아이디 형식 검증
+                if (!/^(?=.*[a-z])[a-z0-9]{4,12}$/.test(userId)) {
+                    statusDiv.textContent = '❌ 영문 소문자만 또는 영문 소문자+숫자 조합으로 4~12자 입력하세요.';
                     statusDiv.className = 'id-status error';
-                    document.getElementById('verifiedInfo').classList.add('hidden');
                     return;
                 }
                 
-                // 인증 성공
-                statusDiv.textContent = '✅ 인증 성공! 추가 정보를 입력해주세요.';
-                statusDiv.className = 'id-status success';
+                if (/^\d+$/.test(userId)) {
+                    statusDiv.textContent = '❌ 숫자만으로는 아이디를 만들 수 없습니다.';
+                    statusDiv.className = 'id-status error';
+                    return;
+                }
                 
-                // 자동 채우기
-                document.getElementById('verified_name').value = preRegData.name;
-                document.getElementById('verified_phone').value = preRegData.phone;
-                
-                const memberTypeText = {
-                    'branch': '지사장',
-                    'inner': '이너회원',
-                    'consultant': '컨홈회원'
-                };
-                document.getElementById('verified_type').value = memberTypeText[preRegData.memberType] || preRegData.memberType;
-                
-                // 추가 정보 입력란 표시
-                document.getElementById('verifiedInfo').classList.remove('hidden');
-                
-                setTimeout(() => {
-                    document.getElementById('verifiedInfo').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 300);
-                
-            } catch (error) {
-                console.error('확인 오류:', error);
-                statusDiv.textContent = '❌ 확인 중 오류가 발생했습니다.';
-                statusDiv.className = 'id-status error';
-            }
-        }
-        
-        // 아이디 중복 확인
-        async function checkDuplicateId() {
-            const userId = document.getElementById('gen_userId').value.trim();
-            const statusDiv = document.getElementById('idCheckStatus');
-            
-            if (!userId) {
-                statusDiv.textContent = '❌ 아이디를 입력하세요.';
-                statusDiv.className = 'id-status error';
-                return;
-            }
-            
-            if (!/^(?=.*[a-z])[a-z0-9]{4,12}$/.test(userId)) {
-                statusDiv.textContent = '❌ 영문 소문자만 또는 영문 소문자+숫자 조합으로 4~12자 입력하세요.';
-                statusDiv.className = 'id-status error';
-                isIdChecked = false;
-                return;
-            }
-            
-            if (/^\d+$/.test(userId)) {
-                statusDiv.textContent = '❌ 숫자만으로는 아이디를 만들 수 없습니다.';
-                statusDiv.className = 'id-status error';
-                isIdChecked = false;
-                return;
-            }
-            
-            try {
-                statusDiv.textContent = '확인 중...';
-                statusDiv.className = 'id-status';
-                
-                const existingUser = await db.collection('users')
-                    .where('userId', '==', userId)
-                    .get();
-                
-                if (existingUser.empty) {
-                    statusDiv.textContent = '✅ 사용 가능한 아이디입니다.';
+                try {
+                    statusDiv.textContent = '확인 중...';
+                    statusDiv.className = 'id-status';
+                    
+                    // users 컬렉션에서 해당 유형의 회원 조회
+                    const snapshot = await db.collection('users')
+                        .where('name', '==', name)
+                        .where('userId', '==', userId)
+                        .where('memberType', '==', selectedMemberType)
+                        .get();
+                    
+                    if (snapshot.empty) {
+                        statusDiv.textContent = '❌ 등록된 회원 정보가 없습니다. 성명과 아이디를 확인해주세요.';
+                        statusDiv.className = 'id-status error';
+                        document.getElementById('verifiedInfo').classList.add('hidden');
+                        return;
+                    }
+                    
+                    const userData = snapshot.docs[0].data();
+                    
+                    // 이미 가입이 완료된 회원인지 확인 (createdAt이 있으면 가입 완료)
+                    if (userData.createdAt) {
+                        statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다. 로그인 페이지에서 로그인하세요.';
+                        statusDiv.className = 'id-status error';
+                        document.getElementById('verifiedInfo').classList.add('hidden');
+                        return;
+                    }
+                    
+                    // 인증 성공
+                    preRegData = {
+                        userId: userData.userId,
+                        name: userData.name,
+                        phone: userData.phone,
+                        memberType: userData.memberType,
+                        docId: snapshot.docs[0].id
+                    };
+                    
+                    statusDiv.textContent = '✅ 인증 성공! 추가 정보를 입력해주세요.';
                     statusDiv.className = 'id-status success';
-                    isIdChecked = true;
-                    checkedUserId = userId;
-                } else {
-                    statusDiv.textContent = '❌ 이미 사용 중인 아이디입니다.';
+                    
+                    // 자동 채우기
+                    document.getElementById('verified_phone').value = userData.phone;
+                    
+                    const memberTypeText = {
+                        'branch': '지사장',
+                        'inner': '이너회원',
+                        'consultant': '컨홈회원'
+                    };
+                    document.getElementById('verified_type').value = memberTypeText[userData.memberType] || userData.memberType;
+                    
+                    // 추가 정보 입력란 표시
+                    document.getElementById('verifiedInfo').classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        document.getElementById('verifiedInfo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                    
+                } catch (error) {
+                    console.error('확인 오류:', error);
+                    statusDiv.textContent = '❌ 확인 중 오류가 발생했습니다.';
+                    statusDiv.className = 'id-status error';
+                }
+            }
+        
+            // 아이디 중복 확인
+            window.checkDuplicateId = async function() {
+                const userId = document.getElementById('gen_userId').value.trim();
+                const statusDiv = document.getElementById('idCheckStatus');
+                
+                if (!userId) {
+                    statusDiv.textContent = '❌ 아이디를 입력하세요.';
+                    statusDiv.className = 'id-status error';
+                    return;
+                }
+                
+                if (!/^(?=.*[a-z])[a-z0-9]{4,12}$/.test(userId)) {
+                    statusDiv.textContent = '❌ 영문 소문자만 또는 영문 소문자+숫자 조합으로 4~12자 입력하세요.';
+                    statusDiv.className = 'id-status error';
+                    isIdChecked = false;
+                    return;
+                }
+                
+                if (/^\d+$/.test(userId)) {
+                    statusDiv.textContent = '❌ 숫자만으로는 아이디를 만들 수 없습니다.';
+                    statusDiv.className = 'id-status error';
+                    isIdChecked = false;
+                    return;
+                }
+                
+                try {
+                    statusDiv.textContent = '확인 중...';
+                    statusDiv.className = 'id-status';
+                    
+                    const existingUser = await db.collection('users')
+                        .where('userId', '==', userId)
+                        .get();
+                    
+                    if (existingUser.empty) {
+                        statusDiv.textContent = '✅ 사용 가능한 아이디입니다.';
+                        statusDiv.className = 'id-status success';
+                        isIdChecked = true;
+                        checkedUserId = userId;
+                    } else {
+                        statusDiv.textContent = '❌ 이미 사용 중인 아이디입니다.';
+                        statusDiv.className = 'id-status error';
+                        isIdChecked = false;
+                    }
+                } catch (error) {
+                    console.error('중복 확인 오류:', error);
+                    statusDiv.textContent = '❌ 확인 중 오류가 발생했습니다.';
                     statusDiv.className = 'id-status error';
                     isIdChecked = false;
                 }
-            } catch (error) {
-                console.error('중복 확인 오류:', error);
-                statusDiv.textContent = '❌ 확인 중 오류가 발생했습니다.';
-                statusDiv.className = 'id-status error';
-                isIdChecked = false;
             }
-        }
         
-        document.addEventListener('DOMContentLoaded', function() {
             const userIdInput = document.getElementById('gen_userId');
             if (userIdInput) {
                 userIdInput.addEventListener('input', function() {
@@ -576,197 +590,183 @@
                     }
                 });
             }
-        });
         
-        function selectType(type) {
-            selectedMemberType = type;
-            
-            document.querySelectorAll('.type-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
-            
-            if (type === 'general') {
-                document.getElementById('generalForm').classList.remove('hidden');
-                document.getElementById('preRegisteredForm').classList.add('hidden');
-            } else {
-                document.getElementById('generalForm').classList.add('hidden');
-                document.getElementById('preRegisteredForm').classList.remove('hidden');
-            }
-        }
-        
-        document.getElementById('gen_email_domain').addEventListener('change', function() {
-            const customInput = document.getElementById('gen_email_custom');
-            if (this.value === 'custom') {
-                customInput.classList.remove('hidden');
-            } else {
-                customInput.classList.add('hidden');
-            }
-        });
-        
-        document.getElementById('pre_email_domain').addEventListener('change', function() {
-            const customInput = document.getElementById('pre_email_custom');
-            if (this.value === 'custom') {
-                customInput.classList.remove('hidden');
-            } else {
-                customInput.classList.add('hidden');
-            }
-        });
-        
-        document.getElementById('generalForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const userId = document.getElementById('gen_userId').value.trim();
-            const name = document.getElementById('gen_name').value.trim();
-            const phone = document.getElementById('gen_phone').value.trim().replace(/-/g, '');
-            const company = document.getElementById('gen_company').value.trim();
-            const position = document.getElementById('gen_position').value.trim();
-            const region = document.getElementById('gen_region').value;
-            
-            const emailId = document.getElementById('gen_email_id').value.trim();
-            const emailDomain = document.getElementById('gen_email_domain').value;
-            const emailCustom = document.getElementById('gen_email_custom').value.trim();
-            const email = `${emailId}@${emailDomain === 'custom' ? emailCustom : emailDomain}`;
-            
-            if (!/^(?=.*[a-z])[a-z0-9]{4,12}$/.test(userId)) {
-                showMessage('아이디는 영문 소문자만 또는 영문 소문자+숫자 조합으로 4~12자 입력하세요.', 'error');
-                return;
-            }
-            
-            if (/^\d+$/.test(userId)) {
-                showMessage('숫자만으로는 아이디를 만들 수 없습니다.', 'error');
-                return;
-            }
-            
-            if (!isIdChecked || userId !== checkedUserId) {
-                showMessage('아이디 중복 확인을 해주세요.', 'error');
-                return;
-            }
-            
-            if (!/^\d{10,11}$/.test(phone)) {
-                showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
-                return;
-            }
-            
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showMessage('올바른 이메일 형식이 아닙니다.', 'error');
-                return;
-            }
-            
-            try {
-                const existingUser = await db.collection('users')
-                    .where('userId', '==', userId)
-                    .get();
+            window.selectType = function(type) {
+                selectedMemberType = type;
                 
-                if (!existingUser.empty) {
-                    showMessage('이미 사용 중인 아이디입니다.', 'error');
-                    isIdChecked = false;
+                document.querySelectorAll('.type-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+                
+                if (type === 'general') {
+                    document.getElementById('generalForm').classList.remove('hidden');
+                    document.getElementById('preRegisteredForm').classList.add('hidden');
+                } else {
+                    document.getElementById('generalForm').classList.add('hidden');
+                    document.getElementById('preRegisteredForm').classList.remove('hidden');
+                }
+            }
+        
+            document.getElementById('gen_email_domain').addEventListener('change', function() {
+                const customInput = document.getElementById('gen_email_custom');
+                if (this.value === 'custom') {
+                    customInput.classList.remove('hidden');
+                } else {
+                    customInput.classList.add('hidden');
+                }
+            });
+        
+            document.getElementById('pre_email_domain').addEventListener('change', function() {
+                const customInput = document.getElementById('pre_email_custom');
+                if (this.value === 'custom') {
+                    customInput.classList.remove('hidden');
+                } else {
+                    customInput.classList.add('hidden');
+                }
+            });
+        
+            document.getElementById('generalForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const userId = document.getElementById('gen_userId').value.trim();
+                const name = document.getElementById('gen_name').value.trim();
+                const phone = document.getElementById('gen_phone').value.trim().replace(/-/g, '');
+                const company = document.getElementById('gen_company').value.trim();
+                const position = document.getElementById('gen_position').value.trim();
+                const region = document.getElementById('gen_region').value;
+                
+                const emailId = document.getElementById('gen_email_id').value.trim();
+                const emailDomain = document.getElementById('gen_email_domain').value;
+                const emailCustom = document.getElementById('gen_email_custom').value.trim();
+                const email = `${emailId}@${emailDomain === 'custom' ? emailCustom : emailDomain}`;
+                
+                if (!/^(?=.*[a-z])[a-z0-9]{4,12}$/.test(userId)) {
+                    showMessage('아이디는 영문 소문자만 또는 영문 소문자+숫자 조합으로 4~12자 입력하세요.', 'error');
                     return;
                 }
                 
-                const authEmail = `${userId}@system.local`;
-                const userCredential = await auth.createUserWithEmailAndPassword(authEmail, phone);
-                const user = userCredential.user;
-                
-                await db.collection('users').doc(user.uid).set({
-                    userId: userId,
-                    name: name,
-                    phone: phone,
-                    company: company,
-                    position: position,
-                    email: email,
-                    region: region,
-                    memberType: 'general',
-                    role: 'user',
-                    isPaid: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                showMessage('회원가입 성공! 로그인 페이지로 이동합니다...', 'success');
-                setTimeout(() => window.location.href = 'login.html', 2000);
-                
-            } catch (error) {
-                console.error('회원가입 오류:', error);
-                
-                let errorMessage = '회원가입 중 오류가 발생했습니다.';
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = '이미 사용 중인 계정입니다.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = '비밀번호가 너무 약합니다. (최소 6자리)';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = '잘못된 이메일 형식입니다.';
+                if (/^\d+$/.test(userId)) {
+                    showMessage('숫자만으로는 아이디를 만들 수 없습니다.', 'error');
+                    return;
                 }
                 
-                showMessage(errorMessage, 'error');
-            }
-        });
-        
-        document.getElementById('preRegisteredForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            if (!preRegData) {
-                showMessage('아이디 확인을 먼저 진행해주세요.', 'error');
-                return;
-            }
-            
-            const emailId = document.getElementById('pre_email_id').value.trim();
-            const emailDomain = document.getElementById('pre_email_domain').value;
-            const emailCustom = document.getElementById('pre_email_custom').value.trim();
-            const email = `${emailId}@${emailDomain === 'custom' ? emailCustom : emailDomain}`;
-            
-            const company = document.getElementById('pre_company').value.trim();
-            const position = document.getElementById('pre_position').value.trim();
-            const region = document.getElementById('pre_region').value;
-            
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showMessage('올바른 이메일 형식이 아닙니다.', 'error');
-                return;
-            }
-            
-            try {
-                const authEmail = `${preRegData.userId}@system.local`;
-                const userCredential = await auth.createUserWithEmailAndPassword(authEmail, preRegData.phone);
-                const user = userCredential.user;
-                
-                await db.collection('users').doc(user.uid).set({
-                    userId: preRegData.userId,
-                    name: preRegData.name,
-                    phone: preRegData.phone,
-                    email: email,
-                    company: company,
-                    position: position,
-                    region: region,
-                    memberType: preRegData.memberType,
-                    role: 'user',
-                    isPaid: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                await db.collection('preRegistered').doc(preRegData.docId).update({ 
-                    registered: true,
-                    registeredAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                showMessage(`${preRegData.name}님 환영합니다! 로그인 페이지로 이동합니다...`, 'success');
-                setTimeout(() => window.location.href = 'login.html', 2000);
-                
-            } catch (error) {
-                console.error('가입 오류:', error);
-                
-                let errorMessage = '가입 중 오류가 발생했습니다.';
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = '이미 가입된 계정입니다.';
+                if (!isIdChecked || userId !== checkedUserId) {
+                    showMessage('아이디 중복 확인을 해주세요.', 'error');
+                    return;
                 }
                 
-                showMessage(errorMessage, 'error');
-            }
-        });
+                if (!/^\d{10,11}$/.test(phone)) {
+                    showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
+                    return;
+                }
+                
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showMessage('올바른 이메일 형식이 아닙니다.', 'error');
+                    return;
+                }
+                
+                try {
+                    const existingUser = await db.collection('users')
+                        .where('userId', '==', userId)
+                        .get();
+                    
+                    if (!existingUser.empty) {
+                        showMessage('이미 사용 중인 아이디입니다.', 'error');
+                        isIdChecked = false;
+                        return;
+                    }
+                    
+                    const authEmail = `${userId}@system.local`;
+                    const userCredential = await auth.createUserWithEmailAndPassword(authEmail, phone);
+                    const user = userCredential.user;
+                    
+                    await db.collection('users').doc(user.uid).set({
+                        userId: userId,
+                        name: name,
+                        phone: phone,
+                        company: company,
+                        position: position,
+                        email: email,
+                        region: region,
+                        memberType: 'general',
+                        role: 'user',
+                        isPaid: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showMessage('회원가입 성공! 로그인 페이지로 이동합니다...', 'success');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    
+                } catch (error) {
+                    console.error('회원가입 오류:', error);
+                    
+                    let errorMessage = '회원가입 중 오류가 발생했습니다.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = '이미 사용 중인 계정입니다.';
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = '비밀번호가 너무 약합니다. (최소 6자리)';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = '잘못된 이메일 형식입니다.';
+                    }
+                    
+                    showMessage(errorMessage, 'error');
+                }
+            });
         
-        // 전역 함수로 등록
-        window.verifyPreRegistered = verifyPreRegistered;
-        window.checkDuplicateId = checkDuplicateId;
-        window.selectType = selectType;
-    });
+            document.getElementById('preRegisteredForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if (!preRegData) {
+                    showMessage('성명과 아이디 확인을 먼저 진행해주세요.', 'error');
+                    return;
+                }
+                
+                const emailId = document.getElementById('pre_email_id').value.trim();
+                const emailDomain = document.getElementById('pre_email_domain').value;
+                const emailCustom = document.getElementById('pre_email_custom').value.trim();
+                const email = `${emailId}@${emailDomain === 'custom' ? emailCustom : emailDomain}`;
+                
+                const company = document.getElementById('pre_company').value.trim();
+                const position = document.getElementById('pre_position').value.trim();
+                const region = document.getElementById('pre_region').value;
+                
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showMessage('올바른 이메일 형식이 아닙니다.', 'error');
+                    return;
+                }
+                
+                try {
+                    const authEmail = `${preRegData.userId}@system.local`;
+                    const userCredential = await auth.createUserWithEmailAndPassword(authEmail, preRegData.phone);
+                    const user = userCredential.user;
+                    
+                    // 기존 문서 업데이트
+                    await db.collection('users').doc(preRegData.docId).update({
+                        email: email,
+                        company: company,
+                        position: position,
+                        region: region,
+                        role: 'user',
+                        isPaid: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showMessage(`${preRegData.name}님 환영합니다! 로그인 페이지로 이동합니다...`, 'success');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    
+                } catch (error) {
+                    console.error('가입 오류:', error);
+                    
+                    let errorMessage = '가입 중 오류가 발생했습니다.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = '이미 가입된 계정입니다.';
+                    }
+                    
+                    showMessage(errorMessage, 'error');
+                }
+            });
+        });
     </script>
 </body>
 </html>
