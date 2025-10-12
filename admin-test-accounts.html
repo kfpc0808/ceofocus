@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테스트 계정 생성 - 관리자</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #f8f9fa;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0c2c54;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 1rem;
+        }
+        .btn-primary {
+            background: #0c2c54;
+            color: white;
+        }
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        .result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #e7f3ff;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .account-info {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border: 2px solid #2a5a8a;
+        }
+        .copy-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .list {
+            margin-top: 2rem;
+        }
+        .account-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .expired {
+            opacity: 0.5;
+            background: #ffebee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 테스트 계정 생성</h1>
+        
+        <form id="createForm">
+            <div class="form-group">
+                <label>생성 개수</label>
+                <input type="number" id="count" value="10" min="1" max="50" required>
+            </div>
+            
+            <div class="form-group">
+                <label>유효 기간</label>
+                <select id="duration" required>
+                    <option value="1">1일</option>
+                    <option value="3">3일</option>
+                    <option value="7">7일</option>
+                    <option value="30">30일</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">테스트 계정 생성</button>
+            <button type="button" class="btn btn-success" onclick="viewAccounts()">생성된 계정 목록</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+        
+        <div id="accountsList" class="list"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <script>
+        function generateRandomId() {
+            return 'TEST' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+        
+        function generateRandomPhone() {
+            return '010' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+        }
+        
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const count = parseInt(document.getElementById('count').value);
+            const duration = parseInt(document.getElementById('duration').value);
+            const resultDiv = document.getElementById('result');
+            
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
+            
+            const accounts = [];
+            
+            resultDiv.innerHTML = '<p>⏳ 계정 생성 중...</p>';
+            resultDiv.classList.add('show');
+            
+            for (let i = 0; i < count; i++) {
+                const userId = generateRandomId();
+                const phone = generateRandomPhone();
+                
+                try {
+                    const email = `${userId}@system.local`;
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
+                    const user = userCredential.user;
+                    
+                    await db.collection('users').doc(user.uid).set({
+                        userId: userId,
+                        name: `테스트${i + 1}`,
+                        phone: phone,
+                        company: '테스트',
+                        position: '테스트',
+                        email: `test${i + 1}@test.com`,
+                        region: '서울',
+                        memberType: 'test',
+                        role: 'user',
+                        isPaid: false,
+                        isTestAccount: true,
+                        expiresAt: expiresAt,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    accounts.push({ userId, phone, expiresAt });
+                    
+                } catch (error) {
+                    console.error('생성 오류:', error);
+                }
+            }
+            
+            let html = `<h3>✅ ${accounts.length}개 계정 생성 완료!</h3>`;
+            html += `<p>유효 기간: ${duration}일 (${expiresAt.toLocaleString('ko-KR')}까지)</p>`;
+            
+            accounts.forEach((acc, idx) => {
+                html += `
+                <div class="account-info">
+                    <strong>계정 ${idx + 1}</strong><br>
+                    아이디: <code>${acc.userId}</code><br>
+                    비밀번호: <code>${acc.phone}</code><br>
+                    <button class="copy-btn" onclick="copyAccount('${acc.userId}', '${acc.phone}')">복사</button>
+                </div>`;
+            });
+            
+            resultDiv.innerHTML = html;
+        });
+        
+        function copyAccount(userId, phone) {
+            const text = `아이디: ${userId}\n비밀번호: ${phone}`;
+            navigator.clipboard.writeText(text);
+            alert('복사되었습니다!');
+        }
+        
+        async function viewAccounts() {
+            const listDiv = document.getElementById('accountsList');
+            listDiv.innerHTML = '<h3>⏳ 불러오는 중...</h3>';
+            
+            try {
+                const snapshot = await db.collection('users')
+                    .where('isTestAccount', '==', true)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    listDiv.innerHTML = '<p>생성된 테스트 계정이 없습니다.</p>';
+                    return;
+                }
+                
+                let html = '<h3>📋 테스트 계정 목록</h3>';
+                const now = new Date();
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const expiresAt = data.expiresAt.toDate();
+                    const isExpired = now > expiresAt;
+                    
+                    html += `
+                    <div class="account-item ${isExpired ? 'expired' : ''}">
+                        <strong>${data.userId}</strong> / ${data.phone}<br>
+                        만료: ${expiresAt.toLocaleString('ko-KR')} 
+                        ${isExpired ? '❌ 만료됨' : '✅ 사용 가능'}
+                    </div>`;
+                });
+                
+                listDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('목록 조회 오류:', error);
+                listDiv.innerHTML = '<p>오류가 발생했습니다.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

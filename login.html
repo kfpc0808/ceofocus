@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>로그인 - Executive Consulting Solution</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .login-container {
+            background: white;
+            padding: 2rem 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+        }
+        h1 {
+            text-align: center;
+            color: #0c2c54;
+            margin-bottom: 0.5rem;
+            font-size: 1.75rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #0c2c54;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input:focus {
+            outline: none;
+            border-color: #2a5a8a;
+        }
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-primary {
+            background: #0c2c54;
+            color: white;
+        }
+        .btn-secondary {
+            background: #27ae60;
+            color: white;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            white-space: pre-line;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            color: #6c757d;
+        }
+        .links {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .links a {
+            color: #2a5a8a;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+        small {
+            display: block;
+            margin-top: 0.25rem;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🔐 로그인</h1>
+        <p class="subtitle">Executive Consulting Solution</p>
+        
+        <div id="message" class="message"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label>아이디 (ID)</label>
+                <input type="text" id="userId" placeholder="아이디 입력" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label>전화번호 (비밀번호)</label>
+                <input type="tel" id="phone" placeholder="01012345678" required autocomplete="current-password" inputmode="numeric">
+                <small>하이픈(-) 없이 숫자만 입력</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">로그인</button>
+            
+            <div class="divider">또는</div>
+            
+            <button type="button" class="btn btn-secondary" onclick="location.href='signup.html'">회원가입</button>
+        </form>
+        
+        <div class="links">
+            <a href="find-id.html">ID 찾기</a>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <script>
+        const form = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+        
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value.trim();
+            const phone = document.getElementById('phone').value.trim().replace(/-/g, '');
+            
+            if (!/^\d{10,11}$/.test(phone)) {
+                showMessage('올바른 전화번호 형식이 아닙니다.', 'error');
+                return;
+            }
+            
+            try {
+                const usersSnapshot = await db.collection('users')
+                    .where('userId', '==', userId)
+                    .get();
+                
+                if (usersSnapshot.empty) {
+                    showMessage('등록되지 않은 아이디입니다.', 'error');
+                    return;
+                }
+                
+                const userData = usersSnapshot.docs[0].data();
+                
+                if (userData.isTestAccount && userData.expiresAt) {
+                    const now = new Date();
+                    const expiresAt = userData.expiresAt.toDate();
+                    
+                    if (now > expiresAt) {
+                        showMessage('테스트 계정이 만료되었습니다.\n정식 회원가입을 진행해주세요.', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'signup.html';
+                        }, 2000);
+                        return;
+                    }
+                }
+                
+                if (userData.phone !== phone) {
+                    showMessage('전화번호가 일치하지 않습니다.', 'error');
+                    return;
+                }
+                
+                const email = `${userId}@system.local`;
+                await auth.signInWithEmailAndPassword(email, phone);
+                
+                window.location.href = 'index.html';
+                
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                showMessage('로그인에 실패했습니다.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
