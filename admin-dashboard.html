@@ -307,6 +307,14 @@
                 <option value="consultant">컨홈회원</option>
                 <option value="test">테스트계정</option>
             </select>
+            <select id="pageSize">
+                <option value="10">10개씩</option>
+                <option value="20" selected>20개씩</option>
+                <option value="30">30개씩</option>
+                <option value="40">40개씩</option>
+                <option value="50">50개씩</option>
+                <option value="100">100개씩</option>
+            </select>
             <button class="btn btn-primary" onclick="loadUsers()">검색</button>
         </div>
 
@@ -329,6 +337,10 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+        
+        <!-- 페이지네이션 -->
+        <div id="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem; flex-wrap: wrap;">
         </div>
     </div>
 
@@ -893,6 +905,42 @@
             }, 3000);
         }
 
+        let allPreRegData = [];
+        let currentPreRegPage = 1;
+        let preRegPageSize = 10;
+
+        // 페이지 크기 변경
+        document.getElementById('preRegPageSize').addEventListener('change', function() {
+            preRegPageSize = parseInt(this.value);
+            currentPreRegPage = 1;
+            displayPreRegPage();
+        });
+
+        // 전체 선택/해제
+        function toggleAllPreReg(checkbox) {
+            const checkboxes = document.querySelectorAll('.preReg-checkbox');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+        }
+
+        // 선택된 회원 리스트로 이동
+        function moveSelectedToUserList() {
+            const checkboxes = document.querySelectorAll('.preReg-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                showPreRegMessage('선택된 회원이 없습니다.', 'error');
+                return;
+            }
+
+            const selectedNames = Array.from(checkboxes).map(cb => {
+                const row = cb.closest('tr');
+                return row.querySelector('td:nth-child(2)').textContent;
+            }).join(', ');
+
+            if (confirm(`선택된 ${checkboxes.length}명(${selectedNames})을 전체 회원 목록으로 이동하시겠습니까?`)) {
+                switchToUserList();
+            }
+        }
+
         // 사전 등록 회원 목록 로드
         async function loadPreRegistered() {
             try {
@@ -900,42 +948,122 @@
                 const snapshot = await db.collection('preRegistered').get();
                 console.log('문서 개수:', snapshot.size);
 
-                const tbody = document.getElementById('preRegTableBody');
-                
-                if (snapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="no-data">등록된 사전 회원이 없습니다.</td></tr>';
-                    return;
-                }
+                allPreRegData = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
 
-                const memberTypeText = {
-                    'branch': '지사장',
-                    'inner': '이너',
-                    'consultant': '컨홈'
-                };
-
-                tbody.innerHTML = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    const status = data.registered ? 
-                        '<span class="badge badge-success">가입완료</span>' : 
-                        '<span class="badge badge-warning">대기중</span>';
-                    
-                    return `
-                        <tr>
-                            <td>${data.name}</td>
-                            <td>${data.userId}</td>
-                            <td>${data.phone}</td>
-                            <td>${memberTypeText[data.memberType]}</td>
-                            <td>${status}</td>
-                            <td>
-                                <button class="btn btn-danger btn-small" onclick="deletePreRegistered('${doc.id}', '${data.name}')">삭제</button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+                currentPreRegPage = 1;
+                displayPreRegPage();
             } catch (error) {
                 console.error('사전 등록 목록 로드 오류:', error);
                 showPreRegMessage('목록을 불러오는데 실패했습니다.', 'error');
             }
+        }
+
+        // 페이지별 표시
+        function displayPreRegPage() {
+            const tbody = document.getElementById('preRegTableBody');
+            
+            if (allPreRegData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-data">등록된 사전 회원이 없습니다.</td></tr>';
+                document.getElementById('preRegPagination').innerHTML = '';
+                return;
+            }
+
+            const memberTypeText = {
+                'branch': '지사장',
+                'inner': '이너',
+                'consultant': '컨홈'
+            };
+
+            // 페이지네이션 계산
+            const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
+            const startIndex = (currentPreRegPage - 1) * preRegPageSize;
+            const endIndex = Math.min(startIndex + preRegPageSize, allPreRegData.length);
+            const pageData = allPreRegData.slice(startIndex, endIndex);
+
+            // 테이블 렌더링
+            tbody.innerHTML = pageData.map(data => {
+                const status = data.registered ? 
+                    '<span class="badge badge-success">가입완료</span>' : 
+                    '<span class="badge badge-warning">대기중</span>';
+                
+                return `
+                    <tr>
+                        <td><input type="checkbox" class="preReg-checkbox" data-id="${data.id}"></td>
+                        <td>${data.name}</td>
+                        <td>${data.userId}</td>
+                        <td>${data.phone}</td>
+                        <td>${memberTypeText[data.memberType]}</td>
+                        <td>${status}</td>
+                        <td>
+                            <button class="btn btn-danger btn-small" onclick="deletePreRegistered('${data.id}', '${data.name}')">삭제</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // 페이지네이션 렌더링
+            renderPreRegPagination(totalPages);
+        }
+
+        // 페이지네이션 렌더링
+        function renderPreRegPagination(totalPages) {
+            const paginationDiv = document.getElementById('preRegPagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // 이전 버튼
+            html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage - 1})" ${currentPreRegPage === 1 ? 'disabled' : ''}>‹ 이전</button>`;
+
+            // 페이지 번호
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPreRegPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            if (startPage > 1) {
+                html += `<button class="pagination-btn" onclick="changePreRegPage(1)">1</button>`;
+                if (startPage > 2) html += `<span style="padding: 0.5rem;">...</span>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="pagination-btn ${i === currentPreRegPage ? 'active' : ''}" onclick="changePreRegPage(${i})">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span style="padding: 0.5rem;">...</span>`;
+                html += `<button class="pagination-btn" onclick="changePreRegPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            // 다음 버튼
+            html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage + 1})" ${currentPreRegPage === totalPages ? 'disabled' : ''}>다음 ›</button>`;
+
+            paginationDiv.innerHTML = html;
+        }
+
+        // 페이지 변경
+        function changePreRegPage(page) {
+            const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPreRegPage = page;
+            displayPreRegPage();
+            
+            // 상단으로 스크롤
+            document.querySelector('#preRegTableBody').parentElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
         }
 
         // 단일 사전 등록
