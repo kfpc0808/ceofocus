@@ -215,6 +215,12 @@
             border-radius: 8px;
             font-size: 0.95rem;
         }
+        .form-group small {
+            color: #6c757d;
+            font-size: 0.85rem;
+            display: block;
+            margin-top: 0.25rem;
+        }
         .no-data {
             text-align: center;
             padding: 3rem;
@@ -339,7 +345,6 @@
             </table>
         </div>
         
-        <!-- 페이지네이션 -->
         <div id="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem; flex-wrap: wrap;">
         </div>
     </div>
@@ -369,6 +374,12 @@
                 <div class="form-group">
                     <label>이메일</label>
                     <input type="email" id="editEmail">
+                </div>
+                
+                <div class="form-group">
+                    <label>새 비밀번호</label>
+                    <input type="password" id="editPassword" placeholder="변경하지 않으려면 비워두세요">
+                    <small>* 최소 6자 이상 입력하세요</small>
                 </div>
                 
                 <div class="form-group">
@@ -526,7 +537,6 @@
                     </table>
                 </div>
                 
-                <!-- 페이지네이션 -->
                 <div id="preRegPagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
                 </div>
             </div>
@@ -540,7 +550,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
             authDomain: "kfpc-company-support-project.firebaseapp.com",
@@ -556,11 +565,17 @@
         const db = firebase.firestore();
 
         let allUsers = [];
-
+        let currentPage = 1;
+        let pageSize = 20;
         let retryCount = 0;
         const maxRetries = 3;
 
-        // 관리자 권한 확인
+        document.getElementById('pageSize').addEventListener('change', function() {
+            pageSize = parseInt(this.value);
+            currentPage = 1;
+            displayUsers(allUsers);
+        });
+
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 console.log('로그인된 사용자 없음');
@@ -571,7 +586,6 @@
             console.log('로그인된 사용자:', user.uid);
             console.log('이메일:', user.email);
 
-            // admin 계정이면 바로 통과 (추가 보안)
             if (user.email === 'admin@system.local') {
                 console.log('관리자 이메일 확인 완료');
                 await ensureAdminAccount(user.uid);
@@ -580,7 +594,6 @@
             }
 
             try {
-                // Firestore 연결 대기
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 const userDoc = await db.collection('users').doc(user.uid).get();
@@ -631,7 +644,6 @@
             }
         });
 
-        // 관리자 계정 확실하게 생성
         async function ensureAdminAccount(uid) {
             try {
                 const userDoc = await db.collection('users').doc(uid).get();
@@ -647,7 +659,6 @@
                     });
                     console.log('관리자 계정 생성 완료');
                     
-                    // 생성 확인
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
             } catch (error) {
@@ -676,10 +687,10 @@
                     ...doc.data()
                 }));
 
-                // 관리자 계정 제외
                 allUsers = allUsers.filter(user => user.role !== 'admin');
 
                 updateStats();
+                currentPage = 1;
                 displayUsers(allUsers);
             } catch (error) {
                 console.error('회원 로딩 오류:', error);
@@ -708,12 +719,6 @@
 
         function displayUsers(users) {
             const tbody = document.getElementById('userTableBody');
-            
-            if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="no-data">회원이 없습니다.</td></tr>';
-                return;
-            }
-
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const typeFilter = document.getElementById('memberTypeFilter').value;
 
@@ -735,7 +740,18 @@
                 }
             }
 
-            tbody.innerHTML = filtered.map(user => {
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-data">회원이 없습니다.</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(filtered.length / pageSize);
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, filtered.length);
+            const pageData = filtered.slice(startIndex, endIndex);
+
+            tbody.innerHTML = pageData.map(user => {
                 const memberTypeText = getMemberTypeText(user);
                 const statusBadge = getStatusBadge(user);
                 const createdDate = user.createdAt ? 
@@ -758,6 +774,78 @@
                     </tr>
                 `;
             }).join('');
+
+            renderPagination(totalPages, filtered.length);
+        }
+
+        function renderPagination(totalPages, totalItems) {
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+
+            let html = `<span style="margin-right: 1rem; color: #6c757d;">전체 ${totalItems}명</span>`;
+
+            html += `<button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ 이전</button>`;
+
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            if (startPage > 1) {
+                html += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
+                if (startPage > 2) html += `<span style="padding: 0.5rem;">...</span>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span style="padding: 0.5rem;">...</span>`;
+                html += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+            }
+
+            html += `<button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>다음 ›</button>`;
+
+            paginationDiv.innerHTML = html;
+        }
+
+        function changePage(page) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('memberTypeFilter').value;
+
+            let filtered = allUsers;
+
+            if (searchTerm) {
+                filtered = filtered.filter(user => 
+                    (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+                    (user.userId && user.userId.toLowerCase().includes(searchTerm)) ||
+                    (user.phone && user.phone.includes(searchTerm))
+                );
+            }
+
+            if (typeFilter) {
+                if (typeFilter === 'test') {
+                    filtered = filtered.filter(user => user.isTestAccount);
+                } else {
+                    filtered = filtered.filter(user => user.memberType === typeFilter);
+                }
+            }
+
+            const totalPages = Math.ceil(filtered.length / pageSize);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            displayUsers(allUsers);
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function getMemberTypeText(user) {
@@ -795,6 +883,7 @@
             document.getElementById('editName').value = user.name || '';
             document.getElementById('editPhone').value = user.phone || '';
             document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editPassword').value = '';
             document.getElementById('editCompany').value = user.company || '';
             document.getElementById('editPosition').value = user.position || '';
 
@@ -814,8 +903,17 @@
             const email = document.getElementById('editEmail').value.trim();
             const company = document.getElementById('editCompany').value.trim();
             const position = document.getElementById('editPosition').value.trim();
+            const newPassword = document.getElementById('editPassword').value.trim();
+
+            if (newPassword && newPassword.length < 6) {
+                showMessage('비밀번호는 최소 6자 이상이어야 합니다.', 'error');
+                return;
+            }
 
             try {
+                const userDoc = await db.collection('users').doc(userId).get();
+                const userData = userDoc.data();
+
                 await db.collection('users').doc(userId).update({
                     name: name,
                     phone: phone,
@@ -824,12 +922,54 @@
                     position: position
                 });
 
-                showMessage('회원 정보가 수정되었습니다.', 'success');
+                if (newPassword) {
+                    const currentAdmin = auth.currentUser;
+                    
+                    try {
+                        const userEmail = userData.email || `${userData.userId}@system.local`;
+                        const oldPassword = userData.phone;
+                        
+                        await auth.signInWithEmailAndPassword(userEmail, oldPassword);
+                        await auth.currentUser.updatePassword(newPassword);
+                        
+                        if (userData.isTestAccount) {
+                            await db.collection('users').doc(userId).update({
+                                phone: newPassword
+                            });
+                        }
+                        
+                        await auth.signOut();
+                        await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
+                        
+                        showMessage('회원 정보 및 비밀번호가 수정되었습니다.', 'success');
+                        
+                    } catch (passwordError) {
+                        console.error('비밀번호 변경 오류:', passwordError);
+                        
+                        try {
+                            await auth.signOut();
+                            await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
+                        } catch (recoveryError) {
+                            console.error('관리자 복구 실패:', recoveryError);
+                        }
+                        
+                        await db.collection('users').doc(userId).update({
+                            pendingPassword: newPassword,
+                            passwordUpdateRequired: true
+                        });
+                        
+                        showMessage('회원 정보는 수정되었으나, 비밀번호 변경은 보류되었습니다.', 'error');
+                    }
+                } else {
+                    showMessage('회원 정보가 수정되었습니다.', 'success');
+                }
+                
                 closeEditModal();
                 loadUsers();
+                
             } catch (error) {
                 console.error('수정 오류:', error);
-                showMessage('수정에 실패했습니다.', 'error');
+                showMessage('수정에 실패했습니다: ' + error.message, 'error');
             }
         });
 
@@ -856,16 +996,16 @@
             }
         }
 
-        // 검색 필터 이벤트
         document.getElementById('searchInput').addEventListener('input', () => {
+            currentPage = 1;
             displayUsers(allUsers);
         });
 
         document.getElementById('memberTypeFilter').addEventListener('change', () => {
+            currentPage = 1;
             displayUsers(allUsers);
         });
 
-        // 모달 외부 클릭시 닫기
         window.onclick = function(event) {
             const editModal = document.getElementById('editModal');
             const testModal = document.getElementById('testAccountModal');
@@ -882,7 +1022,6 @@
             }
         }
 
-        // 사전 등록 회원 관리
         function openPreRegisterModal() {
             console.log('유료회원 등록 모달 열기');
             const modal = document.getElementById('preRegisterModal');
@@ -909,20 +1048,17 @@
         let currentPreRegPage = 1;
         let preRegPageSize = 10;
 
-        // 페이지 크기 변경
         document.getElementById('preRegPageSize').addEventListener('change', function() {
             preRegPageSize = parseInt(this.value);
             currentPreRegPage = 1;
             displayPreRegPage();
         });
 
-        // 전체 선택/해제
         function toggleAllPreReg(checkbox) {
             const checkboxes = document.querySelectorAll('.preReg-checkbox');
             checkboxes.forEach(cb => cb.checked = checkbox.checked);
         }
 
-        // 선택된 회원 리스트로 이동
         function moveSelectedToUserList() {
             const checkboxes = document.querySelectorAll('.preReg-checkbox:checked');
             
@@ -941,7 +1077,6 @@
             }
         }
 
-        // 사전 등록 회원 목록 로드
         async function loadPreRegistered() {
             try {
                 console.log('사전 등록 목록 로딩 시작...');
@@ -961,7 +1096,6 @@
             }
         }
 
-        // 페이지별 표시
         function displayPreRegPage() {
             const tbody = document.getElementById('preRegTableBody');
             
@@ -977,13 +1111,11 @@
                 'consultant': '컨홈'
             };
 
-            // 페이지네이션 계산
             const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
             const startIndex = (currentPreRegPage - 1) * preRegPageSize;
             const endIndex = Math.min(startIndex + preRegPageSize, allPreRegData.length);
             const pageData = allPreRegData.slice(startIndex, endIndex);
 
-            // 테이블 렌더링
             tbody.innerHTML = pageData.map(data => {
                 const status = data.registered ? 
                     '<span class="badge badge-success">가입완료</span>' : 
@@ -1004,11 +1136,9 @@
                 `;
             }).join('');
 
-            // 페이지네이션 렌더링
             renderPreRegPagination(totalPages);
         }
 
-        // 페이지네이션 렌더링
         function renderPreRegPagination(totalPages) {
             const paginationDiv = document.getElementById('preRegPagination');
             
@@ -1019,10 +1149,8 @@
 
             let html = '';
 
-            // 이전 버튼
             html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage - 1})" ${currentPreRegPage === 1 ? 'disabled' : ''}>‹ 이전</button>`;
 
-            // 페이지 번호
             const maxVisible = 5;
             let startPage = Math.max(1, currentPreRegPage - Math.floor(maxVisible / 2));
             let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -1045,13 +1173,11 @@
                 html += `<button class="pagination-btn" onclick="changePreRegPage(${totalPages})">${totalPages}</button>`;
             }
 
-            // 다음 버튼
             html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage + 1})" ${currentPreRegPage === totalPages ? 'disabled' : ''}>다음 ›</button>`;
 
             paginationDiv.innerHTML = html;
         }
 
-        // 페이지 변경
         function changePreRegPage(page) {
             const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
             if (page < 1 || page > totalPages) return;
@@ -1059,14 +1185,12 @@
             currentPreRegPage = page;
             displayPreRegPage();
             
-            // 상단으로 스크롤
             document.querySelector('#preRegTableBody').parentElement.scrollIntoView({ 
                 behavior: 'smooth', 
                 block: 'start' 
             });
         }
 
-        // 단일 사전 등록
         document.getElementById('singlePreRegForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -1081,7 +1205,6 @@
             }
 
             try {
-                // 중복 체크
                 const existing = await db.collection('preRegistered')
                     .where('userId', '==', userId)
                     .get();
@@ -1103,10 +1226,8 @@
                 showPreRegMessage('사전 등록이 완료되었습니다.', 'success');
                 document.getElementById('singlePreRegForm').reset();
                 
-                // 목록 새로고침하고 스크롤 이동
                 await loadPreRegistered();
                 
-                // 등록된 회원 목록으로 스크롤
                 setTimeout(() => {
                     const tableSection = document.querySelector('#preRegTableBody').parentElement.parentElement;
                     tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1118,7 +1239,6 @@
             }
         });
 
-        // 일괄 사전 등록
         async function bulkPreRegister() {
             const bulkText = document.getElementById('bulkInput').value.trim();
             
@@ -1185,24 +1305,20 @@
             document.getElementById('bulkInput').value = '';
             await loadPreRegistered();
             
-            // 등록된 회원 목록으로 스크롤
             setTimeout(() => {
                 const tableSection = document.querySelector('#preRegTableBody').parentElement.parentElement;
                 tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 300);
         }
 
-        // 전체 회원 목록으로 이동
         function switchToUserList() {
             closePreRegisterModal();
-            // 메인 화면의 회원 목록으로 스크롤
             setTimeout(() => {
                 const mainTable = document.querySelector('#userTableBody').parentElement.parentElement;
                 mainTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 300);
         }
 
-        // 사전 등록 삭제
         async function deletePreRegistered(docId, name) {
             if (!confirm(`${name}님의 사전 등록을 삭제하시겠습니까?`)) {
                 return;
@@ -1218,7 +1334,6 @@
             }
         }
 
-        // 테스트 계정 생성 모달
         function openTestAccountModal() {
             document.getElementById('testAccountModal').style.display = 'flex';
             document.getElementById('generatedAccounts').style.display = 'none';
@@ -1236,7 +1351,6 @@
             messageDiv.style.display = 'block';
         }
 
-        // 랜덤 문자열 생성
         function generateRandomString(length) {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let result = '';
@@ -1246,7 +1360,6 @@
             return result;
         }
 
-        // 랜덤 전화번호 생성
         function generateRandomPhone() {
             const prefix = '010';
             const middle = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
@@ -1256,7 +1369,6 @@
 
         let generatedAccountsData = [];
 
-        // 테스트 계정 생성
         document.getElementById('testAccountForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -1265,45 +1377,90 @@
 
             showTestMessage('계정 생성 중...', 'success');
 
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                showTestMessage('로그인 세션이 만료되었습니다.', 'error');
+                return;
+            }
+
             try {
                 generatedAccountsData = [];
                 const expiresAt = new Date();
                 expiresAt.setDate(expiresAt.getDate() + days);
 
                 for (let i = 0; i < count; i++) {
+                    showTestMessage(`계정 생성 중... (${i + 1}/${count})`, 'success');
+                    
                     const userId = 'TEST' + generateRandomString(6);
                     const phone = generateRandomPhone();
                     const email = `${userId}@system.local`;
 
-                    // Firebase Authentication 계정 생성
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
-                    const user = userCredential.user;
+                    try {
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
+                        const newUser = userCredential.user;
 
-                    // Firestore에 사용자 정보 저장
-                    await db.collection('users').doc(user.uid).set({
-                        userId: userId,
-                        phone: phone,
-                        name: `테스트${i + 1}`,
-                        memberType: 'test',
-                        isTestAccount: true,
-                        expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                        await db.collection('users').doc(newUser.uid).set({
+                            userId: userId,
+                            phone: phone,
+                            name: `테스트${i + 1}`,
+                            memberType: 'test',
+                            isTestAccount: true,
+                            expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
 
-                    generatedAccountsData.push({
-                        number: i + 1,
-                        userId: userId,
-                        phone: phone
-                    });
+                        generatedAccountsData.push({
+                            number: i + 1,
+                            userId: userId,
+                            phone: phone
+                        });
+
+                        await auth.signOut();
+
+                        if (currentUser.email === 'admin@system.local') {
+                            await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
+                        } else {
+                            showTestMessage('관리자 재로그인이 필요합니다.', 'error');
+                            break;
+                        }
+
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                    } catch (error) {
+                        console.error(`계정 ${i + 1} 생성 오류:`, error);
+                        
+                        if (!auth.currentUser) {
+                            try {
+                                await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
+                            } catch (loginError) {
+                                console.error('관리자 재로그인 실패:', loginError);
+                                showTestMessage('관리자 재로그인에 실패했습니다. 페이지를 새로고침해주세요.', 'error');
+                                return;
+                            }
+                        }
+                        
+                        continue;
+                    }
                 }
 
-                showTestMessage(`${count}개 계정 생성 완료!`, 'success');
-                displayGeneratedAccounts();
-                loadUsers(); // 회원 목록 새로고침
+                showTestMessage(`${generatedAccountsData.length}/${count}개 계정 생성 완료!`, 'success');
+                
+                if (generatedAccountsData.length > 0) {
+                    displayGeneratedAccounts();
+                }
+                
+                await loadUsers();
 
             } catch (error) {
                 console.error('계정 생성 오류:', error);
                 showTestMessage('계정 생성 중 오류가 발생했습니다: ' + error.message, 'error');
+                
+                try {
+                    await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
+                } catch (loginError) {
+                    console.error('관리자 재로그인 실패:', loginError);
+                    alert('관리자 재로그인에 실패했습니다. 페이지를 새로고침해주세요.');
+                }
             }
         });
 
