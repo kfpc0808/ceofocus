@@ -454,7 +454,12 @@
             
             <!-- 등록된 사전 회원 목록 -->
             <div>
-                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">등록된 사전 회원 목록</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.1rem; margin: 0;">등록된 사전 회원 목록</h3>
+                    <button type="button" class="btn btn-secondary" onclick="switchToUserList()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        👥 전체 회원 목록으로
+                    </button>
+                </div>
                 <div style="overflow-x: auto; max-height: 300px;">
                     <table style="font-size: 0.9rem;">
                         <thead>
@@ -853,9 +858,9 @@
         // 사전 등록 회원 목록 로드
         async function loadPreRegistered() {
             try {
-                const snapshot = await db.collection('preRegistered')
-                    .orderBy('createdAt', 'desc')
-                    .get();
+                console.log('사전 등록 목록 로딩 시작...');
+                const snapshot = await db.collection('preRegistered').get();
+                console.log('문서 개수:', snapshot.size);
 
                 const tbody = document.getElementById('preRegTableBody');
                 
@@ -931,7 +936,16 @@
 
                 showPreRegMessage('사전 등록이 완료되었습니다.', 'success');
                 document.getElementById('singlePreRegForm').reset();
-                loadPreRegistered();
+                
+                // 목록 새로고침하고 스크롤 이동
+                await loadPreRegistered();
+                
+                // 등록된 회원 목록으로 스크롤
+                setTimeout(() => {
+                    const tableSection = document.querySelector('#preRegTableBody').parentElement.parentElement;
+                    tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+                
             } catch (error) {
                 console.error('사전 등록 오류:', error);
                 showPreRegMessage('등록에 실패했습니다.', 'error');
@@ -1003,7 +1017,23 @@
 
             showPreRegMessage(`완료! 성공: ${successCount}개, 실패: ${errorCount}개`, 'success');
             document.getElementById('bulkInput').value = '';
-            loadPreRegistered();
+            await loadPreRegistered();
+            
+            // 등록된 회원 목록으로 스크롤
+            setTimeout(() => {
+                const tableSection = document.querySelector('#preRegTableBody').parentElement.parentElement;
+                tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        }
+
+        // 전체 회원 목록으로 이동
+        function switchToUserList() {
+            closePreRegisterModal();
+            // 메인 화면의 회원 목록으로 스크롤
+            setTimeout(() => {
+                const mainTable = document.querySelector('#userTableBody').parentElement.parentElement;
+                mainTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
         }
 
         // 사전 등록 삭제
