@@ -278,6 +278,7 @@
             <button class="btn btn-secondary" onclick="openPreRegisterModal()">유료회원 등록</button>
             <button class="btn btn-secondary" onclick="openTestAccountModal()">테스트 계정 생성</button>
             <button class="btn btn-danger" onclick="deleteExpiredAccounts()">🗑️ 만료 계정 삭제</button>
+            <button class="btn btn-secondary" onclick="openChangePasswordModal()">🔑 비밀번호 변경</button>
             <button class="btn btn-secondary" onclick="location.href='index.html'">메인 페이지</button>
             <button class="btn btn-primary" onclick="logout()">로그아웃</button>
         </div>
@@ -550,6 +551,38 @@
             </div>
             
             <button type="button" class="btn btn-secondary" onclick="closePreRegisterModal()" style="margin-top: 1.5rem;">닫기</button>
+        </div>
+    </div>
+
+    <!-- 관리자 비밀번호 변경 모달 -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <h2>🔑 관리자 비밀번호 변경</h2>
+            
+            <div id="passwordMessage" class="message"></div>
+            
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <label>현재 비밀번호</label>
+                    <input type="password" id="currentPassword" required placeholder="현재 비밀번호 입력">
+                </div>
+                
+                <div class="form-group">
+                    <label>새 비밀번호</label>
+                    <input type="password" id="newPassword" required placeholder="새 비밀번호 입력 (최소 6자)">
+                    <small>* 최소 6자 이상 입력하세요</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>새 비밀번호 확인</label>
+                    <input type="password" id="confirmPassword" required placeholder="새 비밀번호 다시 입력">
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">비밀번호 변경</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()" style="flex: 1;">취소</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1129,11 +1162,18 @@
                 const count = parseInt(document.getElementById('accountCount').value);
                 const days = parseInt(document.getElementById('validPeriod').value);
 
+                // 버튼 비활성화
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = '생성 중...';
+
                 showTestMessage('계정 생성 중...', 'success');
 
                 const currentUser = auth.currentUser;
                 if (!currentUser) {
                     showTestMessage('로그인 세션이 만료되었습니다.', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '계정 생성';
                     return;
                 }
 
@@ -1153,9 +1193,11 @@
                         const email = `${userId}@system.local`;
 
                         try {
+                            // 1. 새 계정 생성
                             const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
                             const newUser = userCredential.user;
 
+                            // 2. Firestore 저장
                             await db.collection('users').doc(newUser.uid).set({
                                 userId: userId,
                                 phone: phone,
@@ -1166,29 +1208,47 @@
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
                             });
 
+                            console.log(`계정 ${i + 1} Firestore 저장 완료`);
+
+                            // 3. 생성된 계정 정보 저장
                             generatedAccountsData.push({
                                 number: i + 1,
                                 userId: userId,
                                 phone: phone
                             });
 
+                            // 4. 명시적으로 로그아웃
                             await auth.signOut();
-                            await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
-                            await new Promise(resolve => setTimeout(resolve, 300));
+                            console.log(`계정 ${i + 1} 로그아웃 완료`);
+
+                            // 5. 관리자 재로그인 (재인증)
+                            const adminCredential = await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                            console.log(`계정 ${i + 1} 관리자 재로그인 완료:`, adminCredential.user.email);
+
+                            // 6. 재로그인 확인 대기
+                            await new Promise(resolve => setTimeout(resolve, 500));
 
                         } catch (error) {
                             console.error(`계정 ${i + 1} 생성 오류:`, error);
                             
+                            // 오류 발생 시 관리자로 복구
                             try {
-                                if (!auth.currentUser) {
-                                    await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
-                                }
+                                await auth.signOut();
+                                await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                                console.log('관리자 복구 완료');
                             } catch (loginError) {
                                 console.error('관리자 재로그인 실패:', loginError);
+                                showTestMessage('관리자 재로그인 실패. 페이지를 새로고침해주세요.', 'error');
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = '계정 생성';
+                                return;
                             }
-                            
-                            continue;
                         }
+                    }
+
+                    // 최종 관리자 로그인 확인
+                    if (!auth.currentUser || auth.currentUser.email !== adminEmail) {
+                        await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
                     }
 
                     showTestMessage(`${generatedAccountsData.length}/${count}개 계정 생성 완료!`, 'success');
@@ -1201,13 +1261,18 @@
 
                 } catch (error) {
                     console.error('계정 생성 오류:', error);
-                    showTestMessage('계정 생성 중 오류가 발생했습니다.', 'error');
+                    showTestMessage('계정 생성 중 오류: ' + error.message, 'error');
                     
+                    // 최종 복구
                     try {
+                        await auth.signOut();
                         await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
                     } catch (loginError) {
                         console.error('최종 관리자 재로그인 실패:', loginError);
                     }
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '계정 생성';
                 }
             });
 
@@ -1288,21 +1353,32 @@
                 showPreRegMessage('회원 이동 중...', 'success');
                 
                 const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    showPreRegMessage('로그인 세션이 만료되었습니다.', 'error');
+                    return;
+                }
+
                 const adminEmail = currentUser.email;
                 const adminPassword = '01091198211';
                 
                 let successCount = 0;
                 let errorCount = 0;
+                const successIds = []; // 성공한 ID 추적
 
                 try {
                     for (const member of members) {
                         try {
+                            showPreRegMessage(`이동 중... (${successCount + errorCount + 1}/${members.length})`, 'success');
+                            
                             const email = `${member.userId}@system.local`;
                             const password = member.phone;
                             
+                            // 1. 새 계정 생성
                             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                             const user = userCredential.user;
+                            console.log(`${member.name} 계정 생성 완료`);
 
+                            // 2. Firestore users 저장
                             await db.collection('users').doc(user.uid).set({
                                 userId: member.userId,
                                 name: member.name,
@@ -1312,38 +1388,58 @@
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 movedFromPreReg: true
                             });
+                            console.log(`${member.name} Firestore 저장 완료`);
 
+                            // 3. preRegistered 업데이트
                             await db.collection('preRegistered').doc(member.id).update({
                                 registered: true,
                                 movedAt: firebase.firestore.FieldValue.serverTimestamp()
                             });
+                            console.log(`${member.name} 사전등록 업데이트 완료`);
 
+                            // 4. 로그아웃
                             await auth.signOut();
-                            await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                            console.log(`${member.name} 로그아웃 완료`);
+
+                            // 5. 관리자 재로그인
+                            const adminCredential = await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                            console.log(`${member.name} 관리자 재로그인 완료:`, adminCredential.user.email);
 
                             successCount++;
+                            successIds.push(member.id);
+
+                            // 6. 대기
+                            await new Promise(resolve => setTimeout(resolve, 500));
 
                         } catch (error) {
-                            console.error('회원 이동 오류:', member.name, error);
+                            console.error(`${member.name} 이동 오류:`, error);
                             errorCount++;
                             
+                            // 관리자 세션 복구
                             try {
-                                if (!auth.currentUser) {
-                                    await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
-                                }
+                                await auth.signOut();
+                                await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                                console.log('관리자 복구 완료');
                             } catch (loginError) {
                                 console.error('관리자 재로그인 실패:', loginError);
+                                showPreRegMessage('관리자 재로그인 실패. 페이지를 새로고침해주세요.', 'error');
+                                return;
                             }
                         }
+                    }
 
-                        await new Promise(resolve => setTimeout(resolve, 300));
+                    // 최종 관리자 확인
+                    if (!auth.currentUser || auth.currentUser.email !== adminEmail) {
+                        await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
                     }
 
                     showPreRegMessage(`완료! 성공: ${successCount}명, 실패: ${errorCount}명`, 'success');
                     
+                    // 목록 새로고침
                     await loadPreRegistered();
                     await loadUsers();
                     
+                    // 3초 후 전체 회원 목록으로 이동
                     setTimeout(() => {
                         closePreRegisterModal();
                         const mainTable = document.querySelector('#userTableBody').parentElement.parentElement;
@@ -1353,6 +1449,14 @@
                 } catch (error) {
                     console.error('일괄 이동 오류:', error);
                     showPreRegMessage('회원 이동 중 오류가 발생했습니다.', 'error');
+                    
+                    // 최종 복구
+                    try {
+                        await auth.signOut();
+                        await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                    } catch (loginError) {
+                        console.error('최종 복구 실패:', loginError);
+                    }
                 }
             }
 
@@ -1376,7 +1480,10 @@
             function displayPreRegPage() {
                 const tbody = document.getElementById('preRegTableBody');
                 
-                if (allPreRegData.length === 0) {
+                // registered: true인 항목 필터링 (이동된 회원은 목록에서 제거)
+                const activePreReg = allPreRegData.filter(data => !data.registered);
+                
+                if (activePreReg.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="7" class="no-data">등록된 사전 회원이 없습니다.</td></tr>';
                     document.getElementById('preRegPagination').innerHTML = '';
                     return;
@@ -1388,15 +1495,13 @@
                     'consultant': '컨홈'
                 };
 
-                const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
+                const totalPages = Math.ceil(activePreReg.length / preRegPageSize);
                 const startIndex = (currentPreRegPage - 1) * preRegPageSize;
-                const endIndex = Math.min(startIndex + preRegPageSize, allPreRegData.length);
-                const pageData = allPreRegData.slice(startIndex, endIndex);
+                const endIndex = Math.min(startIndex + preRegPageSize, activePreReg.length);
+                const pageData = activePreReg.slice(startIndex, endIndex);
 
                 tbody.innerHTML = pageData.map(data => {
-                    const status = data.registered ? 
-                        '<span class="badge badge-success">가입완료</span>' : 
-                        '<span class="badge badge-warning">대기중</span>';
+                    const status = '<span class="badge badge-warning">대기중</span>';
                     
                     return `
                         <tr>
