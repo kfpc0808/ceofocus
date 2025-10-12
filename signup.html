@@ -164,6 +164,39 @@
         .hidden {
             display: none !important;
         }
+        .id-check-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+        .id-check-container input {
+            flex: 1;
+        }
+        .btn-check {
+            padding: 0.875rem 1.25rem;
+            background: #2a5a8a;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+        .btn-check:hover {
+            background: #1a4a7a;
+        }
+        .id-status {
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            font-weight: 600;
+        }
+        .id-status.success {
+            color: #27ae60;
+        }
+        .id-status.error {
+            color: #e74c3c;
+        }
     </style>
 </head>
 <body>
@@ -202,7 +235,12 @@
         <form id="generalForm" class="hidden">
             <div class="form-group">
                 <label>아이디 (ID)</label>
-                <input type="text" id="gen_userId" placeholder="사용할 아이디" required autocomplete="username">
+                <div class="id-check-container">
+                    <input type="text" id="gen_userId" placeholder="영문 소문자+숫자 4~12자" required autocomplete="username" pattern="[a-z0-9]{4,12}" title="영문 소문자와 숫자만 사용 가능 (4~12자)">
+                    <button type="button" class="btn-check" onclick="checkDuplicateId()">중복 확인</button>
+                </div>
+                <small>영문 소문자와 숫자만 사용 가능 (4~12자)</small>
+                <div id="idCheckStatus" class="id-status"></div>
             </div>
             
             <div class="form-group">
@@ -272,8 +310,61 @@
         <form id="preRegisteredForm" class="hidden">
             <div class="form-group">
                 <label>성명</label>
-                <input type="text" id="pre_name" placeholder="등록된 이름 입력" required autocomplete="name">
+                <input type="text" id="pre_name" placeholder="사전 등록된 이름 입력" required autocomplete="name">
                 <small>사전 등록된 이름을 정확히 입력하세요</small>
+            </div>
+            
+            <!-- 추가 정보 입력 필드 (사전 등록 확인 후 표시) -->
+            <div id="additionalFields" class="hidden">
+                <div class="form-group">
+                    <label>이메일</label>
+                    <div class="email-group">
+                        <input type="text" id="pre_email_id" placeholder="example" required>
+                        <span>@</span>
+                        <select id="pre_email_domain" required>
+                            <option value="naver.com">naver.com</option>
+                            <option value="gmail.com">gmail.com</option>
+                            <option value="daum.net">daum.net</option>
+                            <option value="hanmail.net">hanmail.net</option>
+                            <option value="nate.com">nate.com</option>
+                            <option value="custom">직접입력</option>
+                        </select>
+                    </div>
+                    <input type="text" id="pre_email_custom" placeholder="도메인 직접 입력" style="margin-top: 0.5rem;" class="hidden">
+                </div>
+                
+                <div class="form-group">
+                    <label>소속사</label>
+                    <input type="text" id="pre_company" placeholder="(주)ABC기업">
+                </div>
+                
+                <div class="form-group">
+                    <label>직함</label>
+                    <input type="text" id="pre_position" placeholder="대표이사">
+                </div>
+                
+                <div class="form-group">
+                    <label>지역</label>
+                    <select id="pre_region" required>
+                        <option value="">선택하세요</option>
+                        <option value="서울">서울</option>
+                        <option value="인천">인천</option>
+                        <option value="대전">대전</option>
+                        <option value="광주">광주</option>
+                        <option value="대구">대구</option>
+                        <option value="부산">부산</option>
+                        <option value="울산">울산</option>
+                        <option value="경기">경기</option>
+                        <option value="강원">강원</option>
+                        <option value="충남">충남</option>
+                        <option value="충북">충북</option>
+                        <option value="전남">전남</option>
+                        <option value="전북">전북</option>
+                        <option value="경남">경남</option>
+                        <option value="경북">경북</option>
+                        <option value="제주">제주</option>
+                    </select>
+                </div>
             </div>
             
             <button type="submit" class="btn btn-primary">인증 및 가입</button>
@@ -307,6 +398,8 @@
 
         let selectedMemberType = '';
         const messageDiv = document.getElementById('message');
+        let isIdChecked = false;
+        let checkedUserId = '';
         
         function showMessage(text, type) {
             messageDiv.textContent = text;
@@ -314,6 +407,64 @@
             messageDiv.style.display = 'block';
             window.scrollTo(0, 0);
         }
+        
+        // 아이디 중복 확인
+        async function checkDuplicateId() {
+            const userId = document.getElementById('gen_userId').value.trim();
+            const statusDiv = document.getElementById('idCheckStatus');
+            
+            // 형식 검증
+            if (!userId) {
+                statusDiv.textContent = '❌ 아이디를 입력하세요.';
+                statusDiv.className = 'id-status error';
+                return;
+            }
+            
+            if (!/^[a-z0-9]{4,12}$/.test(userId)) {
+                statusDiv.textContent = '❌ 영문 소문자와 숫자만 4~12자로 입력하세요.';
+                statusDiv.className = 'id-status error';
+                isIdChecked = false;
+                return;
+            }
+            
+            try {
+                statusDiv.textContent = '확인 중...';
+                statusDiv.className = 'id-status';
+                
+                const existingUser = await db.collection('users')
+                    .where('userId', '==', userId)
+                    .get();
+                
+                if (existingUser.empty) {
+                    statusDiv.textContent = '✅ 사용 가능한 아이디입니다.';
+                    statusDiv.className = 'id-status success';
+                    isIdChecked = true;
+                    checkedUserId = userId;
+                } else {
+                    statusDiv.textContent = '❌ 이미 사용 중인 아이디입니다.';
+                    statusDiv.className = 'id-status error';
+                    isIdChecked = false;
+                }
+            } catch (error) {
+                console.error('중복 확인 오류:', error);
+                statusDiv.textContent = '❌ 확인 중 오류가 발생했습니다.';
+                statusDiv.className = 'id-status error';
+                isIdChecked = false;
+            }
+        }
+        
+        // 아이디 입력 시 중복 확인 상태 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            const userIdInput = document.getElementById('gen_userId');
+            if (userIdInput) {
+                userIdInput.addEventListener('input', function() {
+                    if (this.value.trim() !== checkedUserId) {
+                        isIdChecked = false;
+                        document.getElementById('idCheckStatus').textContent = '';
+                    }
+                });
+            }
+        });
         
         function selectType(type) {
             selectedMemberType = type;
@@ -341,6 +492,15 @@
             }
         });
         
+        document.getElementById('pre_email_domain').addEventListener('change', function() {
+            const customInput = document.getElementById('pre_email_custom');
+            if (this.value === 'custom') {
+                customInput.classList.remove('hidden');
+            } else {
+                customInput.classList.add('hidden');
+            }
+        });
+        
         document.getElementById('generalForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -358,6 +518,18 @@
             
             console.log('회원가입 시작:', { userId, name, phone, email });
             
+            // 아이디 형식 검증
+            if (!/^[a-z0-9]{4,12}$/.test(userId)) {
+                showMessage('아이디는 영문 소문자와 숫자만 사용 가능합니다. (4~12자)', 'error');
+                return;
+            }
+            
+            // 중복 확인 여부 체크
+            if (!isIdChecked || userId !== checkedUserId) {
+                showMessage('아이디 중복 확인을 해주세요.', 'error');
+                return;
+            }
+            
             if (!/^\d{10,11}$/.test(phone)) {
                 showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
                 return;
@@ -369,13 +541,14 @@
             }
             
             try {
-                // 아이디 중복 체크
+                // 최종 중복 체크 (보안상 한 번 더)
                 const existingUser = await db.collection('users')
                     .where('userId', '==', userId)
                     .get();
                 
                 if (!existingUser.empty) {
                     showMessage('이미 사용 중인 아이디입니다.', 'error');
+                    isIdChecked = false;
                     return;
                 }
                 
@@ -433,6 +606,29 @@
             
             const name = document.getElementById('pre_name').value.trim();
             
+            // 추가 정보가 표시되어 있으면 수집
+            const additionalFields = document.getElementById('additionalFields');
+            let email = '';
+            let company = '';
+            let position = '';
+            let region = '';
+            
+            if (!additionalFields.classList.contains('hidden')) {
+                const emailId = document.getElementById('pre_email_id').value.trim();
+                const emailDomain = document.getElementById('pre_email_domain').value;
+                const emailCustom = document.getElementById('pre_email_custom').value.trim();
+                email = `${emailId}@${emailDomain === 'custom' ? emailCustom : emailDomain}`;
+                
+                company = document.getElementById('pre_company').value.trim();
+                position = document.getElementById('pre_position').value.trim();
+                region = document.getElementById('pre_region').value;
+                
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showMessage('올바른 이메일 형식이 아닙니다.', 'error');
+                    return;
+                }
+            }
+            
             try {
                 const preRegSnapshot = await db.collection('preRegistered')
                     .where('name', '==', name)
@@ -441,6 +637,8 @@
                 
                 if (preRegSnapshot.empty) {
                     showMessage('사전 등록된 회원 정보가 없습니다.', 'error');
+                    // 추가 정보 입력란 표시
+                    document.getElementById('additionalFields').classList.remove('hidden');
                     return;
                 }
                 
@@ -451,12 +649,27 @@
                     return;
                 }
                 
+                // 추가 정보 입력란이 숨겨져 있으면 표시
+                if (additionalFields.classList.contains('hidden')) {
+                    showMessage('인증 성공! 추가 정보를 입력해주세요.', 'success');
+                    additionalFields.classList.remove('hidden');
+                    document.querySelector('.btn-primary').textContent = '가입 완료';
+                    return;
+                }
+                
                 const authEmail = `${preRegData.userId}@system.local`;
                 const userCredential = await auth.createUserWithEmailAndPassword(authEmail, preRegData.phone);
                 const user = userCredential.user;
                 
                 await db.collection('users').doc(user.uid).set({
-                    ...preRegData,
+                    userId: preRegData.userId,
+                    name: preRegData.name,
+                    phone: preRegData.phone,
+                    email: email,
+                    company: company,
+                    position: position,
+                    region: region,
+                    memberType: preRegData.memberType,
                     role: 'user',
                     isPaid: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
