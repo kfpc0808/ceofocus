@@ -34,6 +34,7 @@
         .header-buttons {
             display: flex;
             gap: 0.75rem;
+            flex-wrap: wrap;
         }
         .btn {
             padding: 0.75rem 1.5rem;
@@ -276,6 +277,7 @@
         <div class="header-buttons">
             <button class="btn btn-secondary" onclick="openPreRegisterModal()">유료회원 등록</button>
             <button class="btn btn-secondary" onclick="openTestAccountModal()">테스트 계정 생성</button>
+            <button class="btn btn-danger" onclick="deleteExpiredAccounts()">🗑️ 만료 계정 삭제</button>
             <button class="btn btn-secondary" onclick="location.href='index.html'">메인 페이지</button>
             <button class="btn btn-primary" onclick="logout()">로그아웃</button>
         </div>
@@ -295,6 +297,10 @@
             <div class="number" id="testUsers">0</div>
         </div>
         <div class="stat-card">
+            <h3>만료 계정</h3>
+            <div class="number" id="expiredUsers" style="color: #e74c3c;">0</div>
+        </div>
+        <div class="stat-card">
             <h3>오늘 가입</h3>
             <div class="number" id="todayUsers">0</div>
         </div>
@@ -312,6 +318,7 @@
                 <option value="inner">이너회원</option>
                 <option value="consultant">컨홈회원</option>
                 <option value="test">테스트계정</option>
+                <option value="expired">만료된 계정</option>
             </select>
             <select id="pageSize">
                 <option value="10">10개씩</option>
@@ -328,18 +335,19 @@
             <table>
                 <thead>
                     <tr>
+                        <th style="width: 50px;">No</th>
                         <th>아이디</th>
                         <th>이름</th>
                         <th>전화번호</th>
                         <th>회원유형</th>
                         <th>상태</th>
-                        <th>가입일</th>
+                        <th>가입일시</th>
                         <th>관리</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody">
                     <tr>
-                        <td colspan="7" class="no-data">로딩 중...</td>
+                        <td colspan="8" class="no-data">로딩 중...</td>
                     </tr>
                 </tbody>
             </table>
@@ -550,730 +558,903 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
-            authDomain: "kfpc-company-support-project.firebaseapp.com",
-            databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "kfpc-company-support-project",
-            storageBucket: "kfpc-company-support-project.firebasestorage.app",
-            messagingSenderId: "101260933373",
-            appId: "1:101260933373:web:3436176f9ca2560056d914"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        let allUsers = [];
-        let currentPage = 1;
-        let pageSize = 20;
-        let retryCount = 0;
-        const maxRetries = 3;
-
-        document.getElementById('pageSize').addEventListener('change', function() {
-            pageSize = parseInt(this.value);
-            currentPage = 1;
-            displayUsers(allUsers);
-        });
-
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                console.log('로그인된 사용자 없음');
-                window.location.href = 'login.html';
+        // Firebase 스크립트 로드 완료 대기
+        window.addEventListener('load', function() {
+            // Firebase가 로드되었는지 확인
+            if (typeof firebase === 'undefined') {
+                alert('Firebase 로드에 실패했습니다. 페이지를 새로고침해주세요.');
                 return;
             }
 
-            console.log('로그인된 사용자:', user.uid);
-            console.log('이메일:', user.email);
+            // Firebase 초기화
+            const firebaseConfig = {
+                apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+                authDomain: "kfpc-company-support-project.firebaseapp.com",
+                databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "kfpc-company-support-project",
+                storageBucket: "kfpc-company-support-project.firebasestorage.app",
+                messagingSenderId: "101260933373",
+                appId: "1:101260933373:web:3436176f9ca2560056d914"
+            };
 
-            if (user.email === 'admin@system.local') {
-                console.log('관리자 이메일 확인 완료');
-                await ensureAdminAccount(user.uid);
-                loadUsers();
-                return;
-            }
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
 
-            try {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (!userDoc.exists) {
-                    console.log('사용자 문서 없음');
-                    
-                    if (user.email === 'admin@system.local') {
-                        console.log('관리자 계정 생성 시도');
-                        await ensureAdminAccount(user.uid);
-                        loadUsers();
-                        return;
-                    }
-                    
-                    alert('사용자 정보를 찾을 수 없습니다.');
-                    await auth.signOut();
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                const userData = userDoc.data();
-                console.log('사용자 데이터:', userData);
+            let allUsers = [];
+            let currentPage = 1;
+            let pageSize = 20;
+            let retryCount = 0;
+            const maxRetries = 3;
+            let allPreRegData = [];
+            let currentPreRegPage = 1;
+            let preRegPageSize = 10;
+            let generatedAccountsData = [];
 
-                if (!userData || userData.role !== 'admin') {
-                    console.log('관리자 권한 없음:', userData);
-                    alert('관리자 권한이 필요합니다.');
-                    await auth.signOut();
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                console.log('관리자 권한 확인 완료');
-                loadUsers();
-            } catch (error) {
-                console.error('권한 확인 오류:', error);
-                
-                retryCount++;
-                if (retryCount < maxRetries) {
-                    console.log(`재시도 중... (${retryCount}/${maxRetries})`);
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    alert('권한 확인에 실패했습니다. 다시 로그인해주세요.');
-                    await auth.signOut();
-                    window.location.href = 'login.html';
-                }
-            }
-        });
-
-        async function ensureAdminAccount(uid) {
-            try {
-                const userDoc = await db.collection('users').doc(uid).get();
-                
-                if (!userDoc.exists) {
-                    console.log('관리자 계정 생성 중...');
-                    await db.collection('users').doc(uid).set({
-                        userId: 'admin',
-                        name: '관리자',
-                        phone: '01091198211',
-                        role: 'admin',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    console.log('관리자 계정 생성 완료');
-                    
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-            } catch (error) {
-                console.error('관리자 계정 생성 오류:', error);
-            }
-        }
-
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 3000);
-        }
-
-        async function loadUsers() {
-            try {
-                const snapshot = await db.collection('users')
-                    .orderBy('createdAt', 'desc')
-                    .get();
-
-                allUsers = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
-                allUsers = allUsers.filter(user => user.role !== 'admin');
-
-                updateStats();
+            // 이벤트 리스너 등록
+            document.getElementById('pageSize').addEventListener('change', function() {
+                pageSize = parseInt(this.value);
                 currentPage = 1;
                 displayUsers(allUsers);
-            } catch (error) {
-                console.error('회원 로딩 오류:', error);
-                showMessage('회원 정보를 불러오는데 실패했습니다.', 'error');
-            }
-        }
+            });
 
-        function updateStats() {
-            const total = allUsers.length;
-            const general = allUsers.filter(u => u.memberType === 'general').length;
-            const test = allUsers.filter(u => u.isTestAccount).length;
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const todayUsers = allUsers.filter(u => {
-                if (!u.createdAt) return false;
-                const created = u.createdAt.toDate();
-                return created >= today;
-            }).length;
+            document.getElementById('searchInput').addEventListener('input', () => {
+                currentPage = 1;
+                displayUsers(allUsers);
+            });
 
-            document.getElementById('totalUsers').textContent = total;
-            document.getElementById('generalUsers').textContent = general;
-            document.getElementById('testUsers').textContent = test;
-            document.getElementById('todayUsers').textContent = todayUsers;
-        }
+            document.getElementById('memberTypeFilter').addEventListener('change', () => {
+                currentPage = 1;
+                displayUsers(allUsers);
+            });
 
-        function displayUsers(users) {
-            const tbody = document.getElementById('userTableBody');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const typeFilter = document.getElementById('memberTypeFilter').value;
-
-            let filtered = users;
-
-            if (searchTerm) {
-                filtered = filtered.filter(user => 
-                    (user.name && user.name.toLowerCase().includes(searchTerm)) ||
-                    (user.userId && user.userId.toLowerCase().includes(searchTerm)) ||
-                    (user.phone && user.phone.includes(searchTerm))
-                );
-            }
-
-            if (typeFilter) {
-                if (typeFilter === 'test') {
-                    filtered = filtered.filter(user => user.isTestAccount);
-                } else {
-                    filtered = filtered.filter(user => user.memberType === typeFilter);
-                }
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="no-data">회원이 없습니다.</td></tr>';
-                document.getElementById('pagination').innerHTML = '';
-                return;
-            }
-
-            const totalPages = Math.ceil(filtered.length / pageSize);
-            const startIndex = (currentPage - 1) * pageSize;
-            const endIndex = Math.min(startIndex + pageSize, filtered.length);
-            const pageData = filtered.slice(startIndex, endIndex);
-
-            tbody.innerHTML = pageData.map(user => {
-                const memberTypeText = getMemberTypeText(user);
-                const statusBadge = getStatusBadge(user);
-                const createdDate = user.createdAt ? 
-                    user.createdAt.toDate().toLocaleDateString('ko-KR') : '-';
-
-                return `
-                    <tr>
-                        <td>${user.userId || '-'}</td>
-                        <td>${user.name || '-'}</td>
-                        <td>${user.phone || '-'}</td>
-                        <td>${memberTypeText}</td>
-                        <td>${statusBadge}</td>
-                        <td>${createdDate}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn btn-primary btn-small" onclick="openEditModal('${user.id}')">수정</button>
-                                <button class="btn btn-danger btn-small" onclick="deleteUser('${user.id}', '${user.name}')">삭제</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            renderPagination(totalPages, filtered.length);
-        }
-
-        function renderPagination(totalPages, totalItems) {
-            const paginationDiv = document.getElementById('pagination');
-            
-            if (totalPages <= 1) {
-                paginationDiv.innerHTML = '';
-                return;
-            }
-
-            let html = `<span style="margin-right: 1rem; color: #6c757d;">전체 ${totalItems}명</span>`;
-
-            html += `<button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ 이전</button>`;
-
-            const maxVisible = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-            if (endPage - startPage < maxVisible - 1) {
-                startPage = Math.max(1, endPage - maxVisible + 1);
-            }
-
-            if (startPage > 1) {
-                html += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
-                if (startPage > 2) html += `<span style="padding: 0.5rem;">...</span>`;
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) html += `<span style="padding: 0.5rem;">...</span>`;
-                html += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
-            }
-
-            html += `<button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>다음 ›</button>`;
-
-            paginationDiv.innerHTML = html;
-        }
-
-        function changePage(page) {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const typeFilter = document.getElementById('memberTypeFilter').value;
-
-            let filtered = allUsers;
-
-            if (searchTerm) {
-                filtered = filtered.filter(user => 
-                    (user.name && user.name.toLowerCase().includes(searchTerm)) ||
-                    (user.userId && user.userId.toLowerCase().includes(searchTerm)) ||
-                    (user.phone && user.phone.includes(searchTerm))
-                );
-            }
-
-            if (typeFilter) {
-                if (typeFilter === 'test') {
-                    filtered = filtered.filter(user => user.isTestAccount);
-                } else {
-                    filtered = filtered.filter(user => user.memberType === typeFilter);
-                }
-            }
-
-            const totalPages = Math.ceil(filtered.length / pageSize);
-            if (page < 1 || page > totalPages) return;
-            
-            currentPage = page;
-            displayUsers(allUsers);
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function getMemberTypeText(user) {
-            if (user.isTestAccount) return '<span class="badge badge-warning">테스트</span>';
-            
-            const types = {
-                'general': '일반',
-                'branch': '지사장',
-                'inner': '이너',
-                'consultant': '컨홈'
-            };
-            return `<span class="badge badge-info">${types[user.memberType] || '-'}</span>`;
-        }
-
-        function getStatusBadge(user) {
-            if (user.isTestAccount && user.expiresAt) {
-                const now = new Date();
-                const expires = user.expiresAt.toDate();
-                
-                if (now > expires) {
-                    return '<span class="badge badge-danger">만료</span>';
-                } else {
-                    return '<span class="badge badge-success">활성</span>';
-                }
-            }
-            return '<span class="badge badge-success">정상</span>';
-        }
-
-        function openEditModal(userId) {
-            const user = allUsers.find(u => u.id === userId);
-            if (!user) return;
-
-            document.getElementById('editUserId').value = user.id;
-            document.getElementById('editUserIdDisplay').value = user.userId || '';
-            document.getElementById('editName').value = user.name || '';
-            document.getElementById('editPhone').value = user.phone || '';
-            document.getElementById('editEmail').value = user.email || '';
-            document.getElementById('editPassword').value = '';
-            document.getElementById('editCompany').value = user.company || '';
-            document.getElementById('editPosition').value = user.position || '';
-
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        document.getElementById('editForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const userId = document.getElementById('editUserId').value;
-            const name = document.getElementById('editName').value.trim();
-            const phone = document.getElementById('editPhone').value.trim();
-            const email = document.getElementById('editEmail').value.trim();
-            const company = document.getElementById('editCompany').value.trim();
-            const position = document.getElementById('editPosition').value.trim();
-            const newPassword = document.getElementById('editPassword').value.trim();
-
-            if (newPassword && newPassword.length < 6) {
-                showMessage('비밀번호는 최소 6자 이상이어야 합니다.', 'error');
-                return;
-            }
-
-            try {
-                const userDoc = await db.collection('users').doc(userId).get();
-                const userData = userDoc.data();
-
-                await db.collection('users').doc(userId).update({
-                    name: name,
-                    phone: phone,
-                    email: email,
-                    company: company,
-                    position: position
-                });
-
-                if (newPassword) {
-                    const currentAdmin = auth.currentUser;
-                    
-                    try {
-                        const userEmail = userData.email || `${userData.userId}@system.local`;
-                        const oldPassword = userData.phone;
-                        
-                        await auth.signInWithEmailAndPassword(userEmail, oldPassword);
-                        await auth.currentUser.updatePassword(newPassword);
-                        
-                        if (userData.isTestAccount) {
-                            await db.collection('users').doc(userId).update({
-                                phone: newPassword
-                            });
-                        }
-                        
-                        await auth.signOut();
-                        await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
-                        
-                        showMessage('회원 정보 및 비밀번호가 수정되었습니다.', 'success');
-                        
-                    } catch (passwordError) {
-                        console.error('비밀번호 변경 오류:', passwordError);
-                        
-                        try {
-                            await auth.signOut();
-                            await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
-                        } catch (recoveryError) {
-                            console.error('관리자 복구 실패:', recoveryError);
-                        }
-                        
-                        await db.collection('users').doc(userId).update({
-                            pendingPassword: newPassword,
-                            passwordUpdateRequired: true
-                        });
-                        
-                        showMessage('회원 정보는 수정되었으나, 비밀번호 변경은 보류되었습니다.', 'error');
-                    }
-                } else {
-                    showMessage('회원 정보가 수정되었습니다.', 'success');
-                }
-                
-                closeEditModal();
-                loadUsers();
-                
-            } catch (error) {
-                console.error('수정 오류:', error);
-                showMessage('수정에 실패했습니다: ' + error.message, 'error');
-            }
-        });
-
-        async function deleteUser(userId, userName) {
-            if (!confirm(`${userName}님의 계정을 정말 삭제하시겠습니까?`)) {
-                return;
-            }
-
-            try {
-                await db.collection('users').doc(userId).delete();
-                showMessage('회원이 삭제되었습니다.', 'success');
-                loadUsers();
-            } catch (error) {
-                console.error('삭제 오류:', error);
-                showMessage('삭제에 실패했습니다.', 'error');
-            }
-        }
-
-        function logout() {
-            if (confirm('로그아웃 하시겠습니까?')) {
-                auth.signOut().then(() => {
-                    window.location.href = 'login.html';
-                });
-            }
-        }
-
-        document.getElementById('searchInput').addEventListener('input', () => {
-            currentPage = 1;
-            displayUsers(allUsers);
-        });
-
-        document.getElementById('memberTypeFilter').addEventListener('change', () => {
-            currentPage = 1;
-            displayUsers(allUsers);
-        });
-
-        window.onclick = function(event) {
-            const editModal = document.getElementById('editModal');
-            const testModal = document.getElementById('testAccountModal');
-            const preRegModal = document.getElementById('preRegisterModal');
-            
-            if (event.target === editModal) {
-                closeEditModal();
-            }
-            if (event.target === testModal) {
-                closeTestAccountModal();
-            }
-            if (event.target === preRegModal) {
-                closePreRegisterModal();
-            }
-        }
-
-        function openPreRegisterModal() {
-            console.log('유료회원 등록 모달 열기');
-            const modal = document.getElementById('preRegisterModal');
-            modal.style.display = 'flex';
-            loadPreRegistered();
-        }
-
-        function closePreRegisterModal() {
-            console.log('유료회원 등록 모달 닫기');
-            document.getElementById('preRegisterModal').style.display = 'none';
-        }
-
-        function showPreRegMessage(text, type) {
-            const messageDiv = document.getElementById('preRegMessage');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 3000);
-        }
-
-        let allPreRegData = [];
-        let currentPreRegPage = 1;
-        let preRegPageSize = 10;
-
-        document.getElementById('preRegPageSize').addEventListener('change', function() {
-            preRegPageSize = parseInt(this.value);
-            currentPreRegPage = 1;
-            displayPreRegPage();
-        });
-
-        function toggleAllPreReg(checkbox) {
-            const checkboxes = document.querySelectorAll('.preReg-checkbox');
-            checkboxes.forEach(cb => cb.checked = checkbox.checked);
-        }
-
-        function moveSelectedToUserList() {
-            const checkboxes = document.querySelectorAll('.preReg-checkbox:checked');
-            
-            if (checkboxes.length === 0) {
-                showPreRegMessage('선택된 회원이 없습니다.', 'error');
-                return;
-            }
-
-            const selectedNames = Array.from(checkboxes).map(cb => {
-                const row = cb.closest('tr');
-                return row.querySelector('td:nth-child(2)').textContent;
-            }).join(', ');
-
-            if (confirm(`선택된 ${checkboxes.length}명(${selectedNames})을 전체 회원 목록으로 이동하시겠습니까?`)) {
-                switchToUserList();
-            }
-        }
-
-        async function loadPreRegistered() {
-            try {
-                console.log('사전 등록 목록 로딩 시작...');
-                const snapshot = await db.collection('preRegistered').get();
-                console.log('문서 개수:', snapshot.size);
-
-                allPreRegData = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
+            document.getElementById('preRegPageSize').addEventListener('change', function() {
+                preRegPageSize = parseInt(this.value);
                 currentPreRegPage = 1;
                 displayPreRegPage();
-            } catch (error) {
-                console.error('사전 등록 목록 로드 오류:', error);
-                showPreRegMessage('목록을 불러오는데 실패했습니다.', 'error');
-            }
-        }
-
-        function displayPreRegPage() {
-            const tbody = document.getElementById('preRegTableBody');
-            
-            if (allPreRegData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="no-data">등록된 사전 회원이 없습니다.</td></tr>';
-                document.getElementById('preRegPagination').innerHTML = '';
-                return;
-            }
-
-            const memberTypeText = {
-                'branch': '지사장',
-                'inner': '이너',
-                'consultant': '컨홈'
-            };
-
-            const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
-            const startIndex = (currentPreRegPage - 1) * preRegPageSize;
-            const endIndex = Math.min(startIndex + preRegPageSize, allPreRegData.length);
-            const pageData = allPreRegData.slice(startIndex, endIndex);
-
-            tbody.innerHTML = pageData.map(data => {
-                const status = data.registered ? 
-                    '<span class="badge badge-success">가입완료</span>' : 
-                    '<span class="badge badge-warning">대기중</span>';
-                
-                return `
-                    <tr>
-                        <td><input type="checkbox" class="preReg-checkbox" data-id="${data.id}"></td>
-                        <td>${data.name}</td>
-                        <td>${data.userId}</td>
-                        <td>${data.phone}</td>
-                        <td>${memberTypeText[data.memberType]}</td>
-                        <td>${status}</td>
-                        <td>
-                            <button class="btn btn-danger btn-small" onclick="deletePreRegistered('${data.id}', '${data.name}')">삭제</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            renderPreRegPagination(totalPages);
-        }
-
-        function renderPreRegPagination(totalPages) {
-            const paginationDiv = document.getElementById('preRegPagination');
-            
-            if (totalPages <= 1) {
-                paginationDiv.innerHTML = '';
-                return;
-            }
-
-            let html = '';
-
-            html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage - 1})" ${currentPreRegPage === 1 ? 'disabled' : ''}>‹ 이전</button>`;
-
-            const maxVisible = 5;
-            let startPage = Math.max(1, currentPreRegPage - Math.floor(maxVisible / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-            if (endPage - startPage < maxVisible - 1) {
-                startPage = Math.max(1, endPage - maxVisible + 1);
-            }
-
-            if (startPage > 1) {
-                html += `<button class="pagination-btn" onclick="changePreRegPage(1)">1</button>`;
-                if (startPage > 2) html += `<span style="padding: 0.5rem;">...</span>`;
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<button class="pagination-btn ${i === currentPreRegPage ? 'active' : ''}" onclick="changePreRegPage(${i})">${i}</button>`;
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) html += `<span style="padding: 0.5rem;">...</span>`;
-                html += `<button class="pagination-btn" onclick="changePreRegPage(${totalPages})">${totalPages}</button>`;
-            }
-
-            html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage + 1})" ${currentPreRegPage === totalPages ? 'disabled' : ''}>다음 ›</button>`;
-
-            paginationDiv.innerHTML = html;
-        }
-
-        function changePreRegPage(page) {
-            const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
-            if (page < 1 || page > totalPages) return;
-            
-            currentPreRegPage = page;
-            displayPreRegPage();
-            
-            document.querySelector('#preRegTableBody').parentElement.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
             });
-        }
 
-        document.getElementById('singlePreRegForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const name = document.getElementById('pre_name').value.trim();
-            const userId = document.getElementById('pre_userId').value.trim();
-            const phone = document.getElementById('pre_phone').value.trim().replace(/-/g, '');
-            const memberType = document.getElementById('pre_memberType').value;
-
-            if (!/^\d{10,11}$/.test(phone)) {
-                showPreRegMessage('올바른 전화번호 형식이 아닙니다.', 'error');
-                return;
+            window.onclick = function(event) {
+                const editModal = document.getElementById('editModal');
+                const testModal = document.getElementById('testAccountModal');
+                const preRegModal = document.getElementById('preRegisterModal');
+                
+                if (event.target === editModal) {
+                    closeEditModal();
+                }
+                if (event.target === testModal) {
+                    closeTestAccountModal();
+                }
+                if (event.target === preRegModal) {
+                    closePreRegisterModal();
+                }
             }
 
-            try {
-                const existing = await db.collection('preRegistered')
-                    .where('userId', '==', userId)
-                    .get();
-
-                if (!existing.empty) {
-                    showPreRegMessage('이미 등록된 아이디입니다.', 'error');
+            // 인증 확인
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    console.log('로그인된 사용자 없음');
+                    window.location.href = 'login.html';
                     return;
                 }
 
-                await db.collection('preRegistered').add({
-                    name: name,
-                    userId: userId,
-                    phone: phone,
-                    memberType: memberType,
-                    registered: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                console.log('로그인된 사용자:', user.uid);
+
+                if (user.email === 'admin@system.local') {
+                    await ensureAdminAccount(user.uid);
+                    loadUsers();
+                    return;
+                }
+
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    const userData = userDoc.data();
+
+                    if (!userData || userData.role !== 'admin') {
+                        alert('관리자 권한이 필요합니다.');
+                        await auth.signOut();
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
+                    loadUsers();
+                } catch (error) {
+                    console.error('권한 확인 오류:', error);
+                    alert('권한 확인에 실패했습니다.');
+                }
+            });
+
+            async function ensureAdminAccount(uid) {
+                try {
+                    const userDoc = await db.collection('users').doc(uid).get();
+                    
+                    if (!userDoc.exists) {
+                        await db.collection('users').doc(uid).set({
+                            userId: 'admin',
+                            name: '관리자',
+                            phone: '01091198211',
+                            role: 'admin',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                } catch (error) {
+                    console.error('관리자 계정 생성 오류:', error);
+                }
+            }
+
+            function showMessage(text, type) {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 3000);
+            }
+
+            async function loadUsers() {
+                try {
+                    const snapshot = await db.collection('users')
+                        .orderBy('createdAt', 'desc')
+                        .get();
+
+                    allUsers = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+
+                    allUsers = allUsers.filter(user => user.role !== 'admin');
+
+                    updateStats();
+                    currentPage = 1;
+                    displayUsers(allUsers);
+                } catch (error) {
+                    console.error('회원 로딩 오류:', error);
+                    showMessage('회원 정보를 불러오는데 실패했습니다.', 'error');
+                }
+            }
+
+            window.loadUsers = loadUsers;
+
+            function updateStats() {
+                const total = allUsers.length;
+                const general = allUsers.filter(u => u.memberType === 'general').length;
+                const test = allUsers.filter(u => u.isTestAccount).length;
+                
+                const now = new Date();
+                const expired = allUsers.filter(u => {
+                    if (u.isTestAccount && u.expiresAt) {
+                        const expires = u.expiresAt.toDate();
+                        return now > expires;
+                    }
+                    return false;
+                }).length;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todayUsers = allUsers.filter(u => {
+                    if (!u.createdAt) return false;
+                    const created = u.createdAt.toDate();
+                    return created >= today;
+                }).length;
+
+                document.getElementById('totalUsers').textContent = total;
+                document.getElementById('generalUsers').textContent = general;
+                document.getElementById('testUsers').textContent = test;
+                document.getElementById('expiredUsers').textContent = expired;
+                document.getElementById('todayUsers').textContent = todayUsers;
+            }
+
+            function displayUsers(users) {
+                const tbody = document.getElementById('userTableBody');
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const typeFilter = document.getElementById('memberTypeFilter').value;
+
+                let filtered = users;
+
+                if (searchTerm) {
+                    filtered = filtered.filter(user => 
+                        (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+                        (user.userId && user.userId.toLowerCase().includes(searchTerm)) ||
+                        (user.phone && user.phone.includes(searchTerm))
+                    );
+                }
+
+                if (typeFilter) {
+                    if (typeFilter === 'test') {
+                        filtered = filtered.filter(user => user.isTestAccount);
+                    } else if (typeFilter === 'expired') {
+                        const now = new Date();
+                        filtered = filtered.filter(user => {
+                            if (user.isTestAccount && user.expiresAt) {
+                                const expires = user.expiresAt.toDate();
+                                return now > expires;
+                            }
+                            return false;
+                        });
+                    } else {
+                        filtered = filtered.filter(user => user.memberType === typeFilter);
+                    }
+                }
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="no-data">회원이 없습니다.</td></tr>';
+                    document.getElementById('pagination').innerHTML = '';
+                    return;
+                }
+
+                const totalPages = Math.ceil(filtered.length / pageSize);
+                const startIndex = (currentPage - 1) * pageSize;
+                const endIndex = Math.min(startIndex + pageSize, filtered.length);
+                const pageData = filtered.slice(startIndex, endIndex);
+
+                tbody.innerHTML = pageData.map((user, index) => {
+                    const memberTypeText = getMemberTypeText(user);
+                    const statusBadge = getStatusBadge(user);
+                    
+                    let createdDateTime = '-';
+                    if (user.createdAt) {
+                        const date = user.createdAt.toDate();
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        createdDateTime = `${year}-${month}-${day} ${hours}:${minutes}`;
+                    }
+                    
+                    const rowNumber = startIndex + index + 1;
+
+                    return `
+                        <tr>
+                            <td style="text-align: center; color: #6c757d;">${rowNumber}</td>
+                            <td>${user.userId || '-'}</td>
+                            <td>${user.name || '-'}</td>
+                            <td>${user.phone || '-'}</td>
+                            <td>${memberTypeText}</td>
+                            <td>${statusBadge}</td>
+                            <td>${createdDateTime}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-small" onclick="openEditModal('${user.id}')">수정</button>
+                                    <button class="btn btn-danger btn-small" onclick="deleteUser('${user.id}', '${user.name}')">삭제</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                renderPagination(totalPages, filtered.length);
+            }
+
+            function renderPagination(totalPages, totalItems) {
+                const paginationDiv = document.getElementById('pagination');
+                
+                if (totalPages <= 1) {
+                    paginationDiv.innerHTML = '';
+                    return;
+                }
+
+                let html = `<span style="margin-right: 1rem; color: #6c757d;">전체 ${totalItems}명</span>`;
+                html += `<button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ 이전</button>`;
+
+                const maxVisible = 5;
+                let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+                if (endPage - startPage < maxVisible - 1) {
+                    startPage = Math.max(1, endPage - maxVisible + 1);
+                }
+
+                if (startPage > 1) {
+                    html += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
+                    if (startPage > 2) html += `<span style="padding: 0.5rem;">...</span>`;
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) html += `<span style="padding: 0.5rem;">...</span>`;
+                    html += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+                }
+
+                html += `<button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>다음 ›</button>`;
+
+                paginationDiv.innerHTML = html;
+            }
+
+            window.changePage = function(page) {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const typeFilter = document.getElementById('memberTypeFilter').value;
+
+                let filtered = allUsers;
+
+                if (searchTerm) {
+                    filtered = filtered.filter(user => 
+                        (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+                        (user.userId && user.userId.toLowerCase().includes(searchTerm)) ||
+                        (user.phone && user.phone.includes(searchTerm))
+                    );
+                }
+
+                if (typeFilter) {
+                    if (typeFilter === 'test') {
+                        filtered = filtered.filter(user => user.isTestAccount);
+                    } else if (typeFilter === 'expired') {
+                        const now = new Date();
+                        filtered = filtered.filter(user => {
+                            if (user.isTestAccount && user.expiresAt) {
+                                const expires = user.expiresAt.toDate();
+                                return now > expires;
+                            }
+                            return false;
+                        });
+                    } else {
+                        filtered = filtered.filter(user => user.memberType === typeFilter);
+                    }
+                }
+
+                const totalPages = Math.ceil(filtered.length / pageSize);
+                if (page < 1 || page > totalPages) return;
+                
+                currentPage = page;
+                displayUsers(allUsers);
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function getMemberTypeText(user) {
+                if (user.isTestAccount) return '<span class="badge badge-warning">테스트</span>';
+                
+                const types = {
+                    'general': '일반',
+                    'branch': '지사장',
+                    'inner': '이너',
+                    'consultant': '컨홈'
+                };
+                return `<span class="badge badge-info">${types[user.memberType] || '-'}</span>`;
+            }
+
+            function getStatusBadge(user) {
+                if (user.isTestAccount && user.expiresAt) {
+                    const now = new Date();
+                    const expires = user.expiresAt.toDate();
+                    
+                    if (now > expires) {
+                        return '<span class="badge badge-danger">만료</span>';
+                    } else {
+                        return '<span class="badge badge-success">활성</span>';
+                    }
+                }
+                return '<span class="badge badge-success">정상</span>';
+            }
+
+            window.openEditModal = function(userId) {
+                const user = allUsers.find(u => u.id === userId);
+                if (!user) return;
+
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editUserIdDisplay').value = user.userId || '';
+                document.getElementById('editName').value = user.name || '';
+                document.getElementById('editPhone').value = user.phone || '';
+                document.getElementById('editEmail').value = user.email || '';
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editCompany').value = user.company || '';
+                document.getElementById('editPosition').value = user.position || '';
+
+                document.getElementById('editModal').style.display = 'flex';
+            }
+
+            window.closeEditModal = function() {
+                document.getElementById('editModal').style.display = 'none';
+            }
+
+            document.getElementById('editForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const userId = document.getElementById('editUserId').value;
+                const name = document.getElementById('editName').value.trim();
+                const phone = document.getElementById('editPhone').value.trim();
+                const email = document.getElementById('editEmail').value.trim();
+                const company = document.getElementById('editCompany').value.trim();
+                const position = document.getElementById('editPosition').value.trim();
+                const newPassword = document.getElementById('editPassword').value.trim();
+
+                if (newPassword && newPassword.length < 6) {
+                    showMessage('비밀번호는 최소 6자 이상이어야 합니다.', 'error');
+                    return;
+                }
+
+                try {
+                    const userDoc = await db.collection('users').doc(userId).get();
+                    const userData = userDoc.data();
+
+                    await db.collection('users').doc(userId).update({
+                        name: name,
+                        phone: phone,
+                        email: email,
+                        company: company,
+                        position: position
+                    });
+
+                    if (newPassword) {
+                        const currentUser = auth.currentUser;
+                        const adminEmail = currentUser.email;
+                        const adminPassword = '01091198211';
+                        
+                        try {
+                            const userEmail = userData.email || `${userData.userId}@system.local`;
+                            const oldPassword = userData.phone;
+                            
+                            await auth.signInWithEmailAndPassword(userEmail, oldPassword);
+                            await auth.currentUser.updatePassword(newPassword);
+                            
+                            if (userData.isTestAccount) {
+                                await db.collection('users').doc(userId).update({
+                                    phone: newPassword
+                                });
+                            }
+                            
+                            await auth.signOut();
+                            await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                            
+                            showMessage('회원 정보 및 비밀번호가 수정되었습니다.', 'success');
+                            
+                        } catch (passwordError) {
+                            console.error('비밀번호 변경 오류:', passwordError);
+                            
+                            try {
+                                await auth.signOut();
+                                await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
+                            } catch (recoveryError) {
+                                console.error('관리자 복구 실패:', recoveryError);
+                            }
+                            
+                            showMessage('회원 정보는 수정되었으나, 비밀번호 변경에 실패했습니다.', 'error');
+                        }
+                    } else {
+                        showMessage('회원 정보가 수정되었습니다.', 'success');
+                    }
+                    
+                    closeEditModal();
+                    loadUsers();
+                    
+                } catch (error) {
+                    console.error('수정 오류:', error);
+                    showMessage('수정에 실패했습니다: ' + error.message, 'error');
+                }
+            });
+
+            window.deleteUser = async function(userId, userName) {
+                if (!confirm(`${userName}님의 계정을 정말 삭제하시겠습니까?`)) {
+                    return;
+                }
+
+                try {
+                    await db.collection('users').doc(userId).delete();
+                    showMessage('회원이 삭제되었습니다.', 'success');
+                    loadUsers();
+                } catch (error) {
+                    console.error('삭제 오류:', error);
+                    showMessage('삭제에 실패했습니다.', 'error');
+                }
+            }
+
+            window.logout = function() {
+                if (confirm('로그아웃 하시겠습니까?')) {
+                    auth.signOut().then(() => {
+                        window.location.href = 'login.html';
+                    });
+                }
+            }
+
+            // 만료된 계정 삭제
+            window.deleteExpiredAccounts = async function() {
+                const now = new Date();
+                const expiredAccounts = allUsers.filter(user => {
+                    if (user.isTestAccount && user.expiresAt) {
+                        const expires = user.expiresAt.toDate();
+                        return now > expires;
+                    }
+                    return false;
                 });
 
-                showPreRegMessage('사전 등록이 완료되었습니다.', 'success');
-                document.getElementById('singlePreRegForm').reset();
+                if (expiredAccounts.length === 0) {
+                    alert('삭제할 만료된 계정이 없습니다.');
+                    return;
+                }
+
+                const accountNames = expiredAccounts.map(u => u.name || u.userId).join(', ');
                 
-                await loadPreRegistered();
-                
+                if (!confirm(`만료된 테스트 계정 ${expiredAccounts.length}개를 삭제하시겠습니까?\n\n대상: ${accountNames}`)) {
+                    return;
+                }
+
+                showMessage('만료된 계정 삭제 중...', 'success');
+
+                let successCount = 0;
+
+                for (const account of expiredAccounts) {
+                    try {
+                        await db.collection('users').doc(account.id).delete();
+                        successCount++;
+                    } catch (error) {
+                        console.error('계정 삭제 오류:', account.userId, error);
+                    }
+                }
+
+                showMessage(`완료! ${successCount}개 계정 삭제`, 'success');
+                await loadUsers();
+            }
+
+            // 테스트 계정 생성
+            window.openTestAccountModal = function() {
+                document.getElementById('testAccountModal').style.display = 'flex';
+                document.getElementById('generatedAccounts').style.display = 'none';
+                document.getElementById('testMessage').style.display = 'none';
+            }
+
+            window.closeTestAccountModal = function() {
+                document.getElementById('testAccountModal').style.display = 'none';
+            }
+
+            function showTestMessage(text, type) {
+                const messageDiv = document.getElementById('testMessage');
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
+            }
+
+            function generateRandomString(length) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            function generateRandomPhone() {
+                const prefix = '010';
+                const middle = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+                const last = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+                return prefix + middle + last;
+            }
+
+            document.getElementById('testAccountForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const count = parseInt(document.getElementById('accountCount').value);
+                const days = parseInt(document.getElementById('validPeriod').value);
+
+                showTestMessage('계정 생성 중...', 'success');
+
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    showTestMessage('로그인 세션이 만료되었습니다.', 'error');
+                    return;
+                }
+
+                const adminEmail = currentUser.email;
+                const adminPassword = '01091198211';
+
+                try {
+                    generatedAccountsData = [];
+                    const expiresAt = new Date();
+                    expiresAt.setDate(expiresAt.getDate() + days);
+
+                    for (let i = 0; i < count; i++) {
+                        showTestMessage(`계정 생성 중... (${i + 1}/${count})`, 'success');
+                        
+                        const userId = 'TEST' + generateRandomString(6);
+                        const phone = generateRandomPhone();
+                        const email = `${userId}@system.local`;
+
+                        try {
+                            const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
+                            const newUser = userCredential.user;
+
+                            await db.collection('users').doc(newUser.uid).set({
+                                userId: userId,
+                                phone: phone,
+                                name: `테스트${i + 1}`,
+                                memberType: 'test',
+                                isTestAccount: true,
+                                expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                            generatedAccountsData.push({
+                                number: i + 1,
+                                userId: userId,
+                                phone: phone
+                            });
+
+                            await auth.signOut();
+                            await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                            await new Promise(resolve => setTimeout(resolve, 300));
+
+                        } catch (error) {
+                            console.error(`계정 ${i + 1} 생성 오류:`, error);
+                            
+                            try {
+                                if (!auth.currentUser) {
+                                    await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                                }
+                            } catch (loginError) {
+                                console.error('관리자 재로그인 실패:', loginError);
+                            }
+                            
+                            continue;
+                        }
+                    }
+
+                    showTestMessage(`${generatedAccountsData.length}/${count}개 계정 생성 완료!`, 'success');
+                    
+                    if (generatedAccountsData.length > 0) {
+                        displayGeneratedAccounts();
+                    }
+                    
+                    await loadUsers();
+
+                } catch (error) {
+                    console.error('계정 생성 오류:', error);
+                    showTestMessage('계정 생성 중 오류가 발생했습니다.', 'error');
+                    
+                    try {
+                        await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                    } catch (loginError) {
+                        console.error('최종 관리자 재로그인 실패:', loginError);
+                    }
+                }
+            });
+
+            function displayGeneratedAccounts() {
+                const accountList = document.getElementById('accountList');
+                const generatedDiv = document.getElementById('generatedAccounts');
+
+                accountList.innerHTML = generatedAccountsData.map(account => `
+                    <div class="account-item">
+                        <strong>계정 ${account.number}</strong><br>
+                        아이디: ${account.userId}<br>
+                        비밀번호: ${account.phone}
+                    </div>
+                `).join('');
+
+                generatedDiv.style.display = 'block';
+            }
+
+            window.copyAllAccounts = function() {
+                const text = generatedAccountsData.map(account => 
+                    `계정 ${account.number}\n아이디: ${account.userId}\n비밀번호: ${account.phone}`
+                ).join('\n\n');
+
+                navigator.clipboard.writeText(text).then(() => {
+                    showTestMessage('전체 계정 정보가 클립보드에 복사되었습니다!', 'success');
+                }).catch(err => {
+                    console.error('복사 실패:', err);
+                    showTestMessage('복사에 실패했습니다.', 'error');
+                });
+            }
+
+            // 사전 등록 회원 관리
+            window.openPreRegisterModal = function() {
+                document.getElementById('preRegisterModal').style.display = 'flex';
+                loadPreRegistered();
+            }
+
+            window.closePreRegisterModal = function() {
+                document.getElementById('preRegisterModal').style.display = 'none';
+            }
+
+            function showPreRegMessage(text, type) {
+                const messageDiv = document.getElementById('preRegMessage');
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
                 setTimeout(() => {
-                    const tableSection = document.querySelector('#preRegTableBody').parentElement.parentElement;
-                    tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 300);
+                    messageDiv.style.display = 'none';
+                }, 3000);
+            }
+
+            window.toggleAllPreReg = function(checkbox) {
+                const checkboxes = document.querySelectorAll('.preReg-checkbox');
+                checkboxes.forEach(cb => cb.checked = checkbox.checked);
+            }
+
+            window.moveSelectedToUserList = function() {
+                const checkboxes = document.querySelectorAll('.preReg-checkbox:checked');
                 
-            } catch (error) {
-                console.error('사전 등록 오류:', error);
-                showPreRegMessage('등록에 실패했습니다.', 'error');
-            }
-        });
-
-        async function bulkPreRegister() {
-            const bulkText = document.getElementById('bulkInput').value.trim();
-            
-            if (!bulkText) {
-                showPreRegMessage('등록할 데이터를 입력하세요.', 'error');
-                return;
-            }
-
-            const lines = bulkText.split('\n').filter(line => line.trim());
-            let successCount = 0;
-            let errorCount = 0;
-
-            showPreRegMessage(`${lines.length}개 항목 등록 중...`, 'success');
-
-            for (const line of lines) {
-                const parts = line.split(/[,\t]/).map(s => s.trim());
-                const [name, userId, phone, memberType] = parts;
-
-                if (!name || !userId || !phone || !memberType) {
-                    console.error('잘못된 형식:', line);
-                    errorCount++;
-                    continue;
+                if (checkboxes.length === 0) {
+                    showPreRegMessage('선택된 회원이 없습니다.', 'error');
+                    return;
                 }
 
-                const cleanPhone = phone.replace(/-/g, '');
-                if (!/^\d{10,11}$/.test(cleanPhone)) {
-                    console.error('잘못된 전화번호:', phone);
-                    errorCount++;
-                    continue;
+                const selectedIds = Array.from(checkboxes).map(cb => cb.dataset.id);
+                const selectedMembers = allPreRegData.filter(member => selectedIds.includes(member.id));
+                
+                const selectedNames = selectedMembers.map(m => m.name).join(', ');
+
+                if (!confirm(`선택된 ${checkboxes.length}명(${selectedNames})을 전체 회원 목록으로 이동하시겠습니까?\n\n이동 후에는 정식 회원으로 등록됩니다.`)) {
+                    return;
                 }
 
-                if (!['branch', 'inner', 'consultant'].includes(memberType)) {
-                    console.error('잘못된 회원유형:', memberType);
-                    errorCount++;
-                    continue;
+                moveToUserCollection(selectedMembers);
+            }
+
+            async function moveToUserCollection(members) {
+                showPreRegMessage('회원 이동 중...', 'success');
+                
+                const currentUser = auth.currentUser;
+                const adminEmail = currentUser.email;
+                const adminPassword = '01091198211';
+                
+                let successCount = 0;
+                let errorCount = 0;
+
+                try {
+                    for (const member of members) {
+                        try {
+                            const email = `${member.userId}@system.local`;
+                            const password = member.phone;
+                            
+                            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                            const user = userCredential.user;
+
+                            await db.collection('users').doc(user.uid).set({
+                                userId: member.userId,
+                                name: member.name,
+                                phone: member.phone,
+                                memberType: member.memberType,
+                                email: email,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                movedFromPreReg: true
+                            });
+
+                            await db.collection('preRegistered').doc(member.id).update({
+                                registered: true,
+                                movedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                            await auth.signOut();
+                            await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+
+                            successCount++;
+
+                        } catch (error) {
+                            console.error('회원 이동 오류:', member.name, error);
+                            errorCount++;
+                            
+                            try {
+                                if (!auth.currentUser) {
+                                    await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+                                }
+                            } catch (loginError) {
+                                console.error('관리자 재로그인 실패:', loginError);
+                            }
+                        }
+
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+
+                    showPreRegMessage(`완료! 성공: ${successCount}명, 실패: ${errorCount}명`, 'success');
+                    
+                    await loadPreRegistered();
+                    await loadUsers();
+                    
+                    setTimeout(() => {
+                        closePreRegisterModal();
+                        const mainTable = document.querySelector('#userTableBody').parentElement.parentElement;
+                        mainTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 3000);
+
+                } catch (error) {
+                    console.error('일괄 이동 오류:', error);
+                    showPreRegMessage('회원 이동 중 오류가 발생했습니다.', 'error');
+                }
+            }
+
+            async function loadPreRegistered() {
+                try {
+                    const snapshot = await db.collection('preRegistered').get();
+
+                    allPreRegData = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+
+                    currentPreRegPage = 1;
+                    displayPreRegPage();
+                } catch (error) {
+                    console.error('사전 등록 목록 로드 오류:', error);
+                    showPreRegMessage('목록을 불러오는데 실패했습니다.', 'error');
+                }
+            }
+
+            function displayPreRegPage() {
+                const tbody = document.getElementById('preRegTableBody');
+                
+                if (allPreRegData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="no-data">등록된 사전 회원이 없습니다.</td></tr>';
+                    document.getElementById('preRegPagination').innerHTML = '';
+                    return;
+                }
+
+                const memberTypeText = {
+                    'branch': '지사장',
+                    'inner': '이너',
+                    'consultant': '컨홈'
+                };
+
+                const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
+                const startIndex = (currentPreRegPage - 1) * preRegPageSize;
+                const endIndex = Math.min(startIndex + preRegPageSize, allPreRegData.length);
+                const pageData = allPreRegData.slice(startIndex, endIndex);
+
+                tbody.innerHTML = pageData.map(data => {
+                    const status = data.registered ? 
+                        '<span class="badge badge-success">가입완료</span>' : 
+                        '<span class="badge badge-warning">대기중</span>';
+                    
+                    return `
+                        <tr>
+                            <td><input type="checkbox" class="preReg-checkbox" data-id="${data.id}"></td>
+                            <td>${data.name}</td>
+                            <td>${data.userId}</td>
+                            <td>${data.phone}</td>
+                            <td>${memberTypeText[data.memberType]}</td>
+                            <td>${status}</td>
+                            <td>
+                                <button class="btn btn-danger btn-small" onclick="deletePreRegistered('${data.id}', '${data.name}')">삭제</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                renderPreRegPagination(totalPages);
+            }
+
+            function renderPreRegPagination(totalPages) {
+                const paginationDiv = document.getElementById('preRegPagination');
+                
+                if (totalPages <= 1) {
+                    paginationDiv.innerHTML = '';
+                    return;
+                }
+
+                let html = '';
+                html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage - 1})" ${currentPreRegPage === 1 ? 'disabled' : ''}>‹ 이전</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    html += `<button class="pagination-btn ${i === currentPreRegPage ? 'active' : ''}" onclick="changePreRegPage(${i})">${i}</button>`;
+                }
+
+                html += `<button class="pagination-btn" onclick="changePreRegPage(${currentPreRegPage + 1})" ${currentPreRegPage === totalPages ? 'disabled' : ''}>다음 ›</button>`;
+
+                paginationDiv.innerHTML = html;
+            }
+
+            window.changePreRegPage = function(page) {
+                const totalPages = Math.ceil(allPreRegData.length / preRegPageSize);
+                if (page < 1 || page > totalPages) return;
+                
+                currentPreRegPage = page;
+                displayPreRegPage();
+            }
+
+            document.getElementById('singlePreRegForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const name = document.getElementById('pre_name').value.trim();
+                const userId = document.getElementById('pre_userId').value.trim();
+                const phone = document.getElementById('pre_phone').value.trim().replace(/-/g, '');
+                const memberType = document.getElementById('pre_memberType').value;
+
+                if (!/^\d{10,11}$/.test(phone)) {
+                    showPreRegMessage('올바른 전화번호 형식이 아닙니다.', 'error');
+                    return;
                 }
 
                 try {
@@ -1281,216 +1462,115 @@
                         .where('userId', '==', userId)
                         .get();
 
-                    if (existing.empty) {
-                        await db.collection('preRegistered').add({
-                            name: name,
-                            userId: userId,
-                            phone: cleanPhone,
-                            memberType: memberType,
-                            registered: false,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        successCount++;
-                    } else {
-                        console.log('중복된 아이디:', userId);
-                        errorCount++;
+                    if (!existing.empty) {
+                        showPreRegMessage('이미 등록된 아이디입니다.', 'error');
+                        return;
                     }
-                } catch (error) {
-                    console.error('등록 오류:', error);
-                    errorCount++;
-                }
-            }
 
-            showPreRegMessage(`완료! 성공: ${successCount}개, 실패: ${errorCount}개`, 'success');
-            document.getElementById('bulkInput').value = '';
-            await loadPreRegistered();
-            
-            setTimeout(() => {
-                const tableSection = document.querySelector('#preRegTableBody').parentElement.parentElement;
-                tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
-        }
+                    await db.collection('preRegistered').add({
+                        name: name,
+                        userId: userId,
+                        phone: phone,
+                        memberType: memberType,
+                        registered: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
 
-        function switchToUserList() {
-            closePreRegisterModal();
-            setTimeout(() => {
-                const mainTable = document.querySelector('#userTableBody').parentElement.parentElement;
-                mainTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
-        }
-
-        async function deletePreRegistered(docId, name) {
-            if (!confirm(`${name}님의 사전 등록을 삭제하시겠습니까?`)) {
-                return;
-            }
-
-            try {
-                await db.collection('preRegistered').doc(docId).delete();
-                showPreRegMessage('삭제되었습니다.', 'success');
-                loadPreRegistered();
-            } catch (error) {
-                console.error('삭제 오류:', error);
-                showPreRegMessage('삭제에 실패했습니다.', 'error');
-            }
-        }
-
-        function openTestAccountModal() {
-            document.getElementById('testAccountModal').style.display = 'flex';
-            document.getElementById('generatedAccounts').style.display = 'none';
-            document.getElementById('testMessage').style.display = 'none';
-        }
-
-        function closeTestAccountModal() {
-            document.getElementById('testAccountModal').style.display = 'none';
-        }
-
-        function showTestMessage(text, type) {
-            const messageDiv = document.getElementById('testMessage');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-        }
-
-        function generateRandomString(length) {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        function generateRandomPhone() {
-            const prefix = '010';
-            const middle = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-            const last = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-            return prefix + middle + last;
-        }
-
-        let generatedAccountsData = [];
-
-        document.getElementById('testAccountForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const count = parseInt(document.getElementById('accountCount').value);
-            const days = parseInt(document.getElementById('validPeriod').value);
-
-            showTestMessage('계정 생성 중...', 'success');
-
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
-                showTestMessage('로그인 세션이 만료되었습니다.', 'error');
-                return;
-            }
-
-            try {
-                generatedAccountsData = [];
-                const expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + days);
-
-                for (let i = 0; i < count; i++) {
-                    showTestMessage(`계정 생성 중... (${i + 1}/${count})`, 'success');
+                    showPreRegMessage('사전 등록이 완료되었습니다.', 'success');
+                    document.getElementById('singlePreRegForm').reset();
                     
-                    const userId = 'TEST' + generateRandomString(6);
-                    const phone = generateRandomPhone();
-                    const email = `${userId}@system.local`;
+                    await loadPreRegistered();
+                    
+                } catch (error) {
+                    console.error('사전 등록 오류:', error);
+                    showPreRegMessage('등록에 실패했습니다.', 'error');
+                }
+            });
 
-                    try {
-                        const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
-                        const newUser = userCredential.user;
+            window.bulkPreRegister = async function() {
+                const bulkText = document.getElementById('bulkInput').value.trim();
+                
+                if (!bulkText) {
+                    showPreRegMessage('등록할 데이터를 입력하세요.', 'error');
+                    return;
+                }
 
-                        await db.collection('users').doc(newUser.uid).set({
-                            userId: userId,
-                            phone: phone,
-                            name: `테스트${i + 1}`,
-                            memberType: 'test',
-                            isTestAccount: true,
-                            expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                const lines = bulkText.split('\n').filter(line => line.trim());
+                let successCount = 0;
+                let errorCount = 0;
 
-                        generatedAccountsData.push({
-                            number: i + 1,
-                            userId: userId,
-                            phone: phone
-                        });
+                for (const line of lines) {
+                    const parts = line.split(/[,\t]/).map(s => s.trim());
+                    const [name, userId, phone, memberType] = parts;
 
-                        await auth.signOut();
-
-                        if (currentUser.email === 'admin@system.local') {
-                            await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
-                        } else {
-                            showTestMessage('관리자 재로그인이 필요합니다.', 'error');
-                            break;
-                        }
-
-                        await new Promise(resolve => setTimeout(resolve, 500));
-
-                    } catch (error) {
-                        console.error(`계정 ${i + 1} 생성 오류:`, error);
-                        
-                        if (!auth.currentUser) {
-                            try {
-                                await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
-                            } catch (loginError) {
-                                console.error('관리자 재로그인 실패:', loginError);
-                                showTestMessage('관리자 재로그인에 실패했습니다. 페이지를 새로고침해주세요.', 'error');
-                                return;
-                            }
-                        }
-                        
+                    if (!name || !userId || !phone || !memberType) {
+                        errorCount++;
                         continue;
                     }
+
+                    const cleanPhone = phone.replace(/-/g, '');
+                    if (!/^\d{10,11}$/.test(cleanPhone)) {
+                        errorCount++;
+                        continue;
+                    }
+
+                    if (!['branch', 'inner', 'consultant'].includes(memberType)) {
+                        errorCount++;
+                        continue;
+                    }
+
+                    try {
+                        const existing = await db.collection('preRegistered')
+                            .where('userId', '==', userId)
+                            .get();
+
+                        if (existing.empty) {
+                            await db.collection('preRegistered').add({
+                                name: name,
+                                userId: userId,
+                                phone: cleanPhone,
+                                memberType: memberType,
+                                registered: false,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    } catch (error) {
+                        console.error('등록 오류:', error);
+                        errorCount++;
+                    }
                 }
 
-                showTestMessage(`${generatedAccountsData.length}/${count}개 계정 생성 완료!`, 'success');
-                
-                if (generatedAccountsData.length > 0) {
-                    displayGeneratedAccounts();
-                }
-                
-                await loadUsers();
+                showPreRegMessage(`완료! 성공: ${successCount}개, 실패: ${errorCount}개`, 'success');
+                document.getElementById('bulkInput').value = '';
+                await loadPreRegistered();
+            }
 
-            } catch (error) {
-                console.error('계정 생성 오류:', error);
-                showTestMessage('계정 생성 중 오류가 발생했습니다: ' + error.message, 'error');
-                
+            window.switchToUserList = function() {
+                closePreRegisterModal();
+                setTimeout(() => {
+                    const mainTable = document.querySelector('#userTableBody').parentElement.parentElement;
+                    mainTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+            }
+
+            window.deletePreRegistered = async function(docId, name) {
+                if (!confirm(`${name}님의 사전 등록을 삭제하시겠습니까?`)) {
+                    return;
+                }
+
                 try {
-                    await auth.signInWithEmailAndPassword('admin@system.local', '01091198211');
-                } catch (loginError) {
-                    console.error('관리자 재로그인 실패:', loginError);
-                    alert('관리자 재로그인에 실패했습니다. 페이지를 새로고침해주세요.');
+                    await db.collection('preRegistered').doc(docId).delete();
+                    showPreRegMessage('삭제되었습니다.', 'success');
+                    loadPreRegistered();
+                } catch (error) {
+                    console.error('삭제 오류:', error);
+                    showPreRegMessage('삭제에 실패했습니다.', 'error');
                 }
             }
         });
-
-        function displayGeneratedAccounts() {
-            const accountList = document.getElementById('accountList');
-            const generatedDiv = document.getElementById('generatedAccounts');
-
-            accountList.innerHTML = generatedAccountsData.map(account => `
-                <div class="account-item">
-                    <strong>계정 ${account.number}</strong><br>
-                    아이디: ${account.userId}<br>
-                    비밀번호: ${account.phone}
-                </div>
-            `).join('');
-
-            generatedDiv.style.display = 'block';
-        }
-
-        function copyAllAccounts() {
-            const text = generatedAccountsData.map(account => 
-                `계정 ${account.number}\n아이디: ${account.userId}\n비밀번호: ${account.phone}`
-            ).join('\n\n');
-
-            navigator.clipboard.writeText(text).then(() => {
-                showTestMessage('전체 계정 정보가 클립보드에 복사되었습니다!', 'success');
-            }).catch(err => {
-                console.error('복사 실패:', err);
-                showTestMessage('복사에 실패했습니다.', 'error');
-            });
-        }
     </script>
 </body>
 </html>
