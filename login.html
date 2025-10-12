@@ -175,8 +175,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Firebase 설정
-        const firebaseConfig = {
+        // Firebase 스크립트 로드 완료 대기
+        window.addEventListener('load', function() {
+            // Firebase가 로드되었는지 확인
+            if (typeof firebase === 'undefined') {
+                alert('Firebase 로드에 실패했습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            // Firebase 설정
+            const firebaseConfig = {
             apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
             authDomain: "kfpc-company-support-project.firebaseapp.com",
             databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -184,127 +192,177 @@
             storageBucket: "kfpc-company-support-project.firebasestorage.app",
             messagingSenderId: "101260933373",
             appId: "1:101260933373:web:3436176f9ca2560056d914"
-        };
+            };
 
-        // Firebase 초기화
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        
-        const form = document.getElementById('loginForm');
-        const messageDiv = document.getElementById('message');
-        
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-        }
-        
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            // Firebase 초기화
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
             
-            const userId = document.getElementById('userId').value.trim();
-            const phone = document.getElementById('phone').value.trim().replace(/-/g, '');
+            const form = document.getElementById('loginForm');
+            const messageDiv = document.getElementById('message');
             
-            // 관리자 계정 체크
-            if (userId === 'admin' && phone === '01091198211') {
+            function showMessage(text, type) {
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
+            }
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const userId = document.getElementById('userId').value.trim();
+                const phone = document.getElementById('phone').value.trim().replace(/-/g, '');
+                
+                // 관리자 계정 체크
+                if (userId === 'admin') {
+                    try {
+                        // Firestore에서 관리자 정보 가져오기
+                        const adminSnapshot = await db.collection('users')
+                            .where('userId', '==', 'admin')
+                            .where('role', '==', 'admin')
+                            .get();
+                        
+                        if (!adminSnapshot.empty) {
+                            const adminData = adminSnapshot.docs[0].data();
+                            const adminPassword = adminData.phone; // Firestore에 저장된 실제 비밀번호
+                            
+                            // 입력한 비밀번호와 Firestore의 비밀번호 비교
+                            if (phone !== adminPassword) {
+                                showMessage('비밀번호가 일치하지 않습니다.', 'error');
+                                return;
+                            }
+                            
+                            // Firebase Authentication 로그인
+                            const email = 'admin@system.local';
+                            try {
+                                await auth.signInWithEmailAndPassword(email, phone);
+                                
+                                showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                                setTimeout(() => {
+                                    window.location.href = 'admin-dashboard.html';
+                                }, 1000);
+                                return;
+                            } catch (authError) {
+                                // Firebase Auth 비밀번호가 다른 경우 - 업데이트 필요
+                                showMessage('계정 정보를 동기화하는 중입니다...', 'warning');
+                                
+                                // 기존 방식으로 시도 (초기 비밀번호)
+                                try {
+                                    await auth.signInWithEmailAndPassword(email, '01091198211');
+                                    
+                                    // 로그인 성공 후 비밀번호를 Firestore 값으로 업데이트
+                                    const user = auth.currentUser;
+                                    await user.updatePassword(adminPassword);
+                                    
+                                    showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                                    setTimeout(() => {
+                                        window.location.href = 'admin-dashboard.html';
+                                    }, 1000);
+                                    return;
+                                } catch (fallbackError) {
+                                    console.error('로그인 실패:', fallbackError);
+                                    showMessage('비밀번호가 일치하지 않습니다.', 'error');
+                                    return;
+                                }
+                            }
+                        } else {
+                            // 관리자 계정이 없으면 생성 (초기 설정)
+                            try {
+                                const email = 'admin@system.local';
+                                const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
+                                const user = userCredential.user;
+                                
+                                await db.collection('users').doc(user.uid).set({
+                                    userId: 'admin',
+                                    name: '관리자',
+                                    phone: phone,
+                                    role: 'admin',
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                                
+                                showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                                setTimeout(() => {
+                                    window.location.href = 'admin-dashboard.html';
+                                }, 1000);
+                                return;
+                            } catch (createError) {
+                                console.error('관리자 계정 생성 오류:', createError);
+                                showMessage('로그인에 실패했습니다.', 'error');
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('관리자 로그인 오류:', error);
+                        showMessage('로그인에 실패했습니다.', 'error');
+                        return;
+                    }
+                }
+                
+                // 전화번호 형식 검증
+                if (!/^\d{10,11}$/.test(phone)) {
+                    showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
+                    return;
+                }
+                
                 try {
-                    const email = 'admin@system.local';
+                    // Firestore에서 사용자 찾기
+                    const usersSnapshot = await db.collection('users')
+                        .where('userId', '==', userId)
+                        .get();
+                    
+                    if (usersSnapshot.empty) {
+                        showMessage('등록되지 않은 아이디입니다.', 'error');
+                        return;
+                    }
+                    
+                    const userData = usersSnapshot.docs[0].data();
+                    
+                    // 테스트 계정 만료 확인
+                    if (userData.isTestAccount && userData.expiresAt) {
+                        const now = new Date();
+                        const expiresAt = userData.expiresAt.toDate();
+                        
+                        if (now > expiresAt) {
+                            showMessage('테스트 계정이 만료되었습니다.\n정식 회원가입을 진행해주세요.', 'warning');
+                            setTimeout(() => {
+                                window.location.href = 'signup.html';
+                            }, 2500);
+                            return;
+                        }
+                        
+                        // 만료 임박 알림 (6시간 이내)
+                        const hoursLeft = (expiresAt - now) / (1000 * 60 * 60);
+                        if (hoursLeft < 6) {
+                            showMessage(`⏰ 테스트 계정이 약 ${Math.floor(hoursLeft)}시간 후 만료됩니다.`, 'warning');
+                        }
+                    }
+                    
+                    // 비밀번호(전화번호) 확인
+                    if (userData.phone !== phone) {
+                        showMessage('전화번호가 일치하지 않습니다.', 'error');
+                        return;
+                    }
+                    
+                    // Firebase Authentication 로그인
+                    const email = `${userId}@system.local`;
                     await auth.signInWithEmailAndPassword(email, phone);
                     
-                    showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                    showMessage('로그인 성공! 메인 페이지로 이동합니다...', 'success');
                     setTimeout(() => {
-                        window.location.href = 'admin-dashboard.html';
+                        window.location.href = 'index.html';
                     }, 1000);
-                    return;
+                    
                 } catch (error) {
-                    // 관리자 계정이 없으면 생성
-                    try {
-                        const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
-                        const user = userCredential.user;
-                        
-                        await db.collection('users').doc(user.uid).set({
-                            userId: 'admin',
-                            name: '관리자',
-                            phone: phone,
-                            role: 'admin',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
-                        setTimeout(() => {
-                            window.location.href = 'admin-dashboard.html';
-                        }, 1000);
-                        return;
-                    } catch (createError) {
-                        console.error('관리자 계정 생성 오류:', createError);
-                    }
-                }
-            }
-            
-            // 전화번호 형식 검증
-            if (!/^\d{10,11}$/.test(phone)) {
-                showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
-                return;
-            }
-            
-            try {
-                // Firestore에서 사용자 찾기
-                const usersSnapshot = await db.collection('users')
-                    .where('userId', '==', userId)
-                    .get();
-                
-                if (usersSnapshot.empty) {
-                    showMessage('등록되지 않은 아이디입니다.', 'error');
-                    return;
-                }
-                
-                const userData = usersSnapshot.docs[0].data();
-                
-                // 테스트 계정 만료 확인
-                if (userData.isTestAccount && userData.expiresAt) {
-                    const now = new Date();
-                    const expiresAt = userData.expiresAt.toDate();
+                    console.error('로그인 오류:', error);
                     
-                    if (now > expiresAt) {
-                        showMessage('테스트 계정이 만료되었습니다.\n정식 회원가입을 진행해주세요.', 'warning');
-                        setTimeout(() => {
-                            window.location.href = 'signup.html';
-                        }, 2500);
-                        return;
-                    }
-                    
-                    // 만료 임박 알림 (6시간 이내)
-                    const hoursLeft = (expiresAt - now) / (1000 * 60 * 60);
-                    if (hoursLeft < 6) {
-                        showMessage(`⏰ 테스트 계정이 약 ${Math.floor(hoursLeft)}시간 후 만료됩니다.`, 'warning');
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                        showMessage('아이디 또는 비밀번호가 일치하지 않습니다.', 'error');
+                    } else {
+                        showMessage('로그인에 실패했습니다.\n잠시 후 다시 시도해주세요.', 'error');
                     }
                 }
-                
-                // 비밀번호(전화번호) 확인
-                if (userData.phone !== phone) {
-                    showMessage('전화번호가 일치하지 않습니다.', 'error');
-                    return;
-                }
-                
-                // Firebase Authentication 로그인
-                const email = `${userId}@system.local`;
-                await auth.signInWithEmailAndPassword(email, phone);
-                
-                showMessage('로그인 성공! 메인 페이지로 이동합니다...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-                
-            } catch (error) {
-                console.error('로그인 오류:', error);
-                
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    showMessage('아이디 또는 비밀번호가 일치하지 않습니다.', 'error');
-                } else {
-                    showMessage('로그인에 실패했습니다.\n잠시 후 다시 시도해주세요.', 'error');
-                }
-            }
+            });
         });
     </script>
 </body>
