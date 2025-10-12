@@ -1,11 +1,12 @@
-// Firebase 설정
 const firebaseConfig = {
-    apiKey: "AIzaSyBdufefZCVqcYBQjppcbFGqVFpMhv1m0",
-    authDomain: "kfpc-company-support-project.firebaseapp.com",
-    projectId: "kfpc-company-support-project",
-    storageBucket: "kfpc-company-support-project.firebasestorage.app",
-    messagingSenderId: "1012609333373",
-    appId: "1:1012609333373:web:343617679ca256005e6914"
+  apiKey: "AIzaSyDburefZCVqCY8QQppcdQFoqVFpMriv1m0",
+  authDomain: "kfpc-company-support-project.firebaseapp.com",
+  databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "kfpc-company-support-project",
+  storageBucket: "kfpc-company-support-project.firebasestorage.app",
+  messagingSenderId: "101260933373",
+  appId: "1:101260933373:web:3436176f9ca256005​6d914",
+  measurementId: "G-TRQCDPL8B4"
 };
 
 // Firebase 초기화
