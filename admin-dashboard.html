@@ -1,0 +1,603 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #f5f6fa;
+            padding: 2rem 1rem;
+        }
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header h1 {
+            color: #0c2c54;
+            font-size: 1.75rem;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            background: #0c2c54;
+            color: white;
+        }
+        .btn-secondary {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .number {
+            color: #0c2c54;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .filters input, .filters select {
+            padding: 0.75rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .filters input {
+            flex: 1;
+            min-width: 200px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th {
+            background: #0c2c54;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            color: #0c2c54;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #0c2c54;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            table {
+                font-size: 0.85rem;
+            }
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ 관리자 대시보드</h1>
+        <div class="header-buttons">
+            <button class="btn btn-secondary" onclick="location.href='index.html'">메인 페이지</button>
+            <button class="btn btn-primary" onclick="logout()">로그아웃</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <h3>전체 회원</h3>
+            <div class="number" id="totalUsers">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>일반 회원</h3>
+            <div class="number" id="generalUsers">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>테스트 계정</h3>
+            <div class="number" id="testUsers">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>오늘 가입</h3>
+            <div class="number" id="todayUsers">0</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="message" class="message"></div>
+        
+        <div class="filters">
+            <input type="text" id="searchInput" placeholder="이름, 아이디, 전화번호로 검색...">
+            <select id="memberTypeFilter">
+                <option value="">전체 회원 유형</option>
+                <option value="general">일반회원</option>
+                <option value="branch">지사장</option>
+                <option value="inner">이너회원</option>
+                <option value="consultant">컨홈회원</option>
+                <option value="test">테스트계정</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadUsers()">검색</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>아이디</th>
+                        <th>이름</th>
+                        <th>전화번호</th>
+                        <th>회원유형</th>
+                        <th>상태</th>
+                        <th>가입일</th>
+                        <th>관리</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr>
+                        <td colspan="7" class="no-data">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 수정 모달 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2>회원 정보 수정</h2>
+            <form id="editForm">
+                <input type="hidden" id="editUserId">
+                
+                <div class="form-group">
+                    <label>아이디</label>
+                    <input type="text" id="editUserIdDisplay" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>이름</label>
+                    <input type="text" id="editName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>전화번호</label>
+                    <input type="tel" id="editPhone" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>이메일</label>
+                    <input type="email" id="editEmail">
+                </div>
+                
+                <div class="form-group">
+                    <label>소속사</label>
+                    <input type="text" id="editCompany">
+                </div>
+                
+                <div class="form-group">
+                    <label>직함</label>
+                    <input type="text" id="editPosition">
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">저장</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()" style="flex: 1;">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+            authDomain: "kfpc-company-support-project.firebaseapp.com",
+            databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "kfpc-company-support-project",
+            storageBucket: "kfpc-company-support-project.firebasestorage.app",
+            messagingSenderId: "101260933373",
+            appId: "1:101260933373:web:3436176f9ca2560056d914"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let allUsers = [];
+
+        // 관리자 권한 확인
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const userData = userDoc.data();
+
+            if (!userData || userData.role !== 'admin') {
+                alert('관리자 권한이 필요합니다.');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            loadUsers();
+        });
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        async function loadUsers() {
+            try {
+                const snapshot = await db.collection('users')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                allUsers = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // 관리자 계정 제외
+                allUsers = allUsers.filter(user => user.role !== 'admin');
+
+                updateStats();
+                displayUsers(allUsers);
+            } catch (error) {
+                console.error('회원 로딩 오류:', error);
+                showMessage('회원 정보를 불러오는데 실패했습니다.', 'error');
+            }
+        }
+
+        function updateStats() {
+            const total = allUsers.length;
+            const general = allUsers.filter(u => u.memberType === 'general').length;
+            const test = allUsers.filter(u => u.isTestAccount).length;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayUsers = allUsers.filter(u => {
+                if (!u.createdAt) return false;
+                const created = u.createdAt.toDate();
+                return created >= today;
+            }).length;
+
+            document.getElementById('totalUsers').textContent = total;
+            document.getElementById('generalUsers').textContent = general;
+            document.getElementById('testUsers').textContent = test;
+            document.getElementById('todayUsers').textContent = todayUsers;
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('userTableBody');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-data">회원이 없습니다.</td></tr>';
+                return;
+            }
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('memberTypeFilter').value;
+
+            let filtered = users;
+
+            if (searchTerm) {
+                filtered = filtered.filter(user => 
+                    (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+                    (user.userId && user.userId.toLowerCase().includes(searchTerm)) ||
+                    (user.phone && user.phone.includes(searchTerm))
+                );
+            }
+
+            if (typeFilter) {
+                if (typeFilter === 'test') {
+                    filtered = filtered.filter(user => user.isTestAccount);
+                } else {
+                    filtered = filtered.filter(user => user.memberType === typeFilter);
+                }
+            }
+
+            tbody.innerHTML = filtered.map(user => {
+                const memberTypeText = getMemberTypeText(user);
+                const statusBadge = getStatusBadge(user);
+                const createdDate = user.createdAt ? 
+                    user.createdAt.toDate().toLocaleDateString('ko-KR') : '-';
+
+                return `
+                    <tr>
+                        <td>${user.userId || '-'}</td>
+                        <td>${user.name || '-'}</td>
+                        <td>${user.phone || '-'}</td>
+                        <td>${memberTypeText}</td>
+                        <td>${statusBadge}</td>
+                        <td>${createdDate}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary btn-small" onclick="openEditModal('${user.id}')">수정</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteUser('${user.id}', '${user.name}')">삭제</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getMemberTypeText(user) {
+            if (user.isTestAccount) return '<span class="badge badge-warning">테스트</span>';
+            
+            const types = {
+                'general': '일반',
+                'branch': '지사장',
+                'inner': '이너',
+                'consultant': '컨홈'
+            };
+            return `<span class="badge badge-info">${types[user.memberType] || '-'}</span>`;
+        }
+
+        function getStatusBadge(user) {
+            if (user.isTestAccount && user.expiresAt) {
+                const now = new Date();
+                const expires = user.expiresAt.toDate();
+                
+                if (now > expires) {
+                    return '<span class="badge badge-danger">만료</span>';
+                } else {
+                    return '<span class="badge badge-success">활성</span>';
+                }
+            }
+            return '<span class="badge badge-success">정상</span>';
+        }
+
+        function openEditModal(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUserIdDisplay').value = user.userId || '';
+            document.getElementById('editName').value = user.name || '';
+            document.getElementById('editPhone').value = user.phone || '';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editCompany').value = user.company || '';
+            document.getElementById('editPosition').value = user.position || '';
+
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userId = document.getElementById('editUserId').value;
+            const name = document.getElementById('editName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const company = document.getElementById('editCompany').value.trim();
+            const position = document.getElementById('editPosition').value.trim();
+
+            try {
+                await db.collection('users').doc(userId).update({
+                    name: name,
+                    phone: phone,
+                    email: email,
+                    company: company,
+                    position: position
+                });
+
+                showMessage('회원 정보가 수정되었습니다.', 'success');
+                closeEditModal();
+                loadUsers();
+            } catch (error) {
+                console.error('수정 오류:', error);
+                showMessage('수정에 실패했습니다.', 'error');
+            }
+        });
+
+        async function deleteUser(userId, userName) {
+            if (!confirm(`${userName}님의 계정을 정말 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                await db.collection('users').doc(userId).delete();
+                showMessage('회원이 삭제되었습니다.', 'success');
+                loadUsers();
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                showMessage('삭제에 실패했습니다.', 'error');
+            }
+        }
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                });
+            }
+        }
+
+        // 검색 필터 이벤트
+        document.getElementById('searchInput').addEventListener('input', () => {
+            displayUsers(allUsers);
+        });
+
+        document.getElementById('memberTypeFilter').addEventListener('change', () => {
+            displayUsers(allUsers);
+        });
+
+        // 모달 외부 클릭시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        }
+    </script>
+</body>
+</html>
