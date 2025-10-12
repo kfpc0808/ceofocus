@@ -287,9 +287,24 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
     
     <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+            authDomain: "kfpc-company-support-project.firebaseapp.com",
+            databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "kfpc-company-support-project",
+            storageBucket: "kfpc-company-support-project.firebasestorage.app",
+            messagingSenderId: "101260933373",
+            appId: "1:101260933373:web:3436176f9ca2560056d914"
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         let selectedMemberType = '';
         const messageDiv = document.getElementById('message');
         
@@ -341,8 +356,10 @@
             const emailCustom = document.getElementById('gen_email_custom').value.trim();
             const email = `${emailId}@${emailDomain === 'custom' ? emailCustom : emailDomain}`;
             
+            console.log('회원가입 시작:', { userId, name, phone, email });
+            
             if (!/^\d{10,11}$/.test(phone)) {
-                showMessage('올바른 전화번호 형식이 아닙니다.', 'error');
+                showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
                 return;
             }
             
@@ -352,6 +369,7 @@
             }
             
             try {
+                // 아이디 중복 체크
                 const existingUser = await db.collection('users')
                     .where('userId', '==', userId)
                     .get();
@@ -361,10 +379,15 @@
                     return;
                 }
                 
+                // Firebase Authentication 계정 생성 (시스템 이메일 사용)
                 const authEmail = `${userId}@system.local`;
+                console.log('Firebase Auth 계정 생성:', authEmail);
+                
                 const userCredential = await auth.createUserWithEmailAndPassword(authEmail, phone);
                 const user = userCredential.user;
+                console.log('Auth 계정 생성 성공:', user.uid);
                 
+                // Firestore에 사용자 정보 저장
                 await db.collection('users').doc(user.uid).set({
                     userId: userId,
                     name: name,
@@ -379,12 +402,29 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
+                console.log('Firestore 저장 완료');
                 showMessage('회원가입 성공! 로그인 페이지로 이동합니다...', 'success');
-                setTimeout(() => window.location.href = 'login.html', 2000);
+                
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
                 
             } catch (error) {
-                console.error('오류:', error);
-                showMessage('회원가입 중 오류가 발생했습니다.', 'error');
+                console.error('회원가입 오류:', error);
+                console.error('오류 코드:', error.code);
+                console.error('오류 메시지:', error.message);
+                
+                let errorMessage = '회원가입 중 오류가 발생했습니다.';
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = '이미 사용 중인 계정입니다.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = '비밀번호가 너무 약합니다. (최소 6자리)';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = '잘못된 이메일 형식입니다.';
+                }
+                
+                showMessage(errorMessage + '\n\n상세 오류: ' + error.message, 'error');
             }
         });
         
@@ -429,7 +469,7 @@
                 
             } catch (error) {
                 console.error('오류:', error);
-                showMessage('가입 중 오류가 발생했습니다.', 'error');
+                showMessage('가입 중 오류가 발생했습니다: ' + error.message, 'error');
             }
         });
     </script>
