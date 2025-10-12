@@ -502,12 +502,29 @@
                         return;
                     }
                     
-                    // 이미 가입이 완료된 회원인지 확인 (createdAt이 있으면 가입 완료)
-                    if (foundUser.createdAt) {
+                    // 이미 가입이 완료된 회원인지 확인
+                    // movedFromPreReg가 true이고 createdAt이 있으면 가입 완료
+                    if (foundUser.movedFromPreReg && foundUser.createdAt) {
                         statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다. 로그인 페이지에서 로그인하세요.';
                         statusDiv.className = 'id-status error';
                         document.getElementById('verifiedInfo').classList.add('hidden');
                         return;
+                    }
+                    
+                    // Firebase Auth에 이미 등록되어 있는지 확인
+                    try {
+                        const authEmail = `${foundUser.userId}@system.local`;
+                        const signInMethods = await auth.fetchSignInMethodsForEmail(authEmail);
+                        
+                        if (signInMethods.length > 0) {
+                            statusDiv.textContent = '❌ 이미 가입이 완료된 회원입니다. 로그인 페이지에서 로그인하세요.';
+                            statusDiv.className = 'id-status error';
+                            document.getElementById('verifiedInfo').classList.add('hidden');
+                            return;
+                        }
+                    } catch (authCheckError) {
+                        // fetchSignInMethodsForEmail 오류는 무시 (계정이 없다는 의미)
+                        console.log('Auth 확인:', authCheckError.code);
                     }
                     
                     // 인증 성공
@@ -763,6 +780,16 @@
                 
                 try {
                     const authEmail = `${preRegData.userId}@system.local`;
+                    
+                    // Firebase Auth에 계정이 이미 있는지 확인
+                    const signInMethods = await auth.fetchSignInMethodsForEmail(authEmail);
+                    
+                    if (signInMethods.length > 0) {
+                        showMessage('이미 가입된 계정입니다. 로그인 페이지에서 로그인하세요.', 'error');
+                        return;
+                    }
+                    
+                    // 새 계정 생성
                     const userCredential = await auth.createUserWithEmailAndPassword(authEmail, preRegData.phone);
                     const user = userCredential.user;
                     
@@ -774,7 +801,8 @@
                         region: region,
                         role: 'user',
                         isPaid: false,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        movedFromPreReg: true,
+                        registeredAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     
                     showMessage(`${preRegData.name}님 환영합니다! 로그인 페이지로 이동합니다...`, 'success');
@@ -785,7 +813,7 @@
                     
                     let errorMessage = '가입 중 오류가 발생했습니다.';
                     if (error.code === 'auth/email-already-in-use') {
-                        errorMessage = '이미 가입된 계정입니다.';
+                        errorMessage = '이미 가입된 계정입니다. 로그인 페이지에서 로그인하세요.';
                     }
                     
                     showMessage(errorMessage, 'error');
