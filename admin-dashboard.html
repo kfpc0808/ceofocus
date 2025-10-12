@@ -179,6 +179,8 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            overflow-y: auto;
+            padding: 1rem;
         }
         .modal-content {
             background: white;
@@ -246,7 +248,7 @@
     <div class="header">
         <h1>🛠️ 관리자 대시보드</h1>
         <div class="header-buttons">
-            <button class="btn btn-secondary" onclick="openPreRegisterModal()">사전 등록 관리</button>
+            <button class="btn btn-secondary" onclick="openPreRegisterModal()">유료회원 등록</button>
             <button class="btn btn-secondary" onclick="openTestAccountModal()">테스트 계정 생성</button>
             <button class="btn btn-secondary" onclick="location.href='index.html'">메인 페이지</button>
             <button class="btn btn-primary" onclick="logout()">로그아웃</button>
@@ -395,8 +397,11 @@
 
     <!-- 사전 등록 회원 관리 모달 -->
     <div id="preRegisterModal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <h2>👥 사전 등록 회원 관리</h2>
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <h2>👥 유료회원 사전 등록</h2>
+            <p style="color: #6c757d; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                지사장/이너회원/컨홈회원을 미리 등록하세요. 등록된 회원은 성명만으로 간편하게 가입할 수 있습니다.
+            </p>
             
             <div id="preRegMessage" class="message"></div>
             
@@ -809,11 +814,211 @@
         window.onclick = function(event) {
             const editModal = document.getElementById('editModal');
             const testModal = document.getElementById('testAccountModal');
+            const preRegModal = document.getElementById('preRegisterModal');
+            
             if (event.target === editModal) {
                 closeEditModal();
             }
             if (event.target === testModal) {
                 closeTestAccountModal();
+            }
+            if (event.target === preRegModal) {
+                closePreRegisterModal();
+            }
+        }
+
+        // 사전 등록 회원 관리
+        function openPreRegisterModal() {
+            console.log('유료회원 등록 모달 열기');
+            const modal = document.getElementById('preRegisterModal');
+            modal.style.display = 'flex';
+            loadPreRegistered();
+        }
+
+        function closePreRegisterModal() {
+            console.log('유료회원 등록 모달 닫기');
+            document.getElementById('preRegisterModal').style.display = 'none';
+        }
+
+        function showPreRegMessage(text, type) {
+            const messageDiv = document.getElementById('preRegMessage');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 사전 등록 회원 목록 로드
+        async function loadPreRegistered() {
+            try {
+                const snapshot = await db.collection('preRegistered')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                const tbody = document.getElementById('preRegTableBody');
+                
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="no-data">등록된 사전 회원이 없습니다.</td></tr>';
+                    return;
+                }
+
+                const memberTypeText = {
+                    'branch': '지사장',
+                    'inner': '이너',
+                    'consultant': '컨홈'
+                };
+
+                tbody.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const status = data.registered ? 
+                        '<span class="badge badge-success">가입완료</span>' : 
+                        '<span class="badge badge-warning">대기중</span>';
+                    
+                    return `
+                        <tr>
+                            <td>${data.name}</td>
+                            <td>${data.userId}</td>
+                            <td>${data.phone}</td>
+                            <td>${memberTypeText[data.memberType]}</td>
+                            <td>${status}</td>
+                            <td>
+                                <button class="btn btn-danger btn-small" onclick="deletePreRegistered('${doc.id}', '${data.name}')">삭제</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('사전 등록 목록 로드 오류:', error);
+                showPreRegMessage('목록을 불러오는데 실패했습니다.', 'error');
+            }
+        }
+
+        // 단일 사전 등록
+        document.getElementById('singlePreRegForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('pre_name').value.trim();
+            const userId = document.getElementById('pre_userId').value.trim();
+            const phone = document.getElementById('pre_phone').value.trim().replace(/-/g, '');
+            const memberType = document.getElementById('pre_memberType').value;
+
+            if (!/^\d{10,11}$/.test(phone)) {
+                showPreRegMessage('올바른 전화번호 형식이 아닙니다.', 'error');
+                return;
+            }
+
+            try {
+                // 중복 체크
+                const existing = await db.collection('preRegistered')
+                    .where('userId', '==', userId)
+                    .get();
+
+                if (!existing.empty) {
+                    showPreRegMessage('이미 등록된 아이디입니다.', 'error');
+                    return;
+                }
+
+                await db.collection('preRegistered').add({
+                    name: name,
+                    userId: userId,
+                    phone: phone,
+                    memberType: memberType,
+                    registered: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showPreRegMessage('사전 등록이 완료되었습니다.', 'success');
+                document.getElementById('singlePreRegForm').reset();
+                loadPreRegistered();
+            } catch (error) {
+                console.error('사전 등록 오류:', error);
+                showPreRegMessage('등록에 실패했습니다.', 'error');
+            }
+        });
+
+        // 일괄 사전 등록
+        async function bulkPreRegister() {
+            const bulkText = document.getElementById('bulkInput').value.trim();
+            
+            if (!bulkText) {
+                showPreRegMessage('등록할 데이터를 입력하세요.', 'error');
+                return;
+            }
+
+            const lines = bulkText.split('\n').filter(line => line.trim());
+            let successCount = 0;
+            let errorCount = 0;
+
+            showPreRegMessage(`${lines.length}개 항목 등록 중...`, 'success');
+
+            for (const line of lines) {
+                const parts = line.split(/[,\t]/).map(s => s.trim());
+                const [name, userId, phone, memberType] = parts;
+
+                if (!name || !userId || !phone || !memberType) {
+                    console.error('잘못된 형식:', line);
+                    errorCount++;
+                    continue;
+                }
+
+                const cleanPhone = phone.replace(/-/g, '');
+                if (!/^\d{10,11}$/.test(cleanPhone)) {
+                    console.error('잘못된 전화번호:', phone);
+                    errorCount++;
+                    continue;
+                }
+
+                if (!['branch', 'inner', 'consultant'].includes(memberType)) {
+                    console.error('잘못된 회원유형:', memberType);
+                    errorCount++;
+                    continue;
+                }
+
+                try {
+                    const existing = await db.collection('preRegistered')
+                        .where('userId', '==', userId)
+                        .get();
+
+                    if (existing.empty) {
+                        await db.collection('preRegistered').add({
+                            name: name,
+                            userId: userId,
+                            phone: cleanPhone,
+                            memberType: memberType,
+                            registered: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        successCount++;
+                    } else {
+                        console.log('중복된 아이디:', userId);
+                        errorCount++;
+                    }
+                } catch (error) {
+                    console.error('등록 오류:', error);
+                    errorCount++;
+                }
+            }
+
+            showPreRegMessage(`완료! 성공: ${successCount}개, 실패: ${errorCount}개`, 'success');
+            document.getElementById('bulkInput').value = '';
+            loadPreRegistered();
+        }
+
+        // 사전 등록 삭제
+        async function deletePreRegistered(docId, name) {
+            if (!confirm(`${name}님의 사전 등록을 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                await db.collection('preRegistered').doc(docId).delete();
+                showPreRegMessage('삭제되었습니다.', 'success');
+                loadPreRegistered();
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                showPreRegMessage('삭제에 실패했습니다.', 'error');
             }
         }
 
