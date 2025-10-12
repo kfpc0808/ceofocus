@@ -176,7 +176,7 @@
             }
             
             try {
-                const usersSnapshot = await db.collection('users')
+                const usersSnapshot = await db.collection('Users')
                     .where('userId', '==', userId)
                     .get();
                 
