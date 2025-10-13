@@ -738,7 +738,7 @@
             <div class="input-group"><label for="private_pension_value">개인연금 적립액 (현재가치)</label><div class="input-field"><input type="text" id="private_pension_value" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group"><label for="spouse_income">배우자 소득 유무</label><div class="input-field"><select id="spouse_income"><option value="no">없음</option><option value="yes">있음</option></select><i class="fas fa-check check-icon"></i></div></div>
 
-            <h4 class="input-divider">🛡️ CEO 보험 플랜 설계</h4>
+            <h4 class="input-divider">🛡️ CEO 목적자금 플랜</h4>
             <div class="input-group"><label for="ceo_age">CEO 현재 연령 (자동계산)</label><div class="input-field"><input type="number" id="ceo_age" readonly style="background:#f8f9fa;"><span>세</span></div></div>
             <div class="input-group"><label for="existing_insurance">기존 CEO 보험 가입 여부</label><div class="input-field"><select id="existing_insurance"><option value="no">없음</option><option value="yes">있음</option></select><i class="fas fa-check check-icon"></i></div></div>
             <div class="input-group"><label for="insurance_target_amount">목표 준비자금 (퇴직금, 상속세 재원 등)</label><div class="input-field"><input type="text" id="insurance_target_amount" value="" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
@@ -801,7 +801,7 @@
         </div>
 
         <div class="card" id="solution_proposal_card" style="display:none;">
-            <h2><i class="fas fa-lightbulb"></i>Step 4. 맞춤형 보험 솔루션 상세 제안</h2>
+            <h2><i class="fas fa-lightbulb"></i>Step 4. 맞춤형 솔루션 상세 제안</h2>
             <div id="solution_proposal"></div>
         </div>
         
@@ -2731,7 +2731,7 @@ function generateInsuranceProposal(inputs) {
     
     container.innerHTML = `
         <div class="consulting-topic topic-good">
-            <h3 class="good"><i class="fas fa-rocket"></i>CEO 보험 솔루션</h3>
+            <h3 class="good"><i class="fas fa-rocket"></i>CEO 솔루션</h3>
             <table class="proposal-table">
                 <tr><th colspan="2">기본 설계</th></tr>
                 <tr><td class="text-left">보험금</td><td class="text-right">${formatNumber(plan.coverage)} 원</td></tr>
