@@ -739,33 +739,57 @@
             <div class="input-group"><label for="spouse_income">배우자 소득 유무</label><div class="input-field"><select id="spouse_income"><option value="no">없음</option><option value="yes">있음</option></select><i class="fas fa-check check-icon"></i></div></div>
 
             <h4 class="input-divider">🛡️ CEO 목적자금 플랜</h4>
+
             <div class="input-group"><label for="ceo_age">CEO 현재 연령 (자동계산)</label><div class="input-field"><input type="number" id="ceo_age" readonly style="background:#f8f9fa;"><span>세</span></div></div>
-            <div class="input-group"><label for="existing_insurance">기존 CEO 보험 가입 여부</label><div class="input-field"><select id="existing_insurance"><option value="no">없음</option><option value="yes">있음</option></select><i class="fas fa-check check-icon"></i></div></div>
-            <div class="input-group"><label for="insurance_target_amount">목표 준비자금 (퇴직금, 상속세 재원 등)</label><div class="input-field"><input type="text" id="insurance_target_amount" value="" inputmode="numeric"><span>원</span><i class="fas fa-check check-icon"></i></div></div>
-            <div class="input-group">
-                <label for="insurance_payment_period">희망 납입기간</label>
-                <div class="input-field">
-                    <select id="insurance_payment_period">
-                        <option value="5">5년</option>
-                        <option value="6">6년</option>
-                        <option value="7">7년</option>
-                        <option value="8">8년</option>
-                        <option value="9">9년</option>
-                        <option value="10" selected>10년</option>
-                        <option value="11">11년</option>
-                        <option value="12">12년</option>
-                        <option value="13">13년</option>
-                        <option value="14">14년</option>
-                        <option value="15">15년</option>
-                        <option value="16">16년</option>
-                        <option value="17">17년</option>
-                        <option value="18">18년</option>
-                        <option value="19">19년</option>
-                        <option value="20">20년</option>
-                    </select>
-<i class="fas fa-check check-icon"></i>
-                </div>
-            </div>
+<div class="input-group">
+    <label for="insurance_target_amount">
+        목표 준비자금 (희망액, 상속세 등)
+        <span class="tooltip-container">
+            <i class="fas fa-info-circle info-icon"></i>
+            <span class="tooltip-text">
+                <strong>보험 설계 기준</strong><br>
+                CEO가 준비하고자 하는 자금 규모를 입력하세요.<br>
+                (예: 상속세 대비 자금, 퇴직자금 등)
+            </span>
+        </span>
+    </label>
+    <div class="input-field">
+        <input type="text" id="insurance_target_amount" value="500000000" inputmode="numeric">
+        <span>원</span>
+        <i class="fas fa-check check-icon"></i>
+    </div>
+    
+    <!-- ✅ 안내 메시지 (input-group 안에 위치) -->
+    <div id="insurance-guide-message" style="margin-top: 0.5rem; padding: 0.75rem; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px; font-size: 0.9em; color: #856404; display: flex; align-items: center;">
+        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+        <span><strong>안내:</strong> '영업이익' 금액을 입력하셔야 <strong>'CEO 솔루션'</strong>이 제공됩니다.</span>
+    </div>
+</div>
+<!-- ✅ 다음 input-group (희망 납입기간) -->
+<div class="input-group">
+    <label for="insurance_payment_period">희망 납입기간</label>
+    <div class="input-field">
+        <select id="insurance_payment_period">
+            <option value="5">5년</option>
+            <option value="6">6년</option>
+            <option value="7">7년</option>
+            <option value="8">8년</option>
+            <option value="9">9년</option>
+            <option value="10" selected>10년</option>
+            <option value="11">11년</option>
+            <option value="12">12년</option>
+            <option value="13">13년</option>
+            <option value="14">14년</option>
+            <option value="15">15년</option>
+            <option value="16">16년</option>
+            <option value="17">17년</option>
+            <option value="18">18년</option>
+            <option value="19">19년</option>
+            <option value="20">20년</option>
+        </select>
+        <i class="fas fa-check check-icon"></i>
+    </div>
+</div>
             <div class="input-group"><label for="consolation_regulation">임원 유족 위로금 규정 유무</label><div class="input-field"><select id="consolation_regulation"><option value="yes">있음</option><option value="no">없음</option></select><i class="fas fa-check check-icon"></i></div></div>
         </div>
     </section>
@@ -1765,8 +1789,8 @@ function updateAnalysis() {
             employment_credit: document.getElementById('employment_credit').value,
             rnd_credit: document.getElementById('rnd_credit').value,
             succession_qualify: document.getElementById('succession_qualify').value,
-            spouse_income: document.getElementById('spouse_income').value,
-            existing_insurance: document.getElementById('existing_insurance').value,
+            spouse_income: document.getElementById('spouse_income')?.value || 'no',
+            existing_insurance: document.getElementById('existing_insurance')?.value || '', 
             listing_status: document.getElementById('listing_status').value,
             valuation_date: document.getElementById('valuation_date')?.value || '',
             industry: document.getElementById('industry').value,
@@ -3339,55 +3363,169 @@ window.onload = function() {
             debouncedUpdate();
         });
     }
+    const opProfitInput = document.getElementById('op_profit');
+    const ebtInput = document.getElementById('ebt');
+    const taxExpenseInput = document.getElementById('tax_expense');
+    const netIncomeInput = document.getElementById('net_income');
     
-    const valuationDateInput = document.getElementById('valuation_date');
-    if (valuationDateInput && !valuationDateInput.value) {
-        const today = new Date().toISOString().split('T')[0];
-        valuationDateInput.value = today;
-    }
-    
-    for (let i = 0; i < 3; i++) {
-        addChild();
-    }
-    addShareholder();
-    
-    const addChildBtn = document.getElementById('add-child-btn');
-    const addShareholderBtn = document.getElementById('add-shareholder-btn');
-    
-    if (addChildBtn) addChildBtn.addEventListener('click', addChild);
-    if (addShareholderBtn) addShareholderBtn.addEventListener('click', addShareholder);
-    
-    if (savedData) {
-        try {
-            loadFormData(savedData);
-            showSaveStatus('이전 작업 복원됨', 'success');
-        } catch (error) {
-            console.error('저장된 데이터 불러오기 오류:', error);
-        }
-    } else {
-        updateIdentityDisplay();
-        updateProgress();
-    }
-    
-    setTimeout(() => {
-        try {
-            if (typeof updateAnalysis === 'function') {
-                updateAnalysis();
+    function updateEbtAvailability() {
+        if (!opProfitInput || !ebtInput || !taxExpenseInput) return;
+        
+        const opProfit = parseFloat(unformat(opProfitInput.value)) || 0;
+        
+        if (opProfit > 0) {
+            ebtInput.disabled = false;
+            ebtInput.style.backgroundColor = '#ffffff';
+            ebtInput.style.cursor = 'text';
+            ebtInput.readOnly = false;
+            
+            taxExpenseInput.disabled = false;
+            taxExpenseInput.style.backgroundColor = '#ffffff';
+            taxExpenseInput.style.cursor = 'text';
+            taxExpenseInput.readOnly = false;
+            
+            const lockIcon = document.getElementById('ebt-lock-icon');
+            if (lockIcon) lockIcon.style.display = 'none';
+            
+        } else {
+            ebtInput.disabled = true;
+            ebtInput.style.backgroundColor = '#e9ecef';
+            ebtInput.style.cursor = 'not-allowed';
+            ebtInput.readOnly = true;
+            ebtInput.value = '0';
+            
+            taxExpenseInput.disabled = true;
+            taxExpenseInput.style.backgroundColor = '#e9ecef';
+            taxExpenseInput.style.cursor = 'not-allowed';
+            taxExpenseInput.readOnly = true;
+            taxExpenseInput.value = '0';
+            
+            if (netIncomeInput) {
+                netIncomeInput.value = '0';
             }
-        } catch (e) {
-            console.error('초기 분석 실행 오류:', e);
+            
+            const lockIcon = document.getElementById('ebt-lock-icon');
+            if (lockIcon) lockIcon.style.display = 'inline';
         }
-    }, 200);
- 
-    setTimeout(() => {
-        const keyboardHelp = document.getElementById('keyboard-help');
-        if (keyboardHelp) {
-            keyboardHelp.classList.add('show');
-            setTimeout(() => {
-                keyboardHelp.classList.remove('show');
-            }, 3000);
+    }
+    
+    if (opProfitInput && ebtInput && taxExpenseInput) {
+        updateEbtAvailability();
+        
+        opProfitInput.addEventListener('input', function() {
+            updateEbtAvailability();
+            debouncedUpdate();
+            autoSave();
+        });
+        
+        opProfitInput.addEventListener('change', function() {
+            updateEbtAvailability();
+            debouncedUpdate();
+            autoSave();
+        });
+    }
+// CEO 솔루션 안내 메시지 동적 표시
+(function() {
+    // ✅ 요소 존재 확인 강화
+    const insuranceGuideMessage = document.getElementById('insurance-guide-message');
+    const opProfitInputLocal = document.getElementById('op_profit');
+    
+    if (!insuranceGuideMessage) {
+        console.warn('[Insurance Guide] insurance-guide-message 요소를 찾을 수 없습니다.');
+        return;
+    }
+    
+    function updateInsuranceGuide() {
+        let opProfit = 0;
+        
+        // ✅ opProfitInputLocal null 체크 추가
+        if (opProfitInputLocal) {
+            try {
+                const value = opProfitInputLocal.value;
+                if (value) {
+                    // unformat 함수가 없을 수도 있으니 직접 처리
+                    const cleaned = value.replace(/,/g, '');
+                    opProfit = parseFloat(cleaned) || 0;
+                }
+            } catch(e) {
+                console.error('[Insurance Guide] 파싱 오류:', e);
+                opProfit = 0;
+            }
         }
-    }, 1000);
+        
+        if (opProfit > 0) {
+            // ✅ 영업이익 있으면 초록색
+            insuranceGuideMessage.style.background = '#d4edda';
+            insuranceGuideMessage.style.borderColor = '#28a745';
+            insuranceGuideMessage.style.color = '#155724';
+            insuranceGuideMessage.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #28a745;"></i><span><strong>준비 완료:</strong> CEO 솔루션이 제공됩니다.</span>';
+        } else {
+            // ⚠️ 영업이익 없으면 노란색
+            insuranceGuideMessage.style.background = '#fff3cd';
+            insuranceGuideMessage.style.borderColor = '#ffc107';
+            insuranceGuideMessage.style.color = '#856404';
+            insuranceGuideMessage.innerHTML = '<i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i><span><strong>안내:</strong> \'영업이익\' 금액을 입력하셔야 <strong>\'CEO 솔루션\'</strong>이 제공됩니다.</span>';
+        }
+    }
+    
+    // ✅ 초기 실행 (약간 지연)
+    setTimeout(updateInsuranceGuide, 100);
+    
+    // ✅ 이벤트 등록
+    if (opProfitInputLocal) {
+        opProfitInputLocal.addEventListener('input', updateInsuranceGuide);
+        opProfitInputLocal.addEventListener('change', updateInsuranceGuide);
+    }
+})();
+
+const valuationDateInput = document.getElementById('valuation_date');
+if (valuationDateInput && !valuationDateInput.value) {
+    const today = new Date().toISOString().split('T')[0];
+    valuationDateInput.value = today;
+}
+
+for (let i = 0; i < 3; i++) {
+    addChild();
+}
+addShareholder();
+
+const addChildBtn = document.getElementById('add-child-btn');
+const addShareholderBtn = document.getElementById('add-shareholder-btn');
+
+if (addChildBtn) addChildBtn.addEventListener('click', addChild);
+if (addShareholderBtn) addShareholderBtn.addEventListener('click', addShareholder);
+
+if (savedData) {
+    try {
+        loadFormData(savedData);
+        showSaveStatus('이전 작업 복원됨', 'success');
+    } catch (error) {
+        console.error('저장된 데이터 불러오기 오류:', error);
+    }
+} else {
+    updateIdentityDisplay();
+    updateProgress();
+}
+
+setTimeout(() => {
+    try {
+        if (typeof updateAnalysis === 'function') {
+            updateAnalysis();
+        }
+    } catch (e) {
+        console.error('초기 분석 실행 오류:', e);
+    }
+}, 200);
+
+setTimeout(() => {
+    const keyboardHelp = document.getElementById('keyboard-help');
+    if (keyboardHelp) {
+        keyboardHelp.classList.add('show');
+        setTimeout(() => {
+            keyboardHelp.classList.remove('show');
+        }, 3000);
+    }
+}, 1000);
     // 자본금/액면가 변경 시 주식수 자동 계산
     const capitalInput = document.getElementById('capital');
     const parValueInput = document.getElementById('par_value');
@@ -3419,41 +3557,38 @@ window.onload = function() {
 // 자본금/액면가 변경 경고
 function setupChangeWarning(input, fieldName) {
     let originalValue = '';
-    let hasWarned = false;
     
     // 포커스 시 초기값 저장
     input.addEventListener('focus', function() {
         originalValue = unformat(this.value) || '';
-        hasWarned = false;  // 포커스할 때마다 리셋
     });
     
-    // 입력 즉시 감지
-    input.addEventListener('input', function(e) {
+    // 포커스 벗어날 때만 체크 (입력 완료 후)
+    input.addEventListener('blur', function() {
         const currentValue = unformat(this.value) || '';
         
-        // 초기값이 있고, 값이 변경되었고, 아직 경고 안 했으면
-        if (originalValue && currentValue && originalValue !== currentValue && !hasWarned) {
-            hasWarned = true;  // 중복 방지
+        if (originalValue && currentValue) {
+            const originalNum = parseFloat(originalValue) || 0;
+            const currentNum = parseFloat(currentValue) || 0;
             
-            // 사용자 응답 받기
-            const userConfirmed = confirm(`⚠️ ${fieldName} 변경 경고\n\n${fieldName}을(를) 변경하면 주식수가 재계산되어 1주당 평가액이 변동됩니다.\n\n• 실제 증자/감자/액면분할이 아니라면 변경을 권장하지 않습니다.\n• 잘못 입력한 경우 "취소"를 눌러 되돌리세요.\n\n계속 변경하시겠습니까?`);
-            
-            if (!userConfirmed) {
-                // 취소 → 원래 값으로 복원
-                this.value = formatNumber(originalValue);
-                calculateShares();
-            } else {
-                // 확인 → 현재 값을 새 초기값으로
-                originalValue = currentValue;
+            // 값이 실제로 변경되었는지 확인
+            if (originalNum !== currentNum) {
+                const userConfirmed = confirm(`⚠️ ${fieldName} 변경 경고\n\n${fieldName}을(를) 변경하면 주식수가 재계산되어 1주당 평가액이 변동됩니다.\n\n• 실제 증자/감자/액면분할이 아니라면 변경을 권장하지 않습니다.\n• 잘못 입력한 경우 "취소"를 눌러 되돌리세요.\n\n계속 변경하시겠습니까?`);
+                
+                if (!userConfirmed) {
+                    // 취소 → 원래 값으로 복원
+                    this.value = formatNumber(originalValue);
+                    calculateShares();
+                    this.focus();  // 다시 포커스
+                } else {
+                    // 확인 → 새 값 적용
+                    originalValue = currentValue;
+                }
             }
         }
     });
-    
-    // 포커스 벗어날 때 리셋
-    input.addEventListener('blur', function() {
-        hasWarned = false;
-    });
 }
+
 if (capitalInput) setupChangeWarning(capitalInput, '자본금');
 if (parValueInput) setupChangeWarning(parValueInput, '액면가');
 
