@@ -1287,82 +1287,325 @@ function scrollToAnalysis() {
 function updateTaxSavingAlert(inputs) {
     const alertDiv = document.getElementById('tax-saving-alert');
     
-    if (!alertDiv || inputs.listing_status !== '비상장' || !inputs.total_shares || inputs.total_shares === 0) {
-        if (alertDiv) alertDiv.innerHTML = '';
-        return;
-    }
-    const currentValue = calculateStockValue(inputs);
-    if (!currentValue) {
-        alertDiv.innerHTML = '';
+    // 방어 코드 1: 엘리먼트 체크
+    if (!alertDiv) {
+        console.warn('[updateTaxSavingAlert] tax-saving-alert 엘리먼트를 찾을 수 없습니다.');
         return;
     }
     
-    const valuePerShare = Math.round(currentValue / inputs.total_shares);
-    
-    if (valuePerShare <= 20000) {
-        alertDiv.innerHTML = '';
-        return;
+    try {
+        // 방어 코드 2: 기본 조건 체크
+        if (inputs.listing_status !== '비상장' || !inputs.total_shares || inputs.total_shares === 0) {
+            alertDiv.innerHTML = '';
+            return;
+        }
+        
+        // 방어 코드 3: 주식 가치 계산
+        const currentValue = calculateStockValue(inputs);
+        if (!currentValue || currentValue <= 0) {
+            alertDiv.innerHTML = '';
+            return;
+        }
+        
+        const valuePerShare = Math.round(currentValue / inputs.total_shares);
+        
+        // 방어 코드 4: 계산 결과 검증
+        if (isNaN(valuePerShare) || valuePerShare < 0) {
+            console.warn('[updateTaxSavingAlert] 비정상적인 주당 가격:', valuePerShare);
+            alertDiv.innerHTML = '';
+            return;
+        }
+        
+        // 시뮬레이션 계산
+        const targetNetIncome = Math.round((inputs.net_income || 0) * 0.8);
+        const adjustment = (inputs.net_income || 0) - targetNetIncome;
+        
+        const simulatedInputs = {...inputs};
+        simulatedInputs.net_income = targetNetIncome;
+        const targetValue = calculateStockValue(simulatedInputs) || 0;
+        
+        const valueDiff = Math.max(0, currentValue - targetValue);
+        const valueChangePercent = currentValue > 0 ? Math.round((valueDiff / currentValue) * 100) : 0;
+        
+        const giftTaxSavings = Math.round(valueDiff * 0.3);
+        const inheritanceTaxSavings = Math.round(valueDiff * 0.4);
+        const totalSavings = giftTaxSavings + inheritanceTaxSavings;
+        
+        const estimatedGiftTax = Math.round(currentValue * 0.3);
+        const estimatedInheritanceTax = Math.round(currentValue * 0.4);
+        
+        let alertHTML = '';
+        
+        // ⭐ 레벨 1: 1 ~ 10,000원 (안전 - 긍정 메시지)
+        if (valuePerShare <= 10000) {
+            alertHTML = `<div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-left: 4px solid #28a745; padding: 1.5rem; border-radius: 8px;">
+                <h4 style="margin: 0 0 1rem 0; color: #155724;">✅ 주식 평가액 안전 구간</h4>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529;">
+                    <strong style="color: #28a745;">📊 현재 평가 상태</strong><br>
+                    주식 평가액 (1주당): <strong style="color: #28a745;">${formatNumber(valuePerShare)}원</strong><br>
+                    총 평가액: <strong style="color: #28a745;">${formatNumber(currentValue)}원</strong><br>
+                    <span style="color: #6c757d; font-size: 0.9em;">※ 증여·상속세 부담이 매우 낮은 수준입니다</span>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; border: 1px solid #ffc107; color: #212529;">
+                    <strong style="color: #856404;">💡 지금이 기회입니다!</strong><br><br>
+                    현재는 <strong>주식 증여의 골든타임</strong>입니다:<br><br>
+                    ✅ 자녀 1인당 10년 공제: 5천만원<br>
+                    ✅ 배우자 10년 공제: 6억원<br>
+                    ✅ 현재 주식가치가 낮아 <strong>더 많은 주식을 무세로 증여 가능</strong><br><br>
+                    <strong style="font-size: 1.1em; color: #e67e22;">🎯 지금 증여 시: 향후 주가 상승분까지 절세 효과</strong>
+                </div>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9em; color: #212529;">
+                    <strong style="color: #0c2c54;">📋 추천 Action:</strong><br>
+                    • 10년 주기 증여 플랜 수립<br>
+                    • 가업승계 요건 사전 점검 (7년 사후관리)<br>
+                    • 배우자·자녀 지분율 최적화 설계<br>
+                    • 향후 주가 상승 대비 선제적 증여 실행
+                </div>
+            </div>`;
+        }
+        
+        // ⭐ 레벨 2: 10,001 ~ 20,000원 (양호 - 현상 유지 권장)
+        else if (valuePerShare > 10000 && valuePerShare <= 20000) {
+            alertHTML = `<div style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border-left: 4px solid #17a2b8; padding: 1.5rem; border-radius: 8px;">
+                <h4 style="margin: 0 0 1rem 0; color: #0c5460;">ℹ️ 주식 평가액 양호 구간</h4>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529;">
+                    <strong style="color: #17a2b8;">📊 현재 평가 상태</strong><br>
+                    주식 평가액 (1주당): <strong style="color: #17a2b8;">${formatNumber(valuePerShare)}원</strong><br>
+                    총 평가액: <strong style="color: #17a2b8;">${formatNumber(currentValue)}원</strong><br>
+                    예상 증여세: 약 ${formatNumber(estimatedGiftTax)}원<br>
+                    <span style="color: #6c757d; font-size: 0.9em;">※ 적정 수준이지만, 모니터링이 필요합니다</span>
+                </div>
+                
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border: 1px solid #28a745; color: #212529;">
+                    <strong style="color: #155724;">💡 현상 유지 전략</strong><br><br>
+                    <strong>현재 상태를 유지하면서 절세 최적화:</strong><br><br>
+                    ✅ 증여 타이밍: 지금이 적기 (2만원 이하 유지 중)<br>
+                    ✅ 향후 관리 포인트: 연 매출·이익 급증 시 주의<br>
+                    ✅ 10년 주기 증여로 누적 ${formatNumber((50000000 * 2) * 3)}원 공제 활용<br><br>
+                    <strong style="font-size: 1.1em; color: #28a745;">🎯 안정적 구간, 계획적 증여 실행 권장</strong>
+                </div>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9em; color: #212529;">
+                    <strong style="color: #0c2c54;">📋 모니터링 체크리스트:</strong><br>
+                    • 연 1회 주식 평가액 재산정<br>
+                    • 매출 30% 이상 증가 시 즉시 재평가<br>
+                    • 배당금 지급 전 평가액 영향도 검토<br>
+                    • 가족 지분율 합산 50% 이상 유지
+                </div>
+            </div>`;
+        }
+        
+        // ⭐ 레벨 3: 20,001 ~ 35,000원 (주의 - 조정 권장)
+        else if (valuePerShare > 20000 && valuePerShare <= 35000) {
+            alertHTML = `<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #ffc107; padding: 1.5rem; border-radius: 8px;">
+                <h4 style="margin: 0 0 1rem 0; color: #856404;">⚠️ 주의: 주식 평가액 조정 권장</h4>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529;">
+                    <strong style="color: #e67e22;">📊 현재 평가 상태</strong><br>
+                    주식 평가액 (1주당): <strong style="color: #e67e22;">${formatNumber(valuePerShare)}원</strong><br>
+                    총 평가액: <strong style="color: #e67e22;">${formatNumber(currentValue)}원</strong><br>
+                    예상 증여세: 약 <strong style="color: #e67e22;">${formatNumber(estimatedGiftTax)}원</strong><br>
+                    <span style="color: #dc3545; font-size: 0.9em;">※ 증여세 부담이 증가하는 구간입니다</span>
+                </div>
+                
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border: 2px solid #28a745; color: #212529;">
+                    <strong style="color: #155724; font-size: 1.1em;">💡 선택적 절세 전략</strong><br><br>
+                    <strong style="color: #212529;">법인세차감전순이익을 ${formatNumber(adjustment)}원 조정 시:</strong><br><br>
+                    ✅ 주식 평가액: ${formatNumber(currentValue)}원 → ${formatNumber(targetValue)}원 <strong style="color: #28a745;">(${valueChangePercent}% ↓)</strong><br>
+                    ✅ 증여세 절감: 약 ${formatNumber(giftTaxSavings)}원<br>
+                    ✅ 상속세 절감: 약 ${formatNumber(inheritanceTaxSavings)}원<br><br>
+                    <strong style="font-size: 1.15em; color: #28a745;">💰 총 절세 효과: ${formatNumber(totalSavings)}원</strong>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; border: 1px solid #ffc107; margin-top: 1rem; color: #212529;">
+                    <strong style="color: #856404;">🤔 대표님 선택지:</strong><br><br>
+                    <strong>A안) 지금 바로 증여 (적극적)</strong><br>
+                    • 장점: 현재 가치로 증여 완료<br>
+                    • 단점: 증여세 ${formatNumber(estimatedGiftTax)}원 납부<br><br>
+                    
+                    <strong>B안) 평가액 조정 후 증여 (보수적)</strong><br>
+                    • 장점: 절세액 ${formatNumber(totalSavings)}원<br>
+                    • 단점: 순이익 조정 필요 (R&D 투자 등)<br><br>
+                    
+                    <strong>C안) 내년으로 연기 (관망)</strong><br>
+                    • 위험: 평가액 추가 상승 가능성
+                </div>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9em; color: #212529;">
+                    <strong style="color: #0c2c54;">📋 순이익 조정 방법 (합법):</strong><br>
+                    • R&D 투자 확대 (세액공제 + 비용 증가)<br>
+                    • 임직원 성과급/복리후생 증액<br>
+                    • 설비 투자 선집행 (감가상각비)<br>
+                    • 퇴직금 추가 적립<br>
+                    • 광고·마케팅 비용 확대
+                </div>
+            </div>`;
+        }
+        
+        // ⭐ 레벨 4: 35,001 ~ 50,000원 (경고 - 즉시 조치)
+        else if (valuePerShare > 35000 && valuePerShare <= 50000) {
+            alertHTML = `<div style="background: linear-gradient(135deg, #ffe5d0 0%, #ffd6ba 100%); border-left: 4px solid #ff6b35; padding: 1.5rem; border-radius: 8px;">
+                <h4 style="margin: 0 0 1rem 0; color: #cc2936;">⚠️ 경고: 즉시 조치 필요</h4>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529; border: 2px solid #ff6b35;">
+                    <strong style="color: #ff6b35;">🚨 현재 위험 수준</strong><br>
+                    주식 평가액 (1주당): <strong style="color: #dc3545;">${formatNumber(valuePerShare)}원</strong><br>
+                    총 평가액: <strong style="color: #dc3545;">${formatNumber(currentValue)}원</strong><br>
+                    예상 증여세: 약 <strong style="color: #dc3545;">${formatNumber(estimatedGiftTax)}원</strong><br>
+                    예상 상속세: 약 <strong style="color: #dc3545;">${formatNumber(estimatedInheritanceTax)}원</strong><br>
+                    <span style="color: #dc3545; font-size: 0.95em; font-weight: 600;">※ 세금 폭탄 위험 구간! 즉시 대응 필요</span>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; border: 2px solid #dc3545; color: #212529; margin-bottom: 1rem;">
+                    <strong style="color: #dc3545; font-size: 1.1em;">⏰ 타임어택: 3개월 내 실행 필수</strong><br><br>
+                    <strong>지금 조치하지 않으면:</strong><br>
+                    • 내년 증여 시 세금 ${formatNumber(Math.round(estimatedGiftTax * 0.15))}원 추가 부담 가능<br>
+                    • 상속 발생 시 가족 재정 위기<br>
+                    • 급매각으로 자산 손실 발생 가능<br><br>
+                    <strong style="color: #dc3545;">현재 상황: 1년 늦을수록 수억원 손실</strong>
+                </div>
+                
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border: 2px solid #28a745; color: #212529;">
+                    <strong style="color: #155724; font-size: 1.1em;">🎯 긴급 절세 플랜 (실행 즉시)</strong><br><br>
+                    <strong style="color: #212529;">법인세차감전순이익 ${formatNumber(adjustment)}원 조정 시:</strong><br><br>
+                    ✅ 주식 평가액: ${formatNumber(currentValue)}원 → ${formatNumber(targetValue)}원 <strong style="color: #28a745;">(${valueChangePercent}% ↓)</strong><br>
+                    ✅ 증여세 절감: 약 <strong style="color: #28a745;">${formatNumber(giftTaxSavings)}원</strong><br>
+                    ✅ 상속세 절감: 약 <strong style="color: #28a745;">${formatNumber(inheritanceTaxSavings)}원</strong><br><br>
+                    <strong style="font-size: 1.3em; color: #28a745;">💰 총 절세 효과: ${formatNumber(totalSavings)}원</strong><br>
+                    <span style="color: #6c757d; font-size: 0.9em;">※ 이번 결산 전까지만 가능한 절세액입니다</span>
+                </div>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9em; color: #212529;">
+                    <strong style="color: #dc3545;">📋 즉시 실행 체크리스트 (우선순위):</strong><br><br>
+                    <strong>1주차:</strong><br>
+                    • 세무사 긴급 미팅 (평가액 검증)<br>
+                    • 순이익 조정 가능 항목 리스트업<br><br>
+                    
+                    <strong>2~4주차:</strong><br>
+                    • R&D 투자 ${formatNumber(Math.round(adjustment * 0.3))}원 집행<br>
+                    • 임직원 성과급 ${formatNumber(Math.round(adjustment * 0.2))}원 지급<br>
+                    • 설비 투자 ${formatNumber(Math.round(adjustment * 0.3))}원 선집행<br>
+                    • 광고·마케팅 ${formatNumber(Math.round(adjustment * 0.2))}원 확대<br><br>
+                    
+                    <strong>결산 전:</strong><br>
+                    • 재평가 후 증여 실행<br>
+                    • 10년 증여 플랜 수립
+                </div>
+            </div>`;
+        }
+        
+        // ⭐ 레벨 5: 50,001원 이상 (긴급 - 위기 상황)
+        else if (valuePerShare > 50000) {
+            const crisis5Year = Math.round(estimatedGiftTax * 0.5);
+            
+            alertHTML = `<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border-left: 6px solid #dc3545; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3);">
+                <h4 style="margin: 0 0 1rem 0; color: #721c24; font-size: 1.3em;">🚨 긴급! 세금 폭탄 위기 상황</h4>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529; border: 3px solid #dc3545;">
+                    <strong style="color: #dc3545; font-size: 1.2em;">💣 현재 위기 수준</strong><br><br>
+                    주식 평가액 (1주당): <strong style="color: #dc3545; font-size: 1.3em;">${formatNumber(valuePerShare)}원</strong><br>
+                    총 평가액: <strong style="color: #dc3545; font-size: 1.3em;">${formatNumber(currentValue)}원</strong><br><br>
+                    
+                    <div style="background: #fff3cd; padding: 0.8rem; border-radius: 6px; margin: 0.5rem 0;">
+                        <strong style="color: #856404;">지금 증여 시:</strong><br>
+                        증여세: <strong style="color: #dc3545;">${formatNumber(estimatedGiftTax)}원</strong>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 0.8rem; border-radius: 6px; margin: 0.5rem 0;">
+                        <strong style="color: #856404;">상속 발생 시:</strong><br>
+                        상속세: <strong style="color: #dc3545;">${formatNumber(estimatedInheritanceTax)}원</strong>
+                    </div>
+                    
+                    <div style="background: #f8d7da; padding: 0.8rem; border-radius: 6px; margin: 0.5rem 0; border: 1px solid #dc3545;">
+                        <strong style="color: #721c24;">5년 방치 시 추가 부담:</strong><br>
+                        약 <strong style="color: #dc3545; font-size: 1.2em;">+${formatNumber(crisis5Year)}원</strong>
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 1.2rem; border-radius: 6px; border: 2px solid #dc3545; color: #212529; margin-bottom: 1rem;">
+                    <strong style="color: #dc3545; font-size: 1.2em;">⏰ 골든타임: 이번 결산이 마지막 기회</strong><br><br>
+                    <strong>최악의 시나리오:</strong><br><br>
+                    <div style="display: grid; gap: 0.5rem;">
+                        <div>📉 1년 후: 주가 10% 상승 → 세금 ${formatNumber(Math.round(estimatedGiftTax * 0.1))}원 증가</div>
+                        <div>📉 3년 후: 주가 30% 상승 → 세금 ${formatNumber(Math.round(estimatedGiftTax * 0.3))}원 증가</div>
+                        <div>📉 5년 후: 누적 부담 <strong style="color: #dc3545;">${formatNumber(estimatedGiftTax + crisis5Year)}원</strong></div>
+                        <div>💀 상속 발생: 급매각으로 시세 대비 30% 손실 가능</div>
+                    </div>
+                </div>
+                
+                <div style="background: #d4edda; padding: 1.2rem; border-radius: 6px; border: 3px solid #28a745; color: #212529;">
+                    <strong style="color: #155724; font-size: 1.2em;">🆘 긴급 구조 플랜 (72시간 내 실행)</strong><br><br>
+                    <strong style="color: #212529; font-size: 1.1em;">법인세차감전순이익 ${formatNumber(adjustment)}원 조정 시:</strong><br><br>
+                    
+                    <div style="background: white; padding: 1rem; border-radius: 6px; margin: 0.8rem 0;">
+                        ✅ 주식 평가액: ${formatNumber(currentValue)}원 → ${formatNumber(targetValue)}원<br>
+                        <strong style="color: #28a745; font-size: 1.1em;">(${valueChangePercent}% 하락 = 위기 탈출)</strong>
+                    </div>
+                    
+                    <div style="background: white; padding: 1rem; border-radius: 6px; margin: 0.8rem 0;">
+                        💰 <strong>증여세 절감:</strong> <strong style="color: #28a745; font-size: 1.2em;">${formatNumber(giftTaxSavings)}원</strong><br>
+                        💰 <strong>상속세 절감:</strong> <strong style="color: #28a745; font-size: 1.2em;">${formatNumber(inheritanceTaxSavings)}원</strong>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; margin: 0.8rem 0; text-align: center;">
+                        <strong style="font-size: 1.4em; color: #28a745;">💎 총 절세 효과</strong><br>
+                        <strong style="font-size: 1.8em; color: #28a745;">${formatNumber(totalSavings)}원</strong><br>
+                        <span style="color: #856404; font-size: 0.95em;">※ 대표님 가족의 미래를 지키는 금액입니다</span>
+                    </div>
+                </div>
+                
+                <div style="background: white; padding: 1.2rem; border-radius: 6px; margin-top: 1rem; color: #212529; border: 2px solid #dc3545;">
+                    <strong style="color: #dc3545; font-size: 1.1em;">🔥 72시간 긴급 액션플랜</strong><br><br>
+                    
+                    <div style="background: #f8d7da; padding: 0.8rem; border-radius: 6px; margin: 0.5rem 0;">
+                        <strong>Day 1 (오늘):</strong><br>
+                        • 오후: 세무사 긴급 화상회의<br>
+                        • 저녁: CFO 소집 - 비상 재무회의<br>
+                        • 밤: 순이익 조정 가능 항목 최종 확정
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 0.8rem; border-radius: 6px; margin: 0.5rem 0;">
+                        <strong>Day 2-3 (내일~모레):</strong><br>
+                        • R&D 투자 ${formatNumber(Math.round(adjustment * 0.25))}원 긴급 집행<br>
+                        • 임직원 특별 성과급 ${formatNumber(Math.round(adjustment * 0.25))}원 결의<br>
+                        • 설비 구매 계약 ${formatNumber(Math.round(adjustment * 0.3))}원 체결<br>
+                        • 광고 대행사 추가 발주 ${formatNumber(Math.round(adjustment * 0.2))}원
+                    </div>
+                    
+                    <div style="background: #d4edda; padding: 0.8rem; border-radius: 6px; margin: 0.5rem 0;">
+                        <strong>결산 전 (1주일 내):</strong><br>
+                        • 재평가 후 주식가치 재확인<br>
+                        • 증여 실행 (자녀·배우자)<br>
+                        • 10년 증여 플랜 최종 수립<br>
+                        • 가업승계 요건 재점검
+                    </div>
+                </div>
+                
+                <div style="background: #212529; color: white; padding: 1rem; border-radius: 6px; margin-top: 1rem; text-align: center;">
+                    <strong style="font-size: 1.1em;">⚠️ 대표님, 이 금액은 숫자가 아닙니다</strong><br><br>
+                    <span style="font-size: 1.05em;">
+                    ${formatNumber(totalSavings)}원은<br>
+                    • 자녀의 학자금 ${Math.round(totalSavings / 50000000)}년치<br>
+                    • 임직원 급여 ${Math.round(totalSavings / 5000000)}개월치<br>
+                    • 신규 설비 투자 ${Math.round(totalSavings / 100000000)}건<br><br>
+                    <strong style="color: #f1c40f; font-size: 1.2em;">지금 실행하면 모두 지킬 수 있습니다</strong>
+                    </span>
+                </div>
+            </div>`;
+        }
+        
+        // 최종 렌더링
+        alertDiv.innerHTML = alertHTML;
+        
+    } catch (error) {
+        console.error('[updateTaxSavingAlert] 처리 중 오류 발생:', error);
+        console.error('입력값:', inputs);
+        alertDiv.innerHTML = ''; // 에러 시 조용히 비우기
     }
-    
-    const targetNetIncome = Math.round(inputs.net_income * 0.8);
-    const adjustment = inputs.net_income - targetNetIncome;
-    
-    const simulatedInputs = {...inputs};
-    simulatedInputs.net_income = targetNetIncome;
-    const targetValue = calculateStockValue(simulatedInputs);
-    
-    const valueDiff = currentValue - targetValue;
-    const valueChangePercent = Math.round((valueDiff / currentValue) * 100);
-    
-    const giftTaxSavings = Math.round(valueDiff * 0.3);
-    const inheritanceTaxSavings = Math.round(valueDiff * 0.4);
-    
-    let alertHTML = '';
-    
-    if (valuePerShare > 50000) {
-        alertHTML = `<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border-left: 4px solid #dc3545; padding: 1.5rem; border-radius: 8px;">
-            <h4 style="margin: 0 0 1rem 0; color: #721c24;">🚨 긴급! 즉시 조치가 필요합니다</h4>
-            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529;">
-                <strong style="color: #dc3545;">현재 위험 수준</strong><br>
-                주식 평가액 (1주당): <strong style="color: #dc3545;">${formatNumber(valuePerShare)}원</strong><br>
-                총 평가액: <strong style="color: #dc3545;">${formatNumber(currentValue)}원</strong><br>
-                예상 증여세: 약 <strong style="color: #dc3545;">${formatNumber(Math.round(currentValue * 0.3))}원</strong>
-            </div>
-            <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border: 2px solid #28a745; color: #212529;">
-                <strong style="color: #155724; font-size: 1.1em;">🎯 긴급 절세 전략</strong><br><br>
-                <strong style="color: #212529;">법인세차감전순이익을 ${formatNumber(adjustment)}원 감소시키면:</strong><br><br>
-                ✅ 주식 평가액: ${formatNumber(currentValue)}원 → ${formatNumber(targetValue)}원 <strong style="color: #28a745;">(${valueChangePercent}% ↓)</strong><br>
-                ✅ 증여세 절감 예상: 약 ${formatNumber(giftTaxSavings)}원<br>
-                ✅ 상속세 절감 예상: 약 ${formatNumber(inheritanceTaxSavings)}원<br><br>
-                <strong style="font-size: 1.2em; color: #28a745;">💰 예상 절세액: ${formatNumber(giftTaxSavings + inheritanceTaxSavings)}원</strong>
-            </div>
-            <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9em; color: #212529;">
-                <strong style="color: #212529;">📋 구체적 조정 방법:</strong><br>
-                • R&D 투자 확대 (세액공제 + 비용 증가)<br>
-                • 설비 투자 선집행 (감가상각비 증가)<br>
-                • 직원 성과급/복리후생 증액<br>
-                • 퇴직금 선지급 검토<br>
-                • 광고·마케팅 비용 확대
-            </div>
-        </div>`;
-    } else {
-        alertHTML = `<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #ffc107; padding: 1.5rem; border-radius: 8px;">
-            <h4 style="margin: 0 0 1rem 0; color: #856404;">⚠️ 주식 평가액 조정 권장</h4>
-            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; color: #212529;">
-                <strong style="color: #0c2c54;">현재 상황</strong><br>
-                주식 평가액 (1주당): ${formatNumber(valuePerShare)}원<br>
-                총 평가액: ${formatNumber(currentValue)}원
-            </div>
-            <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border: 1px solid #28a745; color: #212529;">
-                <strong style="color: #155724;">💡 절세 전략 제안</strong><br><br>
-                ✅ 주식 평가액: ${formatNumber(currentValue)}원 → ${formatNumber(targetValue)}원<br>
-                ✅ 증여세 절감: 약 ${formatNumber(giftTaxSavings)}원<br>
-                ✅ 상속세 절감: 약 ${formatNumber(inheritanceTaxSavings)}원
-            </div>
-        </div>`;
-    }
-    
-    alertDiv.innerHTML = alertHTML;
 }
 function scrollToAnalysis() {
     try {
