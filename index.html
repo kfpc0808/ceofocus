@@ -754,7 +754,7 @@
         </span>
     </label>
     <div class="input-field">
-        <input type="text" id="insurance_target_amount" value="500000000" inputmode="numeric">
+        <input type="text" id="insurance_target_amount" value="" inputmode="numeric">
         <span>원</span>
         <i class="fas fa-check check-icon"></i>
     </div>
@@ -787,9 +787,16 @@
             <option value="19">19년</option>
             <option value="20">20년</option>
         </select>
-        <i class="fas fa-check check-icon"></i>
+        <i class="fas fa-check-icon"></i>
     </div>
 </div>
+
+<h4 class="input-divider">📊 기간별 환급률 설정 (직접 조정)</h4>
+<div id="surrender-rate-container">
+    </div>
+<button type="button" class="btn btn-add small" id="add-rate-btn">
+    <i class="fas fa-plus"></i> 환급률 항목 추가
+</button>
             <div class="input-group"><label for="consolation_regulation">임원 유족 위로금 규정 유무</label><div class="input-field"><select id="consolation_regulation"><option value="yes">있음</option><option value="no">없음</option></select><i class="fas fa-check check-icon"></i></div></div>
         </div>
     </section>
@@ -2967,51 +2974,75 @@ function calculateInsurancePlan(inputs) {
         surrenderRates: [] 
     };
     
-    for (let i = 5; i <= 20; i += 5) { 
-        if(i <= inputs.insurance_payment_period) { 
-            let rate = (i / inputs.insurance_payment_period) * 95 + (i > 5 ? (i-5) * 1.5 : 0); 
-            plan.surrenderRates.push({ year: i, rate: Math.min(120, rate) }); 
-        } 
+    // ================== 핵심 변경 로직 시작 ==================
+    const customRates = getCustomSurrenderRates(); // 사용자가 입력한 값을 가져옵니다.
+
+    if (customRates.length > 0) {
+        // 사용자가 입력한 값이 있으면, 그 값을 그대로 사용합니다.
+        plan.surrenderRates = customRates;
+    } else {
+        // 입력한 값이 없으면, 기존의 고정된 공식으로 계산합니다 (Fallback).
+        for (let i = 5; i <= 20; i += 5) { 
+            if(i <= inputs.insurance_payment_period) { 
+                let rate = (i / inputs.insurance_payment_period) * 95 + (i > 5 ? (i-5) * 1.5 : 0); 
+                plan.surrenderRates.push({ year: i, rate: Math.min(120, rate) }); 
+            } 
+        }
     }
+    // ================== 핵심 변경 로직 끝 ====================
     
     return plan;
 }
-
 function generateInsuranceProposal(inputs) {
     const container = document.getElementById('solution_proposal');
     const card = document.getElementById('solution_proposal_card');
     analysisResult.insurancePlan = calculateInsurancePlan(inputs);
     const plan = analysisResult.insurancePlan;
-    
-    if (!plan) { 
-        card.style.display = 'none'; 
-        return; 
+
+    if (!plan) {
+        card.style.display = 'none';
+        return;
     }
-    
+
     card.style.display = 'block';
-    
+
+    // ================== [수정] 계산 기준액 통일 ==================
+    // 월 납입액을 먼저 정수로 반올림하여 모든 계산의 기준으로 삼습니다.
+    const roundedMonthlyPremium = Math.round(plan.monthlyPremium); 
+    // 반올림된 월납입액 기준으로 최종 총 납부금액을 다시 계산합니다.
+    const totalPremiums = roundedMonthlyPremium * plan.paymentPeriod * 12;
+    // ========================================================
+
     let surrenderTableHtml = '';
     plan.surrenderRates.forEach(item => {
-        const surrenderValue = plan.coverage * (item.rate / 100);
+        // [수정] 해당 시점까지의 총 납입 원금을 '반올림된 월납입액' 기준으로 계산
+        const totalPremiumsPaid = roundedMonthlyPremium * 12 * item.year;
+        
+        // 총 납입 원금 대비 환급률을 적용하여 실제 환급금을 계산
+        const surrenderValue = totalPremiumsPaid * (item.rate / 100);
+
         surrenderTableHtml += `<tr><td class="text-left">${item.year}년 경과</td><td class="text-right">${item.rate.toFixed(1)}%</td><td class="text-right">${formatNumber(surrenderValue)} 원</td></tr>`;
     });
-    
+
     container.innerHTML = `
         <div class="consulting-topic topic-good">
             <h3 class="good"><i class="fas fa-rocket"></i>CEO 솔루션</h3>
             <table class="proposal-table">
                 <tr><th colspan="2">기본 설계</th></tr>
                 <tr><td class="text-left">보험금</td><td class="text-right">${formatNumber(plan.coverage)} 원</td></tr>
-                <tr><td class="text-left">월 납입</td><td class="text-right highlight">${formatNumber(plan.monthlyPremium)} 원</td></tr>
+                
+                <tr><td class="text-left">월 납입</td><td class="text-right highlight">${formatNumber(roundedMonthlyPremium)} 원</td></tr>
+                
+                <tr><td class="text-left">총 납부금액 (${plan.paymentPeriod}년)</td><td class="text-right">${formatNumber(totalPremiums)} 원</td></tr>
+
             </table>
-            <h4>기간별 환급금</h4>
+            <h4>기간별 환급금 (총 납입액 기준)</h4>
             <table class="proposal-table">
                 <tr><th>기간</th><th>환급률</th><th>환급금</th></tr>
                 ${surrenderTableHtml}
             </table>
         </div>`;
 }
-
 function generateConsultantSummary(inputs) {
     const container = document.getElementById('consultant_summary');
     const { risks, opportunities, solutions, insurancePlan, taxSavings, estimatedInheritanceTax } = analysisResult;
@@ -3619,6 +3650,76 @@ window.updateMultiplier = updateMultiplier;  // ← window에도 등록
 
 document.addEventListener('DOMContentLoaded', function() {  // ← DOM 준비되면 즉시
     updateMultiplier();
-});</script>
+});
+// 새 DOM 요소를 기다리기 위해 DOMContentLoaded 이벤트 리스너를 사용합니다.
+document.addEventListener('DOMContentLoaded', function() {
+
+    const rateContainer = document.getElementById('surrender-rate-container');
+    const addRateBtn = document.getElementById('add-rate-btn');
+    let rateRowCounter = 0;
+
+    // 환급률 입력 행(row)을 동적으로 추가하는 함수
+    function addRateRow(year = '', rate = '') {
+        rateRowCounter++;
+        const div = document.createElement('div');
+        div.className = 'dynamic-item';
+        div.style.alignItems = 'center';
+        div.innerHTML = `
+            <div class="input-group" style="margin-bottom:0;">
+                <label>경과 년수</label>
+                <input type="number" class="rate-year" min="1" max="50" step="1" value="${year}" placeholder="예: 5" style="text-align: center;">
+                <span>년</span>
+            </div>
+            <div class="input-group" style="margin-bottom:0;">
+                <label>환급률</label>
+                <input type="number" class="rate-percent" min="0" max="200" step="0.1" value="${rate}" placeholder="예: 47.5" style="text-align: center;">
+                <span>%</span>
+            </div>
+            <button type="button" class="btn danger small btn-remove-rate" title="삭제">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        rateContainer.appendChild(div);
+    }
+
+    // '항목 추가' 버튼 클릭 이벤트
+    if (addRateBtn) {
+        addRateBtn.addEventListener('click', () => addRateRow());
+    }
+
+    // '삭제' 버튼 클릭 이벤트 (이벤트 위임 방식)
+    if (rateContainer) {
+        rateContainer.addEventListener('click', function(e) {
+            if (e.target && (e.target.matches('.btn-remove-rate') || e.target.closest('.btn-remove-rate'))) {
+                e.target.closest('.dynamic-item').remove();
+            }
+        });
+    }
+    
+    // 페이지 로드 시 기본 항목 2개 추가
+    addRateRow(5, 47.5);
+    addRateRow(10, 102.5);
+});
+
+// 사용자가 입력한 모든 환급률 데이터를 읽어오는 함수
+function getCustomSurrenderRates() {
+    const rates = [];
+    const rows = document.querySelectorAll('#surrender-rate-container .dynamic-item');
+    rows.forEach(row => {
+        const yearInput = row.querySelector('.rate-year');
+        const rateInput = row.querySelector('.rate-percent');
+        
+        // 두 입력 필드가 모두 존재하고 값이 있을 때만 추가
+        if (yearInput && rateInput && yearInput.value && rateInput.value) {
+            rates.push({
+                year: parseInt(yearInput.value),
+                rate: parseFloat(rateInput.value)
+            });
+        }
+    });
+    // 년도 순으로 정렬
+    return rates.sort((a, b) => a.year - b.year);
+}
+</script>
 </body>
 </html>
