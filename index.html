@@ -306,6 +306,24 @@
 .stock-price-display div[style*="font-size: 0.75rem"] {
     color: #6c757d !important;
 }
+@media (max-width: 768px) {
+  #consultant-memo {
+    min-height: 260px !important;   /* 높이 확장 */
+    font-size: 17px !important;     /* 글씨 크기 확대 */
+    padding: 1.2rem !important;     /* 여백 증가 */
+  }
+
+  #consultant-memo:focus {
+    outline: none;
+    border-color: #2a5a8a;
+    box-shadow: 0 0 0 3px rgba(42, 90, 138, 0.2);
+  }
+
+  /* 메모 영역 바깥 여백도 조정 (모바일은 화면이 좁아서 압축) */
+  [style*="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 2rem;"] {
+    padding: 1.5rem !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -840,16 +858,47 @@
     </section>
 </main>
 <div style="max-width: 1700px; margin: 2rem auto; padding: 0 2rem;">
-    <div style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 2rem;">
-        <h3 style="margin: 0 0 1rem 0; color: #0c2c54;"><i class="fas fa-sticky-note"></i> 메모</h3>
-        <textarea id="consultant-memo" placeholder="메모를 입력하세요..." oninput="autoSave()" style="width: 100%; min-height: 120px; padding: 1rem; border: 1px solid #ced4da; border-radius: 8px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
-        <div style="margin-top: 1rem; text-align: right;">
-            <button class="btn danger" onclick="if(confirm('메모 전체가 삭제됩니다. 정말로 메모를 삭제하시겠습니까?')){document.getElementById('consultant-memo').value=''; autoSave();}">
-                <i class="fas fa-trash"></i> 삭제
-            </button>
-        </div>
+  <div style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 2rem;">
+    <h3 style="margin: 0 0 1rem 0; color: #0c2c54;">
+      <i class="fas fa-sticky-note"></i> 메모
+    </h3>
+    <textarea id="consultant-memo" placeholder="메모를 입력하세요..." oninput="autoSave()" 
+      style="width: 100%; min-height: 120px; padding: 1rem; border: 1px solid #ced4da; border-radius: 8px; 
+      font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+    <div style="margin-top: 1rem; text-align: right;">
+      <button class="btn danger" 
+        onclick="if(confirm('메모 전체가 삭제됩니다. 정말로 메모를 삭제하시겠습니까?')){
+          document.getElementById('consultant-memo').value='';
+          autoSave();
+        }">
+        <i class="fas fa-trash"></i> 삭제
+      </button>
     </div>
+  </div>
 </div>
+
+<style>
+@media (max-width: 768px) {
+  #consultant-memo {
+    width: 108% !important;          /* 가로폭 확장 */
+    margin-left: -4% !important;     /* 가운데 정렬 보정 */
+    min-height: 260px !important;    /* 높이 확대 */
+    font-size: 17px !important;      /* 글씨 크기 확대 */
+    padding: 1rem !important;        /* 여백 균형 유지 */
+  }
+
+  #consultant-memo:focus {
+    outline: none;
+    border-color: #2a5a8a;
+    box-shadow: 0 0 0 3px rgba(42, 90, 138, 0.2);
+  }
+
+  /* 외곽 카드 여백 약간 줄이기 */
+  [style*="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 2rem;"] {
+    padding: 1.5rem !important;
+  }
+}
+</style>
 <footer>
     <div class="disclaimer" style="max-width: 1700px; margin: 1rem auto; padding: 0 2rem;">
         <div style="background: #e9ecef; padding: 2rem; border-radius: 8px;">
@@ -2660,38 +2709,48 @@ function generateStrategicConsulting(inputs) {
     }
     
     // 기존 컨설팅 내용 추가 (가지급금, 이익잉여금 등)
-    if (inputs.adv_payments > 1000000) {
-        const annualInterest = inputs.adv_payments * 0.046;
-        const taxOnInterest = annualInterest * 0.45;
-        const corporateTaxLoss = annualInterest * 0.21;
-        const type = inputs.adv_payments > 50000000 ? 'danger' : 'warning';
-        
-        html += `<div class="consulting-topic topic-${type}">
-            <h3 class="${type}"><i class="fas fa-exclamation-triangle"></i>가지급금 시한폭탄 (${formatNumber(inputs.adv_payments)}원)</h3>
-            
-            <div class="calc-box">
-                <div class="calc-line">가지급금: ${formatNumber(inputs.adv_payments)}원</div>
-                <div class="calc-line">연간 인정이자 (4.6%): ${formatNumber(annualInterest)}원</div>
-                <div class="calc-line">대표이사 소득세 (45%): ${formatNumber(taxOnInterest)}원</div>
-                <div class="calc-line">법인세 가산 (이자비용 부인): ${formatNumber(corporateTaxLoss)}원</div>
-                <div class="calc-result">💣 매년 세금 손실: ${formatNumber(taxOnInterest + corporateTaxLoss)}원</div>
-            </div>
-            
-            <p><strong>상속 시 충격:</strong> 가지급금 ${formatNumber(inputs.adv_payments)}원은 상속재산에 포함되어 상속세 약 ${formatNumber(inputs.adv_payments * 0.4)}원 추가 발생!</p>
-            
-            <div class="action-box">
-                <h5>🔥 긴급 정리 솔루션</h5>
-                <ul>
-                    <li><strong>방법 1:</strong> 즉시 현금 상환 (개인 자금 활용)</li>
-                    <li><strong>방법 2:</strong> 향후 상여/배당으로 상계 (연 ${formatNumber(inputs.adv_payments * 0.2)}원씩 5년)</li>
-                    <li><strong>방법 3:</strong> 법인 보험 해약환급금으로 상계 (10년 후)</li>
-                    <li><strong>절세 효과:</strong> 전액 정리 시 매년 ${formatNumber(taxOnInterest + corporateTaxLoss)}원 × 10년 = <strong>${formatNumber((taxOnInterest + corporateTaxLoss) * 10)}원 절감</strong></li>
-                </ul>
-            </div>
-        </div>`;
-        totalTaxSavings += (taxOnInterest + corporateTaxLoss) * 10;
-    }
+if (inputs.adv_payments > 1000000) {
+    const annualInterest = inputs.adv_payments * 0.046;
+    const taxOnInterest = annualInterest * 0.45;
+    const corporateTaxLoss = annualInterest * 0.21;
+    const type = inputs.adv_payments > 50000000 ? 'danger' : 'warning';
+
+    // --- [ 여기에 새 계산 로직 삽입 ] ---
+    const annualLoss = taxOnInterest + corporateTaxLoss;
+    const threeYearLoss = annualLoss * 3;
+    const solutionGain = (taxOnInterest + corporateTaxLoss) * 10;
+    analysisResult.risks.push({
+        name: '💸 가지급금',
+        loss: threeYearLoss,
+        gain: solutionGain
+    });
+    // ---------------------------------
     
+    html += `<div class="consulting-topic topic-${type}">
+        <h3 class="${type}"><i class="fas fa-exclamation-triangle"></i>가지급금 시한폭탄 (${formatNumber(inputs.adv_payments)}원)</h3>
+        
+        <div class="calc-box">
+            <div class="calc-line">가지급금: ${formatNumber(inputs.adv_payments)}원</div>
+            <div class="calc-line">연간 인정이자 (4.6%): ${formatNumber(annualInterest)}원</div>
+            <div class="calc-line">대표이사 소득세 (45%): ${formatNumber(taxOnInterest)}원</div>
+            <div class="calc-line">법인세 가산 (이자비용 부인): ${formatNumber(corporateTaxLoss)}원</div>
+            <div class="calc-result">💣 매년 세금 손실: ${formatNumber(taxOnInterest + corporateTaxLoss)}원</div>
+        </div>
+        
+        <p><strong>상속 시 충격:</strong> 가지급금 ${formatNumber(inputs.adv_payments)}원은 상속재산에 포함되어 상속세 약 ${formatNumber(inputs.adv_payments * 0.4)}원 추가 발생!</p>
+        
+        <div class="action-box">
+            <h5>🔥 긴급 정리 솔루션</h5>
+            <ul>
+                <li><strong>방법 1:</strong> 즉시 현금 상환 (개인 자금 활용)</li>
+                <li><strong>방법 2:</strong> 향후 상여/배당으로 상계 (연 ${formatNumber(inputs.adv_payments * 0.2)}원씩 5년)</li>
+                <li><strong>방법 3:</strong> 법인 보험 해약환급금으로 상계 (10년 후)</li>
+                <li><strong>절세 효과:</strong> 전액 정리 시 매년 ${formatNumber(taxOnInterest + corporateTaxLoss)}원 × 10년 = <strong>${formatNumber((taxOnInterest + corporateTaxLoss) * 10)}원 절감</strong></li>
+            </ul>
+        </div>
+    </div>`;
+    totalTaxSavings += (taxOnInterest + corporateTaxLoss) * 10;
+}    
     // 2. 이익잉여금 과다 적립 리스크
     if (inputs.retained_earnings > inputs.equity && inputs.retained_earnings > 500000000) {
         const dividendOption = inputs.retained_earnings * 0.3;
