@@ -2710,20 +2710,19 @@ function generateStrategicConsulting(inputs) {
     
     // 기존 컨설팅 내용 추가 (가지급금, 이익잉여금 등)
 if (inputs.adv_payments > 1000000) {
-    const annualInterest = inputs.adv_payments * 0.046;
-    const taxOnInterest = annualInterest * 0.45;
-    const corporateTaxLoss = annualInterest * 0.21;
-    const type = inputs.adv_payments > 50000000 ? 'danger' : 'warning';
+  const annualInterest = inputs.adv_payments * 0.046;
+  const taxOnInterest = annualInterest * 0.45;
+  const corporateTaxLoss = annualInterest * 0.21;
+  const type = inputs.adv_payments > 50000000 ? 'danger' : 'warning';
 
-    // --- [ 여기에 새 계산 로직 삽입 ] ---
-    const annualLoss = taxOnInterest + corporateTaxLoss;
-    const threeYearLoss = annualLoss * 3;
-    const solutionGain = (taxOnInterest + corporateTaxLoss) * 10;
-    analysisResult.risks.push({
-        name: '💸 가지급금',
-        loss: threeYearLoss,
-        gain: solutionGain
-    });
+  // --- [ 여기에 새 계산 로직 삽입 ] ---
+  const annualLoss = taxOnInterest + corporateTaxLoss;
+  const threeYearLoss = annualLoss * 3;
+  const solutionGain = (taxOnInterest + corporateTaxLoss) * 10;
+
+  // Set에는 문자열만 추가 (요약 로직과 일치)
+  analysisResult.risks.add('고액 가지급금');
+}
     // ---------------------------------
     
     html += `<div class="consulting-topic topic-${type}">
