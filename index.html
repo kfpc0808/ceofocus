@@ -2722,7 +2722,7 @@ if (inputs.adv_payments > 1000000) {
 
   // Set에는 문자열만 추가 (요약 로직과 일치)
   analysisResult.risks.add('고액 가지급금');
-}
+
     // ---------------------------------
     
     html += `<div class="consulting-topic topic-${type}">
@@ -3012,7 +3012,8 @@ if (inputs.adv_payments > 1000000) {
     
     analysisResult.taxSavings = totalTaxSavings;
     container.innerHTML = html;
-}
+    }
+
 function calculateInsurancePlan(inputs) {
     if (inputs.op_profit <= 0 || inputs.insurance_target_amount <= 0) return null;
     
