@@ -1385,6 +1385,31 @@ footer {
         page-break-inside: avoid; 
     }
 }
+/* === Inline Insight badge (입력 옆 경고/분석 배지) === */
+.inline-insight {
+  display: flex; align-items: center; gap: .5rem;
+  margin-left: .5rem; white-space: nowrap;
+  font-size: .85rem; line-height: 1;
+}
+.inline-insight .pill {
+  display:inline-flex; align-items:center; gap:.35rem;
+  padding:.35rem .6rem; border-radius:999px; font-weight:700;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.inline-insight .pill i { font-size:.85rem }
+.inline-insight.info   .pill { background:#e7f3ff; color:#1b73e8; }
+.inline-insight.warn   .pill { background:#fff4d6; color:#a66a00; }
+.inline-insight.danger .pill { background:#fde8e6; color:#b03a2e; }
+
+/* 입력 필드와 자연스럽게 한 줄 배치 */
+.input-field { display:flex; align-items:center; flex-wrap:wrap; }
+.input-field > .inline-insight { margin-top:.35rem; }
+
+/* 태블릿 세로에서 공간이 좁을 때 줄바꿈 */
+@media (min-width:641px) and (max-width:900px) and (orientation:portrait){
+  .inline-insight { margin-left:.25rem; }
+}
+
 </style>
 </head>
 <body>
@@ -4852,6 +4877,171 @@ function getCustomSurrenderRates() {
     // 년도 순으로 정렬
     return rates.sort((a, b) => a.year - b.year);
 }
+</script>
+<script>
+/* === Inline 분석/경고 배치 유틸 === */
+(function(){
+  // 1) 평가 규칙 정의: id별 임계치·메시지
+  // ※ 숫자(원, %)는 절대값 기준. 필요 시 값만 바꾸면 됨.
+  const RULES = {
+    // 재무/리스크 핵심
+    adv_payments: {               // 가지급금
+      type:'number',
+      thresholds:[
+        {min:100000000, level:'warn',   text:'가지급금 규모가 커지고 있습니다.'},
+        {min:200000000, level:'danger', text:'가지급금 과다! 세무 리스크 검토 권장'}
+      ]
+    },
+    retained_earnings: {          // 미처분이익잉여금
+      type:'number',
+      thresholds:[
+        {min:500000000, level:'warn',   text:'이익잉여금이 누적 중입니다.'},
+        {min:1000000000,level:'danger', text:'이익잉여금 과다! 배당/유보전략 점검'}
+      ]
+    },
+    corporate_card: {             // 법인카드 사용액(연)
+      type:'number',
+      thresholds:[
+        {min:50000000, level:'warn',   text:'법인카드 사용액 증가 추세'},
+        {min:100000000,level:'danger', text:'법인카드 과다! 비용 관리 필요'}
+      ]
+    },
+    entertainment: {              // 접대비(연)
+      type:'number',
+      thresholds:[
+        {min:30000000, level:'warn',   text:'접대비가 높은 편입니다.'},
+        {min:60000000, level:'danger', text:'접대비 과다! 세무 리스크 주의'}
+      ]
+    },
+    nominee_stock: {              // 명의신탁주식 보유 여부
+      type:'select',
+      map:{
+        'yes': {level:'danger', text:'명의신탁주식 보유! 세무/법률 리스크'},
+        'no' : null
+      }
+    },
+    successor: {                  // 승계예정 후계자 유무
+      type:'select',
+      map:{
+        'no' : {level:'warn',   text:'후계자 미지정: 승계 계획 수립 필요'},
+        'yes': null
+      }
+    },
+    tax_return_review: {          // 최근 5년 세무신고 전문가 검토 여부
+      type:'select',
+      map:{
+        'no' : {level:'warn',   text:'세무신고 정기 점검 권장'},
+        'yes': null
+      }
+    },
+    rnd_credit: {                 // R&D 세액공제 신청 이력
+      type:'select',
+      map:{
+        'no' : {level:'info',   text:'R&D 공제 검토 여지'},
+        'yes': null
+      }
+    },
+    sme_benefit: {                // 중소기업 특례 적용 여부
+      type:'select',
+      map:{
+        'no' : {level:'info',   text:'특례 적용 가능성 검토'},
+        'yes': null
+      }
+    },
+    employment_credit: {          // 고용증대 세액공제 수혜 여부
+      type:'select',
+      map:{
+        'no' : {level:'info',   text:'고용 공제 검토'},
+        'yes': null
+      }
+    }
+  };
+
+  // 2) 숫자 파서 (쉼표/공백 제거)
+  function toNumber(val){
+    if(val == null) return 0;
+    const s = String(val).replace(/[^\d.-]/g,'').trim();
+    const n = Number(s);
+    return isNaN(n)?0:n;
+  }
+
+  // 3) 인라인 컨테이너 보장 (입력칸 옆에 동적으로 생성)
+  function ensureInlineBox(inputEl){
+    const field = inputEl.closest('.input-field');
+    if(!field) return null;
+    let box = field.querySelector('.inline-insight');
+    if(!box){
+      box = document.createElement('div');
+      box.className = 'inline-insight';
+      field.appendChild(box);
+    }
+    return box;
+  }
+
+  // 4) 평가 후 DOM 반영
+  function renderInline(id, result){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const box = ensureInlineBox(el);
+    if(!box) return;
+
+    if(!result){ box.innerHTML=''; box.className='inline-insight'; return; }
+
+    box.className = 'inline-insight ' + result.level;
+    const icon = result.level==='danger' ? 'fa-triangle-exclamation'
+              : result.level==='warn'   ? 'fa-circle-exclamation'
+              : 'fa-circle-info';
+    box.innerHTML = `<span class="pill"><i class="fa-solid ${icon}"></i>${result.text}</span>`;
+  }
+
+  // 5) 규칙 평가
+  function evaluate(id){
+    const rule = RULES[id];
+    if(!rule) return null;
+    const el = document.getElementById(id);
+    if(!el) return null;
+
+    if(rule.type==='number'){
+      const v = toNumber(el.value);
+      let hit = null;
+      (rule.thresholds||[]).forEach(t=>{
+        if(v >= t.min) hit = t; // 가장 높은 임계치를 우선
+      });
+      return hit ? {level:hit.level, text:hit.text} : null;
+    }
+    if(rule.type==='select'){
+      const v = String(el.value||'');
+      const mapped = rule.map[v];
+      return mapped || null;
+    }
+    return null;
+  }
+
+  // 6) 바인딩 (입력/선택 시 즉시 반영 + 기존 분석 갱신도 호출)
+  function bind(){
+    Object.keys(RULES).forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      const handler = ()=>{
+        const res = evaluate(id);
+        renderInline(id, res);
+        // 기존 분석 패널 갱신 함수가 있으면 호출
+        try{ if(typeof updateAnalysis==='function') updateAnalysis(); }catch(e){}
+      };
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+      // 초기 렌더
+      handler();
+    });
+  }
+
+  // 7) DOM 준비되면 시작
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bind);
+  } else {
+    bind();
+  }
+})();
 </script>
 </body>
 </html>
