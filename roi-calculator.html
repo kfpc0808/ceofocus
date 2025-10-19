@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+<title>수익률계산기 (독립 실행형 · KRW · 그래프)</title>
+<meta name="description" content="초기/월납입/수익률/복리주기/기간을 반영하여 최종 금액·필요 월납입액·필요 수익률·필요 시작금액·필요 기간을 계산합니다.">
+<style>
+:root{
+  --brand:#FF8802; --text:#0b1f3a; --muted:#6b7a90; --line:#e8ecf3; --card:#fff; --accent:#5045E5;
+  --grid:#e6ebf5; --line1:#3b82f6; --line2:#10b981; --kfpc-gold:#DAA520;
+}
+html,body{margin:0;padding:0;background:#f7f9fc;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+*,*:before,*:after{box-sizing:border-box}
+.wrapper{max-width:1100px;margin:0 auto;padding:0 16px}
+.header{background:#fff;border-bottom:1px solid rgba(10,20,40,.08)}
+.header__container{max-width:1100px;margin:0 auto;padding:12px 16px}
+.header-wrapper{display:flex;align-items:center;justify-content:flex-start;gap:12px}
+
+/* KFPC 텍스트 로고 스타일 */
+.header-nav__logo {
+  font-size:28px;
+  font-weight:900;
+  font-family:'Arial Black','Arial',sans-serif;
+  letter-spacing:2px;
+  background:linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #DAA520 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+  padding:8px 16px;
+  border-radius:8px;
+  border:2px solid rgba(255,215,0,0.3);
+  text-decoration:none;
+  display:inline-block;
+}
+
+.header-breadcrumbs{display:flex;align-items:center;gap:8px;color:#6b7b91;font-size:13px;padding:6px 0 10px}
+.calculator__container--title{display:flex;gap:12px;align-items:center;margin:16px 0}
+.calculator__logo{font-size:20px;font-weight:800;color:var(--kfpc-gold)}
+.calculator__title{margin:0;font-size:22px}
+.calculator__subtitle{margin:4px 0 0;color:#4a5a73;font-size:14px}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+@media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+.card{background:var(--card);border:1px solid rgba(10,20,40,.08);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+.pad{padding:16px}
+.card h3{margin:0 0 10px;padding-bottom:10px;border-bottom:2px solid var(--line);font-size:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.col{flex:1 1 auto}
+.input{flex:1 1 160px;min-width:160px}
+.input__title{font-weight:800;margin:10px 2px 6px;font-size:14px}
+.input-description{font-size:12px;color:var(--muted);margin:2px 2px 8px;line-height:1.4}
+.input-field{display:flex;align-items:center;gap:8px;border:1px solid #d7deea;background:#fff;border-radius:10px;padding:10px 12px}
+.input-field__input,.input-field__text{border:none;outline:none;font-size:15px;width:100%;background:transparent}
+.input-field__hint{font-size:12px;color:#7b879b;white-space:nowrap}
+.dropdown-wrapper .input-field{padding:10px 12px}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;font-size:15px}
+.button--primary{background:var(--accent);color:#fff}
+.button--primary:hover{background:#4039cc}
+.related-item-hidden{display:none!important}
+.hidden{display:none!important}
+
+.result .k{font-weight:900;color:#2a5a8a;font-size:18px}
+.result p{margin:8px 0}
+.explain{font-size:13px;color:#42526b;line-height:1.6;margin-top:6px;background:#f8fafc;padding:10px;border-radius:8px}
+.callout{background:#f7f9ff;border:1px dashed #c8d2ff;border-radius:12px;padding:12px;margin-top:10px;font-size:13px;color:#25314a}
+
+.legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:6px 0 6px}
+.legend .item{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#334155}
+.legend .swatch{width:12px;height:12px;border-radius:3px}
+.sw1{background:var(--line1)} .sw2{background:var(--line2)}
+.chart-wrap{width:100%;overflow:hidden}
+.muted{color:#6b7b91;font-size:12px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;justify-content:center;align-items:center}
+.modal-content{background:#fff;padding:22px;border-radius:12px;max-width:560px;width:92%;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.modal-content h2{margin:0 0 8px;font-size:20px}
+.modal-content p{margin:8px 0;color:#33405a;font-size:14px;line-height:1.6}
+.modal-content ul{padding-left:20px;margin:8px 0 0}
+.modal-content li{margin:6px 0}
+.modal-button{display:block;width:100%;padding:12px;border:none;border-radius:8px;background:var(--brand);color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-top:12px}
+
+button,input,select{ -webkit-tap-highlight-color: rgba(0,0,0,0); }
+.footer{ text-align:center; margin:22px 0; color:#6b7b91; font-size:12px; }
+
+.data-table{
+  margin-top:14px;
+  background:#fafbfe;
+  border:1px solid #e0e6f0;
+  border-radius:10px;
+  overflow-x:auto;
+  font-size:13px;
+}
+.data-table table{ width:100%; border-collapse:collapse; text-align:right; }
+.data-table th,.data-table td{
+  padding:8px 10px;
+  border-bottom:1px solid #eef2f8;
+  white-space:nowrap;
+}
+.data-table th{ background:#f1f5fb; color:#334155; font-weight:700; text-align:right; }
+.data-table th:first-child, .data-table td:first-child{ text-align:left; }
+
+@media (max-width: 600px){
+  .header-nav__logo{font-size:22px;padding:6px 12px}
+  .calculator__title{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- 안내 모달 -->
+<div id="info-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-content" role="document">
+    <h2>📈 수익률계산기 사용법</h2>
+    <p>이 계산기는 <b>₩(원화)</b> 기준으로 다음을 계산합니다.</p>
+    <ul>
+      <li><b>최종 금액</b>: 투자 후 모이는 총 금액</li>
+      <li><b>필요 월 납입액</b>: 목표 달성에 필요한 매월 저축금</li>
+      <li><b>필요 수익률</b>: 목표를 위한 연간 수익률</li>
+      <li><b>필요 시작금액</b>: 초기에 필요한 투자금</li>
+      <li><b>필요 투자기간</b>: 목표 달성까지 걸리는 시간</li>
+    </ul>
+    <p style="margin-top:12px;font-size:13px">💡 <b>팁</b>: 금액은 자동으로 콤마가 표시되며, 복리 주기를 짧게 할수록 더 많은 이자가 붙습니다.</p>
+    <button id="modal-close-btn" class="modal-button">시작하기</button>
+  </div>
+</div>
+
+<div class="wrapper">
+  <header class="header">
+    <div class="header__container">
+      <div class="header-wrapper">
+        <a class="header-nav__logo" href="#">KFPC</a>
+      </div>
+      <div class="header-breadcrumbs">재무 계산기 &gt; <strong>수익률계산기</strong></div>
+    </div>
+  </header>
+
+  <div class="calculator">
+    <div class="calculator__container calculator__container--title row">
+      <div class="calculator__logo">💰</div>
+      <div class="calculator__info col">
+        <h1 class="calculator__title">수익률 계산기</h1>
+        <p class="calculator__subtitle">초기 투자금과 매월 저축, 수익률과 기간을 고려한 투자 계산기입니다.</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- 좌측 입력 -->
+      <div class="card pad">
+        <h3>설정</h3>
+
+        <div class="row">
+          <label class="input col">
+            <p class="input__title">무엇을 계산할까요?</p>
+            <div class="dropdown-wrapper">
+              <div class="input-field row" tabindex="0">
+                <select class="input-field__text" id="loan_type">
+                  <option value="최종 금액" selected>미래에 얼마나 모일까?</option>
+                  <option value="추가 기여">매월 얼마씩 저축해야 할까?</option>
+                  <option value="수익률">몇 % 수익률이 필요할까?</option>
+                  <option value="시작 금액">처음 얼마를 투자해야 할까?</option>
+                  <option value="투자 기간">목표까지 몇 년 걸릴까?</option>
+                </select>
+              </div>
+            </div>
+            <p class="input-description">계산하고 싶은 항목을 선택하세요</p>
+          </label>
+        </div>
+
+        <!-- A: 최종 금액 -->
+        <div class="loan_type related-to-loan_type-0">
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">처음 투자하는 돈</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="starting_amount" value="20,000,000" inputmode="numeric"/>
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">지금 한번에 넣는 목돈</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">투자 기간</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="after" value="15" inputmode="decimal"/>
+                <span class="input-field__hint">년</span>
+              </div>
+              <p class="input-description">몇 년 동안 투자할지</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">예상 수익률 (연)</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="return_rate" value="6" inputmode="decimal"/>
+                <span class="input-field__hint">%</span>
+              </div>
+              <p class="input-description">1년에 몇 % 수익 예상</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">복리 주기</p>
+              <div class="input-field row">
+                <select class="input-field__text" id="compound">
+                  <option value="12" selected>매월</option>
+                  <option value="4">분기 (3개월)</option>
+                  <option value="2">반년 (6개월)</option>
+                  <option value="1">매년</option>
+                </select>
+              </div>
+              <p class="input-description">이자가 붙는 빈도</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">매월 추가 저축</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="additional_contribution" value="200,000" inputmode="numeric"/>
+                <span class="input-field__hint">원/월</span>
+              </div>
+              <p class="input-description">매달 꾸준히 넣는 돈</p>
+            </label>
+          </div>
+        </div>
+
+        <!-- B: 매월 추가납입액 -->
+        <div class="loan_type related-item-hidden related-to-loan_type-1">
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">목표 금액</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="your_target_1" value="100,000,000" inputmode="numeric"/>
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">모으고 싶은 금액</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">처음 투자하는 돈</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="starting_amount_1" value="20,000,000" inputmode="numeric"/>
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">지금 한번에 넣는 돈</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">투자 기간</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="after_1" value="15" inputmode="decimal"/>
+                <span class="input-field__hint">년</span>
+              </div>
+              <p class="input-description">몇 년 동안</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">예상 수익률 (연)</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="return_rate_1" value="6" inputmode="decimal"/>
+                <span class="input-field__hint">%</span>
+              </div>
+              <p class="input-description">연간 수익률</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">복리 주기</p>
+              <div class="input-field row">
+                <select class="input-field__text" id="compound_1">
+                  <option value="12" selected>매월</option>
+                  <option value="4">분기</option>
+                  <option value="2">반년</option>
+                  <option value="1">매년</option>
+                </select>
+              </div>
+              <p class="input-description">이자 계산 빈도</p>
+            </label>
+          </div>
+        </div>
+
+        <!-- C: 필요 수익률 -->
+        <div class="loan_type related-item-hidden related-to-loan_type-2">
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">목표 금액</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="your_target_2" value="100,000,000" inputmode="numeric">
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">달성하고 싶은 금액</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">처음 투자하는 돈</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="starting_amount_2" value="20,000,000" inputmode="numeric">
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">초기 투자금</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">투자 기간</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="after_2" value="15" inputmode="decimal">
+                <span class="input-field__hint">년</span>
+              </div>
+              <p class="input-description">투자 연수</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">매월 추가 저축</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="additional_contribution_2" value="200,000" inputmode="numeric">
+                <span class="input-field__hint">원/월</span>
+              </div>
+              <p class="input-description">매달 넣는 돈</p>
+            </label>
+          </div>
+        </div>
+
+        <!-- D: 필요 시작금액 -->
+        <div class="loan_type related-item-hidden related-to-loan_type-3">
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">목표 금액</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="your_target_3" value="100,000,000" inputmode="numeric">
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">목표 금액</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">투자 기간</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="after_3" value="15" inputmode="decimal">
+                <span class="input-field__hint">년</span>
+              </div>
+              <p class="input-description">투자 기간</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">예상 수익률 (연)</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="return_rate_3" value="6" inputmode="decimal">
+                <span class="input-field__hint">%</span>
+              </div>
+              <p class="input-description">연간 수익률</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">복리 주기</p>
+              <div class="input-field row">
+                <select class="input-field__text" id="compound_3">
+                  <option value="12" selected>매월</option>
+                  <option value="4">분기</option>
+                  <option value="2">반년</option>
+                  <option value="1">매년</option>
+                </select>
+              </div>
+              <p class="input-description">이자 빈도</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">매월 추가 저축</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="additional_contribution_3" value="200,000" inputmode="numeric">
+                <span class="input-field__hint">원/월</span>
+              </div>
+              <p class="input-description">매달 저축액</p>
+            </label>
+          </div>
+        </div>
+
+        <!-- E: 필요 투자기간 -->
+        <div class="loan_type related-item-hidden related-to-loan_type-4">
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">목표 금액</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="your_target_4" value="100,000,000" inputmode="numeric">
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">목표 금액</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">처음 투자하는 돈</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="starting_amount_4" value="20,000,000" inputmode="numeric">
+                <span class="input-field__hint">원</span>
+              </div>
+              <p class="input-description">초기 투자금</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">예상 수익률 (연)</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="return_rate_4" value="6" inputmode="decimal">
+                <span class="input-field__hint">%</span>
+              </div>
+              <p class="input-description">연간 수익률</p>
+            </label>
+            <label class="input col">
+              <p class="input__title">복리 주기</p>
+              <div class="input-field row">
+                <select class="input-field__text" id="compound_4">
+                  <option value="12" selected>매월</option>
+                  <option value="4">분기</option>
+                  <option value="2">반년</option>
+                  <option value="1">매년</option>
+                </select>
+              </div>
+              <p class="input-description">이자 빈도</p>
+            </label>
+          </div>
+          <div class="row">
+            <label class="input col">
+              <p class="input__title">매월 추가 저축</p>
+              <div class="input-field row">
+                <input type="text" class="input-field__input" id="additional_contribution_4" value="200,000" inputmode="numeric">
+                <span class="input-field__hint">원/월</span>
+              </div>
+              <p class="input-description">매달 저축액</p>
+            </label>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <button class="button button--primary ml-auto" id="action-button">🧮 계산하기</button>
+        </div>
+      </div>
+
+      <!-- 우측 결과+그래프 -->
+      <div class="card pad">
+        <h3>계산 결과</h3>
+        <div id="calculator_result" class="result">
+          <p>좌측 값을 입력하고 <b>계산하기</b>를 누르세요. 모든 금액은 <b>원화(정수)</b>로 표시됩니다.</p>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="legend">
+            <div class="item"><span class="swatch sw1"></span>총 잔액 (미래가치)</div>
+            <div class="item"><span class="swatch sw2"></span>내가 넣은 돈</div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="chartSvg" width="100%" height="260" viewBox="0 0 700 260" preserveAspectRatio="none" aria-label="월별 잔액/납입 누계 차트"></svg>
+          </div>
+          <div class="muted">* 가로축: 월, 세로축: 금액(상대 스케일). 실제 값은 결과 텍스트를 확인하세요.</div>
+
+          <div id="dataTable" class="data-table" aria-live="polite"></div>
+        </div>
+
+        <div class="callout">
+          💡 <b>팁</b>: 같은 금액이라도 복리 주기가 짧을수록(예: 매월) 더 많은 이자가 붙습니다!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Copyright © 2025 KFPC Co., Ltd. All Rights Reserved.
+  </footer>
+</div>
+
+<script>
+/* 안내 모달 */
+document.getElementById('modal-close-btn').addEventListener('click', ()=>{
+  document.getElementById('info-modal').style.display='none';
+});
+
+/* 입력 포맷/정수 콤마 */
+const digitsOnly = s => (s||'').toString().replace(/[^\d]/g,'');
+const toInt = s => { const v = parseInt(digitsOnly(s),10); return isNaN(v)?0:v; };
+const toFloat = s => parseFloat((s||'0').toString().replace(',', '.')) || 0;
+const fmtKRW = n => Number(Math.round(n)).toLocaleString('ko-KR');
+
+function attachCommaIntInput(sel){
+  document.querySelectorAll(sel).forEach(el=>{
+    el.addEventListener('input', ()=>{ el.value = fmtKRW(toInt(el.value)); });
+    el.value = fmtKRW(toInt(el.value));
+  });
+}
+attachCommaIntInput('.input-field__input');
+
+/* 섹션 토글 */
+const loanTypeSelect = document.getElementById('loan_type');
+function toggleRelatedInputs(){
+  const idx = loanTypeSelect.selectedIndex;
+  document.querySelectorAll('.loan_type').forEach((sec,i)=>{
+    if(i===idx){ sec.classList.remove('related-item-hidden'); }
+    else { sec.classList.add('related-item-hidden'); }
+  });
+}
+loanTypeSelect.addEventListener('change', toggleRelatedInputs);
+toggleRelatedInputs();
+
+/* 금융 유틸 */
+function fvOfPrincipal(P, rPer, N){ return P * Math.pow(1 + rPer, N); }
+function fvOfAnnuity(PMT, rPer, N, due=false){
+  if (N<=0) return 0;
+  if (rPer===0) return PMT * N;
+  const fvOrd = PMT * ( (Math.pow(1+rPer, N) - 1) / rPer );
+  return due ? fvOrd * (1 + rPer) : fvOrd;
+}
+function bisection(fn, low, high, tol=1e-9, maxIter=200){
+  let fL = fn(low), fH = fn(high);
+  if (isNaN(fL) || isNaN(fH)) return null;
+  for(let i=0;i<maxIter;i++){
+    const mid = 0.5*(low+high);
+    const fM = fn(mid);
+    if (Math.abs(fM) < tol || Math.abs(high-low) < tol) return mid;
+    if ((fL>0 && fM>0) || (fL<0 && fM<0)) { low = mid; fL = fM; } else { high = mid; fH = fM; }
+  }
+  return 0.5*(low+high);
+}
+
+/* 그래프 */
+function drawChart(svgId, seriesBal, seriesContrib){
+  const svg = document.getElementById(svgId);
+  const W=700,H=260,padL=48,padR=10,padT=12,padB=28;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const n = seriesBal.length;
+  const maxV = Math.max(...seriesBal, ...seriesContrib) || 1;
+  const minV = 0;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const x0=padL,y0=padT,x1=padL+plotW,y1=padT+plotH;
+
+  const grid = document.createElementNS('http://www.w3.org/2000/svg','g');
+  for(let i=0;i<=4;i++){
+    const y=y0+(plotH*i/4);
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x0);l.setAttribute('y1',y);l.setAttribute('x2',x1);l.setAttribute('y2',y);
+    l.setAttribute('stroke','var(--grid)');l.setAttribute('stroke-width','1'); grid.appendChild(l);
+  }
+  svg.appendChild(grid);
+
+  const mapX=i=>x0+(plotW*i/(n-1||1));
+  const mapY=v=>y1-((v-minV)/(maxV-minV||1))*plotH;
+
+  function path(series, stroke){
+    let d=''; series.forEach((v,i)=>{ d+=(i?'L':'M')+mapX(i)+' '+mapY(v)+' '; });
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d', d.trim()); p.setAttribute('fill','none'); p.setAttribute('stroke', stroke);
+    p.setAttribute('stroke-width','2.5'); p.setAttribute('stroke-linecap','round'); return p;
+  }
+  svg.appendChild(path(seriesBal,'var(--line1)'));
+  svg.appendChild(path(seriesContrib,'var(--line2)'));
+
+  function label(x,y,t,anc='middle'){
+    const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+    tx.setAttribute('x',x); tx.setAttribute('y',y); tx.setAttribute('fill','#6b7b91');
+    tx.setAttribute('font-size','11'); tx.setAttribute('text-anchor',anc); tx.textContent=t; return tx;
+  }
+  svg.appendChild(label(x0, y1+18, '0개월', 'start'));
+  svg.appendChild(label(x0+plotW/2, y1+18, Math.round((n-1)/2)+'개월'));
+  svg.appendChild(label(x1, y1+18, (n-1)+'개월', 'end'));
+}
+
+/* 월 단위 시뮬레이션 */
+function simulateSeries(P, PMT_month, rYear, years){
+  const months = Math.max(0, Math.round(years*12));
+  const rm = Math.pow(1+rYear, 1/12) - 1;
+  let bal = P, contrib = P;
+  const sBal=[bal], sContrib=[contrib];
+  for(let m=1;m<=months;m++){
+    bal *= (1+rm);
+    if(PMT_month>0){ bal += PMT_month; contrib += PMT_month; }
+    sBal.push(bal); sContrib.push(contrib);
+  }
+  return {seriesBal:sBal, seriesContrib:sContrib};
+}
+
+/* 기간별 데이터 표 렌더링 */
+function renderDataTable(seriesBal, seriesContrib){
+  const tableDiv = document.getElementById('dataTable');
+  if(!tableDiv) return;
+
+  const rows = [];
+  const lastIdx = seriesBal.length - 1;
+  const pushRow = (i) => {
+    const years = (i/12).toFixed(1);
+    rows.push({
+      periodLabel: `${years}년`,
+      bal: seriesBal[i],
+      contrib: seriesContrib[i],
+      interest: seriesBal[i] - seriesContrib[i]
+    });
+  };
+
+  pushRow(0);
+  for(let i=12; i<lastIdx; i+=12){ pushRow(i); }
+  if(lastIdx>0) pushRow(lastIdx);
+
+  let html = '<table><thead><tr><th>기간</th><th>총 잔액(₩)</th><th>내가 넣은 돈(₩)</th><th>이자 수익(₩)</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    html += `<tr><td>${r.periodLabel}</td><td>${fmtKRW(r.bal)}</td><td>${fmtKRW(r.contrib)}</td><td>${fmtKRW(Math.max(0,r.interest))}</td></tr>`;
+  });
+  html += '</tbody></table>';
+
+  tableDiv.innerHTML = html;
+}
+
+/* 메인 계산 */
+const resultEl = document.getElementById('calculator_result');
+document.getElementById('action-button').addEventListener('click', ()=>{
+  const idx = loanTypeSelect.selectedIndex;
+  let html = '';
+  function currency(n){ return '₩ ' + Number(Math.round(n)).toLocaleString('ko-KR'); }
+
+  if(idx===0){ // 최종 금액
+    const P = toInt(document.getElementById('starting_amount').value);
+    const t = toFloat(document.getElementById('after').value);
+    const r = toFloat(document.getElementById('return_rate').value)/100;
+    const n = parseInt(document.getElementById('compound').value,10);
+    const PMT_m = toInt(document.getElementById('additional_contribution').value);
+
+    const rPer = r / n; const N = n * t; const PMT_per = PMT_m * (12/n);
+    const fvP = fvOfPrincipal(P, rPer, N);
+    const fvA = fvOfAnnuity(PMT_per, rPer, N, false);
+    const FV = fvP + fvA;
+    const contrib = P + PMT_m * (t*12);
+    const interest = Math.max(0, FV - contrib);
+
+    html += '<p><b>🎯 최종 잔액</b> : <span class="k">'+currency(FV)+'</span></p>';
+    html += '<div class="explain">처음 <b>'+currency(P)+'</b>를 투자하고, 매월 <b>'+currency(PMT_m)+'</b>씩 <b>'+t+'년</b> 동안 저축하면 연 <b>'+ (r*100).toFixed(2) +'%</b> 수익률로 총 <b>'+currency(FV)+'</b>이 됩니다!</div>';
+    html += '<p><b>💵 내가 넣은 총액</b> : <span class="k">'+currency(contrib)+'</span></p>';
+    html += '<p><b>💰 이자로 번 돈</b> : <span class="k">'+currency(interest)+'</span></p>';
+
+    const sc = simulateSeries(P, PMT_m, r, t);
+    drawChart('chartSvg', sc.seriesBal, sc.seriesContrib);
+    renderDataTable(sc.seriesBal, sc.seriesContrib);
+  }
+
+  if(idx===1){ // 매월 추가납입액
+    const FV = toInt(document.getElementById('your_target_1').value);
+    const P = toInt(document.getElementById('starting_amount_1').value);
+    const t = toFloat(document.getElementById('after_1').value);
+    const r = toFloat(document.getElementById('return_rate_1').value)/100;
+    const n = parseInt(document.getElementById('compound_1').value,10);
+
+    const rPer = r / n; const N = n * t;
+    const fvP = fvOfPrincipal(P, rPer, N);
+    const needFV = FV - fvP;
+    let PMT_m = 0;
+    if (needFV>0){
+      const annFac = (rPer===0)? N : (Math.pow(1+rPer,N)-1)/rPer;
+      const PMT_per = needFV / annFac;
+      PMT_m = PMT_per * (n/12);
+    }
+    html += '<p><b>💳 매월 저축해야 할 금액</b> : <span class="k">'+currency(PMT_m)+'</span></p>';
+    html += '<div class="explain">처음 <b>'+currency(P)+'</b>로 시작해서 <b>'+t+'년</b> 동안 연 <b>'+ (r*100).toFixed(2) +'%</b> 수익률로 <b>'+currency(FV)+'</b>을 모으려면 매월 <b>'+currency(PMT_m)+'</b>씩 저축해야 합니다.</div>';
+
+    const sc = simulateSeries(P, PMT_m, r, t);
+    drawChart('chartSvg', sc.seriesBal, sc.seriesContrib);
+    renderDataTable(sc.seriesBal, sc.seriesContrib);
+  }
+
+  if(idx===2){ // 필요 수익률
+    const FV = toInt(document.getElementById('your_target_2').value);
+    const P = toInt(document.getElementById('starting_amount_2').value);
+    const t = toFloat(document.getElementById('after_2').value);
+    const PMT_m = toInt(document.getElementById('additional_contribution_2').value);
+    const n = 12;
+
+    const N = n * t;
+    const f = (r)=>{
+      const rPer = r / n;
+      const fv = fvOfPrincipal(P, rPer, N) + fvOfAnnuity(PMT_m*(12/n), rPer, N, false);
+      return fv - FV;
+    };
+    let rSol = bisection(f, 0, 1);
+    if(rSol===null || !isFinite(rSol)){
+      html += '<p><b>📊 필요 수익률</b> : 계산 불가</p><div class="explain">입력하신 조건으로는 현실적인 범위(연 0~100%)에서 해를 찾기 어렵습니다.</div>';
+      drawChart('chartSvg', [0,0], [0,0]);
+      renderDataTable([0],[0]);
+    }else{
+      html += '<p><b>📊 필요한 연 수익률</b> : <span class="k">'+(rSol*100).toFixed(2)+'%</span></p>';
+      html += '<div class="explain">처음 <b>'+currency(P)+'</b>, 매월 <b>'+currency(PMT_m)+'</b>, <b>'+t+'년</b> 동안 투자하여 <b>'+currency(FV)+'</b>을 모으려면 연 <b>'+(rSol*100).toFixed(2)+'%</b>의 수익률이 필요합니다.</div>';
+
+      const sc = simulateSeries(P, PMT_m, rSol, t);
+      drawChart('chartSvg', sc.seriesBal, sc.seriesContrib);
+      renderDataTable(sc.seriesBal, sc.seriesContrib);
+    }
+  }
+
+  if(idx===3){ // 필요 시작금액
+    const FV = toInt(document.getElementById('your_target_3').value);
+    const t = toFloat(document.getElementById('after_3').value);
+    const r = toFloat(document.getElementById('return_rate_3').value)/100;
+    const n = parseInt(document.getElementById('compound_3').value,10);
+    const PMT_m = toInt(document.getElementById('additional_contribution_3').value);
+
+    const rPer = r / n; const N = n * t;
+    const fvA = fvOfAnnuity(PMT_m*(12/n), rPer, N, false);
+    const needFromP = FV - fvA;
+    const Pneed = (needFromP<=0) ? 0 : (needFromP / Math.pow(1+rPer,N));
+
+    html += '<p><b>💵 처음 필요한 투자금</b> : <span class="k">'+currency(Pneed)+'</span></p>';
+    html += '<div class="explain">매월 <b>'+currency(PMT_m)+'</b>씩 저축하고 <b>'+t+'년</b> 후 <b>'+currency(FV)+'</b>을 모으려면 처음에 <b>'+currency(Pneed)+'</b>을 투자해야 합니다. (연 <b>'+ (r*100).toFixed(2) +'%</b> 수익률)</div>';
+
+    const sc = simulateSeries(Pneed, PMT_m, r, t);
+    drawChart('chartSvg', sc.seriesBal, sc.seriesContrib);
+    renderDataTable(sc.seriesBal, sc.seriesContrib);
+  }
+
+  if(idx===4){ // 필요 투자기간
+    const FV = toInt(document.getElementById('your_target_4').value);
+    const P = toInt(document.getElementById('starting_amount_4').value);
+    const r = toFloat(document.getElementById('return_rate_4').value)/100;
+    const n = parseInt(document.getElementById('compound_4').value,10);
+    const PMT_m = toInt(document.getElementById('additional_contribution_4').value);
+
+    const fN = (N)=>{
+      const rPer = r / n;
+      const fv = fvOfPrincipal(P, rPer, N) + fvOfAnnuity(PMT_m*(12/n), rPer, N, false);
+      return fv - FV;
+    };
+    let Nsol = bisection(fN, 0, n*120);
+    if(Nsol===null || !isFinite(Nsol)){
+      html += '<p><b>⏰ 필요한 기간</b> : 계산 불가</p><div class="explain">입력 조건으로 현실적인 기간(최대 120년) 내에서 목표 달성이 어렵습니다.</div>';
+      drawChart('chartSvg', [0,0], [0,0]);
+      renderDataTable([0],[0]);
+    }else{
+      const years = Nsol / n; const y = Math.floor(years); const m = Math.ceil((years - y) * 12);
+      html += '<p><b>⏰ 필요한 투자 기간</b> : <span class="k">'+y+'년 '+m+'개월</span></p>';
+      html += '<div class="explain">처음 <b>'+currency(P)+'</b>, 매월 <b>'+currency(PMT_m)+'</b>, 연 <b>'+ (r*100).toFixed(2) +'%</b> 수익률로 <b>'+currency(FV)+'</b>을 모으려면 약 <b>'+y+'년 '+m+'개월</b>이 필요합니다.</div>';
+
+      const sc = simulateSeries(P, PMT_m, r, years);
+      drawChart('chartSvg', sc.seriesBal, sc.seriesContrib);
+      renderDataTable(sc.seriesBal, sc.seriesContrib);
+    }
+  }
+
+  resultEl.innerHTML = html;
+});
+
+/* 모달 닫기 */
+document.getElementById('info-modal').addEventListener('click', (e)=>{
+  if(e.target.id==='info-modal'){ e.currentTarget.style.display='none'; }
+});
+</script>
+</body>
+</html>

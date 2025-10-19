@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+<title>연금 계산기 + 그래프 (독립 실행형 · KRW)</title>
+<meta name="description" content="초기원금, 연/월 추가납입, 이자율, 납입시점(시작/마감)을 반영하여 미래가치를 계산하고, 월별 잔액과 납입 누계를 그래프로 시각화합니다.">
+<style>
+  :root{
+    --navy:#0b1f3a; --blue:#2a5a8a; --gold:#c5a05b;
+    --card:#fff; --line:#e8ecf3; --muted:#6b7a90; --accent:#5045E5;
+    --line1:#3b82f6; --line2:#10b981; --grid:#e6ebf5;
+  }
+  html,body{margin:0;padding:0;background:#f3f5f9;color:#0b1f3a;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  *,*:before,*:after{box-sizing:border-box}
+  .wrapper{max-width:1100px;margin:22px auto;padding:0 16px}
+  .title-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  /* KFPC 텍스트 로고 */
+  .logo{
+    display:flex;align-items:center;justify-content:center;
+    padding:8px 12px;border-radius:12px;border:1px solid rgba(10,20,40,.08);
+    background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06);
+    font-weight:900; letter-spacing:.5px; font-size:18px;
+    color:transparent; background-image:linear-gradient(90deg,#5045E5,#0ea5e9,#10b981);
+    -webkit-background-clip:text; background-clip:text;
+  }
+  .subtitle{margin:2px 0 0;color:#4a5a73;font-size:14px}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+  @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--card);border:1px solid rgba(10,20,40,.08);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+  .pad{padding:16px}
+  .card h3{margin:0 0 10px;padding-bottom:10px;border-bottom:2px solid var(--line);font-size:18px;color:var(--navy)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .input{flex:1 1 160px;min-width:160px}
+  .input .label{font-weight:800;margin:10px 2px 6px}
+  .input .sub{font-size:12px;color:var(--muted);margin:2px 2px 8px}
+  .field{display:flex;align-items:center;gap:8px;border:1px solid #d7deea;background:#fff;border-radius:10px;padding:10px 12px}
+  .field input,.field select{border:none;outline:none;font-size:15px;width:100%;background:transparent}
+  .hint{font-size:12px;color:#7b879b;white-space:nowrap}
+  .unit{font-weight:900;color:#65728a}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn-block{width:100%}
+  .switch{display:flex;gap:8px}
+  .switch .opt{flex:1;border:1px solid #d7deea;background:#fff;border-radius:10px;padding:10px 12px;text-align:center;cursor:pointer;font-weight:700}
+  .switch .opt.active{background:#eef1f7;border-color:#c8d4ea}
+  .result .k{font-weight:900;color:var(--blue)}
+  .explain{font-size:13px;color:#42526b;line-height:1.55;margin-top:8px}
+  .callout{background:#f7f9ff;border:1px dashed #c8d2ff;border-radius:12px;padding:12px;margin-top:10px;font-size:13px;color:#25314a}
+  .chart-wrap{width:100%;overflow:hidden}
+  .legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:6px 0 2px}
+  .legend .item{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#334155}
+  .legend .swatch{width:14px;height:14px;border-radius:3px}
+  .sw1{background:var(--line1)} .sw2{background:var(--line2)}
+  .muted{color:#6b7b91;font-size:12px}
+  .modal-back{position:fixed;inset:0;background:rgba(7,15,30,.72);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .modal{background:#fff;padding:18px;border-radius:16px;max-width:720px;width:92%;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+  .modal h2{margin:0 0 8px}
+  .modal p{margin:8px 0;color:#33405a;font-size:14px;line-height:1.6}
+  .modal .list{margin:8px 0 0 16px;color:#3a4a64;font-size:14px}
+  .modal .list li{margin:6px 0}
+  .modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+  button,input,select{ -webkit-tap-highlight-color: rgba(0,0,0,0); }
+
+  /* 기간표 테이블 */
+  .table-wrap{margin-top:14px}
+  table.kfpc{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e3e8f2;border-radius:10px;overflow:hidden}
+  .kfpc th,.kfpc td{padding:10px 12px;border-bottom:1px solid #eef2f8;text-align:right;font-size:13px}
+  .kfpc th{background:#f8fafc;color:#0b1f3a;font-weight:800;text-align:center}
+  .kfpc td:first-child,.kfpc th:first-child{text-align:center}
+  .tag{display:inline-block;padding:2px 8px;border:1px solid #d7deea;border-radius:20px;font-size:12px;color:#334155;background:#fff}
+  details summary{cursor:pointer;user-select:none;padding:8px 0;font-weight:800;color:#2a5a8a}
+  /* 하단 고정 푸터 */
+  .footer{
+    margin:28px auto 12px; max-width:1100px; padding:0 16px; color:#6b7a90; font-size:12px;
+    display:flex;align-items:center;justify-content:center; text-align:center;
+  }
+</style>
+</head>
+<body>
+<div id="welcome" class="modal-back" role="dialog" aria-modal="true">
+  <div class="modal" role="document">
+    <h2>연금 계산기 이용 안내</h2>
+    <p>이 계산기는 <b>₩(원화)</b> 기준으로 미래가치(FV)와 <b>월별 잔액 추이 그래프</b>를 제공합니다.</p>
+    <ul class="list">
+      <li>초기 원금 + 연/월 추가 납입 반영</li>
+      <li>연 이자율(%)과 기간(년), <b>납입 시점(선납/후납)</b> 선택</li>
+      <li>금액 입력은 <b>정수</b>, 입력 시 <b>3자리 콤마</b> 자동</li>
+    </ul>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="document.getElementById('welcome').style.display='none'">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+  <div class="title-row">
+    <div class="logo" aria-label="KFPC 텍스트 로고">KFPC</div>
+    <div>
+      <h1 style="margin:0;">연금 계산기 + 그래프</h1>
+      <p class="subtitle">FV = PV(1+r)<sup>n</sup> + 적립식(연/월) 합산 · 월별 잔액/누계 차트</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Inputs -->
+    <div class="card pad">
+      <h3>입력값</h3>
+      <div class="row">
+        <div class="input">
+          <div class="label">시작 돈(초기 원금)</div>
+          <div class="field"><span class="unit">₩</span><input id="starting_principal" inputmode="numeric" placeholder="예: 100,000" /></div>
+          <div class="sub">처음에 넣어두는 금액입니다. (정수, 콤마 자동)</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input">
+          <div class="label">해마다 넣는 금액(연 납입)</div>
+          <div class="field"><span class="unit">₩</span><input id="annual_addition" inputmode="numeric" placeholder="예: 1,000,000" /></div>
+          <div class="sub">1년에 한 번 넣는 돈입니다.</div>
+        </div>
+        <div class="input">
+          <div class="label">매달 넣는 금액(월 납입)</div>
+          <div class="field"><span class="unit">₩</span><input id="monthly_addition" inputmode="numeric" placeholder="예: 500,000" /></div>
+          <div class="sub">매월 넣는 돈입니다.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input">
+          <div class="label">납입 시점</div>
+          <div class="switch" role="tablist" aria-label="납입 시점">
+            <div id="when-beg" class="opt active" role="tab" tabindex="0" aria-selected="true">기간 시작(선납)</div>
+            <div id="when-end" class="opt" role="tab" tabindex="0" aria-selected="false">기간 마감(후납)</div>
+          </div>
+          <div class="sub">선납 = 먼저 넣고 이자 붙임 / 후납 = 이자 붙인 뒤에 넣음</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input">
+          <div class="label">연 이자율(%)</div>
+          <div class="field"><input id="annual_interest" inputmode="decimal" placeholder="예: 5.0"><span class="hint">% 연</span></div>
+          <div class="sub">예상 수익률(세전). 예: 5 → 연 5%</div>
+        </div>
+        <div class="input">
+          <div class="label">기간(년)</div>
+          <div class="field"><input id="years" inputmode="decimal" placeholder="예: 20"><span class="hint">년</span></div>
+          <div class="sub">몇 년 동안 굴릴지 입력하세요.</div>
+        </div>
+      </div>
+      <div style="margin-top:12px" class="row">
+        <button id="run" class="btn primary btn-block">계산하기</button>
+      </div>
+      <div id="warn" class="callout" style="display:none;"></div>
+    </div>
+
+    <!-- Results + Chart -->
+    <div class="card pad">
+      <h3>결과</h3>
+      <div id="result" class="result">
+        <p>좌측 값을 입력하고 <b>계산하기</b>를 누르세요. 모든 금액은 <b>원화 정수</b>로 표시됩니다.</p>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="legend">
+          <div class="item"><span class="swatch sw1"></span>총 잔액(미래가치)</div>
+          <div class="item"><span class="swatch sw2"></span>납입 누계(초기+연+월)</div>
+        </div>
+        <div class="chart-wrap">
+          <svg id="chartSvg" width="100%" height="260" viewBox="0 0 700 260" preserveAspectRatio="none" aria-label="월별 잔액/납입 누계 차트"></svg>
+        </div>
+        <div class="muted">* 가로축: 월, 세로축: 금액(상대 스케일). 실제 값은 아래 기간표에서 확인하세요.</div>
+      </div>
+
+      <!-- 기간별 숫자 표 -->
+      <div id="tableWrap" class="table-wrap">
+        <!-- JS에서 연도별 표 + 월별 상세(details) 생성 -->
+      </div>
+
+      <div class="callout" style="margin-top:12px">
+        팁: 같은 납입이라도 <b>선납(기간 시작)</b>이 <b>후납(기간 마감)</b>보다 복리로 굴러가는 기간이 길어 잔액 곡선이 더 가파릅니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 하단 저작권 고지 (기존 문구가 있었다면 삭제하고 본 문구만 사용) -->
+<div class="footer">
+  Copyright © 2025 KFPC Co., Ltd. All Rights Reserved.
+</div>
+
+<script>
+// ===== Utilities =====
+const digitsOnly = s => (s||'').toString().replace(/[^\d]/g,'');
+const toInt = s => { const v = parseInt(digitsOnly(s), 10); return isNaN(v) ? 0 : v; };
+const fmtKRW = n => Number(Math.round(n)).toLocaleString('ko-KR');
+function attachCommaIntInput(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', () => { el.value = fmtKRW(toInt(el.value)); });
+}
+
+// ===== Switcher =====
+let payAtBeginning = true;
+function bindSwitcher(){
+  const beg = document.getElementById('when-beg');
+  const end = document.getElementById('when-end');
+  function setActive(isBeg){
+    payAtBeginning = isBeg;
+    beg.classList.toggle('active', isBeg);
+    end.classList.toggle('active', !isBeg);
+    beg.setAttribute('aria-selected', isBeg ? 'true' : 'false');
+    end.setAttribute('aria-selected', !isBeg ? 'true' : 'false');
+  }
+  beg.addEventListener('click', ()=>setActive(true));
+  end.addEventListener('click', ()=>setActive(false));
+  beg.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') setActive(true); });
+  end.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') setActive(false); });
+}
+
+// ===== Core Calculation (with monthly simulation for chart) =====
+function simulateSeries(PV0, A_year, A_month, r_annual, t_years, begin){
+  const nM = Math.max(0, Math.round(t_years*12));
+  const rm = Math.pow(1+r_annual, 1/12) - 1;
+
+  let bal = PV0;
+  let contrib = PV0;
+  const seriesBal = [bal];
+  const seriesContrib = [contrib];
+
+  for(let m=1; m<=nM; m++){
+    const isYearStart = (m-1)%12===0; // month 1,13,25,... are each new year start
+    if(begin){
+      // Beginning: contributions first, then interest
+      if(A_year>0 && isYearStart){ bal += A_year; contrib += A_year; }
+      if(A_month>0){ bal += A_month; contrib += A_month; }
+      bal *= (1+rm);
+    }else{
+      // End: interest first, then contributions
+      bal *= (1+rm);
+      if(A_year>0 && isYearStart){ bal += A_year; contrib += A_year; }
+      if(A_month>0){ bal += A_month; contrib += A_month; }
+    }
+    seriesBal.push(bal);
+    seriesContrib.push(contrib);
+  }
+  return {seriesBal, seriesContrib};
+}
+
+// ===== Chart (inline SVG, no libs) =====
+function drawChart(svgId, seriesBal, seriesContrib){
+  const svg = document.getElementById(svgId);
+  const W = 700, H = 260, padL=48, padR=10, padT=12, padB=28;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const n = seriesBal.length;
+  const maxV = Math.max(...seriesBal, ...seriesContrib) || 1;
+  const minV = 0;
+
+  // Grid
+  const grid = document.createElementNS('http://www.w3.org/2000/svg','g');
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const x0 = padL, y0 = padT, x1 = padL + plotW, y1 = padT + plotH;
+  const gridCountY = 4;
+  for(let i=0;i<=gridCountY;i++){
+    const y = y0 + (plotH*i/gridCountY);
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1', x0); l.setAttribute('y1', y);
+    l.setAttribute('x2', x1); l.setAttribute('y2', y);
+    l.setAttribute('stroke', 'var(--grid)'); l.setAttribute('stroke-width','1');
+    grid.appendChild(l);
+  }
+  svg.appendChild(grid);
+
+  function mapX(idx){ return x0 + (plotW * idx / (n-1 || 1)); }
+  function mapY(val){ const t = (val - minV)/(maxV - minV || 1); return y1 - t*plotH; }
+
+  function polyline(series, stroke){
+    let d='';
+    series.forEach((v,i)=>{ d += (i===0?'M':'L') + mapX(i) + ' ' + mapY(v) + ' '; });
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d', d.trim());
+    p.setAttribute('fill','none');
+    p.setAttribute('stroke', stroke);
+    p.setAttribute('stroke-width','2.5');
+    p.setAttribute('stroke-linecap','round');
+    return p;
+  }
+
+  // Draw lines
+  svg.appendChild(polyline(seriesBal, 'var(--line1)'));
+  svg.appendChild(polyline(seriesContrib, 'var(--line2)'));
+
+  // Axes labels (x: months at 0, 1/2, end; y: min/max)
+  function text(x,y,txt,anchor='middle'){
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('fill', '#6b7b91'); t.setAttribute('font-size', '11');
+    t.setAttribute('text-anchor', anchor);
+    t.textContent = txt; return t;
+  }
+  svg.appendChild(text(x0, y1+18, '0개월', 'start'));
+  svg.appendChild(text(x0 + plotW/2, y1+18, Math.round((n-1)/2)+'개월'));
+  svg.appendChild(text(x1, y1+18, (n-1)+'개월', 'end'));
+
+  const fmtShort = (v)=>{
+    if(v>=1e8) return (v/1e8).toFixed(1)+'억';
+    if(v>=1e4) return (v/1e4).toFixed(0)+'만';
+    return Math.round(v).toLocaleString('ko-KR');
+  };
+  svg.appendChild(text(x0-6, y1, fmtShort(minV), 'end'));
+  svg.appendChild(text(x0-6, y0, fmtShort(maxV), 'end'));
+}
+
+// ===== Build Period Tables (연도별 + 월별 상세) =====
+function buildTables(seriesBal, seriesContrib, t_years){
+  const nM = seriesBal.length - 1; // months
+  const years = Math.floor(t_years);
+  const wrap = document.getElementById('tableWrap');
+  wrap.innerHTML = '';
+
+  // 연도별 인덱스(매 12개월 마지막 시점) + 최종 시점
+  const yearRows = [];
+  for(let y=1;y<=years;y++){
+    const idx = Math.min(y*12, nM);
+    yearRows.push(idx);
+  }
+  if(yearRows[yearRows.length-1] !== nM) yearRows.push(nM);
+
+  // 연도별 표 생성
+  let yHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <div class="tag">연도별 요약</div>
+    <div class="muted">잔액 증감(Δ)은 이전 연말 대비 변화입니다.</div>
+  </div>
+  <table class="kfpc"><thead><tr>
+    <th>구간</th><th>월(누적)</th><th>총 잔액</th><th>납입 누계</th><th>이자 누계</th><th>잔액 Δ</th><th>납입 Δ</th>
+  </tr></thead><tbody>`;
+
+  let prevBal = seriesBal[0];
+  let prevContrib = seriesContrib[0];
+  yearRows.forEach((idx,i)=>{
+    const bal = seriesBal[idx];
+    const con = seriesContrib[idx];
+    const interest = Math.max(0, bal - con);
+
+    const dBal = bal - prevBal;
+    const dCon = con - prevContrib;
+
+    const label = (idx===nM && (idx%12)!==0) ? `마지막` : `연말 ${i+1}`;
+    yHTML += `<tr>
+      <td>${label}</td>
+      <td>${idx.toLocaleString('ko-KR')}월</td>
+      <td>₩ ${fmtKRW(bal)}</td>
+      <td>₩ ${fmtKRW(con)}</td>
+      <td>₩ ${fmtKRW(interest)}</td>
+      <td>₩ ${fmtKRW(dBal)}</td>
+      <td>₩ ${fmtKRW(dCon)}</td>
+    </tr>`;
+    prevBal = bal; prevContrib = con;
+  });
+  yHTML += `</tbody></table>`;
+  wrap.insertAdjacentHTML('beforeend', yHTML);
+
+  // 월별 상세(요청 시 열기)
+  let mHTML = `<details style="margin-top:10px"><summary>월별 상세 보기 (열기)</summary>
+  <div style="margin-top:8px"></div>
+  <table class="kfpc"><thead><tr>
+    <th>월</th><th>총 잔액</th><th>납입 누계</th><th>이자 누계</th><th>잔액 Δ</th><th>납입 Δ</th>
+  </tr></thead><tbody>`;
+  for(let m=0;m<=nM;m++){
+    const bal = seriesBal[m];
+    const con = seriesContrib[m];
+    const interest = Math.max(0, bal - con);
+    const dBal = m===0 ? 0 : (seriesBal[m]-seriesBal[m-1]);
+    const dCon = m===0 ? 0 : (seriesContrib[m]-seriesContrib[m-1]);
+    mHTML += `<tr>
+      <td>${m.toLocaleString('ko-KR')}</td>
+      <td>₩ ${fmtKRW(bal)}</td>
+      <td>₩ ${fmtKRW(con)}</td>
+      <td>₩ ${fmtKRW(interest)}</td>
+      <td>₩ ${fmtKRW(dBal)}</td>
+      <td>₩ ${fmtKRW(dCon)}</td>
+    </tr>`;
+  }
+  mHTML += `</tbody></table></details>`;
+  wrap.insertAdjacentHTML('beforeend', mHTML);
+}
+
+// ===== Calculate & Render =====
+function validateAndWarn(PV0,A_year,A_month,ry,t_years){
+  const warn = document.getElementById('warn');
+  const msgs = [];
+  if(t_years<=0){ msgs.push('기간(년)은 0보다 커야 합니다.'); }
+  if(ry<-0.5 || ry>1){ msgs.push('연 이자율은 -50% ~ 100% 범위에서 입력해 주세요.'); }
+  if(PV0===0 && A_year===0 && A_month===0){ msgs.push('초기 원금과 납입 금액 중 하나 이상은 0보다 커야 합니다.'); }
+  if(msgs.length){
+    warn.style.display='block';
+    warn.innerHTML = '입력값을 확인해 주세요:<br>• ' + msgs.join('<br>• ');
+    return false;
+  }
+  warn.style.display='none'; warn.innerHTML='';
+  return true;
+}
+
+function calculate(){
+  const PV0 = toInt(document.getElementById('starting_principal').value);
+  const A_year = toInt(document.getElementById('annual_addition').value);
+  const A_month = toInt(document.getElementById('monthly_addition').value);
+  const r_annual = parseFloat((document.getElementById('annual_interest').value||'0').replace(',', '.'))/100 || 0;
+  const t_years = parseFloat((document.getElementById('years').value||'0').replace(',', '.')) || 0;
+
+  if(!validateAndWarn(PV0,A_year,A_month,r_annual,t_years)) return;
+
+  // Closed-form FV for summary
+  const nY = Math.max(0, Math.floor(t_years));
+  const nM = Math.max(0, Math.round(t_years*12));
+  const ry = r_annual;
+  const rm = Math.pow(1+ry, 1/12) - 1;
+  const FV_principal = PV0 * Math.pow(1+rm, nM);
+
+  let FV_yearly = 0;
+  if (A_year > 0 && nY > 0){
+    const factorY = ry === 0 ? nY : (Math.pow(1+ry, nY) - 1) / ry;
+    FV_yearly = A_year * factorY * (payAtBeginning ? (1+ry) : 1);
+  }
+
+  let FV_monthly = 0;
+  if (A_month > 0 && nM > 0){
+    const factorM = rm === 0 ? nM : (Math.pow(1+rm, nM) - 1) / rm;
+    FV_monthly = A_month * factorM * (payAtBeginning ? (1+rm) : 1);
+  }
+
+  const FV_total = FV_principal + FV_yearly + FV_monthly;
+  const total_contrib = PV0 + A_year * nY + A_month * nM;
+  const interest_earned = Math.max(0, FV_total - total_contrib);
+
+  // 쉬운 설명으로 요약
+  let html = "";
+  html += `<p><b>최종 잔액(미래가치)</b> : <span class="k">₩ ${fmtKRW(FV_total)}</span></p>`;
+  html += `<div class="explain">처음 넣은 돈 <b>₩${fmtKRW(PV0)}</b>이 이자로 불어나고, <b>연 납입</b> <b>₩${fmtKRW(A_year)}</b>, <b>월 납입</b> <b>₩${fmtKRW(A_month)}</b>이(가) <b>${payAtBeginning ? '선납(먼저 넣기)' : '후납(나중에 넣기)'}</b> 기준으로 합쳐졌습니다. 연 이자율은 <b>${(ry*100).toFixed(2)}%</b>, 기간은 <b>${t_years}</b>년입니다.</div>`;
+
+  html += `<p><b>총 내가 넣은 돈</b> : <span class="k">₩ ${fmtKRW(total_contrib)}</span></p>`;
+  html += `<div class="explain">처음 돈 + 연간 ${nY}회 + 월간 ${nM}회 납입의 합계입니다.</div>`;
+
+  html += `<p><b>이자로 불어난 돈(추정)</b> : <span class="k">₩ ${fmtKRW(interest_earned)}</span></p>`;
+  html += `<div class="explain">세금/수수료/변동금리는 반영하지 않았습니다(실제와 차이 가능).</div>`;
+
+  document.getElementById('result').innerHTML = html;
+
+  // Simulate for chart & draw
+  const {seriesBal, seriesContrib} = simulateSeries(PV0, A_year, A_month, ry, t_years, payAtBeginning);
+  drawChart('chartSvg', seriesBal, seriesContrib);
+
+  // Build period tables
+  buildTables(seriesBal, seriesContrib, t_years);
+}
+
+// Bind
+['starting_principal','annual_addition','monthly_addition'].forEach(attachCommaIntInput);
+bindSwitcher();
+document.getElementById('run').addEventListener('click', calculate);
+
+// Defaults
+document.getElementById('starting_principal').value = '100,000';
+document.getElementById('annual_addition').value = '1,000,000';
+document.getElementById('monthly_addition').value = '500,000';
+document.getElementById('annual_interest').value = '5.0';
+document.getElementById('years').value = '20';
+</script>
+</body>
+</html>

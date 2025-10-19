@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>KFPC 복리 계산기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+            color: white;
+            padding: 20px 30px;
+            position: relative;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 42px;
+            font-weight: 700;
+            opacity: 0.98;
+            margin: 0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .input-section, .result-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #5e72e4;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #5e72e4;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .input-help {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #5e72e4;
+            box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
+        }
+
+        select.input-field {
+            cursor: pointer;
+            background: white;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(94, 114, 228, 0.4);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .result-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #5e72e4;
+        }
+
+        .result-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #5e72e4;
+            margin-bottom: 10px;
+        }
+
+        .result-description {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            height: 400px;
+        }
+
+        .detail-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .detail-table th {
+            background: #5e72e4;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .detail-table td {
+            padding: 10px;
+            text-align: right;
+            border-bottom: 1px solid #e1e8ed;
+            font-size: 13px;
+        }
+
+        .detail-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .detail-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .footer {
+            background: #2d3436;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideDown 0.3s;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #5e72e4;
+            margin-bottom: 20px;
+        }
+
+        .modal-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .modal-btn {
+            background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { 
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+
+            .logo {
+                font-size: 22px;
+                letter-spacing: 2px;
+            }
+
+            .subtitle {
+                font-size: 28px;
+                position: static;
+                transform: none;
+                flex: 1;
+                margin-left: 15px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 20px;
+                gap: 20px;
+            }
+
+            .input-section, .result-section {
+                padding: 20px;
+            }
+
+            .section-title {
+                font-size: 18px;
+            }
+
+            .result-value {
+                font-size: 22px;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .modal-content {
+                margin: 10% 5%;
+                padding: 25px;
+            }
+
+            .modal-title {
+                font-size: 22px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 12px 15px;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .logo {
+                font-size: 20px;
+                letter-spacing: 2px;
+                align-self: flex-start;
+            }
+
+            .subtitle {
+                font-size: 22px;
+                width: 100%;
+                text-align: center;
+                margin-left: 0;
+            }
+
+            .detail-table {
+                font-size: 11px;
+            }
+
+            .detail-table th, .detail-table td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 안내 모달 -->
+    <div id="welcomeModal" class="modal" style="display: block;">
+        <div class="modal-content">
+            <h2 class="modal-title">🎯 KFPC 복리 계산기 사용 안내</h2>
+            
+            <p class="modal-text">
+                <strong>복리 계산기란?</strong><br>
+                복리는 원금에 대한 이자뿐만 아니라, 이미 발생한 이자에도 이자가 붙는 방식입니다. 
+                시간이 지날수록 자산이 기하급수적으로 증가하는 '눈덩이 효과'를 경험할 수 있습니다.
+            </p>
+
+            <p class="modal-text">
+                <strong>📝 입력 항목 설명</strong><br>
+                • <strong>초기 투자금액:</strong> 처음 투자하는 원금 (예: 1,000만원)<br>
+                • <strong>연 이자율:</strong> 1년 동안 받는 이자 비율 (예: 5%는 5로 입력)<br>
+                • <strong>투자 기간:</strong> 돈을 맡겨두는 총 년수 (예: 10년)<br>
+                • <strong>복리 계산 주기:</strong> 이자가 원금에 더해지는 빈도<br>
+                  - 월간: 매달 이자가 원금에 추가 (가장 일반적)<br>
+                  - 연간: 1년에 한 번 이자 추가<br>
+                  - 분기: 3개월마다 이자 추가
+            </p>
+
+            <p class="modal-text">
+                <strong>💡 사용 팁</strong><br>
+                • 숫자 입력 시 자동으로 천단위 콤마가 표시됩니다<br>
+                • 계산 버튼을 누르면 상세한 결과와 그래프를 확인할 수 있습니다<br>
+                • 연도별 상세 내역표로 자산 증가 과정을 확인하세요<br>
+                • 모바일에서도 편리하게 사용할 수 있습니다
+            </p>
+
+            <p class="modal-text" style="color: #5e72e4; font-weight: 600;">
+                지금 바로 시작해서 미래의 자산을 계획해보세요!
+            </p>
+
+            <button class="modal-btn" onclick="closeModal()">확인하고 시작하기</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div style="position: absolute; left: 30px; top: 50%; transform: translateY(-50%);">
+                <div class="logo">KFPC</div>
+            </div>
+            <h1 class="subtitle">복리 계산기</h1>
+        </header>
+
+        <div class="main-content">
+            <!-- 입력 섹션 -->
+            <div class="input-section">
+                <h2 class="section-title">💰 투자 정보 입력</h2>
+                
+                <div class="input-group">
+                    <label class="input-label">초기 투자금액 (원금)</label>
+                    <span class="input-help">처음에 투자하는 금액을 입력하세요 (예: 10,000,000원)</span>
+                    <input type="text" id="principal" class="input-field" value="10,000,000" placeholder="예: 10,000,000">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">연 이자율 (%)</label>
+                    <span class="input-help">1년 동안 받을 수 있는 이자 비율 (예: 5%는 5로 입력)</span>
+                    <input type="text" id="rate" class="input-field" value="5" placeholder="예: 5">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">투자 기간 (년)</label>
+                    <span class="input-help">돈을 맡겨둘 총 기간 (예: 10년)</span>
+                    <input type="text" id="years" class="input-field" value="10" placeholder="예: 10">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">복리 계산 주기</label>
+                    <span class="input-help">이자가 원금에 더해지는 빈도를 선택하세요</span>
+                    <select id="compound" class="input-field">
+                        <option value="12">월간 (매달 이자 지급 - 추천)</option>
+                        <option value="1">연간 (1년에 한 번)</option>
+                        <option value="4">분기별 (3개월마다)</option>
+                        <option value="2">반기별 (6개월마다)</option>
+                        <option value="365">일간 (매일)</option>
+                    </select>
+                </div>
+
+                <button class="calculate-btn" onclick="calculateCompound()">📊 계산하기</button>
+            </div>
+
+            <!-- 결과 섹션 -->
+            <div class="result-section">
+                <h2 class="section-title">📈 계산 결과</h2>
+                <div id="results"></div>
+                <div id="chartContainer" style="display:none;">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 상세 내역 -->
+        <div id="detailSection" style="padding: 40px; display:none;">
+            <h2 class="section-title" style="text-align:center; font-size: 24px;">📋 연도별 상세 내역</h2>
+            <div id="detailTable"></div>
+        </div>
+
+        <footer class="footer">
+            Copyright © 2025 KFPC Co., Ltd. All Rights Reserved.
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let chartInstance = null;
+
+        // 모달 닫기
+        function closeModal() {
+            document.getElementById('welcomeModal').style.display = 'none';
+        }
+
+        // 숫자 포맷팅 (콤마 추가)
+        function formatNumber(num) {
+            return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // 콤마 제거
+        function unformatNumber(str) {
+            return str.replace(/,/g, '');
+        }
+
+        // 실시간 콤마 추가
+        document.querySelectorAll('.input-field[type="text"]').forEach(input => {
+            if(input.id !== 'rate') {
+                input.addEventListener('input', function(e) {
+                    let value = unformatNumber(e.target.value);
+                    if(value && !isNaN(value)) {
+                        e.target.value = formatNumber(value);
+                    }
+                });
+            }
+        });
+
+        // 복리 계산
+        function calculateCompound() {
+            // 입력값 가져오기
+            const principalInput = document.getElementById('principal').value;
+            const rateInput = document.getElementById('rate').value;
+            const yearsInput = document.getElementById('years').value;
+            const compoundInput = document.getElementById('compound').value;
+
+            const P = parseFloat(unformatNumber(principalInput));
+            const r = parseFloat(rateInput) / 100;
+            const t = parseInt(yearsInput);
+            const n = parseInt(compoundInput);
+
+            // 유효성 검사
+            if(isNaN(P) || isNaN(r) || isNaN(t) || P <= 0 || r < 0 || t <= 0) {
+                alert('올바른 값을 입력해주세요.');
+                return;
+            }
+
+            // 복리 공식: A = P(1 + r/n)^(nt)
+            const A = P * Math.pow((1 + r/n), n*t);
+            const totalInterest = A - P;
+
+            // 연도별 데이터 계산
+            const yearlyData = [];
+            for(let year = 0; year <= t; year++) {
+                const amount = P * Math.pow((1 + r/n), n*year);
+                const interest = amount - P;
+                yearlyData.push({
+                    year: year,
+                    amount: amount,
+                    interest: interest,
+                    principal: P
+                });
+            }
+
+            // 결과 표시
+            displayResults(P, A, totalInterest, r, t, n);
+            
+            // 그래프 표시
+            displayChart(yearlyData);
+            
+            // 상세 테이블 표시
+            displayDetailTable(yearlyData);
+        }
+
+        // 결과 표시
+        function displayResults(principal, finalAmount, totalInterest, rate, years, compound) {
+            const resultsDiv = document.getElementById('results');
+            
+            const compoundText = {
+                '12': '월간',
+                '1': '연간',
+                '4': '분기별',
+                '2': '반기별',
+                '365': '일간'
+            }[compound];
+
+            resultsDiv.innerHTML = `
+                <div class="result-box">
+                    <div class="result-label">최종 받을 금액</div>
+                    <div class="result-value">₩${formatNumber(finalAmount)}</div>
+                    <div class="result-description">
+                        ${years}년 후 받게 될 총 금액입니다. 원금 ${formatNumber(principal)}원에 
+                        이자 ${formatNumber(totalInterest)}원이 더해진 금액입니다.
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-label">총 이자 수익</div>
+                    <div class="result-value">₩${formatNumber(totalInterest)}</div>
+                    <div class="result-description">
+                        ${years}년 동안 복리 효과로 벌어들인 순수한 이자 수익입니다. 
+                        원금 대비 ${((totalInterest/principal)*100).toFixed(1)}%의 수익률을 달성했습니다.
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-label">투자 수익률</div>
+                    <div class="result-value">${((totalInterest/principal)*100).toFixed(1)}%</div>
+                    <div class="result-description">
+                        연 ${(rate*100).toFixed(1)}% 이자율로 ${compoundText} 복리 계산했을 때의 
+                        최종 수익률입니다. ${years}년 동안 ${formatNumber(principal)}원이 
+                        ${formatNumber(finalAmount)}원으로 성장했습니다.
+                    </div>
+                </div>
+
+                <div class="result-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                    <div class="result-label" style="color: rgba(255,255,255,0.9);">연평균 수익률</div>
+                    <div class="result-value" style="color: white;">${(rate*100).toFixed(2)}%</div>
+                    <div class="result-description" style="color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.1);">
+                        매년 평균적으로 원금 대비 ${(rate*100).toFixed(2)}%의 수익이 발생합니다. 
+                        복리 효과로 인해 시간이 지날수록 실제 받는 이자 금액은 점점 증가합니다.
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('chartContainer').style.display = 'block';
+        }
+
+        // 그래프 표시
+        function displayChart(yearlyData) {
+            const ctx = document.getElementById('growthChart');
+            
+            if(chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const labels = yearlyData.map(d => d.year + '년');
+            const amounts = yearlyData.map(d => d.amount);
+            const principals = yearlyData.map(d => d.principal);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '총 자산',
+                        data: amounts,
+                        borderColor: '#5e72e4',
+                        backgroundColor: 'rgba(94, 114, 228, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: '원금',
+                        data: principals,
+                        borderColor: '#f5365c',
+                        backgroundColor: 'rgba(245, 54, 92, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += '₩' + formatNumber(context.parsed.y);
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₩' + formatNumber(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 상세 테이블 표시
+        function displayDetailTable(yearlyData) {
+            const detailDiv = document.getElementById('detailTable');
+            const detailSection = document.getElementById('detailSection');
+            
+            let tableHTML = '<table class="detail-table"><thead><tr>';
+            tableHTML += '<th>연차</th><th>원금</th><th>누적 이자</th><th>총 자산</th>';
+            tableHTML += '</tr></thead><tbody>';
+
+            yearlyData.forEach(data => {
+                tableHTML += '<tr>';
+                tableHTML += `<td style="text-align:center; font-weight:600;">${data.year}년</td>`;
+                tableHTML += `<td>₩${formatNumber(data.principal)}</td>`;
+                tableHTML += `<td style="color:#5e72e4; font-weight:600;">₩${formatNumber(data.interest)}</td>`;
+                tableHTML += `<td style="color:#10b981; font-weight:700;">₩${formatNumber(data.amount)}</td>`;
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            detailDiv.innerHTML = tableHTML;
+            detailSection.style.display = 'block';
+        }
+
+        // 페이지 로드 시 초기 계산 (선택사항)
+        // window.addEventListener('load', calculateCompound);
+    </script>
+</body>
+</html>

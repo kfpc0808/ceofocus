@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+<title>KFPC 은퇴 계산기 (독립 실행형 · KRW)</title>
+<meta name="description" content="은퇴 준비에 필요한 자금, 매월 저축액, 가능한 인출액, 자금 지속 기간을 계산합니다. (KRW 기준)">
+<style>
+  /* ===== 기본 리셋 & 폰트 ===== */
+  html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0b1f3a;background:#f3f5f9}
+  *,*:before,*:after{box-sizing:border-box}
+  :root{
+    --navy:#0b1f3a;
+    --blue:#2a5a8a;
+    --gold:#c5a05b;
+    --card:#ffffff;
+    --line:#e8ecf3;
+    --muted:#6b7a90;
+    --accent:#5045E5;
+  }
+
+  /* ===== 레이아웃 ===== */
+  .wrapper{max-width:1100px;margin:24px auto;padding:0 16px}
+  
+  /* KFPC 로고 스타일 */
+  .header{display:flex;align-items:center;gap:20px;margin-bottom:20px;padding:15px 0;position:relative}
+  .logo-kfpc{
+    font-size:36px;
+    font-weight:900;
+    letter-spacing:4px;
+    background:linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    text-shadow:0 2px 10px rgba(94,114,228,0.3);
+  }
+  .title-area{flex:1}
+  .title-area h1{margin:0;font-size:28px;color:var(--navy)}
+  .subtitle{margin:4px 0 0;color:#4a5a73;font-size:14px;line-height:1.5}
+
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+  @media (max-width: 900px){
+    .grid{grid-template-columns:1fr}
+    .logo-kfpc{font-size:28px;letter-spacing:3px}
+    .title-area h1{font-size:24px}
+  }
+  @media (max-width: 480px){
+    .logo-kfpc{font-size:24px;letter-spacing:2px}
+    .title-area h1{font-size:20px}
+    .subtitle{font-size:13px}
+  }
+
+  /* ===== 카드 ===== */
+  .card{background:var(--card);border:1px solid rgba(10,20,40,.08);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+  .card.pad{padding:16px}
+  .card h3{margin:0 0 10px;padding-bottom:10px;border-bottom:2px solid var(--line);font-size:18px;color:var(--navy)}
+
+  /* ===== 입력 ===== */
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .input{flex:1 1 160px;min-width:160px}
+  .input .label{font-weight:700;margin:10px 2px 6px;color:var(--navy);font-size:14px}
+  .input .sub{font-size:12px;color:var(--muted);margin:2px 2px 8px;line-height:1.4}
+  .field{display:flex;align-items:center;gap:8px;border:1px solid #d7deea;background:#fff;border-radius:10px;padding:10px 12px;transition:all 0.2s}
+  .field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(80,69,229,0.1)}
+  .field input,.field select{border:none;outline:none;font-size:15px;width:100%;background:transparent}
+  .hint{font-size:12px;color:#7b879b;white-space:nowrap}
+  .unit{font-weight:800;color:#65728a}
+  .tab-select{width:100%;padding:10px 12px;border:1px solid #d7deea;border-radius:10px;background:#fff;font-size:14px;cursor:pointer}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;transition:all 0.2s}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.primary:hover{background:#4038d4;transform:translateY(-1px);box-shadow:0 4px 12px rgba(80,69,229,0.3)}
+  .btn.ghost{background:#eef1f7;color:#22324b}
+  .btn-block{width:100%}
+
+  /* ===== 결과 ===== */
+  .result{padding:4px 0}
+  .result .k{font-weight:800;color:var(--blue);font-size:18px}
+  .explain{font-size:13px;color:#4a5a73;line-height:1.6;margin-top:8px;padding:10px;background:#f8f9fc;border-radius:8px}
+  .callout{background:#f7f9ff;border:1px dashed #c8d2ff;border-radius:12px;padding:12px;margin-top:10px;font-size:13px;color:#25314a;line-height:1.5}
+
+  /* 그래프 컨테이너 */
+  .chart-container{margin-top:20px;padding:15px;background:#fff;border-radius:12px;border:1px solid #e8ecf3}
+  .chart-container canvas{max-height:350px}
+
+  /* 연도별 테이블 */
+  .year-table{width:100%;margin-top:15px;border-collapse:collapse;font-size:13px}
+  .year-table th{background:linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);color:#fff;padding:10px;text-align:center;font-weight:700}
+  .year-table td{padding:8px;text-align:right;border-bottom:1px solid #e8ecf3}
+  .year-table tr:hover{background:#f8f9fc}
+  .year-table tr:last-child td{border-bottom:none}
+
+  /* ===== 모달 ===== */
+  .modal-back{position:fixed;inset:0;background:rgba(7,15,30,.72);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .modal{background:#fff;padding:18px;border-radius:16px;max-width:720px;width:92%;box-shadow:0 12px 40px rgba(0,0,0,.25);max-height:85vh;overflow-y:auto}
+  .modal h2{margin:0 0 8px;color:var(--navy)}
+  .modal p{margin:8px 0;color:#33405a;font-size:14px;line-height:1.6}
+  .modal .list{margin:8px 0 0 16px;color:#3a4a64;font-size:14px}
+  .modal .list li{margin:6px 0}
+  .modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+
+  /* 푸터 */
+  .footer{text-align:center;padding:30px 16px;color:#6b7a90;font-size:13px;border-top:1px solid #e8ecf3;margin-top:40px}
+
+  /* iOS 클릭 강조 제거 */
+  button,input,select{ -webkit-tap-highlight-color: rgba(0,0,0,0); }
+</style>
+</head>
+<body>
+<div id="welcome" class="modal-back" role="dialog" aria-modal="true">
+  <div class="modal" role="document">
+    <h2>💰 KFPC 은퇴 계산기 사용 안내</h2>
+    <p><strong>이 계산기는 원화 기준으로 다음 네 가지를 도와드립니다.</strong></p>
+    <ul class="list">
+      <li><b>① 은퇴에 필요한 총 자금</b> — 생활비·보조소득·수익률·인플레이션을 반영하여 은퇴 시점에 필요한 금액을 계산합니다</li>
+      <li><b>② 매월 얼마를 저축해야 하나</b> — 목표 시점(은퇴연령)까지 필요한 월 저축액을 알려드립니다</li>
+      <li><b>③ 매월 얼마나 인출할 수 있나</b> — 보유 자산으로 가능한 안전 인출액을 계산합니다</li>
+      <li><b>④ 내 자금이 얼마나 지속되나</b> — 현재 자산과 인출액 기준 지속 가능 기간을 알려드립니다</li>
+    </ul>
+    <p><strong>💡 사용 팁</strong></p>
+    <ul class="list">
+      <li>모든 금액은 <b>₩ 원화</b> 기준입니다</li>
+      <li>숫자를 입력하면 <b>자동으로 3자리 콤마</b>가 표시됩니다</li>
+      <li>계산 결과에는 <b>연도별 그래프와 상세 표</b>가 함께 제공됩니다</li>
+      <li>각 항목마다 쉬운 설명이 있으니 참고하세요</li>
+    </ul>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="document.getElementById('welcome').style.display='none'">확인하고 시작하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+  <div class="header">
+    <div class="logo-kfpc">KFPC</div>
+    <div class="title-area">
+      <h1>은퇴 계산기</h1>
+      <p class="subtitle">미래 자산 계획을 위한 종합 은퇴 시뮬레이터 (원화 기준 · 실시간 계산)</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 좌측: 입력 -->
+    <div class="card pad">
+      <h3>📝 정보 입력</h3>
+
+      <div class="input">
+        <div class="label">계산 모드 선택</div>
+        <select id="mode" class="tab-select" aria-label="계산 모드">
+          <option value="need">① 은퇴에 필요한 총 금액 계산</option>
+          <option value="save">② 매월 저축해야 할 금액 계산</option>
+          <option value="withdraw">③ 매월 인출 가능한 금액 계산</option>
+          <option value="duration">④ 자금 지속 가능 기간 계산</option>
+        </select>
+        <div class="sub">💡 원하시는 계산 유형을 선택하세요</div>
+      </div>
+
+      <!-- 공통: 나이 -->
+      <div class="row">
+        <div class="input">
+          <div class="label">현재 나이</div>
+          <div class="field"><input id="current_age" inputmode="numeric" placeholder="예: 35"><span class="hint">세</span></div>
+          <div class="sub">지금 만 나이를 입력하세요</div>
+        </div>
+        <div class="input">
+          <div class="label">은퇴 예정 나이</div>
+          <div class="field"><input id="retire_age" inputmode="numeric" placeholder="예: 65"><span class="hint">세</span></div>
+          <div class="sub">은퇴하실 나이를 입력하세요</div>
+        </div>
+        <div class="input">
+          <div class="label">예상 수명</div>
+          <div class="field"><input id="life_exp" inputmode="numeric" placeholder="예: 85"><span class="hint">세</span></div>
+          <div class="sub">몇 세까지 생활비가 필요한지</div>
+        </div>
+      </div>
+
+      <!-- 수익률/물가 -->
+      <div class="row">
+        <div class="input">
+          <div class="label">연평균 투자 수익률</div>
+          <div class="field"><input id="return_pct" inputmode="decimal" placeholder="예: 6"><span class="hint">%</span></div>
+          <div class="sub">투자로 얻을 수 있는 연 수익률 (보수적 권장)</div>
+        </div>
+        <div class="input">
+          <div class="label">연평균 물가상승률</div>
+          <div class="field"><input id="inflation_pct" inputmode="decimal" placeholder="예: 3"><span class="hint">%</span></div>
+          <div class="sub">매년 물가가 오르는 비율</div>
+        </div>
+      </div>
+
+      <!-- 모드별 추가 입력 -->
+      <div id="block-need" class="mode-block">
+        <h3 style="margin-top:18px">💰 필요 자금 계산 정보</h3>
+        <div class="row">
+          <div class="input">
+            <div class="label">현재 연간 소득</div>
+            <div class="field"><span class="unit">₩</span><input id="current_income" placeholder="예: 70,000,000" inputmode="numeric"></div>
+            <div class="sub">현재 1년 동안 버는 총 소득</div>
+          </div>
+          <div class="input">
+            <div class="label">은퇴 후 필요 생활비 비율</div>
+            <div class="field"><input id="replace_pct" placeholder="예: 70" inputmode="decimal"><span class="hint">%</span></div>
+            <div class="sub">은퇴 후 현재 소득의 몇 %가 필요한지</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input">
+            <div class="label">매월 받을 국민연금 등</div>
+            <div class="field"><span class="unit">₩</span><input id="ss_month" placeholder="예: 1,200,000" inputmode="numeric"><span class="hint">/월</span></div>
+            <div class="sub">국민연금·임대료 등 매월 받는 돈</div>
+          </div>
+          <div class="input">
+            <div class="label">기타 월 수입</div>
+            <div class="field"><span class="unit">₩</span><input id="other_month" placeholder="예: 300,000" inputmode="numeric"><span class="hint">/월</span></div>
+            <div class="sub">부업·이자 등 추가 수입</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input">
+            <div class="label">현재 모아둔 은퇴자금</div>
+            <div class="field"><span class="unit">₩</span><input id="current_saving" placeholder="예: 0" inputmode="numeric"></div>
+            <div class="sub">지금까지 모은 총 금액</div>
+          </div>
+          <div class="input">
+            <div class="label">앞으로 저축할 비율</div>
+            <div class="field"><input id="save_rate_pct" placeholder="예: 10" inputmode="decimal"><span class="hint">%</span></div>
+            <div class="sub">매년 소득의 몇 %를 저축할지</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="block-save" class="mode-block" style="display:none">
+        <h3 style="margin-top:18px">💵 저축액 산정 정보</h3>
+        <div class="row">
+          <div class="input">
+            <div class="label">은퇴 시 목표 금액</div>
+            <div class="field"><span class="unit">₩</span><input id="goal_amount" placeholder="예: 800,000,000" inputmode="numeric"></div>
+            <div class="sub">은퇴할 때 갖고 싶은 총 금액</div>
+          </div>
+          <div class="input">
+            <div class="label">현재 모아둔 은퇴자금</div>
+            <div class="field"><span class="unit">₩</span><input id="current_saving2" placeholder="예: 30,000,000" inputmode="numeric"></div>
+            <div class="sub">지금까지 모은 금액</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="block-withdraw" class="mode-block" style="display:none">
+        <h3 style="margin-top:18px">💸 인출액 계산 정보</h3>
+        <div class="row">
+          <div class="input">
+            <div class="label">현재 보유한 은퇴자금</div>
+            <div class="field"><span class="unit">₩</span><input id="balance_now" placeholder="예: 800,000,000" inputmode="numeric"></div>
+            <div class="sub">지금 갖고 있는 총 자산</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="block-duration" class="mode-block" style="display:none">
+        <h3 style="margin-top:18px">⏱️ 지속 기간 계산 정보</h3>
+        <div class="row">
+          <div class="input">
+            <div class="label">현재 보유한 은퇴자금</div>
+            <div class="field"><span class="unit">₩</span><input id="balance_now2" placeholder="예: 600,000,000" inputmode="numeric"></div>
+            <div class="sub">지금 갖고 있는 총 자산</div>
+          </div>
+          <div class="input">
+            <div class="label">매월 사용할 금액</div>
+            <div class="field"><span class="unit">₩</span><input id="withdraw_month" placeholder="예: 2,000,000" inputmode="numeric"><span class="hint">/월</span></div>
+            <div class="sub">한 달에 쓸 생활비</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="row">
+        <button id="run" class="btn primary btn-block">📊 계산하기</button>
+      </div>
+    </div>
+
+    <!-- 우측: 결과 -->
+    <div class="card pad">
+      <h3>📈 계산 결과</h3>
+      <div id="result" class="result">
+        <p>좌측에 값을 입력하고 <b>계산하기</b>를 눌러주세요. 모든 결과에는 쉬운 설명과 함께 <b>그래프</b>와 <b>연도별 상세표</b>가 제공됩니다.</p>
+      </div>
+      <div class="callout">
+        💡 <b>실질수익률 (= 명목수익률 − 인플레이션)</b>이 낮을수록 필요한 자금은 커지고,
+        동일 자금으로 가능한 인출액/지속기간은 줄어듭니다. 보수적으로 계산하시는 것을 권장합니다.
+      </div>
+      <div id="chartArea"></div>
+      <div id="tableArea"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Copyright © 2025 KFPC Co., Ltd. All Rights Reserved.
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/* ===== 유틸: 숫자 포맷 ===== */
+const onlyDigits = s => (s||'').toString().replace(/[^\d.-]/g,'');
+const toNumber = s => {
+  const v = parseFloat(onlyDigits(s).replace(/,/g,''));
+  return isNaN(v) ? 0 : v;
+};
+const fmtKRW = n => {
+  const sign = n < 0 ? '-' : '';
+  const v = Math.abs(n);
+  return sign + v.toLocaleString('ko-KR');
+};
+function attachCommaInput(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', e=>{
+    const cursor = el.selectionStart;
+    const raw = onlyDigits(el.value);
+    const parts = raw.split('.');
+    let int = parts[0].replace(/^0+(?=\d)/,'');
+    if(int==='') int='0';
+    const dec = parts[1];
+    let out = parseInt(int,10).toLocaleString('ko-KR');
+    if(raw.includes('.') && dec!==undefined) out += '.'+dec;
+    el.value = out === 'NaN' ? '' : out;
+  });
+}
+
+/* ===== 모드 전환 ===== */
+const modeEl = document.getElementById('mode');
+const blocks = {
+  need: document.getElementById('block-need'),
+  save: document.getElementById('block-save'),
+  withdraw: document.getElementById('block-withdraw'),
+  duration: document.getElementById('block-duration')
+};
+function switchMode(){
+  const m = modeEl.value;
+  Object.keys(blocks).forEach(k=>blocks[k].style.display = (k===m?'block':'none'));
+}
+modeEl.addEventListener('change', switchMode);
+
+/* ===== 입력 콤마 적용 ===== */
+['current_income','ss_month','other_month','current_saving','goal_amount','current_saving2','balance_now','balance_now2','withdraw_month']
+.forEach(attachCommaInput);
+
+/* ===== 그래프 변수 ===== */
+let chartInstance = null;
+
+/* ===== 계산 로직 ===== */
+function calc(){
+  const mode = modeEl.value;
+
+  const age = toNumber(document.getElementById('current_age').value);
+  const retire = toNumber(document.getElementById('retire_age').value);
+  const life = toNumber(document.getElementById('life_exp').value);
+  const r_nom = toNumber(document.getElementById('return_pct').value)/100;
+  const i_nom = toNumber(document.getElementById('inflation_pct').value)/100;
+
+  const ny = Math.max(0, retire - age);
+  const nd = Math.max(0, life - retire);
+  const r_real_y = (1+r_nom)/(1+i_nom) - 1;
+  const r_real_m = Math.pow(1+r_real_y, 1/12) - 1;
+
+  let html = '';
+  let chartData = null;
+  let tableData = null;
+
+  if(mode==='need'){
+    const income = toNumber(document.getElementById('current_income').value);
+    const replacePct = toNumber(document.getElementById('replace_pct').value)/100;
+    const ss = toNumber(document.getElementById('ss_month').value);
+    const other = toNumber(document.getElementById('other_month').value);
+    const cur = toNumber(document.getElementById('current_saving').value);
+    const saveRate = toNumber(document.getElementById('save_rate_pct').value)/100;
+
+    const needMonthReal = Math.max(0, (income*replacePct)/12 - (ss + other));
+    const N = Math.max(1, Math.round(nd*12));
+    const r = r_real_m;
+    const annuityPV = r === 0 ? needMonthReal * N : needMonthReal * (1 - Math.pow(1+r, -N)) / r;
+    const needAtRetire = annuityPV;
+
+    const Y = Math.max(0, Math.round(ny*12));
+    const saveMonth = (income * saveRate) / 12;
+    const grow = r_real_m;
+    const curFV = cur * Math.pow(1+grow, Y);
+    const saveFV = grow === 0 ? saveMonth * Y : saveMonth * (Math.pow(1+grow, Y)-1)/grow;
+    const gap = Math.max(0, needAtRetire - (curFV + saveFV));
+
+    html += `<p><b>💰 은퇴에 필요한 총 자금 (은퇴 시점·실질가치)</b><br><span class="k">₩ ${fmtKRW(needAtRetire.toFixed(0))}</span></p>`;
+    html += `<div class="explain">은퇴 후 <b>${nd}년</b> 동안 매월 실질 <b>₩${fmtKRW(needMonthReal.toFixed(0))}</b>이 필요하다고 가정했을 때의 금액입니다. (실질수익률: ${(r_real_y*100).toFixed(2)}%/년)</div>`;
+    html += `<p><b>📊 현재→은퇴까지 예상 누적 자금</b><br><span class="k">₩ ${fmtKRW((curFV+saveFV).toFixed(0))}</span></p>`;
+    html += `<div class="explain">현재 자금 성장분 <b>₩${fmtKRW(curFV.toFixed(0))}</b> + 월 저축 <b>₩${fmtKRW(saveMonth.toFixed(0))}</b>의 누적 미래가치 <b>₩${fmtKRW(saveFV.toFixed(0))}</b>의 합입니다.</div>`;
+    html += `<p><b>⚠️ 추가로 필요한 부족액</b><br><span class="k" style="color:#e74c3c">₩ ${fmtKRW(gap.toFixed(0))}</span></p>`;
+    html += `<div class="explain">부족액을 줄이려면 <b>저축률 상향</b>, <b>수익률 개선</b>, <b>은퇴시기 조정</b>, <b>필요 생활비 점검</b> 등을 고려하세요.</div>`;
+
+    // 그래프 데이터
+    chartData = generateNeedChart(age, retire, life, cur, saveMonth, grow, needAtRetire, r_real_m);
+    tableData = generateNeedTable(age, retire, life, cur, saveMonth, grow, needAtRetire, r_real_m, needMonthReal);
+  }
+
+  if(mode==='save'){
+    const goal = toNumber(document.getElementById('goal_amount').value);
+    const cur = toNumber(document.getElementById('current_saving2').value);
+
+    const Y = Math.max(0, Math.round(ny*12));
+    const r = r_real_m;
+    const curFV = cur * Math.pow(1+r, Y);
+    const needFV = Math.max(0, goal - curFV);
+    const pmt = (r===0) ? (needFV / Math.max(1,Y)) : (needFV * r / (Math.pow(1+r,Y)-1));
+
+    html += `<p><b>💵 목표 달성을 위한 월 저축액</b><br><span class="k">₩ ${fmtKRW(pmt.toFixed(0))}</span></p>`;
+    html += `<div class="explain">현재 자금은 은퇴까지 <b>₩${fmtKRW(curFV.toFixed(0))}</b>로 성장하고, 부족한 <b>₩${fmtKRW(needFV.toFixed(0))}</b>를 <b>${ny}년</b> 동안 매월 균등 저축한다고 가정했습니다.</div>`;
+
+    chartData = generateSaveChart(age, retire, cur, pmt, r_real_m);
+    tableData = generateSaveTable(age, retire, cur, pmt, r_real_m);
+  }
+
+  if(mode==='withdraw'){
+    const bal = toNumber(document.getElementById('balance_now').value);
+    const N = Math.max(1, Math.round(nd*12));
+    const r = r_real_m;
+    const pmt = (r===0) ? (bal / N) : (bal * r / (1 - Math.pow(1+r,-N)));
+
+    html += `<p><b>💸 매월 인출 가능한 금액 (실질가치)</b><br><span class="k">₩ ${fmtKRW(pmt.toFixed(0))}</span></p>`;
+    html += `<div class="explain">은퇴 후 <b>${nd}년</b> 간 매월 같은 실질가치로 인출한다고 가정했습니다. (실질수익률: ${(r_real_y*100).toFixed(2)}%/년)</div>`;
+
+    chartData = generateWithdrawChart(retire, life, bal, pmt, r_real_m);
+    tableData = generateWithdrawTable(retire, life, bal, pmt, r_real_m);
+  }
+
+  if(mode==='duration'){
+    const bal = toNumber(document.getElementById('balance_now2').value);
+    const pmt = toNumber(document.getElementById('withdraw_month').value);
+    const r = r_real_m;
+    let N;
+    if(r===0){
+      N = bal / Math.max(1,pmt);
+    }else{
+      if(pmt <= bal*r){
+        html = `<p><b>♾️ 자금이 이론상 소진되지 않습니다.</b></p><div class="explain">월 인출액이 실질 수익으로 보전되는 범위 내(<b>PMT ≤ r×잔액</b>)라면 자금은 소진되지 않고 유지/성장할 수 있습니다.</div>`;
+        document.getElementById('result').innerHTML = html;
+        document.getElementById('chartArea').innerHTML = '';
+        document.getElementById('tableArea').innerHTML = '';
+        return;
+      }else{
+        N = Math.log(pmt/(pmt - r*bal))/Math.log(1+r);
+      }
+    }
+    const years = N/12;
+    html += `<p><b>⏱️ 예상 지속 가능 기간</b><br><span class="k">${years.toFixed(1)} 년</span> (약 ${Math.floor(N)} 개월)</p>`;
+    html += `<div class="explain">현재 자금 <b>₩${fmtKRW(bal.toFixed(0))}</b>에서 월 <b>₩${fmtKRW(pmt.toFixed(0))}</b>를 인출할 때의 <b>실질 기준</b> 지속 기간입니다.</div>`;
+
+    chartData = generateDurationChart(age, bal, pmt, r_real_m, N);
+    tableData = generateDurationTable(age, bal, pmt, r_real_m, N);
+  }
+
+  document.getElementById('result').innerHTML = html;
+  
+  if(chartData) drawChart(chartData);
+  if(tableData) drawTable(tableData);
+}
+
+/* ===== 그래프 생성 함수들 ===== */
+function generateNeedChart(age, retire, life, cur, saveMonth, grow, needAtRetire, withdrawRate){
+  const labels = [];
+  const assets = [];
+  
+  // 은퇴 전: 저축 기간
+  for(let y = age; y <= retire; y++){
+    const months = (y - age) * 12;
+    const curGrow = cur * Math.pow(1+grow, months);
+    const saveGrow = grow === 0 ? saveMonth * months : saveMonth * (Math.pow(1+grow, months)-1)/grow;
+    labels.push(y + '세');
+    assets.push(curGrow + saveGrow);
+  }
+  
+  // 은퇴 후: 인출 기간
+  let balance = needAtRetire;
+  for(let y = retire + 1; y <= life; y++){
+    const months = (y - retire) * 12;
+    const monthlyWithdraw = withdrawRate === 0 ? balance / ((life-retire)*12) : balance * withdrawRate / (1 - Math.pow(1+withdrawRate, -(life-retire)*12));
+    // 간단 근사: 매년 12개월치 인출
+    balance = balance * Math.pow(1+withdrawRate, 12) - monthlyWithdraw * 12;
+    labels.push(y + '세');
+    assets.push(Math.max(0, balance));
+  }
+  
+  return {labels, datasets: [{label: '예상 자산', data: assets, borderColor: '#5e72e4', backgroundColor: 'rgba(94,114,228,0.1)', fill: true, tension: 0.3}]};
+}
+
+function generateNeedTable(age, retire, life, cur, saveMonth, grow, needAtRetire, withdrawRate, needMonth){
+  const rows = [];
+  
+  // 저축 기간
+  for(let y = age; y <= retire; y += 5){
+    const months = (y - age) * 12;
+    const curGrow = cur * Math.pow(1+grow, months);
+    const saveGrow = grow === 0 ? saveMonth * months : saveMonth * (Math.pow(1+grow, months)-1)/grow;
+    rows.push({year: y+'세', balance: curGrow + saveGrow, flow: '+₩'+fmtKRW(saveMonth.toFixed(0))});
+  }
+  
+  // 은퇴 시점
+  rows.push({year: retire+'세 (은퇴)', balance: needAtRetire, flow: '은퇴'});
+  
+  // 인출 기간
+  let balance = needAtRetire;
+  for(let y = retire + 5; y <= life; y += 5){
+    const months = (y - retire) * 12;
+    const monthlyWithdraw = withdrawRate === 0 ? balance / ((life-retire)*12) : balance * withdrawRate / (1 - Math.pow(1+withdrawRate, -(life-retire)*12));
+    balance = balance * Math.pow(1+withdrawRate, 12) - monthlyWithdraw * 12;
+    rows.push({year: y+'세', balance: Math.max(0, balance), flow: '-₩'+fmtKRW(needMonth.toFixed(0))});
+  }
+  
+  return rows;
+}
+
+function generateSaveChart(age, retire, cur, pmt, grow){
+  const labels = [];
+  const assets = [];
+  
+  for(let y = age; y <= retire; y++){
+    const months = (y - age) * 12;
+    const curGrow = cur * Math.pow(1+grow, months);
+    const saveGrow = grow === 0 ? pmt * months : pmt * (Math.pow(1+grow, months)-1)/grow;
+    labels.push(y + '세');
+    assets.push(curGrow + saveGrow);
+  }
+  
+  return {labels, datasets: [{label: '예상 자산', data: assets, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3}]};
+}
+
+function generateSaveTable(age, retire, cur, pmt, grow){
+  const rows = [];
+  for(let y = age; y <= retire; y += 5){
+    const months = (y - age) * 12;
+    const curGrow = cur * Math.pow(1+grow, months);
+    const saveGrow = grow === 0 ? pmt * months : pmt * (Math.pow(1+grow, months)-1)/grow;
+    rows.push({year: y+'세', balance: curGrow + saveGrow, flow: '+₩'+fmtKRW(pmt.toFixed(0))});
+  }
+  return rows;
+}
+
+function generateWithdrawChart(retire, life, bal, pmt, r){
+  const labels = [];
+  const assets = [];
+  
+  let balance = bal;
+  for(let y = retire; y <= life; y++){
+    labels.push(y + '세');
+    assets.push(Math.max(0, balance));
+    balance = balance * Math.pow(1+r, 12) - pmt * 12;
+  }
+  
+  return {labels, datasets: [{label: '예상 자산', data: assets, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3}]};
+}
+
+function generateWithdrawTable(retire, life, bal, pmt, r){
+  const rows = [];
+  let balance = bal;
+  for(let y = retire; y <= life; y += 5){
+    rows.push({year: y+'세', balance: Math.max(0, balance), flow: '-₩'+fmtKRW(pmt.toFixed(0))});
+    balance = balance * Math.pow(1+r, 60) - pmt * 60;
+  }
+  return rows;
+}
+
+function generateDurationChart(age, bal, pmt, r, totalMonths){
+  const labels = [];
+  const assets = [];
+  
+  let balance = bal;
+  const years = Math.ceil(totalMonths / 12);
+  for(let y = 0; y <= years; y++){
+    labels.push((age+y) + '세');
+    assets.push(Math.max(0, balance));
+    balance = balance * Math.pow(1+r, 12) - pmt * 12;
+  }
+  
+  return {labels, datasets: [{label: '예상 자산', data: assets, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', fill: true, tension: 0.3}]};
+}
+
+function generateDurationTable(age, bal, pmt, r, totalMonths){
+  const rows = [];
+  let balance = bal;
+  const years = Math.ceil(totalMonths / 12);
+  for(let y = 0; y <= years; y += 5){
+    rows.push({year: (age+y)+'세', balance: Math.max(0, balance), flow: '-₩'+fmtKRW(pmt.toFixed(0))});
+    balance = balance * Math.pow(1+r, 60) - pmt * 60;
+  }
+  return rows;
+}
+
+/* ===== 그래프 그리기 ===== */
+function drawChart(data){
+  const container = document.getElementById('chartArea');
+  container.innerHTML = '<div class="chart-container"><canvas id="myChart"></canvas></div>';
+  
+  if(chartInstance) chartInstance.destroy();
+  
+  const ctx = document.getElementById('myChart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {display: true, position: 'top'},
+        tooltip: {
+          callbacks: {
+            label: function(context){
+              return context.dataset.label + ': ₩' + fmtKRW(context.parsed.y.toFixed(0));
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value){
+              return '₩' + (value/100000000).toFixed(1) + '억';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ===== 테이블 그리기 ===== */
+function drawTable(rows){
+  const container = document.getElementById('tableArea');
+  let html = '<table class="year-table"><thead><tr><th>나이</th><th>예상 자산</th><th>월 흐름</th></tr></thead><tbody>';
+  rows.forEach(row => {
+    html += `<tr><td style="text-align:center">${row.year}</td><td>₩${fmtKRW(row.balance.toFixed(0))}</td><td>${row.flow}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+/* ===== 이벤트 바인딩 ===== */
+document.getElementById('run').addEventListener('click', calc);
+switchMode();
+
+/* ===== 기본값 ===== */
+document.getElementById('current_age').value = '35';
+document.getElementById('retire_age').value = '65';
+document.getElementById('life_exp').value = '85';
+document.getElementById('return_pct').value = '6';
+document.getElementById('inflation_pct').value = '3';
+document.getElementById('current_income').value = '70,000,000';
+document.getElementById('replace_pct').value = '70';
+document.getElementById('ss_month').value = '1,200,000';
+document.getElementById('other_month').value = '300,000';
+document.getElementById('current_saving').value = '0';
+document.getElementById('save_rate_pct').value = '10';
+document.getElementById('goal_amount').value = '800,000,000';
+document.getElementById('current_saving2').value = '30,000,000';
+document.getElementById('balance_now').value = '800,000,000';
+document.getElementById('balance_now2').value = '600,000,000';
+document.getElementById('withdraw_month').value = '2,000,000';
+</script>
+</body>
+</html>
