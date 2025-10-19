@@ -91,7 +91,6 @@
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
-    .dropdown-wrapper:hover .dropdown-menu,
     .dropdown-menu.active {
       display: block;
     }
@@ -186,9 +185,6 @@
       .dropdown-menu.active {
         display: block;
       }
-      .dropdown-wrapper:hover .dropdown-menu {
-        display: none; /* 모바일에서는 hover 비활성화 */
-      }
       @keyframes slideDown {
         from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
         to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -230,7 +226,7 @@
       </div>
       
       <!-- 재무계산기 드롭다운 -->
-      <div class="dropdown-wrapper">
+      <div class="dropdown-wrapper" onmouseenter="openDropdown()">
         <div class="program-card" onclick="toggleDropdown(event)">
           <h2>재무계산기</h2><p>복리·은퇴·연금·세금 등</p>
         </div>
@@ -238,60 +234,60 @@
           <div class="dropdown-header">📊 재무계산기 선택</div>
           
           <div class="category-label">💰 투자 & 수익</div>
-          <div class="dropdown-item" onclick="go('investment-return-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('investment-return-calculator.html')">
             <span class="dropdown-item-icon">📈</span>
             <span>투자수익계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('compound-interest-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('compound-interest-calculator.html')">
             <span class="dropdown-item-icon">🔄</span>
             <span>복리계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('roi-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('roi-calculator.html')">
             <span class="dropdown-item-icon">📊</span>
             <span>수익률계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('future-value-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('future-value-calculator.html')">
             <span class="dropdown-item-icon">🔮</span>
             <span>미래가치계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('present-value-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('present-value-calculator.html')">
             <span class="dropdown-item-icon">💰</span>
             <span>현재가치계산기</span>
           </div>
           
           <div class="category-divider"></div>
-          <div class="category-label">🏖️ 은퇴 & 연금</div>
-          <div class="dropdown-item" onclick="go('retirement-calculator.html')">
-            <span class="dropdown-item-icon">🏖️</span>
+          <div class="category-label">🖏️ 은퇴 & 연금</div>
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('retirement-calculator.html')">
+            <span class="dropdown-item-icon">🖏️</span>
             <span>은퇴계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('pension-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('pension-calculator.html')">
             <span class="dropdown-item-icon">📅</span>
             <span>연금계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('severance-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('severance-calculator.html')">
             <span class="dropdown-item-icon">💼</span>
             <span>퇴직금계산기</span>
           </div>
           
           <div class="category-divider"></div>
           <div class="category-label">📋 세금 계산</div>
-          <div class="dropdown-item" onclick="go('gift-tax-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('gift-tax-calculator.html')">
             <span class="dropdown-item-icon">🎁</span>
             <span>증여세계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('inheritance-tax-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('inheritance-tax-calculator.html')">
             <span class="dropdown-item-icon">👨‍👩‍👧‍👦</span>
             <span>상속세계산기</span>
           </div>
-          <div class="dropdown-item" onclick="go('capital-gains-tax-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('capital-gains-tax-calculator.html')">
             <span class="dropdown-item-icon">🏠</span>
             <span>양도세계산기</span>
           </div>
           
           <div class="category-divider"></div>
           <div class="category-label">🧮 종합 도구</div>
-          <div class="dropdown-item" onclick="go('financial-calculator.html')">
+          <div class="dropdown-item" onclick="event.stopPropagation(); go('financial-calculator.html')">
             <span class="dropdown-item-icon">🧮</span>
             <span>재무계산기 (종합)</span>
           </div>
@@ -321,7 +317,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // 재무계산기 드롭다운 토글
+    // 재무계산기 드롭다운 열기 (마우스 올렸을 때)
+    function openDropdown() {
+      const dropdown = document.getElementById('calculatorDropdown');
+      dropdown.classList.add('active');
+    }
+
+    // 재무계산기 드롭다운 토글 (클릭했을 때)
     function toggleDropdown(event) {
       event.stopPropagation();
       const dropdown = document.getElementById('calculatorDropdown');
@@ -395,12 +397,10 @@
           setLoggedInUI(name);
           refreshDriveNotice(user);
         } else {
-          // 로그인되지 않았으면 login.html로 리다이렉트
           window.location.href = 'login.html';
         }
       });
     } else {
-      // Firebase가 없으면 login.html로 리다이렉트
       window.location.href = 'login.html';
     }
 
