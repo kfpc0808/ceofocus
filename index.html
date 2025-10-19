@@ -75,7 +75,7 @@
       top: 100%;
       left: 50%;
       transform: translateX(-50%);
-      margin-top: 0.5rem;
+      margin-top: 0.75rem;
       background: rgba(255,255,255,.98);
       backdrop-filter: blur(10px);
       border-radius: 16px;
@@ -86,6 +86,7 @@
       max-width: 320px;
       z-index: 1000;
       animation: slideDown 0.3s ease;
+      pointer-events: none;
     }
     @keyframes slideDown {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
@@ -93,6 +94,7 @@
     }
     .dropdown-menu.active {
       display: block;
+      pointer-events: auto;
     }
     .dropdown-header {
       font-size: 0.9rem;
@@ -102,6 +104,49 @@
       padding-bottom: 0.5rem;
       border-bottom: 2px solid #e0e0e0;
       text-align: center;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: -0.25rem;
+      right: 0;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #6c757d;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .close-btn:hover {
+      background: #f0f0f0;
+      color: #0c2c54;
+    }
+    .close-footer {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e0e0e0;
+    }
+    .close-footer-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      color: #0c2c54;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .close-footer-btn:hover {
+      background: #e9ecef;
+      border-color: #adb5bd;
     }
     .dropdown-item {
       padding: 0.75rem 1rem;
@@ -231,7 +276,10 @@
           <h2>재무계산기</h2><p>복리·은퇴·연금·세금 등</p>
         </div>
         <div class="dropdown-menu" id="calculatorDropdown">
-          <div class="dropdown-header">📊 재무계산기 선택</div>
+          <div class="dropdown-header">
+            📊 재무계산기 선택
+            <button class="close-btn" onclick="event.stopPropagation(); closeDropdown()">×</button>
+          </div>
           
           <div class="category-label">💰 투자 & 수익</div>
           <div class="dropdown-item" onclick="event.stopPropagation(); go('investment-return-calculator.html')">
@@ -291,6 +339,10 @@
             <span class="dropdown-item-icon">🧮</span>
             <span>재무계산기 (종합)</span>
           </div>
+          
+          <div class="close-footer">
+            <button class="close-footer-btn" onclick="event.stopPropagation(); closeDropdown()">닫기</button>
+          </div>
         </div>
       </div>
 
@@ -328,6 +380,12 @@
       event.stopPropagation();
       const dropdown = document.getElementById('calculatorDropdown');
       dropdown.classList.toggle('active');
+    }
+
+    // 재무계산기 드롭다운 닫기
+    function closeDropdown() {
+      const dropdown = document.getElementById('calculatorDropdown');
+      dropdown.classList.remove('active');
     }
 
     // 드롭다운 외부 클릭 시 닫기
