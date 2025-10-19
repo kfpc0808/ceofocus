@@ -4,42 +4,111 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>프로그램 선택 - Executive Consulting Solution</title>
+  
+  <!-- Firebase SDK를 head에서 먼저 로드 -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body{
       font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;
       background:linear-gradient(135deg,#0c2c54 0%,#2a5a8a 100%);
-      color:#fff; padding:2rem 1rem; min-height:100vh;
+      color:#fff; 
+      padding:2rem 1rem; 
+      min-height:100vh;
+      /* 모바일 스크롤 최적화 */
+      -webkit-overflow-scrolling: touch;
+      touch-action: manipulation;
     }
     .dashboard-container{ max-width:1000px; margin:0 auto; }
+    
+    /* 상단 헤더 */
     .header{
-      display:flex; justify-content:space-between; align-items:center;
       margin-bottom:1rem; padding-bottom:1rem;
       border-bottom:1px solid rgba(255,255,255,.2);
-      gap:.75rem;
+    }
+    .top-bar{
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center;
+      margin-bottom:1rem;
     }
     .welcome-message h1{ font-size:1.8rem; margin:0; }
     .welcome-message p{ font-size:1rem; opacity:.85; margin-top:.25rem; }
 
-    .toolbar{
-      display:flex; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;
+    /* 우측 상단 버튼 영역 */
+    .top-right-buttons{
+      display:flex; 
+      gap:.5rem;
     }
+    
     .btn{
-      border:none; padding:.7rem 1rem; border-radius:10px;
-      font-weight:700; cursor:pointer; transition:.25s;
+      border:none; 
+      padding:.7rem 1.2rem; 
+      border-radius:10px;
+      font-weight:700; 
+      cursor:pointer; 
+      transition:.25s;
       backdrop-filter: blur(10px);
+      font-size:0.9rem;
+      white-space: nowrap;
+      /* 모바일 터치 최적화 */
+      -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+      user-select: none;
     }
     .btn:hover{ transform:translateY(-1px); }
-    .btn-logout{ background:#e74c3c; color:#fff; }
-    .btn-logout:hover{ background:#c0392b; }
-    .btn-warm{ background:linear-gradient(135deg,#FF8802 0%,#FF6B00 100%); color:#fff; box-shadow:0 4px 12px rgba(255,136,2,.25); }
-    .btn-warm:hover{ box-shadow:0 6px 16px rgba(255,136,2,.35); }
-    .btn-soft{ background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.25); }
-    .btn-soft:hover{ background:rgba(255,255,255,.22); }
+    .btn:active{ transform:translateY(0); opacity:0.9; }
+    
+    .btn-mypage{ 
+      background:rgba(255,255,255,.15); 
+      color:#fff; 
+      border:1px solid rgba(255,255,255,.3); 
+    }
+    .btn-mypage:hover{ 
+      background:rgba(255,255,255,.25); 
+    }
+    
+    .btn-logout{ 
+      background:#e74c3c; 
+      color:#fff; 
+    }
+    .btn-logout:hover{ 
+      background:#c0392b; 
+    }
+    
+    .btn-warm{ 
+      background:linear-gradient(135deg,#FF8802 0%,#FF6B00 100%); 
+      color:#fff; 
+      box-shadow:0 4px 12px rgba(255,136,2,.25); 
+    }
+    .btn-warm:hover{ 
+      box-shadow:0 6px 16px rgba(255,136,2,.35); 
+    }
+    
+    .btn-soft{ 
+      background:rgba(255,255,255,.12); 
+      color:#fff; 
+      border:1px solid rgba(255,255,255,.25); 
+    }
+    .btn-soft:hover{ 
+      background:rgba(255,255,255,.22); 
+    }
+
+    .btn-drive{ 
+      background:linear-gradient(135deg,#4CAF50 0%,#45a049 100%); 
+      color:#fff; 
+      box-shadow:0 4px 12px rgba(76,175,80,.25); 
+    }
+    .btn-drive:hover{ 
+      box-shadow:0 6px 16px rgba(76,175,80,.35); 
+    }
 
     .notice{
       display:none;
-      margin:1rem 0 1.25rem; padding:1rem 1.25rem;
+      margin:1rem 0 1.25rem; 
+      padding:1rem 1.25rem;
       border-radius:12px;
       background:rgba(255,255,255,.12);
       border:1px solid rgba(255,255,255,.25);
@@ -48,22 +117,57 @@
     .notice.show{ display:block; }
     .notice b{ color:#ffd27f; }
 
+    /* 프로그램 카드 그리드 */
     .program-list{
-      display:grid; gap:1rem; margin-top:1rem;
+      display:grid; 
+      gap:1rem; 
+      margin-top:1rem;
       grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
     }
+    
+    /* 하단 4개 카드용 별도 그리드 */
+    .bottom-programs{
+      display:grid; 
+      gap:1rem; 
+      margin-top:1rem;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
     .program-card{
       background:rgba(255,255,255,.1);
       border:1px solid rgba(255,255,255,.2);
-      border-radius:16px; padding:1.4rem;
-      text-align:center; cursor:pointer; transition:.25s;
+      border-radius:16px; 
+      padding:1.4rem;
+      text-align:center; 
+      cursor:pointer; 
+      transition:.25s;
       backdrop-filter:blur(8px);
+      min-height:100px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      /* 모바일 터치 최적화 */
+      -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+      user-select: none;
     }
     .program-card:hover{
-      background:rgba(255,255,255,.2); transform:translateY(-4px);
+      background:rgba(255,255,255,.2); 
+      transform:translateY(-4px);
     }
-    .program-card h2{ font-size:1.2rem; margin:.2rem 0 .4rem; }
-    .program-card p{ font-size:.9rem; opacity:.75; }
+    .program-card:active{
+      transform:translateY(-2px);
+      background:rgba(255,255,255,.25);
+    }
+    .program-card h2{ 
+      font-size:1.1rem; 
+      margin:.2rem 0 .4rem;
+      white-space:nowrap;
+    }
+    .program-card p{ 
+      font-size:.85rem; 
+      opacity:.75;
+      line-height:1.3;
+    }
 
     /* 재무계산기 드롭다운 */
     .dropdown-wrapper {
@@ -72,25 +176,30 @@
     .dropdown-menu {
       display: none;
       position: absolute;
-      top: 100%;
+      top: calc(100% + 5px);
       left: 50%;
       transform: translateX(-50%);
-      margin-top: 0.75rem;
+      min-width: 280px;
+      max-width: 320px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .dropdown-menu.active {
+      display: block;
+      pointer-events: auto;
+    }
+    .dropdown-menu-inner {
+      padding: 1rem;
       background: rgba(255,255,255,.98);
       backdrop-filter: blur(10px);
       border-radius: 16px;
       box-shadow: 0 10px 40px rgba(0,0,0,.3);
       border: 1px solid rgba(255,255,255,.3);
-      padding: 1rem;
-      min-width: 280px;
-      max-width: 320px;
-      z-index: 1000;
       animation: slideDown 0.3s ease;
-      pointer-events: none;
     }
     @keyframes slideDown {
-      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .dropdown-menu.active {
       display: block;
@@ -210,29 +319,79 @@
 
     /* 모바일 반응형 */
     @media (max-width: 768px) {
-      .header {
+      .top-bar {
         flex-direction: column;
-        align-items: stretch;
+        gap:0.75rem;
       }
-      .toolbar {
+      .welcome-message {
+        text-align: center;
+        width: 100%;
+      }
+      .welcome-message h1{ font-size:1.5rem; }
+      .top-right-buttons {
+        width: 100%;
         justify-content: center;
+        gap: 0.4rem;
       }
+      /* 모바일에서 버튼 크기 축소 */
+      .top-right-buttons .btn {
+        padding: 0.55rem 0.75rem;
+        font-size: 0.8rem;
+      }
+      
+      /* 하단 4개 카드는 모바일에서 2열 유지 */
+      .bottom-programs{
+        grid-template-columns: repeat(2, 1fr);
+        gap:0.75rem;
+      }
+      
+      .program-card h2 {
+        font-size:0.95rem;
+      }
+      .program-card p {
+        font-size:0.75rem;
+      }
+      
       .dropdown-menu {
         position: fixed;
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%) !important;
         margin-top: 0;
+        padding-top: 0;
         max-width: 90%;
         max-height: 80vh;
         overflow-y: auto;
       }
-      .dropdown-menu.active {
-        display: block;
+      .dropdown-menu-inner {
+        max-height: 80vh;
+        overflow-y: auto;
       }
       @keyframes slideDown {
-        from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body{ padding:1rem 0.5rem; }
+      /* 작은 화면에서 버튼 더 축소 */
+      .top-right-buttons {
+        gap: 0.3rem;
+      }
+      .top-right-buttons .btn {
+        padding: 0.5rem 0.6rem;
+        font-size: 0.75rem;
+      }
+      .program-card {
+        padding:1rem 0.5rem;
+        min-height:85px;
+      }
+      .program-card h2 {
+        font-size:0.9rem;
+      }
+      .program-card p {
+        font-size:0.7rem;
       }
     }
   </style>
@@ -245,147 +404,220 @@
 
   <div class="dashboard-container">
     <div class="header">
-      <div class="welcome-message">
-        <h1 id="welcomeTitle">환영합니다</h1>
-        <p>사용하실 프로그램을 선택해주세요.</p>
-      </div>
-
-      <div class="toolbar">
-        <button class="btn btn-soft" onclick="pickDownloadDirectory()">구글드라이브 다운폴더</button>
-        <button class="btn btn-warm" onclick="enableDrive()">구글드라이브 사용설정</button>
-        <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+      <!-- 최상단: 환영메시지 + My page/로그아웃 -->
+      <div class="top-bar">
+        <div class="welcome-message">
+          <h1 id="welcomeTitle">환영합니다</h1>
+          <p>사용하실 프로그램을 선택해주세요.</p>
+        </div>
+        <div class="top-right-buttons">
+          <button class="btn btn-drive" onclick="enableDrive()">드라이브 연동</button>
+          <button class="btn btn-mypage" onclick="goToMyPage()">My page</button>
+          <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+        </div>
       </div>
     </div>
 
     <div id="driveNotice" class="notice">
       모든 고객정보는 사용자의 <b>구글드라이브</b>에 안전하게 보관됩니다. 공급자는 사용자의 고객정보를 보관하지 않습니다.<br/>
-      간단하게 본인의 <b>'구글드라이브 사용설정'</b>을 먼저 하신 후 이용바랍니다.
+      간단하게 본인의 <b>'드라이브 연동'</b>을 먼저 하신 후 이용바랍니다.
     </div>
 
+    <!-- 상단 프로그램들 (CEO Focus, FM, 재무계산기, 업무일지) -->
     <div class="program-list">
       <div class="program-card" onclick="go('ceofocus.html')">
-        <h2>CEO Focus</h2><p>실시간 법인컨설팅 시뮬레이션</p>
+        <h2>CEO Focus</h2>
+        <p>실시간 법인컨설팅 시뮬레이션</p>
       </div>
       <div class="program-card" onclick="go('fm.html')">
-        <h2>Financial Master</h2><p>프리미엄 재무 Fact Finding</p>
+        <h2>Financial Master</h2>
+        <p>프리미엄 재무 Fact Finding</p>
       </div>
       
       <!-- 재무계산기 드롭다운 -->
-      <div class="dropdown-wrapper" onmouseenter="openDropdown()">
+      <div class="dropdown-wrapper" onmouseenter="openDropdownHover()">
         <div class="program-card" onclick="toggleDropdown(event)">
-          <h2>재무계산기</h2><p>복리·은퇴·연금·세금 등</p>
+          <h2>재무계산기</h2>
+          <p>복리·은퇴·연금·세금 등</p>
         </div>
         <div class="dropdown-menu" id="calculatorDropdown">
-          <div class="dropdown-header">
-            📊 재무계산기 선택
-            <button class="close-btn" onclick="event.stopPropagation(); closeDropdown()">×</button>
-          </div>
-          
-          <div class="category-label">💰 투자 & 수익</div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('investment-return-calculator.html')">
-            <span class="dropdown-item-icon">📈</span>
-            <span>투자수익계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('compound-interest-calculator.html')">
-            <span class="dropdown-item-icon">🔄</span>
-            <span>복리계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('roi-calculator.html')">
-            <span class="dropdown-item-icon">📊</span>
-            <span>수익률계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('future-value-calculator.html')">
-            <span class="dropdown-item-icon">🔮</span>
-            <span>미래가치계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('present-value-calculator.html')">
-            <span class="dropdown-item-icon">💰</span>
-            <span>현재가치계산기</span>
-          </div>
-          
-          <div class="category-divider"></div>
-          <div class="category-label">🖏️ 은퇴 & 연금</div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('retirement-calculator.html')">
-            <span class="dropdown-item-icon">🖏️</span>
-            <span>은퇴계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('pension-calculator.html')">
-            <span class="dropdown-item-icon">📅</span>
-            <span>연금계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('severance-calculator.html')">
-            <span class="dropdown-item-icon">💼</span>
-            <span>퇴직금계산기</span>
-          </div>
-          
-          <div class="category-divider"></div>
-          <div class="category-label">📋 세금 계산</div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('gift-tax-calculator.html')">
-            <span class="dropdown-item-icon">🎁</span>
-            <span>증여세계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('inheritance-tax-calculator.html')">
-            <span class="dropdown-item-icon">👨‍👩‍👧‍👦</span>
-            <span>상속세계산기</span>
-          </div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('capital-gains-tax-calculator.html')">
-            <span class="dropdown-item-icon">🏠</span>
-            <span>양도세계산기</span>
-          </div>
-          
-          <div class="category-divider"></div>
-          <div class="category-label">🧮 종합 도구</div>
-          <div class="dropdown-item" onclick="event.stopPropagation(); go('financial-calculator.html')">
-            <span class="dropdown-item-icon">🧮</span>
-            <span>재무계산기 (종합)</span>
-          </div>
-          
-          <div class="close-footer">
-            <button class="close-footer-btn" onclick="event.stopPropagation(); closeDropdown()">닫기</button>
+          <div class="dropdown-menu-inner">
+            <div class="dropdown-header">
+              📊 재무계산기 선택
+              <button class="close-btn" onclick="event.stopPropagation(); closeDropdown()">×</button>
+            </div>
+            
+            <div class="category-label">💰 투자 & 수익</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('investment-return-calculator.html')">
+              <span class="dropdown-item-icon">📈</span>
+              <span>투자수익계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('compound-interest-calculator.html')">
+              <span class="dropdown-item-icon">🔄</span>
+              <span>복리계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('roi-calculator.html')">
+              <span class="dropdown-item-icon">📊</span>
+              <span>수익률계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('future-value-calculator.html')">
+              <span class="dropdown-item-icon">🔮</span>
+              <span>미래가치계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('present-value-calculator.html')">
+              <span class="dropdown-item-icon">💰</span>
+              <span>현재가치계산기</span>
+            </div>
+            
+            <div class="category-divider"></div>
+            <div class="category-label">🏖️ 은퇴 & 연금</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('retirement-calculator.html')">
+              <span class="dropdown-item-icon">🏖️</span>
+              <span>은퇴계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('pension-calculator.html')">
+              <span class="dropdown-item-icon">📅</span>
+              <span>연금계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('severance-calculator.html')">
+              <span class="dropdown-item-icon">💼</span>
+              <span>퇴직금계산기</span>
+            </div>
+            
+            <div class="category-divider"></div>
+            <div class="category-label">📋 세금 계산</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('gift-tax-calculator.html')">
+              <span class="dropdown-item-icon">🎁</span>
+              <span>증여세계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('inheritance-tax-calculator.html')">
+              <span class="dropdown-item-icon">👨‍👩‍👧‍👦</span>
+              <span>상속세계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('capital-gains-tax-calculator.html')">
+              <span class="dropdown-item-icon">🏠</span>
+              <span>양도세계산기</span>
+            </div>
+            
+            <div class="category-divider"></div>
+            <div class="category-label">🧮 종합 도구</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('financial-calculator.html')">
+              <span class="dropdown-item-icon">🧮</span>
+              <span>재무계산기 (종합)</span>
+            </div>
+            
+            <div class="close-footer">
+              <button class="close-footer-btn" onclick="event.stopPropagation(); closeDropdown()">닫기</button>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="program-card" onclick="go('journal.html')">
-        <h2>업무일지</h2><p>고객상담내역 및 To-do list</p>
+        <h2>업무일지</h2>
+        <p>고객상담내역 및 To-do list</p>
       </div>
+    </div>
+
+    <!-- 하단 4개 프로그램 (2열 고정) -->
+    <div class="bottom-programs">
       <div class="program-card" onclick="go('calendar.html')">
-        <h2>일정관리</h2><p>생일·기념일·만기일 알림</p>
+        <h2>일정관리</h2>
+        <p>생일·기념일·만기일</p>
       </div>
       <div class="program-card" onclick="go('send-center.html')">
-        <h2>발송관리</h2><p>웹푸시 발송시스템</p>
+        <h2>발송관리</h2>
+        <p>웹푸시 발송시스템</p>
       </div>
       <div class="program-card" onclick="go('members.html')">
-        <h2>회원관리</h2><p>고객Database</p>
+        <h2>회원관리</h2>
+        <p>고객 Database</p>
       </div>
       <div class="program-card" onclick="go('crm-search.html')">
-        <h2>고객찾기</h2><p>지도로 내주변 고객찾기</p>
+        <h2>고객찾기</h2>
+        <p>지도로 주변고객찾기</p>
       </div>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    // ========================================
+    // 디버그 정보 출력
+    // ========================================
+    console.log('=== 페이지 시작 ===');
+    console.log('📱 화면:', window.innerWidth, 'x', window.innerHeight);
+    console.log('📱 모바일:', window.innerWidth <= 768);
+    console.log('🌐 URL:', window.location.href);
+    console.log('🔥 Firebase 로드:', typeof firebase !== 'undefined' ? '✅ 성공' : '❌ 실패');
+    
+    // Firebase가 head에서 로드되었는지 확인
+    if (typeof firebase === 'undefined') {
+      console.error('❌ CRITICAL: Firebase가 로드되지 않았습니다!');
+      setTimeout(() => {
+        document.getElementById('loadingScreen').classList.add('hide');
+        alert('앱을 불러올 수 없습니다.\n\n네트워크 연결 상태를 확인해주세요.');
+      }, 1000);
+    }드 실패');"></script>
 
   <script>
-    // 재무계산기 드롭다운 열기 (마우스 올렸을 때)
-    function openDropdown() {
+    console.log('페이지 로드 시작');
+    
+    // Firebase 라이브러리 로드 대기
+    function waitForFirebase() {
+      return new Promise((resolve, reject) => {
+        // 이미 로드되어 있으면 즉시 반환
+        if (typeof firebase !== 'undefined') {
+          console.log('✅ Firebase 이미 로드됨');
+          resolve(true);
+          return;
+        }
+        
+        let attempts = 0;
+        const maxAttempts = 20; // 2초 대기 (20 * 100ms)
+        
+        const checkFirebase = setInterval(() => {
+          attempts++;
+          
+          if (typeof firebase !== 'undefined') {
+            clearInterval(checkFirebase);
+            console.log(`✅ Firebase 로드 성공 (${attempts * 100}ms)`);
+            resolve(true);
+          } else if (attempts >= maxAttempts) {
+            clearInterval(checkFirebase);
+            console.error('❌ Firebase 로드 실패 (2초 타임아웃)');
+            reject(new Error('Firebase 로드 타임아웃'));
+          }
+        }, 100);
+      });
+    }
+    
+    // ========================================
+    // 재무계산기 드롭다운 제어
+    // ========================================
+    
+    // 드롭다운 열기 (마우스 올렸을 때)
+    function openDropdownHover() {
       const dropdown = document.getElementById('calculatorDropdown');
-      dropdown.classList.add('active');
+      if (dropdown) {
+        dropdown.classList.add('active');
+      }
     }
 
-    // 재무계산기 드롭다운 토글 (클릭했을 때)
+    // 드롭다운 토글 (클릭 - 모바일용)
     function toggleDropdown(event) {
       event.stopPropagation();
       const dropdown = document.getElementById('calculatorDropdown');
-      dropdown.classList.toggle('active');
+      if (dropdown) {
+        dropdown.classList.toggle('active');
+      }
     }
 
-    // 재무계산기 드롭다운 닫기
+    // 드롭다운 닫기
     function closeDropdown() {
       const dropdown = document.getElementById('calculatorDropdown');
-      dropdown.classList.remove('active');
+      if (dropdown) {
+        dropdown.classList.remove('active');
+      }
     }
 
     // 드롭다운 외부 클릭 시 닫기
@@ -406,60 +638,201 @@
       messagingSenderId:"101260933373",
       appId:"1:101260933373:web:3436176f9ca2560056d914"
     };
-    if (typeof firebase !== 'undefined') firebase.initializeApp(firebaseConfig);
-    const auth = (typeof firebase !== 'undefined') ? firebase.auth() : null;
-    const db   = (typeof firebase !== 'undefined') ? firebase.firestore() : null;
+    
+    let auth = null;
+    let db = null;
+    
+    // Firebase 초기화 함수
+    async function initializeFirebase() {
+      try {
+        console.log('🔥 Firebase 초기화 시작...');
+        
+        // Firebase 라이브러리 로드 대기
+        await waitForFirebase();
+        
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        
+        // 로그인 상태 유지 설정 (로컬 스토리지 사용)
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        
+        console.log('✅ Firebase 초기화 완료');
+        console.log('✅ 인증 지속성 설정 완료 (LOCAL)');
+        
+        // 인증 상태 감시 시작
+        setupAuthStateListener();
+        
+      } catch (error) {
+        console.error('❌ Firebase 초기화 오류:', error);
+        clearTimeout(loadingTimeout);
+        
+        // 로딩 화면 제거
+        elLoading.classList.add('hide');
+        
+        // 사용자에게 알림
+        alert('앱 초기화에 실패했습니다.\n\n네트워크 연결을 확인하고 다시 시도해주세요.\n\n오류: ' + error.message);
+        
+        // 3초 후 로그인 페이지로 이동
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 3000);
+      }
+    }
+    
+    // 페이지 로드 시 Firebase 초기화
+    initializeFirebase();
 
     const elNotice = document.getElementById('driveNotice');
     const elWelcome = document.getElementById('welcomeTitle');
     const elLoading = document.getElementById('loadingScreen');
 
+    // 로딩 타임아웃 설정 (5초 후 강제로 로딩 화면 제거)
+    const loadingTimeout = setTimeout(() => {
+      if (elLoading && !elLoading.classList.contains('hide')) {
+        console.warn('⚠️ 로딩 타임아웃 (5초) - 강제로 로딩 화면 제거');
+        elLoading.classList.add('hide');
+        
+        // 로그인 상태 확인
+        if (auth && auth.currentUser) {
+          console.log('✅ 사용자는 로그인되어 있음:', auth.currentUser.uid);
+          setLoggedInUI(auth.currentUser.displayName || '');
+        } else {
+          console.log('❌ 로그인되지 않음 - 로그인 페이지로 이동');
+          window.location.href = 'login.html';
+        }
+      }
+    }, 5000);
+
     function go(path){
+      console.log('페이지 이동:', path);
       const user = auth ? auth.currentUser : null;
       if (!user) { 
+        console.log('로그인 필요 - login.html로 이동');
         window.location.href = 'login.html'; 
         return; 
       }
       window.location.href = path;
     }
 
+    function goToMyPage(){
+      console.log('My page 이동');
+      const user = auth ? auth.currentUser : null;
+      if (!user) { 
+        alert('로그인이 필요합니다.');
+        window.location.href = 'login.html'; 
+        return; 
+      }
+      // My page로 이동 (해당 페이지가 있어야 함)
+      window.location.href = 'mypage.html';
+    }
+
     function setLoggedInUI(name){
-      if (elWelcome && name) elWelcome.textContent = `안녕하세요, ${name}님`;
-      if (elLoading) elLoading.classList.add('hide');
+      console.log('🎨 UI 업데이트:', name);
+      if (elWelcome && name) {
+        elWelcome.textContent = `안녕하세요, ${name}님`;
+      }
+      if (elLoading) {
+        elLoading.classList.add('hide');
+        console.log('✅ 로딩 화면 제거됨');
+      }
     }
 
     async function refreshDriveNotice(user){
-      if (!user) { elNotice.classList.remove('show'); return; }
+      if (!user) { 
+        elNotice.classList.remove('show'); 
+        return; 
+      }
+      
       let enabled = localStorage.getItem('driveEnabled') === 'true';
-      try{
-        if (db){
-          const snap = await db.collection('users').doc(user.uid).get();
-          if (snap.exists && typeof snap.data().driveEnabled === 'boolean'){
+      
+      try {
+        if (db) {
+          // 타임아웃 설정 (3초)
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 3000)
+          );
+          
+          const firestorePromise = db.collection('users').doc(user.uid).get();
+          
+          const snap = await Promise.race([firestorePromise, timeoutPromise]);
+          
+          if (snap.exists && typeof snap.data().driveEnabled === 'boolean') {
             enabled = snap.data().driveEnabled;
             localStorage.setItem('driveEnabled', String(enabled));
           }
         }
-      }catch(e){}
-      if (enabled) elNotice.classList.remove('show');
-      else elNotice.classList.add('show');
+      } catch (e) {
+        console.warn('⚠️ 드라이브 설정 확인 실패 (로컬 저장소 사용):', e.message);
+        // 로컬 저장소 값 사용
+      }
+      
+      if (enabled) {
+        elNotice.classList.remove('show');
+      } else {
+        elNotice.classList.add('show');
+      }
     }
 
-    if (auth){
-      auth.onAuthStateChanged(async (user)=>{
-        if (user){
-          let name = '';
-          try{
-            const doc = await db.collection('users').doc(user.uid).get();
-            if (doc.exists && doc.data().name) name = doc.data().name;
-          }catch(e){}
-          setLoggedInUI(name);
-          refreshDriveNotice(user);
+    // Firebase 인증 상태 감시 설정
+    function setupAuthStateListener() {
+      if (!auth) {
+        console.error('❌ Auth 객체가 없습니다.');
+        elLoading.classList.add('hide');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      console.log('👀 인증 상태 감시 시작...');
+      
+      // 즉시 현재 사용자 확인
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        console.log('✅ 즉시 확인: 이미 로그인됨', currentUser.uid);
+        clearTimeout(loadingTimeout);
+        loadUserData(currentUser);
+        return;
+      }
+
+      // onAuthStateChanged 이벤트 리스너
+      const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        console.log('🔄 인증 상태 변경:', user ? '로그인됨' : '로그아웃됨');
+        clearTimeout(loadingTimeout);
+        
+        if (user) {
+          console.log('✅ 사용자 로그인 확인:', user.uid);
+          await loadUserData(user);
         } else {
+          console.log('❌ 로그인되지 않음');
+          elLoading.classList.add('hide');
           window.location.href = 'login.html';
         }
+      }, (error) => {
+        console.error('❌ 인증 오류:', error);
+        clearTimeout(loadingTimeout);
+        elLoading.classList.add('hide');
+        alert('인증 확인 중 오류가 발생했습니다.\n\n' + error.message);
+        window.location.href = 'login.html';
       });
-    } else {
-      window.location.href = 'login.html';
+    }
+    
+    // 사용자 데이터 로드
+    async function loadUserData(user) {
+      let name = '';
+      try {
+        if (db) {
+          const doc = await db.collection('users').doc(user.uid).get();
+          if (doc.exists && doc.data().name) {
+            name = doc.data().name;
+          }
+        }
+      } catch (e) {
+        console.error('⚠️ 사용자 정보 로드 오류:', e);
+      }
+      
+      setLoggedInUI(name || user.displayName || user.email);
+      refreshDriveNotice(user);
     }
 
     function logout(){
@@ -471,40 +844,67 @@
       }
     }
 
+    // 구글 드라이브 사용설정 (간편 버전)
     async function enableDrive(){
       const user = auth ? auth.currentUser : null;
       if (!user) {
         alert('로그인이 필요합니다.');
         return;
       }
-      localStorage.setItem('driveEnabled','true');
-      if (db){
-        try{ 
-          await db.collection('users').doc(user.uid).set({ driveEnabled:true }, { merge:true }); 
-          alert('구글드라이브 사용설정이 완료되었습니다.');
-        }catch(e){
-          alert('설정 저장에 실패했습니다.');
+      
+      console.log('🔐 드라이브 연동 시작...');
+      
+      try {
+        // 로컬 저장소에 플래그 설정
+        localStorage.setItem('driveEnabled', 'true');
+        
+        // Firestore에 플래그 저장
+        if (db) {
+          await db.collection('users').doc(user.uid).set({ 
+            driveEnabled: true,
+            driveSetupDate: new Date().toISOString()
+          }, { merge: true });
         }
-      }
-      refreshDriveNotice(user);
-    }
-
-    async function pickDownloadDirectory(){
-      if ('showDirectoryPicker' in window){
-        try{
-          const handle = await window.showDirectoryPicker();
-          if (handle.requestPermission) await handle.requestPermission({mode:'readwrite'});
-          localStorage.setItem('downloadDirGranted','true');
-          alert('다운로드 폴더가 설정되었습니다.');
-        }catch(e){
-          if (e.name !== 'AbortError') {
-            alert('폴더 선택이 취소되었습니다.');
-          }
-        }
-      }else {
-        alert('이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome/Edge 최신 버전을 권장합니다.');
+        
+        console.log('✅ 드라이브 연동 완료');
+        
+        alert('✅ 구글 드라이브 연동이 완료되었습니다!\n\nCEO Focus와 Financial Master에서\n고객 데이터를 구글 시트에 저장할 수 있습니다.');
+        
+        // 안내 메시지 숨기기
+        refreshDriveNotice(user);
+        
+      } catch (error) {
+        console.error('❌ 드라이브 설정 오류:', error);
+        alert('드라이브 연동 설정에 실패했습니다.\n\n' + error.message);
       }
     }
+    
+    // ========================================
+    // 페이지 로드 이벤트
+    // ========================================
+    let domLoaded = false;
+    let pageLoaded = false;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      domLoaded = true;
+      console.log('📄 DOM 로드 완료');
+    });
+    
+    window.addEventListener('load', function() {
+      pageLoaded = true;
+      console.log('🌐 페이지 완전 로드');
+      console.log('⏱️ 로드 시간:', performance.now().toFixed(0), 'ms');
+    });
+    
+    // 3초 후 로드 상태 점검
+    setTimeout(() => {
+      console.log('=== 로드 상태 점검 (3초 경과) ===');
+      console.log('DOM 로드:', domLoaded ? '✅' : '❌');
+      console.log('페이지 로드:', pageLoaded ? '✅' : '❌');
+      console.log('Firebase 초기화:', auth ? '✅' : '❌');
+      console.log('로그인 상태:', auth && auth.currentUser ? '✅ ' + auth.currentUser.uid : '❌');
+      console.log('로딩 화면:', elLoading.classList.contains('hide') ? '제거됨 ✅' : '표시중 ⚠️');
+    }, 3000);
   </script>
 </body>
 </html>
