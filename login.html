@@ -133,9 +133,36 @@
             font-size: 0.85rem;
             color: #0c2c54;
         }
+        /* 로딩 오버레이 */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(12, 44, 84, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-overlay.show { display: flex; }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
     <div class="login-container">
         <h1>🔐 로그인</h1>
         <p class="subtitle">Executive Consulting Solution</p>
@@ -175,32 +202,53 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Firebase 스크립트 로드 완료 대기
         window.addEventListener('load', function() {
-            // Firebase가 로드되었는지 확인
             if (typeof firebase === 'undefined') {
                 alert('Firebase 로드에 실패했습니다. 페이지를 새로고침해주세요.');
                 return;
             }
 
-            // Firebase 설정
             const firebaseConfig = {
-            apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
-            authDomain: "kfpc-company-support-project.firebaseapp.com",
-            databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "kfpc-company-support-project",
-            storageBucket: "kfpc-company-support-project.firebasestorage.app",
-            messagingSenderId: "101260933373",
-            appId: "1:101260933373:web:3436176f9ca2560056d914"
+                apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+                authDomain: "kfpc-company-support-project.firebaseapp.com",
+                databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "kfpc-company-support-project",
+                storageBucket: "kfpc-company-support-project.firebasestorage.app",
+                messagingSenderId: "101260933373",
+                appId: "1:101260933373:web:3436176f9ca2560056d914"
             };
 
-            // Firebase 초기화
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const db = firebase.firestore();
             
             const form = document.getElementById('loginForm');
             const messageDiv = document.getElementById('message');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
+            // 페이지 로드 시 이미 로그인되어 있는지 체크
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // 이미 로그인되어 있으면 자동 이동
+                    try {
+                        const doc = await db.collection('users').doc(user.uid).get();
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            
+                            // 관리자인 경우 관리자 페이지로
+                            if (userData.role === 'admin') {
+                                window.location.href = 'admin-dashboard.html';
+                                return;
+                            }
+                        }
+                    } catch(e) {
+                        console.error('사용자 정보 확인 오류:', e);
+                    }
+                    
+                    // 일반 사용자는 index.html로
+                    window.location.href = 'index.html';
+                }
+            });
             
             function showMessage(text, type) {
                 messageDiv.textContent = text;
@@ -208,11 +256,21 @@
                 messageDiv.style.display = 'block';
             }
             
+            function showLoading() {
+                loadingOverlay.classList.add('show');
+            }
+            
+            function hideLoading() {
+                loadingOverlay.classList.remove('show');
+            }
+            
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
                 const userId = document.getElementById('userId').value.trim();
                 const phone = document.getElementById('phone').value.trim().replace(/-/g, '');
+                
+                showLoading();
                 
                 // 관리자 계정 체크
                 if (userId === 'admin') {
@@ -263,11 +321,13 @@
                             return;
                         } catch (error3) {
                             console.error('관리자 계정 생성 실패:', error3);
+                            hideLoading();
                             showMessage('관리자 로그인에 실패했습니다.\n비밀번호를 확인하세요.', 'error');
                             return;
                         }
                     } catch (error) {
                         console.error('관리자 로그인 오류:', error);
+                        hideLoading();
                         showMessage('로그인에 실패했습니다.', 'error');
                         return;
                     }
@@ -275,6 +335,7 @@
                 
                 // 전화번호 형식 검증
                 if (!/^\d{10,11}$/.test(phone)) {
+                    hideLoading();
                     showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
                     return;
                 }
@@ -286,6 +347,7 @@
                         .get();
                     
                     if (usersSnapshot.empty) {
+                        hideLoading();
                         showMessage('등록되지 않은 아이디입니다.', 'error');
                         return;
                     }
@@ -298,6 +360,7 @@
                         const expiresAt = userData.expiresAt.toDate();
                         
                         if (now > expiresAt) {
+                            hideLoading();
                             showMessage('테스트 계정이 만료되었습니다.\n정식 회원가입을 진행해주세요.', 'warning');
                             setTimeout(() => {
                                 window.location.href = 'signup.html';
@@ -314,6 +377,7 @@
                     
                     // 비밀번호(전화번호) 확인
                     if (userData.phone !== phone) {
+                        hideLoading();
                         showMessage('전화번호가 일치하지 않습니다.', 'error');
                         return;
                     }
@@ -329,6 +393,7 @@
                     
                 } catch (error) {
                     console.error('로그인 오류:', error);
+                    hideLoading();
                     
                     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                         showMessage('아이디 또는 비밀번호가 일치하지 않습니다.', 'error');

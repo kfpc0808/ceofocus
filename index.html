@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>프로그램 선택 - Executive Consulting Solution</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;
+      background:linear-gradient(135deg,#0c2c54 0%,#2a5a8a 100%);
+      color:#fff; padding:2rem 1rem; min-height:100vh;
+    }
+    .dashboard-container{ max-width:1000px; margin:0 auto; }
+    .header{
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:1rem; padding-bottom:1rem;
+      border-bottom:1px solid rgba(255,255,255,.2);
+      gap:.75rem;
+    }
+    .welcome-message h1{ font-size:1.8rem; margin:0; }
+    .welcome-message p{ font-size:1rem; opacity:.85; margin-top:.25rem; }
+
+    .toolbar{
+      display:flex; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .btn{
+      border:none; padding:.7rem 1rem; border-radius:10px;
+      font-weight:700; cursor:pointer; transition:.25s;
+      backdrop-filter: blur(10px);
+    }
+    .btn:hover{ transform:translateY(-1px); }
+    .btn-logout{ background:#e74c3c; color:#fff; }
+    .btn-logout:hover{ background:#c0392b; }
+    .btn-warm{ background:linear-gradient(135deg,#FF8802 0%,#FF6B00 100%); color:#fff; box-shadow:0 4px 12px rgba(255,136,2,.25); }
+    .btn-warm:hover{ box-shadow:0 6px 16px rgba(255,136,2,.35); }
+    .btn-soft{ background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.25); }
+    .btn-soft:hover{ background:rgba(255,255,255,.22); }
+
+    .notice{
+      display:none;
+      margin:1rem 0 1.25rem; padding:1rem 1.25rem;
+      border-radius:12px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.25);
+      line-height:1.6;
+    }
+    .notice.show{ display:block; }
+    .notice b{ color:#ffd27f; }
+
+    .program-list{
+      display:grid; gap:1rem; margin-top:1rem;
+      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    }
+    .program-card{
+      background:rgba(255,255,255,.1);
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:16px; padding:1.4rem;
+      text-align:center; cursor:pointer; transition:.25s;
+      backdrop-filter:blur(8px);
+    }
+    .program-card:hover{
+      background:rgba(255,255,255,.2); transform:translateY(-4px);
+    }
+    .program-card h2{ font-size:1.2rem; margin:.2rem 0 .4rem; }
+    .program-card p{ font-size:.9rem; opacity:.75; }
+
+    /* 재무계산기 드롭다운 */
+    .dropdown-wrapper {
+      position: relative;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: 0.5rem;
+      background: rgba(255,255,255,.98);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.3);
+      border: 1px solid rgba(255,255,255,.3);
+      padding: 1rem;
+      min-width: 280px;
+      max-width: 320px;
+      z-index: 1000;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .dropdown-wrapper:hover .dropdown-menu,
+    .dropdown-menu.active {
+      display: block;
+    }
+    .dropdown-header {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0c2c54;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e0e0e0;
+      text-align: center;
+    }
+    .dropdown-item {
+      padding: 0.75rem 1rem;
+      margin: 0.25rem 0;
+      border-radius: 8px;
+      background: #f8f9fa;
+      color: #0c2c54;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .dropdown-item:hover {
+      background: linear-gradient(135deg,#FF8802 0%,#FF6B00 100%);
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(255,136,2,.3);
+    }
+    .dropdown-item-icon {
+      font-size: 1.2rem;
+      width: 24px;
+      text-align: center;
+    }
+    .category-divider {
+      margin: 0.75rem 0;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 0.5rem;
+    }
+    .category-label {
+      font-size: 0.75rem;
+      color: #6c757d;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      padding-left: 0.5rem;
+    }
+
+    /* 로딩 화면 */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg,#0c2c54 0%,#2a5a8a 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .loading-screen.hide { display: none; }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toolbar {
+        justify-content: center;
+      }
+      .dropdown-menu {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) !important;
+        margin-top: 0;
+        max-width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .dropdown-menu.active {
+        display: block;
+      }
+      .dropdown-wrapper:hover .dropdown-menu {
+        display: none; /* 모바일에서는 hover 비활성화 */
+      }
+      @keyframes slideDown {
+        from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 로딩 화면 -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="dashboard-container">
+    <div class="header">
+      <div class="welcome-message">
+        <h1 id="welcomeTitle">환영합니다</h1>
+        <p>사용하실 프로그램을 선택해주세요.</p>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn btn-soft" onclick="pickDownloadDirectory()">구글드라이브 다운폴더</button>
+        <button class="btn btn-warm" onclick="enableDrive()">구글드라이브 사용설정</button>
+        <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+
+    <div id="driveNotice" class="notice">
+      모든 고객정보는 사용자의 <b>구글드라이브</b>에 안전하게 보관됩니다. 공급자는 사용자의 고객정보를 보관하지 않습니다.<br/>
+      간단하게 본인의 <b>'구글드라이브 사용설정'</b>을 먼저 하신 후 이용바랍니다.
+    </div>
+
+    <div class="program-list">
+      <div class="program-card" onclick="go('ceofocus.html')">
+        <h2>CEO Focus</h2><p>실시간 법인컨설팅 시뮬레이션</p>
+      </div>
+      <div class="program-card" onclick="go('fm.html')">
+        <h2>Financial Master</h2><p>프리미엄 재무 Fact Finding</p>
+      </div>
+      
+      <!-- 재무계산기 드롭다운 -->
+      <div class="dropdown-wrapper">
+        <div class="program-card" onclick="toggleDropdown(event)">
+          <h2>재무계산기</h2><p>복리·은퇴·연금·세금 등</p>
+        </div>
+        <div class="dropdown-menu" id="calculatorDropdown">
+          <div class="dropdown-header">📊 재무계산기 선택</div>
+          
+          <div class="category-label">💰 투자 & 수익</div>
+          <div class="dropdown-item" onclick="go('투자수익계산기.html')">
+            <span class="dropdown-item-icon">📈</span>
+            <span>투자수익계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('복리계산기.html')">
+            <span class="dropdown-item-icon">🔄</span>
+            <span>복리계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('수익률계산기.html')">
+            <span class="dropdown-item-icon">📊</span>
+            <span>수익률계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('미래가치계산기.html')">
+            <span class="dropdown-item-icon">🔮</span>
+            <span>미래가치계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('현재가치계산기.html')">
+            <span class="dropdown-item-icon">💰</span>
+            <span>현재가치계산기</span>
+          </div>
+          
+          <div class="category-divider"></div>
+          <div class="category-label">🏖️ 은퇴 & 연금</div>
+          <div class="dropdown-item" onclick="go('은퇴계산기.html')">
+            <span class="dropdown-item-icon">🏖️</span>
+            <span>은퇴계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('연금계산기.html')">
+            <span class="dropdown-item-icon">📅</span>
+            <span>연금계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('퇴직금계산기.html')">
+            <span class="dropdown-item-icon">💼</span>
+            <span>퇴직금계산기</span>
+          </div>
+          
+          <div class="category-divider"></div>
+          <div class="category-label">📋 세금 계산</div>
+          <div class="dropdown-item" onclick="go('증여세계산기.html')">
+            <span class="dropdown-item-icon">🎁</span>
+            <span>증여세계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('상속세계산기.html')">
+            <span class="dropdown-item-icon">👨‍👩‍👧‍👦</span>
+            <span>상속세계산기</span>
+          </div>
+          <div class="dropdown-item" onclick="go('양도세계산기.html')">
+            <span class="dropdown-item-icon">🏠</span>
+            <span>양도세계산기</span>
+          </div>
+          
+          <div class="category-divider"></div>
+          <div class="category-label">🧮 종합 도구</div>
+          <div class="dropdown-item" onclick="go('재무계산기.html')">
+            <span class="dropdown-item-icon">🧮</span>
+            <span>재무계산기 (종합)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="program-card" onclick="go('journal.html')">
+        <h2>업무일지</h2><p>고객상담내역 및 To-do list</p>
+      </div>
+      <div class="program-card" onclick="go('calendar.html')">
+        <h2>일정관리</h2><p>생일·기념일·만기일 알림</p>
+      </div>
+      <div class="program-card" onclick="go('send-center.html')">
+        <h2>발송관리</h2><p>웹푸시 발송시스템</p>
+      </div>
+      <div class="program-card" onclick="go('members.html')">
+        <h2>회원관리</h2><p>고객Database</p>
+      </div>
+      <div class="program-card" onclick="go('crm-search.html')">
+        <h2>고객찾기</h2><p>지도로 내주변 고객찾기</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // 재무계산기 드롭다운 토글
+    function toggleDropdown(event) {
+      event.stopPropagation();
+      const dropdown = document.getElementById('calculatorDropdown');
+      dropdown.classList.toggle('active');
+    }
+
+    // 드롭다운 외부 클릭 시 닫기
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('calculatorDropdown');
+      const wrapper = dropdown?.closest('.dropdown-wrapper');
+      if (dropdown && !wrapper?.contains(event.target)) {
+        dropdown.classList.remove('active');
+      }
+    });
+
+    const firebaseConfig = {
+      apiKey:"AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+      authDomain:"kfpc-company-support-project.firebaseapp.com",
+      databaseURL:"https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:"kfpc-company-support-project",
+      storageBucket:"kfpc-company-support-project.appspot.com",
+      messagingSenderId:"101260933373",
+      appId:"1:101260933373:web:3436176f9ca2560056d914"
+    };
+    if (typeof firebase !== 'undefined') firebase.initializeApp(firebaseConfig);
+    const auth = (typeof firebase !== 'undefined') ? firebase.auth() : null;
+    const db   = (typeof firebase !== 'undefined') ? firebase.firestore() : null;
+
+    const elNotice = document.getElementById('driveNotice');
+    const elWelcome = document.getElementById('welcomeTitle');
+    const elLoading = document.getElementById('loadingScreen');
+
+    function go(path){
+      const user = auth ? auth.currentUser : null;
+      if (!user) { 
+        window.location.href = 'login.html'; 
+        return; 
+      }
+      window.location.href = path;
+    }
+
+    function setLoggedInUI(name){
+      if (elWelcome && name) elWelcome.textContent = `안녕하세요, ${name}님`;
+      if (elLoading) elLoading.classList.add('hide');
+    }
+
+    async function refreshDriveNotice(user){
+      if (!user) { elNotice.classList.remove('show'); return; }
+      let enabled = localStorage.getItem('driveEnabled') === 'true';
+      try{
+        if (db){
+          const snap = await db.collection('users').doc(user.uid).get();
+          if (snap.exists && typeof snap.data().driveEnabled === 'boolean'){
+            enabled = snap.data().driveEnabled;
+            localStorage.setItem('driveEnabled', String(enabled));
+          }
+        }
+      }catch(e){}
+      if (enabled) elNotice.classList.remove('show');
+      else elNotice.classList.add('show');
+    }
+
+    if (auth){
+      auth.onAuthStateChanged(async (user)=>{
+        if (user){
+          let name = '';
+          try{
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (doc.exists && doc.data().name) name = doc.data().name;
+          }catch(e){}
+          setLoggedInUI(name);
+          refreshDriveNotice(user);
+        } else {
+          // 로그인되지 않았으면 login.html로 리다이렉트
+          window.location.href = 'login.html';
+        }
+      });
+    } else {
+      // Firebase가 없으면 login.html로 리다이렉트
+      window.location.href = 'login.html';
+    }
+
+    function logout(){
+      if (!auth) return;
+      if (confirm('로그아웃 하시겠습니까?')) {
+        auth.signOut().then(()=>{
+          window.location.href='login.html';
+        });
+      }
+    }
+
+    async function enableDrive(){
+      const user = auth ? auth.currentUser : null;
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+      localStorage.setItem('driveEnabled','true');
+      if (db){
+        try{ 
+          await db.collection('users').doc(user.uid).set({ driveEnabled:true }, { merge:true }); 
+          alert('구글드라이브 사용설정이 완료되었습니다.');
+        }catch(e){
+          alert('설정 저장에 실패했습니다.');
+        }
+      }
+      refreshDriveNotice(user);
+    }
+
+    async function pickDownloadDirectory(){
+      if ('showDirectoryPicker' in window){
+        try{
+          const handle = await window.showDirectoryPicker();
+          if (handle.requestPermission) await handle.requestPermission({mode:'readwrite'});
+          localStorage.setItem('downloadDirGranted','true');
+          alert('다운로드 폴더가 설정되었습니다.');
+        }catch(e){
+          if (e.name !== 'AbortError') {
+            alert('폴더 선택이 취소되었습니다.');
+          }
+        }
+      }else {
+        alert('이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome/Edge 최신 버전을 권장합니다.');
+      }
+    }
+  </script>
+</body>
+</html>
