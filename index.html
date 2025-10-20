@@ -18,13 +18,11 @@
       color:#fff; 
       padding:2rem 1rem; 
       min-height:100vh;
-      /* 모바일 스크롤 최적화 */
       -webkit-overflow-scrolling: touch;
       touch-action: manipulation;
     }
-    .dashboard-container{ max-width:1000px; margin:0 auto; }
+    .dashboard-container{ max-width:1200px; margin:0 auto; }
     
-    /* 상단 헤더 */
     .header{
       margin-bottom:1rem; padding-bottom:1rem;
       border-bottom:1px solid rgba(255,255,255,.2);
@@ -35,10 +33,9 @@
       align-items:center;
       margin-bottom:1rem;
     }
-    .welcome-message h1{ font-size:1.8rem; margin:0; }
-    .welcome-message p{ font-size:1rem; opacity:.85; margin-top:.25rem; }
+    .welcome-message h1{ font-size:2.2rem; margin:0; }
+    .welcome-message p{ font-size:1.1rem; opacity:.85; margin-top:.25rem; }
 
-    /* 우측 상단 버튼 영역 */
     .top-right-buttons{
       display:flex; 
       gap:.5rem;
@@ -46,15 +43,14 @@
     
     .btn{
       border:none; 
-      padding:.7rem 1.2rem; 
+      padding:.8rem 1.4rem; 
       border-radius:10px;
       font-weight:700; 
       cursor:pointer; 
       transition:.25s;
       backdrop-filter: blur(10px);
-      font-size:0.9rem;
+      font-size:0.95rem;
       white-space: nowrap;
-      /* 모바일 터치 최적화 */
       -webkit-tap-highlight-color: rgba(0,0,0,0.1);
       user-select: none;
     }
@@ -117,7 +113,6 @@
     .notice.show{ display:block; }
     .notice b{ color:#ffd27f; }
 
-    /* 프로그램 카드 그리드 */
     .program-list{
       display:grid; 
       gap:1rem; 
@@ -125,7 +120,6 @@
       grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
     }
     
-    /* 하단 4개 카드용 별도 그리드 */
     .bottom-programs{
       display:grid; 
       gap:1rem; 
@@ -146,7 +140,6 @@
       display:flex;
       flex-direction:column;
       justify-content:center;
-      /* 모바일 터치 최적화 */
       -webkit-tap-highlight-color: rgba(255,255,255,0.2);
       user-select: none;
     }
@@ -169,7 +162,6 @@
       line-height:1.3;
     }
 
-    /* 재무계산기 드롭다운 */
     .dropdown-wrapper {
       position: relative;
     }
@@ -179,8 +171,9 @@
       top: calc(100% + 5px);
       left: 50%;
       transform: translateX(-50%);
-      min-width: 280px;
-      max-width: 320px;
+      min-width: 320px;
+      max-width: 360px;
+      max-height: 500px;
       z-index: 1000;
       pointer-events: none;
     }
@@ -196,17 +189,30 @@
       box-shadow: 0 10px 40px rgba(0,0,0,.3);
       border: 1px solid rgba(255,255,255,.3);
       animation: slideDown 0.3s ease;
+      max-height: 500px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar {
+      width: 8px;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar-thumb {
+      background: #FF8802;
+      border-radius: 10px;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar-thumb:hover {
+      background: #FF6B00;
     }
     @keyframes slideDown {
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .dropdown-menu.active {
-      display: block;
-      pointer-events: auto;
-    }
     .dropdown-header {
-      font-size: 0.9rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #0c2c54;
       margin-bottom: 0.5rem;
@@ -244,7 +250,7 @@
     }
     .close-footer-btn {
       width: 100%;
-      padding: 0.75rem;
+      padding: 0.85rem;
       background: #f8f9fa;
       border: 1px solid #dee2e6;
       border-radius: 8px;
@@ -252,14 +258,15 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
+      font-size: 0.95rem;
     }
     .close-footer-btn:hover {
       background: #e9ecef;
       border-color: #adb5bd;
     }
     .dropdown-item {
-      padding: 0.75rem 1rem;
-      margin: 0.25rem 0;
+      padding: 0.85rem 1rem;
+      margin: 0.3rem 0;
       border-radius: 8px;
       background: #f8f9fa;
       color: #0c2c54;
@@ -268,7 +275,7 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     .dropdown-item:hover {
       background: linear-gradient(135deg,#FF8802 0%,#FF6B00 100%);
@@ -277,31 +284,32 @@
       box-shadow: 0 4px 12px rgba(255,136,2,.3);
     }
     .dropdown-item-icon {
-      font-size: 1.2rem;
-      width: 24px;
+      font-size: 1.3rem;
+      width: 26px;
       text-align: center;
     }
     .category-divider {
-      margin: 0.75rem 0;
+      margin: 0.85rem 0;
       border-top: 1px solid #e0e0e0;
       padding-top: 0.5rem;
     }
     .category-label {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: #6c757d;
       font-weight: 600;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.3rem;
       padding-left: 0.5rem;
     }
 
-    /* 로딩 화면 */
     .loading-screen {
       position: fixed;
       inset: 0;
       background: linear-gradient(135deg,#0c2c54 0%,#2a5a8a 100%);
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
+      gap: 1rem;
       z-index: 9999;
     }
     .loading-screen.hide { display: none; }
@@ -311,13 +319,24 @@
       border: 4px solid rgba(255,255,255,.2);
       border-top-color: #fff;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    .loading-text {
+      color: rgba(255,255,255,.9);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .loading-details {
+      color: rgba(255,255,255,.6);
+      font-size: 0.85rem;
+      text-align: center;
+      max-width: 80%;
+      line-height: 1.4;
+    }
 
-    /* 모바일 반응형 */
     @media (max-width: 768px) {
       .top-bar {
         flex-direction: column;
@@ -333,13 +352,11 @@
         justify-content: center;
         gap: 0.4rem;
       }
-      /* 모바일에서 버튼 크기 축소 */
       .top-right-buttons .btn {
         padding: 0.55rem 0.75rem;
         font-size: 0.8rem;
       }
       
-      /* 하단 4개 카드는 모바일에서 2열 유지 */
       .bottom-programs{
         grid-template-columns: repeat(2, 1fr);
         gap:0.75rem;
@@ -375,7 +392,6 @@
     
     @media (max-width: 480px) {
       body{ padding:1rem 0.5rem; }
-      /* 작은 화면에서 버튼 더 축소 */
       .top-right-buttons {
         gap: 0.3rem;
       }
@@ -397,14 +413,14 @@
   </style>
 </head>
 <body>
-  <!-- 로딩 화면 -->
   <div class="loading-screen" id="loadingScreen">
     <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">앱 시작 중...</div>
+    <div class="loading-details" id="loadingDetails"></div>
   </div>
 
-  <div class="dashboard-container">
+  <div class="dashboard-container" style="display:none;" id="mainContent">
     <div class="header">
-      <!-- 최상단: 환영메시지 + My page/로그아웃 -->
       <div class="top-bar">
         <div class="welcome-message">
           <h1 id="welcomeTitle">환영합니다</h1>
@@ -423,7 +439,6 @@
       간단하게 본인의 <b>'드라이브 연동'</b>을 먼저 하신 후 이용바랍니다.
     </div>
 
-    <!-- 상단 프로그램들 (CEO Focus, FM, 재무계산기, 업무일지) -->
     <div class="program-list">
       <div class="program-card" onclick="go('ceofocus.html')">
         <h2>CEO Focus</h2>
@@ -434,7 +449,6 @@
         <p>프리미엄 재무 Fact Finding</p>
       </div>
       
-      <!-- 재무계산기 드롭다운 -->
       <div class="dropdown-wrapper" onmouseenter="openDropdownHover()">
         <div class="program-card" onclick="toggleDropdown(event)">
           <h2>재무계산기</h2>
@@ -470,9 +484,9 @@
             </div>
             
             <div class="category-divider"></div>
-            <div class="category-label">🏖️ 은퇴 & 연금</div>
+            <div class="category-label">🖐️ 은퇴 & 연금</div>
             <div class="dropdown-item" onclick="event.stopPropagation(); go('retirement-calculator.html')">
-              <span class="dropdown-item-icon">🏖️</span>
+              <span class="dropdown-item-icon">🖐️</span>
               <span>은퇴계산기</span>
             </div>
             <div class="dropdown-item" onclick="event.stopPropagation(); go('pension-calculator.html')">
@@ -519,7 +533,6 @@
       </div>
     </div>
 
-    <!-- 하단 4개 프로그램 (2열 고정) -->
     <div class="bottom-programs">
       <div class="program-card" onclick="go('calendar.html')">
         <h2>일정관리</h2>
@@ -541,231 +554,243 @@
   </div>
 
   <script>
-    // ========================================
-    // 디버그 정보 출력
-    // ========================================
-    console.log('=== 페이지 시작 ===');
+    // 전역 변수
+    const elLoading = document.getElementById('loadingScreen');
+    const elLoadingText = document.getElementById('loadingText');
+    const elLoadingDetails = document.getElementById('loadingDetails');
+    const elMainContent = document.getElementById('mainContent');
+    const elNotice = document.getElementById('driveNotice');
+    const elWelcome = document.getElementById('welcomeTitle');
+    
+    let auth = null;
+    let db = null;
+    let loadingTimeout = null;
+    
+    console.log('🚀 === 페이지 시작 ===');
     console.log('📱 화면:', window.innerWidth, 'x', window.innerHeight);
     console.log('📱 모바일:', window.innerWidth <= 768);
-    console.log('🌐 URL:', window.location.href);
-    console.log('🔥 Firebase 로드:', typeof firebase !== 'undefined' ? '✅ 성공' : '❌ 실패');
+    console.log('🌐 User Agent:', navigator.userAgent);
     
-    // Firebase가 head에서 로드되었는지 확인
-    if (typeof firebase === 'undefined') {
-      console.error('❌ CRITICAL: Firebase가 로드되지 않았습니다!');
+    // 로딩 텍스트 업데이트 함수
+    function updateLoadingText(text, details = '') {
+      if (elLoadingText) elLoadingText.textContent = text;
+      if (elLoadingDetails) elLoadingDetails.textContent = details;
+      console.log('💬', text, details ? '(' + details + ')' : '');
+    }
+    
+    // 에러 표시 및 리다이렉트
+    function showErrorAndRedirect(message, details = '') {
+      console.error('❌', message, details);
+      updateLoadingText(message, details);
+      
       setTimeout(() => {
-        document.getElementById('loadingScreen').classList.add('hide');
-        alert('앱을 불러올 수 없습니다.\n\n네트워크 연결 상태를 확인해주세요.');
-      }, 1000);
-    }드 실패');"></script>
-
-  <script>
-    console.log('페이지 로드 시작');
+        if (elLoading) elLoading.classList.add('hide');
+        alert(message + (details ? '\n\n' + details : ''));
+        window.location.href = 'login.html';
+      }, 2000);
+    }
     
-    // Firebase 라이브러리 로드 대기
+    // Firebase 대기 함수 (개선된 버전)
     function waitForFirebase() {
       return new Promise((resolve, reject) => {
-        // 이미 로드되어 있으면 즉시 반환
+        const startTime = Date.now();
+        
+        // 즉시 확인
         if (typeof firebase !== 'undefined') {
-          console.log('✅ Firebase 이미 로드됨');
+          updateLoadingText('Firebase 준비 완료', '즉시 로드됨');
           resolve(true);
           return;
         }
         
+        updateLoadingText('Firebase 로딩 중...', '라이브러리 다운로드 중');
+        
         let attempts = 0;
-        const maxAttempts = 20; // 2초 대기 (20 * 100ms)
+        const maxAttempts = 50; // 50번 × 200ms = 10초
+        const checkInterval = 200;
         
         const checkFirebase = setInterval(() => {
           attempts++;
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
           
           if (typeof firebase !== 'undefined') {
             clearInterval(checkFirebase);
-            console.log(`✅ Firebase 로드 성공 (${attempts * 100}ms)`);
+            updateLoadingText('Firebase 로드 완료', `${elapsed}초 소요`);
+            console.log('✅ Firebase 로드 성공 (시도:', attempts, ', 시간:', elapsed + 's)');
             resolve(true);
           } else if (attempts >= maxAttempts) {
             clearInterval(checkFirebase);
-            console.error('❌ Firebase 로드 실패 (2초 타임아웃)');
-            reject(new Error('Firebase 로드 타임아웃'));
+            console.error('❌ Firebase 로드 실패: 타임아웃 (10초)');
+            reject(new Error('Firebase 라이브러리를 로드할 수 없습니다'));
+          } else if (attempts % 5 === 0) {
+            // 5회마다 진행 상황 업데이트
+            updateLoadingText('Firebase 로딩 중...', `${elapsed}초 경과 (${attempts}/${maxAttempts})`);
           }
-        }, 100);
+        }, checkInterval);
       });
     }
     
-    // ========================================
-    // 재무계산기 드롭다운 제어
-    // ========================================
-    
-    // 드롭다운 열기 (마우스 올렸을 때)
-    function openDropdownHover() {
-      const dropdown = document.getElementById('calculatorDropdown');
-      if (dropdown) {
-        dropdown.classList.add('active');
-      }
-    }
-
-    // 드롭다운 토글 (클릭 - 모바일용)
-    function toggleDropdown(event) {
-      event.stopPropagation();
-      const dropdown = document.getElementById('calculatorDropdown');
-      if (dropdown) {
-        dropdown.classList.toggle('active');
-      }
-    }
-
-    // 드롭다운 닫기
-    function closeDropdown() {
-      const dropdown = document.getElementById('calculatorDropdown');
-      if (dropdown) {
-        dropdown.classList.remove('active');
-      }
-    }
-
-    // 드롭다운 외부 클릭 시 닫기
-    document.addEventListener('click', function(event) {
-      const dropdown = document.getElementById('calculatorDropdown');
-      const wrapper = dropdown?.closest('.dropdown-wrapper');
-      if (dropdown && !wrapper?.contains(event.target)) {
-        dropdown.classList.remove('active');
-      }
-    });
-
-    const firebaseConfig = {
-      apiKey:"AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
-      authDomain:"kfpc-company-support-project.firebaseapp.com",
-      databaseURL:"https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId:"kfpc-company-support-project",
-      storageBucket:"kfpc-company-support-project.appspot.com",
-      messagingSenderId:"101260933373",
-      appId:"1:101260933373:web:3436176f9ca2560056d914"
-    };
-    
-    let auth = null;
-    let db = null;
-    
-    // Firebase 초기화 함수
+    // Firebase 초기화
     async function initializeFirebase() {
       try {
-        console.log('🔥 Firebase 초기화 시작...');
+        updateLoadingText('시스템 초기화 중...', 'Firebase 확인');
         
         // Firebase 라이브러리 로드 대기
         await waitForFirebase();
+        
+        updateLoadingText('Firebase 설정 중...', '서버 연결');
+        
+        // Firebase 설정
+        const firebaseConfig = {
+          apiKey:"AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+          authDomain:"kfpc-company-support-project.firebaseapp.com",
+          databaseURL:"https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId:"kfpc-company-support-project",
+          storageBucket:"kfpc-company-support-project.appspot.com",
+          messagingSenderId:"101260933373",
+          appId:"1:101260933373:web:3436176f9ca2560056d914"
+        };
         
         // Firebase 초기화
         firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         db = firebase.firestore();
         
-        // 로그인 상태 유지 설정 (로컬 스토리지 사용)
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        
         console.log('✅ Firebase 초기화 완료');
-        console.log('✅ 인증 지속성 설정 완료 (LOCAL)');
         
-        // 인증 상태 감시 시작
-        setupAuthStateListener();
+        // 인증 지속성 설정
+        try {
+          await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+          console.log('✅ 인증 지속성 설정 완료 (LOCAL)');
+        } catch (e) {
+          console.warn('⚠️ 인증 지속성 설정 실패 (계속 진행):', e.message);
+        }
+        
+        updateLoadingText('로그인 확인 중...', '사용자 인증');
+        
+        // 인증 상태 확인
+        await setupAuthStateListener();
         
       } catch (error) {
-        console.error('❌ Firebase 초기화 오류:', error);
-        clearTimeout(loadingTimeout);
-        
-        // 로딩 화면 제거
-        elLoading.classList.add('hide');
-        
-        // 사용자에게 알림
-        alert('앱 초기화에 실패했습니다.\n\n네트워크 연결을 확인하고 다시 시도해주세요.\n\n오류: ' + error.message);
-        
-        // 3초 후 로그인 페이지로 이동
-        setTimeout(() => {
-          window.location.href = 'login.html';
-        }, 3000);
+        showErrorAndRedirect(
+          '앱 초기화 실패',
+          error.message || '네트워크 연결을 확인하고 다시 시도해주세요'
+        );
       }
     }
     
-    // 페이지 로드 시 Firebase 초기화
-    initializeFirebase();
-
-    const elNotice = document.getElementById('driveNotice');
-    const elWelcome = document.getElementById('welcomeTitle');
-    const elLoading = document.getElementById('loadingScreen');
-
-    // 로딩 타임아웃 설정 (5초 후 강제로 로딩 화면 제거)
-    const loadingTimeout = setTimeout(() => {
-      if (elLoading && !elLoading.classList.contains('hide')) {
-        console.warn('⚠️ 로딩 타임아웃 (5초) - 강제로 로딩 화면 제거');
-        elLoading.classList.add('hide');
-        
-        // 로그인 상태 확인
-        if (auth && auth.currentUser) {
-          console.log('✅ 사용자는 로그인되어 있음:', auth.currentUser.uid);
-          setLoggedInUI(auth.currentUser.displayName || '');
-        } else {
-          console.log('❌ 로그인되지 않음 - 로그인 페이지로 이동');
-          window.location.href = 'login.html';
+    // 인증 상태 리스너 설정
+    function setupAuthStateListener() {
+      return new Promise((resolve, reject) => {
+        if (!auth) {
+          reject(new Error('Auth 객체가 없습니다'));
+          return;
         }
-      }
-    }, 5000);
-
-    function go(path){
-      console.log('페이지 이동:', path);
-      const user = auth ? auth.currentUser : null;
-      if (!user) { 
-        console.log('로그인 필요 - login.html로 이동');
-        window.location.href = 'login.html'; 
-        return; 
-      }
-      window.location.href = path;
+        
+        console.log('👀 인증 상태 감시 시작...');
+        
+        // 타임아웃 설정 (10초)
+        const authTimeout = setTimeout(() => {
+          console.warn('⚠️ 인증 확인 타임아웃');
+          reject(new Error('인증 확인 시간 초과'));
+        }, 10000);
+        
+        // 즉시 현재 사용자 확인
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          clearTimeout(authTimeout);
+          console.log('✅ 즉시 확인: 이미 로그인됨', currentUser.uid);
+          loadUserData(currentUser);
+          resolve();
+          return;
+        }
+        
+        // onAuthStateChanged 이벤트 리스너
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+          clearTimeout(authTimeout);
+          console.log('🔄 인증 상태 변경:', user ? '로그인됨' : '로그아웃됨');
+          
+          if (user) {
+            console.log('✅ 사용자 로그인 확인:', user.uid);
+            await loadUserData(user);
+            resolve();
+          } else {
+            console.log('❌ 로그인되지 않음 - 로그인 페이지로 이동');
+            updateLoadingText('로그인 필요', '로그인 페이지로 이동 중...');
+            setTimeout(() => {
+              window.location.href = 'login.html';
+            }, 1000);
+          }
+        }, (error) => {
+          clearTimeout(authTimeout);
+          console.error('❌ 인증 오류:', error);
+          reject(error);
+        });
+      });
     }
-
-    function goToMyPage(){
-      console.log('My page 이동');
-      const user = auth ? auth.currentUser : null;
-      if (!user) { 
-        alert('로그인이 필요합니다.');
-        window.location.href = 'login.html'; 
-        return; 
+    
+    // 사용자 데이터 로드
+    async function loadUserData(user) {
+      console.log('📥 사용자 데이터 로드 중...');
+      updateLoadingText('사용자 정보 로드 중...');
+      
+      // UI 먼저 표시
+      const displayName = user.displayName || user.email || '사용자';
+      setLoggedInUI(displayName);
+      
+      // Firestore에서 추가 정보 로드 (백그라운드)
+      try {
+        if (db) {
+          const doc = await db.collection('users').doc(user.uid).get();
+          if (doc.exists && doc.data().name) {
+            const name = doc.data().name;
+            if (elWelcome) {
+              elWelcome.textContent = '안녕하세요, ' + name + '님';
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ 사용자 정보 로드 실패 (기본값 사용):', e.message);
       }
-      // My page로 이동 (해당 페이지가 있어야 함)
-      window.location.href = 'mypage.html';
+      
+      // 드라이브 설정 확인
+      refreshDriveNotice(user);
     }
-
-    function setLoggedInUI(name){
+    
+    // UI 업데이트 및 표시
+    function setLoggedInUI(name) {
       console.log('🎨 UI 업데이트:', name);
+      
       if (elWelcome && name) {
-        elWelcome.textContent = `안녕하세요, ${name}님`;
+        elWelcome.textContent = '안녕하세요, ' + name + '님';
       }
-      if (elLoading) {
-        elLoading.classList.add('hide');
-        console.log('✅ 로딩 화면 제거됨');
-      }
+      
+      // 로딩 화면 숨기고 메인 컨텐츠 표시
+      setTimeout(() => {
+        if (elLoading) elLoading.classList.add('hide');
+        if (elMainContent) elMainContent.style.display = 'block';
+        console.log('✅ 페이지 로드 완료');
+      }, 300);
     }
-
-    async function refreshDriveNotice(user){
-      if (!user) { 
-        elNotice.classList.remove('show'); 
-        return; 
+    
+    // 드라이브 설정 확인
+    async function refreshDriveNotice(user) {
+      if (!user) {
+        elNotice.classList.remove('show');
+        return;
       }
       
       let enabled = localStorage.getItem('driveEnabled') === 'true';
       
       try {
         if (db) {
-          // 타임아웃 설정 (3초)
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 3000)
-          );
-          
-          const firestorePromise = db.collection('users').doc(user.uid).get();
-          
-          const snap = await Promise.race([firestorePromise, timeoutPromise]);
-          
+          const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists && typeof snap.data().driveEnabled === 'boolean') {
             enabled = snap.data().driveEnabled;
             localStorage.setItem('driveEnabled', String(enabled));
           }
         }
       } catch (e) {
-        console.warn('⚠️ 드라이브 설정 확인 실패 (로컬 저장소 사용):', e.message);
-        // 로컬 저장소 값 사용
+        console.warn('⚠️ 드라이브 설정 확인 실패:', e.message);
       }
       
       if (enabled) {
@@ -774,93 +799,56 @@
         elNotice.classList.add('show');
       }
     }
-
-    // Firebase 인증 상태 감시 설정
-    function setupAuthStateListener() {
-      if (!auth) {
-        console.error('❌ Auth 객체가 없습니다.');
-        elLoading.classList.add('hide');
+    
+    // 페이지 이동
+    function go(path) {
+      console.log('🔗 페이지 이동:', path);
+      const user = auth ? auth.currentUser : null;
+      if (!user) {
+        alert('로그인이 필요합니다.');
         window.location.href = 'login.html';
         return;
       }
-
-      console.log('👀 인증 상태 감시 시작...');
-      
-      // 즉시 현재 사용자 확인
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        console.log('✅ 즉시 확인: 이미 로그인됨', currentUser.uid);
-        clearTimeout(loadingTimeout);
-        loadUserData(currentUser);
-        return;
-      }
-
-      // onAuthStateChanged 이벤트 리스너
-      const unsubscribe = auth.onAuthStateChanged(async (user) => {
-        console.log('🔄 인증 상태 변경:', user ? '로그인됨' : '로그아웃됨');
-        clearTimeout(loadingTimeout);
-        
-        if (user) {
-          console.log('✅ 사용자 로그인 확인:', user.uid);
-          await loadUserData(user);
-        } else {
-          console.log('❌ 로그인되지 않음');
-          elLoading.classList.add('hide');
-          window.location.href = 'login.html';
-        }
-      }, (error) => {
-        console.error('❌ 인증 오류:', error);
-        clearTimeout(loadingTimeout);
-        elLoading.classList.add('hide');
-        alert('인증 확인 중 오류가 발생했습니다.\n\n' + error.message);
-        window.location.href = 'login.html';
-      });
+      window.location.href = path;
     }
     
-    // 사용자 데이터 로드
-    async function loadUserData(user) {
-      let name = '';
-      try {
-        if (db) {
-          const doc = await db.collection('users').doc(user.uid).get();
-          if (doc.exists && doc.data().name) {
-            name = doc.data().name;
-          }
-        }
-      } catch (e) {
-        console.error('⚠️ 사용자 정보 로드 오류:', e);
+    // My Page 이동
+    function goToMyPage() {
+      console.log('🔗 My page 이동');
+      const user = auth ? auth.currentUser : null;
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        window.location.href = 'login.html';
+        return;
       }
-      
-      setLoggedInUI(name || user.displayName || user.email);
-      refreshDriveNotice(user);
+      window.location.href = 'mypage.html';
     }
-
-    function logout(){
+    
+    // 로그아웃
+    function logout() {
       if (!auth) return;
       if (confirm('로그아웃 하시겠습니까?')) {
-        auth.signOut().then(()=>{
-          window.location.href='login.html';
+        auth.signOut().then(() => {
+          window.location.href = 'login.html';
         });
       }
     }
-
-    // 구글 드라이브 사용설정 (간편 버전)
-    async function enableDrive(){
+    
+    // 드라이브 연동
+    async function enableDrive() {
       const user = auth ? auth.currentUser : null;
       if (!user) {
         alert('로그인이 필요합니다.');
         return;
       }
       
-      console.log('🔐 드라이브 연동 시작...');
+      console.log('🔗 드라이브 연동 시작...');
       
       try {
-        // 로컬 저장소에 플래그 설정
         localStorage.setItem('driveEnabled', 'true');
         
-        // Firestore에 플래그 저장
         if (db) {
-          await db.collection('users').doc(user.uid).set({ 
+          await db.collection('users').doc(user.uid).set({
             driveEnabled: true,
             driveSetupDate: new Date().toISOString()
           }, { merge: true });
@@ -868,9 +856,8 @@
         
         console.log('✅ 드라이브 연동 완료');
         
-        alert('✅ 구글 드라이브 연동이 완료되었습니다!\n\nCEO Focus와 Financial Master에서\n고객 데이터를 구글 시트에 저장할 수 있습니다.');
+        alert('구글 드라이브 연동이 완료되었습니다!\n\nCEO Focus와 Financial Master에서\n고객 데이터를 구글 시트에 저장할 수 있습니다.');
         
-        // 안내 메시지 숨기기
         refreshDriveNotice(user);
         
       } catch (error) {
@@ -879,32 +866,47 @@
       }
     }
     
-    // ========================================
-    // 페이지 로드 이벤트
-    // ========================================
-    let domLoaded = false;
-    let pageLoaded = false;
+    // 드롭다운 제어
+    function openDropdownHover() {
+      const dropdown = document.getElementById('calculatorDropdown');
+      if (dropdown) dropdown.classList.add('active');
+    }
     
+    function toggleDropdown(event) {
+      event.stopPropagation();
+      const dropdown = document.getElementById('calculatorDropdown');
+      if (dropdown) dropdown.classList.toggle('active');
+    }
+    
+    function closeDropdown() {
+      const dropdown = document.getElementById('calculatorDropdown');
+      if (dropdown) dropdown.classList.remove('active');
+    }
+    
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('calculatorDropdown');
+      const wrapper = dropdown?.closest('.dropdown-wrapper');
+      if (dropdown && !wrapper?.contains(event.target)) {
+        dropdown.classList.remove('active');
+      }
+    });
+    
+    // 페이지 로드 시 초기화 시작
+    console.log('🚀 앱 초기화 시작');
+    initializeFirebase().catch(error => {
+      console.error('💥 치명적 오류:', error);
+      showErrorAndRedirect('앱 시작 실패', error.message);
+    });
+    
+    // 디버깅용 이벤트
     document.addEventListener('DOMContentLoaded', function() {
-      domLoaded = true;
       console.log('📄 DOM 로드 완료');
     });
     
     window.addEventListener('load', function() {
-      pageLoaded = true;
-      console.log('🌐 페이지 완전 로드');
+      console.log('🎉 페이지 완전 로드');
       console.log('⏱️ 로드 시간:', performance.now().toFixed(0), 'ms');
     });
-    
-    // 3초 후 로드 상태 점검
-    setTimeout(() => {
-      console.log('=== 로드 상태 점검 (3초 경과) ===');
-      console.log('DOM 로드:', domLoaded ? '✅' : '❌');
-      console.log('페이지 로드:', pageLoaded ? '✅' : '❌');
-      console.log('Firebase 초기화:', auth ? '✅' : '❌');
-      console.log('로그인 상태:', auth && auth.currentUser ? '✅ ' + auth.currentUser.uid : '❌');
-      console.log('로딩 화면:', elLoading.classList.contains('hide') ? '제거됨 ✅' : '표시중 ⚠️');
-    }, 3000);
   </script>
 </body>
 </html>
