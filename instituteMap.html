@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>기업부설연구소 지도 (Leaflet/OSM)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Leaflet CSS/JS (무료, 키 불필요) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body { height:100%; margin:0; font-family: "Noto Sans KR", system-ui, sans-serif; background:#f9fafb; }
+    #map { height:100%; }
+    .infocard { font-size:13px; line-height:1.45; }
+    .infocard h4 { margin:0 0 6px; font-size:14px; }
+    .row { display:flex; gap:6px; flex-wrap: wrap; margin-top:8px; }
+    .btn {
+      display:inline-block; padding:6px 8px; border:1px solid #e2e8f0; border-radius:8px;
+      background:#fff; text-decoration:none; font-size:12px; cursor:pointer;
+    }
+    .btn:hover { background:#f1f5f9; }
+    .menu {
+      position:absolute; background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:6px; z-index:9999;
+      box-shadow:0 8px 20px rgba(0,0,0,.08);
+    }
+    .menu button { display:block; width:100%; text-align:left; margin:2px 0; border:none; background:none; padding:6px; cursor:pointer; font-size:13px; }
+    .lbl { background: rgba(255,255,255,.9); border:1px solid rgba(0,0,0,.15); border-radius:6px; padding:2px 6px; font-size:11px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    // ====== 1) 회사 데이터 (주소만 있는 경우에도 최종적으로 lat/lng 채워서 쓰세요) ======
+    //  - 이미 좌표가 있으면 그대로 사용 → 100% 정확 위치 표시
+    //  - 주소만 있다면, 사전 일괄 지오코딩(카카오/네이버/구글 중 택1) 후 lat/lng 컬럼 추가를 권장
+    const institutes = [
+      {
+        companyName: "Kyungil Corporation",
+        address: "서울특별시 중구 세종대로 110",
+        lat: 37.5665, lng: 126.9780,
+        phone: "+82-2-1234-5678",
+        website: "https://example.com",
+        industryType: "Electronics",
+        certificationDate: "2021-06-15"
+      },
+      {
+        companyName: "Market Kurly R&D",
+        address: "서울특별시 송파구 올림픽로 300",
+        lat: 37.5145, lng: 127.1056,
+        phone: "+82-2-9876-5432",
+        website: "https://marketkurly.com",
+        industryType: "Retail / Logistics",
+        certificationDate: "2022-03-08"
+      }
+    ];
+
+    // ====== 2) 공용 유틸 ======
+    const APP_NAME = "kr.fpcenter.web";          // 네이버맵 appname 파라미터용(문자열 임의)
+    const PREF_KEY = "preferredMap";              // "kakao" | "naver" | "tmap" | "google"
+    const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const getPref = () => localStorage.getItem(PREF_KEY) || null;
+    const setPref = (v) => localStorage.setItem(PREF_KEY, v);
+    const escapeHtml = (s) => (s||"").replace(/[&<>"']/g,(ch)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    const telHref = (phone) => `tel:${(phone||"").replace(/[^0-9+]/g,"")}`;
+    const normalizeUrl = (u) => !u ? null : (/^https?:\/\//i.test(u) ? u : `https://${u}`);
+
+    // 지도앱 딥링크 + 웹 폴백 (앱 없으면 자동 웹으로)
+    function tmapLinkFor(p){
+      const name=encodeURIComponent(p.companyName||p.address||"Destination");
+      if(p.lng!=null&&p.lat!=null) return { app:`tmap://route?goalname=${name}&goalx=${p.lng}&goaly=${p.lat}`,
+                                           web:`https://map.tmap.co.kr/?rGoX=${p.lng}&rGoY=${p.lat}&rGoName=${name}` };
+      const q=encodeURIComponent(p.address||name);
+      return { app:`tmap://search?name=${q}`, web:`https://map.tmap.co.kr/search?searchKeyword=${q}` };
+    }
+    function kakaoMapLinkFor(p){
+      const name=encodeURIComponent(p.companyName||p.address||"Destination");
+      if(p.lat!=null&&p.lng!=null) return { app:`kakaomap://route?ep=${p.lat},${p.lng}&by=CAR`,
+                                            web:`https://map.kakao.com/link/to/${name},${p.lat},${p.lng}` };
+      const q=encodeURIComponent(p.address||"");
+      return { app:`kakaomap://search?q=${q}`, web:`https://map.kakao.com/?q=${q}` };
+    }
+    function naverMapLinkFor(p){
+      const name=encodeURIComponent(p.companyName||p.address||"Destination");
+      if(p.lat!=null&&p.lng!=null) return { app:`nmap://route/car?dlat=${p.lat}&dlng=${p.lng}&dname=${name}&appname=${encodeURIComponent(APP_NAME)}`,
+                                            web:`https://map.naver.com/v5/search/${name}?c=${p.lng},${p.lat},15,0,0,0` };
+      const q=encodeURIComponent(p.address||"");
+      return { app:`nmap://search?query=${q}&appname=${encodeURIComponent(APP_NAME)}`, web:`https://map.naver.com/v5/search/${q}` };
+    }
+    function openWithFallback(links){
+      const t=setTimeout(()=>window.open(links.web,"_blank"), 900);
+      window.location.href=links.app;
+      window.addEventListener("pagehide",()=>clearTimeout(t),{once:true});
+      window.addEventListener("blur",()=>clearTimeout(t),{once:true});
+    }
+    const openTmap = (p)=>openWithFallback(tmapLinkFor(p));
+    const openKakaoMap = (p)=>openWithFallback(kakaoMapLinkFor(p));
+    const openNaverMap = (p)=>openWithFallback(naverMapLinkFor(p));
+    function openGoogleMap(p){
+      const q=(p.lat!=null&&p.lng!=null)
+        ? `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`
+        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address||p.companyName||"")}`;
+      window.open(q,"_blank");
+    }
+
+    // 선호 지도 기반 스마트 길찾기
+    let currentMenu;
+    function smartNavigate(p){
+      const pref=getPref();
+      if(pref==="kakao") return openKakaoMap(p);
+      if(pref==="naver") return openNaverMap(p);
+      if(pref==="tmap")  return openTmap(p);
+      if(pref==="google")return openGoogleMap(p);
+      openProviderMenu(null,p);
+    }
+    function openProviderMenu(anchor,p){
+      if(currentMenu){ currentMenu.remove(); currentMenu=null; }
+      window.__lastPlaceForMenu=p;
+      const m=document.createElement("div");
+      m.className="menu";
+      m.innerHTML=`
+        <button onclick="chooseProvider('kakao')">🟡 카카오맵으로 계속</button>
+        <button onclick="chooseProvider('naver')">🟢 네이버맵으로 계속</button>
+        <button onclick="chooseProvider('tmap')">🗺️ T맵으로 계속</button>
+        <button onclick="chooseProvider('google')">🔵 구글맵으로 계속</button>
+        <hr style='margin:6px 0;'><button onclick='currentMenu.remove()'>취소</button>`;
+      document.body.appendChild(m); currentMenu=m;
+      const x=anchor?anchor.getBoundingClientRect().left:window.innerWidth/2;
+      const y=anchor?anchor.getBoundingClientRect().bottom:80;
+      m.style.left=x+"px"; m.style.top=y+"px";
+    }
+    function chooseProvider(v){
+      setPref(v);
+      const p=window.__lastPlaceForMenu;
+      if(v==="kakao") openKakaoMap(p);
+      else if(v==="naver") openNaverMap(p);
+      else if(v==="tmap") openTmap(p);
+      else openGoogleMap(p);
+      if(currentMenu) currentMenu.remove(), currentMenu=null;
+    }
+
+    // ====== 3) Leaflet 지도 초기화 ======
+    //  - OSM 타일 무료 사용 (출처 표기 표시)
+    const map = L.map('map', { zoomControl: true });
+    const defaultCenter = [37.5665, 126.9780]; // 서울시청
+    map.setView(defaultCenter, 11);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 마커 + 회사명 라벨(영구 툴팁)
+    const group = L.featureGroup().addTo(map);
+
+    institutes.forEach(p=>{
+      if(p.lat==null || p.lng==null) return; // 좌표 없으면 스킵(사전 지오코딩 권장)
+      const marker = L.marker([p.lat, p.lng]).addTo(group);
+
+      // 회사명 라벨(항상 보이게)
+      marker.bindTooltip(p.companyName || "", {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -8],
+        className: 'lbl'
+      }).openTooltip();
+
+      // 상세 팝업
+      marker.bindPopup(makePopupHtml(p), { maxWidth: 340 });
+
+      // 클릭 시 팝업 open
+      marker.on('click', ()=> marker.openPopup());
+    });
+
+    // 데이터에 맞춰 화면 경계 맞춤
+    if (group.getLayers().length > 0) {
+      map.fitBounds(group.getBounds().pad(0.2));
+    }
+
+    function makePopupHtml(p){
+      const phoneBtn = (p.phone && isMobile()) ? `<a class="btn" href="${telHref(p.phone)}">📞 전화</a>` : "";
+      const webBtn   = p.website ? `<a class="btn" href="${normalizeUrl(p.website)}" target="_blank" rel="noopener">🌐 웹사이트</a>` : "";
+      const smartBtn = `<button class="btn" onclick='smartNavigate(${JSON.stringify({companyName:p.companyName,address:p.address,lat:p.lat,lng:p.lng})})'>🚗 길찾기</button>`;
+      const cert = p.certificationDate ? `<div>인정일자: ${escapeHtml(p.certificationDate)}</div>` : "";
+      const ind  = p.industryType ? `<div>업종: ${escapeHtml(p.industryType)}</div>` : "";
+
+      return `
+        <div class="infocard">
+          <h4>${escapeHtml(p.companyName)}</h4>
+          <div>${escapeHtml(p.address || "")}</div>
+          ${ind}
+          ${cert}
+          <div class="row">
+            ${phoneBtn}
+            ${webBtn}
+            ${smartBtn}
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
