@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>고객 관리 - Executive Consulting Solution</title>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  
+  <!-- Google API Client Library -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <!-- CryptoJS for 암호화 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  
+  <!-- 다음 주소 API -->
+  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  
+  <!-- SheetJS for Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .header h1 {
+      color: #fff;
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      justify-content: center;
+    }
+    
+    .btn {
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+    }
+    
+    .btn-back {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-back:hover {
+      background: rgba(255,255,255,0.25);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(255,136,2,0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(255,136,2,0.4);
+    }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.9);
+      color: #0c2c54;
+    }
+    
+    .btn-secondary:hover {
+      background: #fff;
+    }
+    
+    .btn-map {
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: #fff;
+    }
+    
+    .btn-map:hover {
+      transform: translateY(-2px);
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      color: #fff;
+    }
+    
+    .stat-card h3 {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    
+    .controls {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .controls-top {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 0.8rem 1rem 0.8rem 2.5rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    
+    .search-box input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 0.8rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+    }
+    
+    .controls-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .btn-google-drive {
+      background: linear-gradient(135deg, #4285F4 0%, #34A853 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(66,133,244,0.3);
+    }
+    
+    .btn-google-drive:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(66,133,244,0.4);
+    }
+    
+    .btn-delete-selected {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #fff;
+      display: none;
+    }
+    
+    .btn-delete-selected.show {
+      display: inline-flex;
+    }
+    
+    .btn-send-selected {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      display: none;
+    }
+    
+    .btn-send-selected.show {
+      display: inline-flex;
+    }
+    
+    .table-container {
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      overflow-x: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1500px;
+    }
+    
+    thead {
+      background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
+      color: #fff;
+    }
+    
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    
+    th:first-child {
+      width: 40px;
+      text-align: center;
+    }
+    
+    th:nth-child(2) {
+      width: 50px;
+      text-align: center;
+    }
+    
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    .action-btns {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn-icon {
+      padding: 0.5rem 0.8rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.8rem;
+      background: #f1f5f9;
+      white-space: nowrap;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    
+    .btn-icon:hover {
+      transform: translateY(-2px);
+    }
+    
+    .btn-view { background: #3b82f6; color: #fff; }
+    .btn-edit { background: #10b981; color: #fff; }
+    .btn-delete { background: #ef4444; color: #fff; }
+    .btn-ceo { background: #FF8802; color: #fff; }
+    .btn-fm { background: #8b5cf6; color: #fff; }
+    .btn-call { background: #06b6d4; color: #fff; padding: 0.4rem 0.6rem; margin-left: 0.3rem; }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+    
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
+      color: #fff;
+      border-radius: 16px 16px 0 0;
+    }
+    
+    .modal-header h2 {
+      font-size: 1.3rem;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+    
+    .close-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .modal-body {
+      padding: 1.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #334155;
+      font-size: 0.9rem;
+    }
+    
+    .required::after {
+      content: ' *';
+      color: #ef4444;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.7rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+    
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #FF8802;
+      box-shadow: 0 0 0 3px rgba(255,136,2,0.1);
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .phone-inputs {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .phone-prefix {
+      padding: 0.7rem 1rem;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #475569;
+    }
+    
+    .phone-inputs input {
+      flex: 1;
+      text-align: center;
+    }
+    
+    .address-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .address-group input {
+      flex: 1;
+    }
+    
+    .btn-address {
+      padding: 0.7rem 1.2rem;
+      background: #475569;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    
+    .btn-address:hover {
+      background: #334155;
+    }
+    
+    .calendar-type {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    .calendar-type label {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-weight: normal;
+      cursor: pointer;
+    }
+    
+    .anniversary-input {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .anniversary-input input[type="text"] {
+      flex: 1;
+    }
+    
+    .anniversary-input input[type="date"] {
+      flex: 2;
+    }
+    
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+    
+    .btn-cancel {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    
+    .btn-cancel:hover {
+      background: #cbd5e1;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #64748b;
+    }
+    
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .loading {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    
+    .loading.hide { display: none; }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: #fff;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+    
+    .spreadsheet-container {
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    
+    .spreadsheet {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 1200px;
+    }
+    
+    .spreadsheet th,
+    .spreadsheet td {
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem;
+    }
+    
+    .spreadsheet th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #475569;
+      position: sticky;
+      top: 0;
+      font-size: 0.85rem;
+    }
+    
+    .spreadsheet th:nth-child(1), .spreadsheet td:nth-child(1) { min-width: 100px; }
+    .spreadsheet th:nth-child(2), .spreadsheet td:nth-child(2) { min-width: 120px; }
+    .spreadsheet th:nth-child(3), .spreadsheet td:nth-child(3) { min-width: 250px; }
+    .spreadsheet th:nth-child(4), .spreadsheet td:nth-child(4) { min-width: 150px; }
+    .spreadsheet th:nth-child(5), .spreadsheet td:nth-child(5) { min-width: 120px; }
+    .spreadsheet th:nth-child(6), .spreadsheet td:nth-child(6) { min-width: 100px; }
+    .spreadsheet th:nth-child(7), .spreadsheet td:nth-child(7) { min-width: 120px; }
+    .spreadsheet th:nth-child(8), .spreadsheet td:nth-child(8) { min-width: 120px; }
+    .spreadsheet th:nth-child(9), .spreadsheet td:nth-child(9) { min-width: 80px; }
+    .spreadsheet th:nth-child(10), .spreadsheet td:nth-child(10) { min-width: 100px; }
+    .spreadsheet th:nth-child(11), .spreadsheet td:nth-child(11) { min-width: 120px; }
+    .spreadsheet th:nth-child(12), .spreadsheet td:nth-child(12) { min-width: 150px; }
+    .spreadsheet th:nth-child(13), .spreadsheet td:nth-child(13) { min-width: 200px; }
+    
+    .spreadsheet input,
+    .spreadsheet select {
+      width: 100%;
+      border: none;
+      padding: 0.3rem;
+      background: transparent;
+    }
+    
+    .spreadsheet input::placeholder {
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+    
+    .spreadsheet input:focus,
+    .spreadsheet select:focus {
+      outline: 2px solid #FF8802;
+      background: #fff;
+    }
+    
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .header h1 {
+        justify-content: flex-start;
+      }
+      
+      .controls-top {
+        flex-direction: column;
+      }
+      
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">구글 드라이브 연결 중...</div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="btn btn-back" style="position: absolute; left: 1.5rem;">← 돌아가기</a>
+      <h1>🏢 고객 관리</h1>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <h3>총 고객</h3>
+        <div class="number" id="totalClients">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>이번 달 추가</h3>
+        <div class="number" id="monthlyClients">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>생일 예정</h3>
+        <div class="number" id="upcomingBirthdays">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>기념일 예정</h3>
+        <div class="number" id="upcomingAnniversaries">0</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-top">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="이름, 회사명, 연락처로 검색...">
+        </div>
+      </div>
+      <div class="controls-buttons">
+        <button class="btn btn-google-drive" onclick="showGoogleDriveInfo()">🔗 구글 드라이브 연동</button>
+        <button class="btn btn-primary" onclick="openAddModal()">➕ 고객 추가</button>
+        <button class="btn btn-secondary" onclick="openBulkUploadModal()">📥 단체 등록</button>
+        <button class="btn btn-secondary" onclick="exportToExcel()">📤 엑셀 내보내기</button>
+        <button class="btn btn-map" onclick="goToMap()">🗺️ 지도에서 보기</button>
+        <button class="btn btn-delete-selected" id="deleteSelectedBtn" onclick="deleteSelected()">🗑️ 선택 삭제</button>
+        <button class="btn btn-send-selected" id="sendSelectedBtn" onclick="sendToSelected()">📧 선택 발송</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table id="clientsTable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+            <th>No</th>
+            <th>고객명</th>
+            <th>연락처</th>
+            <th>회사명</th>
+            <th>직업</th>
+            <th>주소</th>
+            <th>생일</th>
+            <th>등록일</th>
+            <th style="min-width: 280px;">프로그램</th>
+            <th>발송</th>
+          </tr>
+        </thead>
+        <tbody id="clientsTableBody">
+          <tr>
+            <td colspan="11" class="empty-state">
+              <div class="empty-state-icon">📋</div>
+              <div>등록된 고객이 없습니다.<br/>고객을 추가해보세요!</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal" id="clientModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">➕ 고객 추가</h2>
+        <button class="close-btn" onclick="closeModal('clientModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="clientForm">
+          <div class="form-group">
+            <label class="required">고객명</label>
+            <input type="text" id="clientName" required placeholder="홍길동">
+          </div>
+          
+          <div class="form-group">
+            <label class="required">연락처</label>
+            <div class="phone-inputs">
+              <span class="phone-prefix">010</span>
+              <span>-</span>
+              <input type="text" id="phone1" maxlength="4" required placeholder="1234" inputmode="numeric">
+              <span>-</span>
+              <input type="text" id="phone2" maxlength="4" required placeholder="5678" inputmode="numeric">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="required">주소</label>
+            <div class="address-group">
+              <input type="text" id="postcode" placeholder="우편번호" readonly>
+              <button type="button" class="btn-address" onclick="findAddress()">🔍 주소찾기</button>
+            </div>
+            <input type="text" id="address" placeholder="기본주소" readonly style="margin-bottom:0.5rem;">
+            <input type="text" id="detailAddress" placeholder="상세주소 (필수)" required>
+          </div>
+          
+          <div class="form-group">
+            <label>회사명</label>
+            <input type="text" id="company" placeholder="(주)ABC">
+          </div>
+          
+          <div class="form-group">
+            <label>직업</label>
+            <input type="text" id="job" placeholder="대표이사">
+          </div>
+          
+          <div class="form-group">
+            <label>생년월일</label>
+            <input type="date" id="birthDate">
+          </div>
+          
+          <div class="form-group">
+            <label>생일</label>
+            <input type="date" id="birthday">
+            <div class="calendar-type">
+              <label>
+                <input type="radio" name="birthdayType" value="solar" checked> ☀️ 양력
+              </label>
+              <label>
+                <input type="radio" name="birthdayType" value="lunar"> 🌙 음력
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>기념일</label>
+            <div class="anniversary-input">
+              <input type="text" id="anniversaryName" placeholder="항목명 (예: 결혼기념일)">
+              <input type="date" id="anniversary">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="email" placeholder="example@email.com">
+          </div>
+          
+          <div class="form-group">
+            <label>메모</label>
+            <textarea id="memo" placeholder="메모 사항"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="closeModal('clientModal')">취소</button>
+        <button class="btn btn-primary" onclick="saveClient()">💾 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="bulkUploadModal">
+    <div class="modal-content" style="max-width: 95%; max-height: 95vh;">
+      <div class="modal-header">
+        <h2>📥 단체 고객 등록</h2>
+        <button class="close-btn" onclick="closeModal('bulkUploadModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 1rem;">
+          <label class="btn btn-secondary" style="cursor: pointer;">
+            📁 엑셀 파일 선택
+            <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleFileUpload(event)">
+          </label>
+          <span style="margin: 0 1rem; color: #64748b;">또는</span>
+          <button class="btn btn-secondary" onclick="initSpreadsheet()">📋 직접 입력</button>
+        </div>
+        
+        <div id="spreadsheetContainer" style="display:none;">
+          <div class="spreadsheet-container">
+            <table class="spreadsheet" id="spreadsheet">
+              <thead>
+                <tr>
+                  <th>고객명*</th>
+                  <th>연락처*</th>
+                  <th>주소*</th>
+                  <th>상세주소*</th>
+                  <th>회사명</th>
+                  <th>직업</th>
+                  <th>생년월일</th>
+                  <th>생일</th>
+                  <th>양/음력</th>
+                  <th>기념일명</th>
+                  <th>기념일</th>
+                  <th>이메일</th>
+                  <th>메모</th>
+                </tr>
+              </thead>
+              <tbody id="spreadsheetBody">
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top: 1rem;">
+            <button class="btn btn-secondary" onclick="addSpreadsheetRow()">➕ 행 추가</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="closeModal('bulkUploadModal')">취소</button>
+        <button class="btn btn-primary" onclick="saveBulkClients()">💾 일괄 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="viewModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>👤 고객 상세정보</h2>
+        <button class="close-btn" onclick="closeModal('viewModal')">×</button>
+      </div>
+      <div class="modal-body" id="viewModalBody">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="closeModal('viewModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+      authDomain: "kfpc-company-support-project.firebaseapp.com",
+      projectId: "kfpc-company-support-project"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    
+    // Google API 설정
+    const CLIENT_ID = '288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com';
+    const API_KEY = 'AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+    
+    const ENCRYPTION_KEY = 'KFPC-CEO-FOCUS-MASTER-KEY-2025';
+    
+    let clients = [];
+    let currentEditId = null;
+    let currentUser = null;
+    let gapiInited = false;
+    let gisInited = false;
+    let tokenClient;
+    let accessToken = null;
+    
+    // 암호화
+    function encryptData(data) {
+      const jsonString = JSON.stringify(data);
+      const encrypted = CryptoJS.AES.encrypt(jsonString, ENCRYPTION_KEY);
+      return encrypted.toString();
+    }
+    
+    // 복호화
+    function decryptData(encryptedData) {
+      try {
+        const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
+        const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.error('복호화 오류:', error);
+        return [];
+      }
+    }
+    
+    // Google API 초기화
+    function gapiLoaded() {
+      gapi.load('client', initializeGapiClient);
+    }
+    
+    async function initializeGapiClient() {
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: [DISCOVERY_DOC],
+      });
+      gapiInited = true;
+      maybeEnableButtons();
+    }
+    
+    function gisLoaded() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: '',
+      });
+      gisInited = true;
+      maybeEnableButtons();
+    }
+    
+    function maybeEnableButtons() {
+      if (gapiInited && gisInited) {
+        console.log('Google API 준비 완료');
+      }
+    }
+    
+    // Google Drive 파일 찾기
+    async function findFile(fileName) {
+      try {
+        const response = await gapi.client.drive.files.list({
+          q: `name='${fileName}' and trashed=false`,
+          fields: 'files(id, name)',
+          spaces: 'drive'
+        });
+        
+        if (response.result.files && response.result.files.length > 0) {
+          return response.result.files[0];
+        }
+        return null;
+      } catch (error) {
+        console.error('파일 검색 오류:', error);
+        return null;
+      }
+    }
+    
+    // Google Drive에서 파일 다운로드
+    async function downloadFile(fileId) {
+      try {
+        const response = await gapi.client.drive.files.get({
+          fileId: fileId,
+          alt: 'media'
+        });
+        return response.body;
+      } catch (error) {
+        console.error('파일 다운로드 오류:', error);
+        return null;
+      }
+    }
+    
+    // Google Drive에 파일 업로드
+    async function uploadFile(fileName, content) {
+      try {
+        const file = new Blob([content], { type: 'application/octet-stream' });
+        const metadata = {
+          name: fileName,
+          mimeType: 'application/octet-stream'
+        };
+        
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', file);
+        
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method: 'POST',
+          headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+          body: form,
+        });
+        
+        return await response.json();
+      } catch (error) {
+        console.error('파일 업로드 오류:', error);
+        return null;
+      }
+    }
+    
+    // Google Drive에 파일 업데이트
+    async function updateFile(fileId, content) {
+      try {
+        const file = new Blob([content], { type: 'application/octet-stream' });
+        
+        const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+          body: file,
+        });
+        
+        return await response.json();
+      } catch (error) {
+        console.error('파일 업데이트 오류:', error);
+        return null;
+      }
+    }
+    
+    // 구글 드라이브에서 데이터 로드
+    async function loadFromDrive() {
+      try {
+        const file = await findFile('고객목록.fmd');
+        
+        if (file) {
+          const encryptedData = await downloadFile(file.id);
+          if (encryptedData) {
+            return decryptData(encryptedData);
+          }
+        }
+        
+        return [];
+      } catch (error) {
+        console.error('드라이브 로드 오류:', error);
+        return [];
+      }
+    }
+    
+    // 구글 드라이브에 데이터 저장
+    async function saveToDrive() {
+      try {
+        const encrypted = encryptData(clients);
+        const file = await findFile('고객목록.fmd');
+        
+        if (file) {
+          await updateFile(file.id, encrypted);
+        } else {
+          await uploadFile('고객목록.fmd', encrypted);
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('드라이브 저장 오류:', error);
+        return false;
+      }
+    }
+    
+    // 초기화
+    async function init() {
+      try {
+        const user = await Promise.race([
+          new Promise((resolve) => {
+            auth.onAuthStateChanged(user => resolve(user));
+          }),
+          new Promise((resolve) => setTimeout(() => resolve(null), 1000))
+        ]);
+        
+        currentUser = user || { uid: 'test-user-001' };
+        
+        // Google API가 준비될 때까지 대기
+        await new Promise(resolve => {
+          const checkReady = setInterval(() => {
+            if (gapiInited && gisInited) {
+              clearInterval(checkReady);
+              resolve();
+            }
+          }, 100);
+          
+          setTimeout(() => {
+            clearInterval(checkReady);
+            resolve();
+          }, 5000);
+        });
+        
+        // 토큰 요청
+        tokenClient.callback = async (resp) => {
+          if (resp.error !== undefined) {
+            throw (resp);
+          }
+          
+          accessToken = gapi.client.getToken().access_token;
+          await loadClients();
+          updateStats();
+          document.getElementById('loading').classList.add('hide');
+        };
+        
+        if (gapi.client.getToken() === null) {
+          tokenClient.requestAccessToken({ prompt: 'consent' });
+        } else {
+          tokenClient.requestAccessToken({ prompt: '' });
+        }
+        
+      } catch (error) {
+        console.error('초기화 오류:', error);
+        document.getElementById('loading').classList.add('hide');
+        alert('Google Drive 연결에 실패했습니다. 페이지를 새로고침해주세요.');
+      }
+    }
+    
+    async function loadClients() {
+      clients = await loadFromDrive();
+      renderTable();
+    }
+    
+    async function saveClients() {
+      const success = await saveToDrive();
+      if (success) {
+        renderTable();
+        updateStats();
+      } else {
+        alert('저장에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+    
+    function formatPhone(phone) {
+      const cleaned = phone.replace(/\D/g, '');
+      if (cleaned.length === 11) {
+        return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      } else if (cleaned.length === 10) {
+        return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+      }
+      return phone;
+    }
+    
+    function renderTable() {
+      const tbody = document.getElementById('clientsTableBody');
+      
+      if (clients.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="11" class="empty-state">
+              <div class="empty-state-icon">📋</div>
+              <div>등록된 고객이 없습니다.<br/>고객을 추가해보세요!</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      tbody.innerHTML = clients.map((client, index) => `
+        <tr>
+          <td style="text-align: center;">
+            <input type="checkbox" class="client-checkbox" value="${index}" onchange="updateSelectedButtons()">
+          </td>
+          <td style="text-align: center;"><strong>${index + 1}</strong></td>
+          <td><strong>${client.name}</strong></td>
+          <td>
+            ${formatPhone(client.phone)}
+            <a href="tel:${client.phone}" class="btn-icon btn-call" title="전화걸기">📞</a>
+          </td>
+          <td>${client.company || '-'}</td>
+          <td>${client.job || '-'}</td>
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${client.address}">${client.address}</td>
+          <td>${client.birthday ? new Date(client.birthday).toLocaleDateString() : '-'}</td>
+          <td>${new Date(client.createdAt).toLocaleDateString()}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-icon btn-ceo" onclick="openCEOFocus(${index})" title="CEO Focus">CEO</button>
+              <button class="btn-icon btn-fm" onclick="openFM(${index})" title="FM">FM</button>
+              <button class="btn-icon btn-view" onclick="viewClient(${index})" title="상세보기">👁️</button>
+              <button class="btn-icon btn-edit" onclick="editClient(${index})" title="수정">✏️</button>
+              <button class="btn-icon btn-delete" onclick="deleteClient(${index})" title="삭제">🗑️</button>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <button class="btn-icon" onclick="sendToClient(${index})" style="background: #10b981; color: #fff;" title="발송">📧</button>
+          </td>
+        </tr>
+      `).join('');
+      
+      // 체크박스 상태 초기화
+      document.getElementById('selectAll').checked = false;
+      updateSelectedButtons();
+    }
+    
+    function updateStats() {
+      document.getElementById('totalClients').textContent = clients.length;
+      
+      const now = new Date();
+      const thisMonth = clients.filter(c => {
+        const created = new Date(c.createdAt);
+        return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+      }).length;
+      document.getElementById('monthlyClients').textContent = thisMonth;
+      
+      const today = new Date();
+      const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      
+      const upcomingBirthdays = clients.filter(c => {
+        if (!c.birthday) return false;
+        const birthday = new Date(c.birthday);
+        const thisYearBirthday = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
+        return thisYearBirthday >= today && thisYearBirthday <= in30Days;
+      }).length;
+      
+      const upcomingAnniversaries = clients.filter(c => {
+        if (!c.anniversary) return false;
+        const anniversary = new Date(c.anniversary);
+        const thisYearAnniversary = new Date(today.getFullYear(), anniversary.getMonth(), anniversary.getDate());
+        return thisYearAnniversary >= today && thisYearAnniversary <= in30Days;
+      }).length;
+      
+      document.getElementById('upcomingBirthdays').textContent = upcomingBirthdays;
+      document.getElementById('upcomingAnniversaries').textContent = upcomingAnniversaries;
+    }
+    
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('show');
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+      if (modalId === 'clientModal') {
+        document.getElementById('clientForm').reset();
+        currentEditId = null;
+      }
+    }
+    
+    function openAddModal() {
+      currentEditId = null;
+      document.getElementById('modalTitle').textContent = '➕ 고객 추가';
+      document.getElementById('clientForm').reset();
+      openModal('clientModal');
+    }
+    
+    function findAddress() {
+      if (typeof daum === 'undefined' || !daum.Postcode) {
+        alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      
+      new daum.Postcode({
+        oncomplete: function(data) {
+          console.log('주소 선택:', data);
+          document.getElementById('postcode').value = data.zonecode;
+          document.getElementById('address').value = data.address;
+          document.getElementById('detailAddress').focus();
+        },
+        onclose: function(state) {
+          console.log('팝업 상태:', state);
+        },
+        width: '100%',
+        height: '100%'
+      }).open({
+        popupTitle: '주소 검색',
+        left: (window.screen.width / 2) - (250),
+        top: (window.screen.height / 2) - (300)
+      });
+    }
+    
+    async function saveClient() {
+      const name = document.getElementById('clientName').value.trim();
+      const phone1 = document.getElementById('phone1').value.trim();
+      const phone2 = document.getElementById('phone2').value.trim();
+      const postcode = document.getElementById('postcode').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const detailAddress = document.getElementById('detailAddress').value.trim();
+      
+      if (!name || !phone1 || !phone2 || !address || !detailAddress) {
+        alert('필수 항목을 모두 입력해주세요.');
+        return;
+      }
+      
+      const phone = `010${phone1}${phone2}`;
+      const fullAddress = `${address} ${detailAddress}`;
+      const birthdayType = document.querySelector('input[name="birthdayType"]:checked').value;
+      
+      const client = {
+        name,
+        phone,
+        address: fullAddress,
+        postcode,
+        company: document.getElementById('company').value.trim(),
+        job: document.getElementById('job').value.trim(),
+        birthDate: document.getElementById('birthDate').value,
+        birthday: document.getElementById('birthday').value,
+        birthdayType,
+        anniversaryName: document.getElementById('anniversaryName').value.trim(),
+        anniversary: document.getElementById('anniversary').value,
+        email: document.getElementById('email').value.trim(),
+        memo: document.getElementById('memo').value.trim(),
+        createdAt: currentEditId !== null ? clients[currentEditId].createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      if (currentEditId !== null) {
+        clients[currentEditId] = client;
+      } else {
+        clients.push(client);
+      }
+      
+      await saveClients();
+      closeModal('clientModal');
+      alert('저장되었습니다!');
+    }
+    
+    function editClient(index) {
+      currentEditId = index;
+      const client = clients[index];
+      
+      document.getElementById('modalTitle').textContent = '✏️ 고객 수정';
+      document.getElementById('clientName').value = client.name;
+      
+      const cleaned = client.phone.replace(/\D/g, '');
+      if (cleaned.length === 11) {
+        document.getElementById('phone1').value = cleaned.substr(3, 4);
+        document.getElementById('phone2').value = cleaned.substr(7, 4);
+      }
+      
+      document.getElementById('postcode').value = client.postcode || '';
+      const addressParts = client.address.split(' ');
+      const detailAddr = addressParts.pop();
+      document.getElementById('address').value = addressParts.join(' ');
+      document.getElementById('detailAddress').value = detailAddr;
+      
+      document.getElementById('company').value = client.company || '';
+      document.getElementById('job').value = client.job || '';
+      document.getElementById('birthDate').value = client.birthDate || '';
+      document.getElementById('birthday').value = client.birthday || '';
+      
+      const birthdayTypeRadio = document.querySelector(`input[name="birthdayType"][value="${client.birthdayType || 'solar'}"]`);
+      if (birthdayTypeRadio) birthdayTypeRadio.checked = true;
+      
+      document.getElementById('anniversaryName').value = client.anniversaryName || '';
+      document.getElementById('anniversary').value = client.anniversary || '';
+      document.getElementById('email').value = client.email || '';
+      document.getElementById('memo').value = client.memo || '';
+      
+      openModal('clientModal');
+    }
+    
+    async function deleteClient(index) {
+      if (confirm('정말 삭제하시겠습니까?')) {
+        clients.splice(index, 1);
+        await saveClients();
+        alert('삭제되었습니다.');
+      }
+    }
+    
+    // 전체 선택/해제
+    function toggleSelectAll(checkbox) {
+      const checkboxes = document.querySelectorAll('.client-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+      });
+      updateSelectedButtons();
+    }
+    
+    // 선택된 항목 확인 및 버튼 표시
+    function updateSelectedButtons() {
+      const checkboxes = document.querySelectorAll('.client-checkbox:checked');
+      const deleteBtn = document.getElementById('deleteSelectedBtn');
+      const sendBtn = document.getElementById('sendSelectedBtn');
+      
+      if (checkboxes.length > 0) {
+        deleteBtn.classList.add('show');
+        sendBtn.classList.add('show');
+      } else {
+        deleteBtn.classList.remove('show');
+        sendBtn.classList.remove('show');
+      }
+    }
+    
+    // 선택 삭제
+    async function deleteSelected() {
+      const checkboxes = document.querySelectorAll('.client-checkbox:checked');
+      const count = checkboxes.length;
+      
+      if (count === 0) {
+        alert('삭제할 고객을 선택해주세요.');
+        return;
+      }
+      
+      if (!confirm(`선택한 ${count}명의 고객 데이터를 정말 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`)) {
+        return;
+      }
+      
+      const indicesToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => b - a);
+      
+      indicesToDelete.forEach(index => {
+        clients.splice(index, 1);
+      });
+      
+      await saveClients();
+      alert(`${count}명의 고객이 삭제되었습니다.`);
+    }
+    
+    // 개별 발송
+    function sendToClient(index) {
+      const client = clients[index];
+      alert(`${client.name}님께 메시지 발송 기능은 준비 중입니다.\n\n연락처: ${formatPhone(client.phone)}\n이메일: ${client.email || '없음'}`);
+      // TODO: 실제 발송 기능 구현
+    }
+    
+    // 선택 발송
+    function sendToSelected() {
+      const checkboxes = document.querySelectorAll('.client-checkbox:checked');
+      const count = checkboxes.length;
+      
+      if (count === 0) {
+        alert('발송할 고객을 선택해주세요.');
+        return;
+      }
+      
+      const selectedClients = Array.from(checkboxes).map(cb => {
+        const index = parseInt(cb.value);
+        return clients[index];
+      });
+      
+      const names = selectedClients.map(c => c.name).join(', ');
+      alert(`${count}명의 고객에게 일괄 발송 기능은 준비 중입니다.\n\n선택된 고객: ${names}`);
+      // TODO: 실제 일괄 발송 기능 구현
+    }
+    
+    // 구글 드라이브 연동 안내
+    function showGoogleDriveInfo() {
+      const message = `
+🔗 구글 드라이브 연동 안내
+
+안녕하세요! 고객 데이터를 안전하게 보관하기 위해 
+구글 드라이브 연동이 필요합니다.
+
+📋 연동 방법:
+1. 페이지를 처음 방문하시면 Google 로그인 팝업이 나타납니다.
+2. "이 앱이 Google Drive에 접근하도록 허용하시겠습니까?" 
+   메시지가 표시됩니다.
+3. [허용] 버튼을 클릭해주세요.
+
+✅ 연동 후:
+• 모든 고객 데이터가 귀하의 구글 드라이브에 암호화되어 저장됩니다.
+• "고객목록.fmd" 파일이 자동으로 생성됩니다.
+• 다른 기기에서도 같은 데이터를 볼 수 있습니다.
+• 회사 서버에는 저장되지 않아 안전합니다.
+
+🔒 보안:
+• AES-256 암호화로 데이터 보호
+• .fmd 파일은 본 프로그램에서만 열림
+• 귀하의 드라이브에만 저장됨
+
+❓ 권한을 거부하셨나요?
+페이지를 새로고침하시면 다시 연동을 시도할 수 있습니다.
+
+감사합니다! 😊
+      `;
+      
+      alert(message);
+    }
+    
+    function viewClient(index) {
+      const client = clients[index];
+      const body = document.getElementById('viewModalBody');
+      
+      body.innerHTML = `
+        <div style="padding: 1rem 0;">
+          <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">기본 정보</h3>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px;">
+              <p style="margin: 0.5rem 0;"><strong>고객명:</strong> ${client.name}</p>
+              <p style="margin: 0.5rem 0;"><strong>연락처:</strong> ${formatPhone(client.phone)} <a href="tel:${client.phone}" style="color: #06b6d4;">📞 전화걸기</a></p>
+              <p style="margin: 0.5rem 0;"><strong>주소:</strong> ${client.address}</p>
+              ${client.company ? `<p style="margin: 0.5rem 0;"><strong>회사명:</strong> ${client.company}</p>` : ''}
+              ${client.job ? `<p style="margin: 0.5rem 0;"><strong>직업:</strong> ${client.job}</p>` : ''}
+            </div>
+          </div>
+          
+          ${client.birthDate || client.birthday || client.anniversary ? `
+          <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">기념일 정보</h3>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px;">
+              ${client.birthDate ? `<p style="margin: 0.5rem 0;"><strong>생년월일:</strong> ${client.birthDate}</p>` : ''}
+              ${client.birthday ? `<p style="margin: 0.5rem 0;"><strong>생일:</strong> ${new Date(client.birthday).toLocaleDateString()} (${client.birthdayType === 'lunar' ? '🌙 음력' : '☀️ 양력'})</p>` : ''}
+              ${client.anniversary ? `<p style="margin: 0.5rem 0;"><strong>${client.anniversaryName || '기념일'}:</strong> ${new Date(client.anniversary).toLocaleDateString()}</p>` : ''}
+            </div>
+          </div>
+          ` : ''}
+          
+          ${client.email || client.memo ? `
+          <div>
+            <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">기타 정보</h3>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px;">
+              ${client.email ? `<p style="margin: 0.5rem 0;"><strong>이메일:</strong> ${client.email}</p>` : ''}
+              ${client.memo ? `<p style="margin: 0.5rem 0;"><strong>메모:</strong> ${client.memo}</p>` : ''}
+            </div>
+          </div>
+          ` : ''}
+        </div>
+      `;
+      
+      openModal('viewModal');
+    }
+    
+    function openCEOFocus(index) {
+      const client = clients[index];
+      const clientData = encryptData(client);
+      const encoded = encodeURIComponent(clientData);
+      window.open(`ceoFocus.html?client=${encoded}`, '_blank');
+    }
+    
+    function openFM(index) {
+      const client = clients[index];
+      const clientData = encryptData(client);
+      const encoded = encodeURIComponent(clientData);
+      window.open(`financialMaster.html?client=${encoded}`, '_blank');
+    }
+    
+    function goToMap() {
+      window.location.href = 'clientMap.html';
+    }
+    
+    function exportToExcel() {
+      if (clients.length === 0) {
+        alert('내보낼 데이터가 없습니다.');
+        return;
+      }
+      
+      const data = clients.map(c => ({
+        '고객명': c.name,
+        '연락처': formatPhone(c.phone),
+        '주소': c.address.split(' ').slice(0, -1).join(' '),
+        '상세주소': c.address.split(' ').slice(-1)[0],
+        '회사명': c.company || '',
+        '직업': c.job || '',
+        '생년월일': c.birthDate || '',
+        '생일': c.birthday ? new Date(c.birthday).toLocaleDateString() : '',
+        '양/음력': c.birthdayType === 'lunar' ? '음력' : '양력',
+        '기념일명': c.anniversaryName || '',
+        '기념일': c.anniversary ? new Date(c.anniversary).toLocaleDateString() : '',
+        '이메일': c.email || '',
+        '메모': c.memo || ''
+      }));
+      
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '고객목록');
+      XLSX.writeFile(wb, `고객목록_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+    
+    function openBulkUploadModal() {
+      document.getElementById('spreadsheetContainer').style.display = 'none';
+      openModal('bulkUploadModal');
+    }
+    
+    function initSpreadsheet() {
+      const container = document.getElementById('spreadsheetContainer');
+      container.style.display = 'block';
+      
+      const tbody = document.getElementById('spreadsheetBody');
+      tbody.innerHTML = '';
+      
+      for (let i = 0; i < 10; i++) {
+        addSpreadsheetRow();
+      }
+    }
+    
+    function addSpreadsheetRow() {
+      const tbody = document.getElementById('spreadsheetBody');
+      const row = tbody.insertRow();
+      
+      const cells = [
+        'text', 'text', 'text', 'text', 'text', 'text',
+        'date', 'date', 'select', 'text', 'date', 'email', 'text'
+      ];
+      
+      cells.forEach((type, i) => {
+        const cell = row.insertCell();
+        if (type === 'select') {
+          cell.innerHTML = '<select><option value="solar">양력</option><option value="lunar">음력</option></select>';
+        } else if (i === 1) {
+          cell.innerHTML = `<input type="text" placeholder="'-' 빼고 숫자만 입력" inputmode="numeric">`;
+        } else {
+          cell.innerHTML = `<input type="${type}">`;
+        }
+      });
+    }
+    
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        
+        initSpreadsheet();
+        const tbody = document.getElementById('spreadsheetBody');
+        tbody.innerHTML = '';
+        
+        jsonData.forEach(row => {
+          const tr = tbody.insertRow();
+          
+          const values = [
+            row['고객명'] || '',
+            row['연락처'] || '',
+            row['주소'] || '',
+            row['상세주소'] || '',
+            row['회사명'] || '',
+            row['직업'] || '',
+            row['생년월일'] || '',
+            row['생일'] || '',
+            row['양/음력'] || 'solar',
+            row['기념일명'] || '',
+            row['기념일'] || '',
+            row['이메일'] || '',
+            row['메모'] || ''
+          ];
+          
+          values.forEach((value, i) => {
+            const td = tr.insertCell();
+            if (i === 8) {
+              td.innerHTML = `<select><option value="solar" ${value === '양력' || value === 'solar' ? 'selected' : ''}>양력</option><option value="lunar" ${value === '음력' || value === 'lunar' ? 'selected' : ''}>음력</option></select>`;
+            } else if (i === 6 || i === 7 || i === 10) {
+              td.innerHTML = `<input type="date" value="${value}">`;
+            } else if (i === 11) {
+              td.innerHTML = `<input type="email" value="${value}">`;
+            } else if (i === 1) {
+              td.innerHTML = `<input type="text" value="${value}" placeholder="'-' 빼고 숫자만 입력" inputmode="numeric">`;
+            } else {
+              td.innerHTML = `<input type="text" value="${value}">`;
+            }
+          });
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    
+    async function saveBulkClients() {
+      const tbody = document.getElementById('spreadsheetBody');
+      const rows = tbody.querySelectorAll('tr');
+      let added = 0;
+      
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll('input, select');
+        const name = inputs[0].value.trim();
+        const phone = inputs[1].value.trim().replace(/\D/g, '');
+        const address = inputs[2].value.trim();
+        const detailAddress = inputs[3].value.trim();
+        
+        if (name && phone && address && detailAddress) {
+          clients.push({
+            name,
+            phone,
+            address: `${address} ${detailAddress}`,
+            postcode: '',
+            company: inputs[4].value.trim(),
+            job: inputs[5].value.trim(),
+            birthDate: inputs[6].value.trim(),
+            birthday: inputs[7].value.trim(),
+            birthdayType: inputs[8].value,
+            anniversaryName: inputs[9].value.trim(),
+            anniversary: inputs[10].value.trim(),
+            email: inputs[11].value.trim(),
+            memo: inputs[12].value.trim(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          added++;
+        }
+      });
+      
+      if (added > 0) {
+        await saveClients();
+        closeModal('bulkUploadModal');
+        alert(`${added}명의 고객이 추가되었습니다!`);
+      } else {
+        alert('저장할 데이터가 없습니다.');
+      }
+    }
+    
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const query = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll('#clientsTableBody tr');
+      
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    });
+    
+    document.getElementById('phone1').addEventListener('input', function(e) {
+      this.value = this.value.replace(/\D/g, '');
+    });
+    
+    document.getElementById('phone2').addEventListener('input', function(e) {
+      this.value = this.value.replace(/\D/g, '');
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('paste', function(e) {
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.closest('.spreadsheet')) {
+          e.preventDefault();
+          
+          const clipboardData = e.clipboardData.getData('text');
+          const rows = clipboardData.split('\n').map(row => row.split('\t'));
+          
+          let currentCell = activeElement.closest('td');
+          if (!currentCell) return;
+          
+          const table = currentCell.closest('tbody');
+          let rowIndex = currentCell.parentElement.rowIndex - 1;
+          let cellIndex = currentCell.cellIndex;
+          
+          rows.forEach((rowData, i) => {
+            let row = table.rows[rowIndex + i];
+            if (!row) {
+              addSpreadsheetRow();
+              row = table.rows[rowIndex + i];
+            }
+            
+            rowData.forEach((cellData, j) => {
+              const cell = row.cells[cellIndex + j];
+              if (cell) {
+                const input = cell.querySelector('input, select');
+                if (input) {
+                  input.value = cellData.trim();
+                }
+              }
+            });
+          });
+        }
+      });
+    });
+    
+    // Google API 로드
+    window.addEventListener('load', function() {
+      gapiLoaded();
+      setTimeout(() => {
+        if (typeof google !== 'undefined' && google.accounts) {
+          gisLoaded();
+        }
+      }, 1000);
+      
+      init();
+    });
+  </script>
+</body>
+</html>
