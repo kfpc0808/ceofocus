@@ -9,8 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   
-  <!-- Google API Client Library -->
-  <script src="https://apis.google.com/js/api.js"></script>
+  <!-- Google Identity Services (수정됨) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
   <!-- CryptoJS for 암호화 -->
@@ -663,7 +662,7 @@
         </div>
       </div>
       <div class="controls-buttons">
-        <button class="btn btn-google-drive" onclick="showGoogleDriveInfo()">🔗 구글 드라이브 연동</button>
+        <button class="btn btn-google-drive" onclick="handleGoogleDriveConnect()">🔗 구글 드라이브 연동</button>
         <button class="btn btn-primary" onclick="openAddModal()">➕ 고객 추가</button>
         <button class="btn btn-secondary" onclick="openBulkUploadModal()">📥 단체 등록</button>
         <button class="btn btn-secondary" onclick="exportToExcel()">📤 엑셀 내보내기</button>
@@ -702,6 +701,7 @@
     </div>
   </div>
 
+  <!-- 모든 모달 생략 (원본과 동일) -->
   <div class="modal" id="clientModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -857,6 +857,7 @@
   </div>
 
   <script>
+    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
       authDomain: "kfpc-company-support-project.firebaseapp.com",
@@ -866,21 +867,17 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     
-    // Google API 설정
+    // Google API 설정 (수정됨)
     const CLIENT_ID = '288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com';
-    const API_KEY = 'AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    
     const ENCRYPTION_KEY = 'KFPC-CEO-FOCUS-MASTER-KEY-2025';
     
     let clients = [];
     let currentEditId = null;
     let currentUser = null;
-    let gapiInited = false;
-    let gisInited = false;
     let tokenClient;
     let accessToken = null;
+    let gisInited = false;
     
     // 암호화
     function encryptData(data) {
@@ -901,73 +898,111 @@
       }
     }
     
-    // Google API 초기화
-    function gapiLoaded() {
-      gapi.load('client', initializeGapiClient);
-    }
-    
-    async function initializeGapiClient() {
-      await gapi.client.init({
-        apiKey: API_KEY,
-        discoveryDocs: [DISCOVERY_DOC],
-      });
-      gapiInited = true;
-      maybeEnableButtons();
-    }
-    
+    // Google Identity Services 초기화 (수정됨)
     function gisLoaded() {
+      console.log('✅ Google Identity Services 로드');
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
-        callback: '',
+        callback: '', // 나중에 설정
       });
       gisInited = true;
-      maybeEnableButtons();
+      console.log('✅ Google OAuth 준비 완료');
     }
     
-    function maybeEnableButtons() {
-      if (gapiInited && gisInited) {
-        console.log('Google API 준비 완료');
+    // Google Drive 연동 버튼 클릭 (수정됨)
+    function handleGoogleDriveConnect() {
+      if (!gisInited) {
+        alert('Google API가 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
       }
+      
+      showGoogleDriveInfo();
+      
+      // 2초 후 실제 로그인 시작
+      setTimeout(() => {
+        console.log('🔐 Google 로그인 시작...');
+        
+        tokenClient.callback = async (resp) => {
+          if (resp.error !== undefined) {
+            console.error('❌ 로그인 오류:', resp);
+            alert('로그인에 실패했습니다: ' + resp.error);
+            document.getElementById('loading').classList.add('hide');
+            return;
+          }
+          
+          accessToken = resp.access_token;
+          console.log('✅ Google 로그인 성공!');
+          
+          await loadClients();
+          updateStats();
+          document.getElementById('loading').classList.add('hide');
+          alert('구글 드라이브 연동 완료! ✅');
+        };
+        
+        // 토큰 요청
+        if (accessToken === null) {
+          tokenClient.requestAccessToken({prompt: 'consent'});
+        } else {
+          tokenClient.requestAccessToken({prompt: ''});
+        }
+      }, 2000);
     }
     
-    // Google Drive 파일 찾기
+    // Google Drive 파일 찾기 (fetch 방식으로 수정)
     async function findFile(fileName) {
+      if (!accessToken) {
+        console.log('⚠️ Access Token 없음');
+        return null;
+      }
+      
       try {
-        const response = await gapi.client.drive.files.list({
-          q: `name='${fileName}' and trashed=false`,
-          fields: 'files(id, name)',
-          spaces: 'drive'
-        });
+        const response = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and trashed=false&fields=files(id,name)`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
         
-        if (response.result.files && response.result.files.length > 0) {
-          return response.result.files[0];
+        const data = await response.json();
+        
+        if (data.files && data.files.length > 0) {
+          console.log('✅ 파일 발견:', data.files[0].id);
+          return data.files[0];
         }
+        
+        console.log('ℹ️ 파일 없음 - 새로 생성 필요');
         return null;
       } catch (error) {
-        console.error('파일 검색 오류:', error);
+        console.error('❌ 파일 검색 오류:', error);
         return null;
       }
     }
     
-    // Google Drive에서 파일 다운로드
+    // Google Drive에서 파일 다운로드 (fetch 방식으로 수정)
     async function downloadFile(fileId) {
       try {
-        const response = await gapi.client.drive.files.get({
-          fileId: fileId,
-          alt: 'media'
-        });
-        return response.body;
+        const response = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
+        
+        return await response.text();
       } catch (error) {
-        console.error('파일 다운로드 오류:', error);
+        console.error('❌ 파일 다운로드 오류:', error);
         return null;
       }
     }
     
-    // Google Drive에 파일 업로드
+    // Google Drive에 파일 업로드 (fetch 방식으로 수정)
     async function uploadFile(fileName, content) {
       try {
-        const file = new Blob([content], { type: 'application/octet-stream' });
         const metadata = {
           name: fileName,
           mimeType: 'application/octet-stream'
@@ -975,35 +1010,44 @@
         
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', file);
+        form.append('file', new Blob([content], { type: 'application/octet-stream' }));
         
-        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-          method: 'POST',
-          headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
-          body: form,
-        });
+        const response = await fetch(
+          'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: form
+          }
+        );
         
         return await response.json();
       } catch (error) {
-        console.error('파일 업로드 오류:', error);
+        console.error('❌ 파일 업로드 오류:', error);
         return null;
       }
     }
     
-    // Google Drive에 파일 업데이트
+    // Google Drive에 파일 업데이트 (fetch 방식으로 수정)
     async function updateFile(fileId, content) {
       try {
-        const file = new Blob([content], { type: 'application/octet-stream' });
-        
-        const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-          method: 'PATCH',
-          headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
-          body: file,
-        });
+        const response = await fetch(
+          `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/octet-stream'
+            },
+            body: content
+          }
+        );
         
         return await response.json();
       } catch (error) {
-        console.error('파일 업데이트 오류:', error);
+        console.error('❌ 파일 업데이트 오류:', error);
         return null;
       }
     }
@@ -1046,55 +1090,32 @@
       }
     }
     
-    // 초기화
+    // 초기화 (간소화)
     async function init() {
       try {
-        const user = await Promise.race([
-          new Promise((resolve) => {
-            auth.onAuthStateChanged(user => resolve(user));
-          }),
-          new Promise((resolve) => setTimeout(() => resolve(null), 1000))
-        ]);
+        currentUser = { uid: 'user-' + Date.now() };
         
-        currentUser = user || { uid: 'test-user-001' };
-        
-        // Google API가 준비될 때까지 대기
-        await new Promise(resolve => {
-          const checkReady = setInterval(() => {
-            if (gapiInited && gisInited) {
-              clearInterval(checkReady);
-              resolve();
-            }
-          }, 100);
-          
-          setTimeout(() => {
-            clearInterval(checkReady);
-            resolve();
-          }, 5000);
-        });
-        
-        // 토큰 요청
-        tokenClient.callback = async (resp) => {
-          if (resp.error !== undefined) {
-            throw (resp);
+        // Google Identity Services 로드 대기
+        const checkGIS = setInterval(() => {
+          if (typeof google !== 'undefined' && google.accounts) {
+            clearInterval(checkGIS);
+            gisLoaded();
           }
-          
-          accessToken = gapi.client.getToken().access_token;
-          await loadClients();
-          updateStats();
-          document.getElementById('loading').classList.add('hide');
-        };
+        }, 100);
         
-        if (gapi.client.getToken() === null) {
-          tokenClient.requestAccessToken({ prompt: 'consent' });
-        } else {
-          tokenClient.requestAccessToken({ prompt: '' });
-        }
+        // 5초 후에도 로드 안되면 타임아웃
+        setTimeout(() => {
+          clearInterval(checkGIS);
+          if (!gisInited) {
+            console.warn('⚠️ Google API 로드 타임아웃');
+          }
+        }, 5000);
+        
+        document.getElementById('loading').classList.add('hide');
         
       } catch (error) {
         console.error('초기화 오류:', error);
         document.getElementById('loading').classList.add('hide');
-        alert('Google Drive 연결에 실패했습니다. 페이지를 새로고침해주세요.');
       }
     }
     
@@ -1169,7 +1190,6 @@
         </tr>
       `).join('');
       
-      // 체크박스 상태 초기화
       document.getElementById('selectAll').checked = false;
       updateSelectedButtons();
     }
@@ -1232,13 +1252,9 @@
       
       new daum.Postcode({
         oncomplete: function(data) {
-          console.log('주소 선택:', data);
           document.getElementById('postcode').value = data.zonecode;
           document.getElementById('address').value = data.address;
           document.getElementById('detailAddress').focus();
-        },
-        onclose: function(state) {
-          console.log('팝업 상태:', state);
         },
         width: '100%',
         height: '100%'
@@ -1338,7 +1354,6 @@
       }
     }
     
-    // 전체 선택/해제
     function toggleSelectAll(checkbox) {
       const checkboxes = document.querySelectorAll('.client-checkbox');
       checkboxes.forEach(cb => {
@@ -1347,7 +1362,6 @@
       updateSelectedButtons();
     }
     
-    // 선택된 항목 확인 및 버튼 표시
     function updateSelectedButtons() {
       const checkboxes = document.querySelectorAll('.client-checkbox:checked');
       const deleteBtn = document.getElementById('deleteSelectedBtn');
@@ -1362,7 +1376,6 @@
       }
     }
     
-    // 선택 삭제
     async function deleteSelected() {
       const checkboxes = document.querySelectorAll('.client-checkbox:checked');
       const count = checkboxes.length;
@@ -1386,14 +1399,11 @@
       alert(`${count}명의 고객이 삭제되었습니다.`);
     }
     
-    // 개별 발송
     function sendToClient(index) {
       const client = clients[index];
       alert(`${client.name}님께 메시지 발송 기능은 준비 중입니다.\n\n연락처: ${formatPhone(client.phone)}\n이메일: ${client.email || '없음'}`);
-      // TODO: 실제 발송 기능 구현
     }
     
-    // 선택 발송
     function sendToSelected() {
       const checkboxes = document.querySelectorAll('.client-checkbox:checked');
       const count = checkboxes.length;
@@ -1410,39 +1420,10 @@
       
       const names = selectedClients.map(c => c.name).join(', ');
       alert(`${count}명의 고객에게 일괄 발송 기능은 준비 중입니다.\n\n선택된 고객: ${names}`);
-      // TODO: 실제 일괄 발송 기능 구현
     }
     
-    // 구글 드라이브 연동 안내
     function showGoogleDriveInfo() {
-      const message = `
-🔗 구글 드라이브 연동 안내
-
-안녕하세요! 고객 데이터를 안전하게 보관하기 위해 
-구글 드라이브 연동이 필요합니다.
-
-📋 연동 방법:
-1. 페이지를 처음 방문하시면 Google 로그인 팝업이 나타납니다.
-2. "이 앱이 Google Drive에 접근하도록 허용하시겠습니까?" 
-   메시지가 표시됩니다.
-3. [허용] 버튼을 클릭해주세요.
-
-✅ 연동 후:
-• 모든 고객 데이터가 귀하의 구글 드라이브에 암호화되어 저장됩니다.
-• "고객목록.fmd" 파일이 자동으로 생성됩니다.
-• 다른 기기에서도 같은 데이터를 볼 수 있습니다.
-• 회사 서버에는 저장되지 않아 안전합니다.
-
-🔒 보안:
-• AES-256 암호화로 데이터 보호
-• .fmd 파일은 본 프로그램에서만 열림
-• 귀하의 드라이브에만 저장됨
-
-❓ 권한을 거부하셨나요?
-페이지를 새로고침하시면 다시 연동을 시도할 수 있습니다.
-
-감사합니다! 😊
-      `;
+      const message = `🔗 구글 드라이브 연동 안내\n\n안녕하세요! 고객 데이터를 안전하게 보관하기 위해\n구글 드라이브 연동이 필요합니다.\n\n📋 연동 방법:\n1. 페이지를 처음 방문하시면 Google 로그인 팝업이 나타납니다.\n2. "이 앱이 Google Drive에 접근하도록 허용하시겠습니까?"\n   메시지가 표시됩니다.\n3. [허용] 버튼을 클릭해주세요.\n\n✅ 연동 후:\n• 모든 고객 데이터가 귀하의 구글 드라이브에 암호화되어 저장됩니다.\n• "고객목록.fmd" 파일이 자동으로 생성됩니다.\n• 다른 기기에서도 같은 데이터를 볼 수 있습니다.\n\n🔒 보안:\n• AES-256 암호화로 데이터 보호\n• 귀하의 드라이브에만 저장됨\n\n감사합니다! 😊`;
       
       alert(message);
     }
@@ -1725,15 +1706,8 @@
       });
     });
     
-    // Google API 로드
+    // 초기화 실행
     window.addEventListener('load', function() {
-      gapiLoaded();
-      setTimeout(() => {
-        if (typeof google !== 'undefined' && google.accounts) {
-          gisLoaded();
-        }
-      }, 1000);
-      
       init();
     });
   </script>
