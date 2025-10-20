@@ -20,8 +20,16 @@
       min-height:100vh;
       -webkit-overflow-scrolling: touch;
       touch-action: manipulation;
+      /* 수직 중앙 정렬 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .dashboard-container{ max-width:1200px; margin:0 auto; }
+    .dashboard-container{ 
+      max-width:1200px; 
+      width: 100%;
+      margin:0 auto; 
+    }
     
     .header{
       margin-bottom:1rem; padding-bottom:1rem;
@@ -570,6 +578,14 @@
     console.log('📱 화면:', window.innerWidth, 'x', window.innerHeight);
     console.log('📱 모바일:', window.innerWidth <= 768);
     console.log('🌐 User Agent:', navigator.userAgent);
+    console.log('🔗 프로토콜:', window.location.protocol);
+    console.log('🔗 전체 URL:', window.location.href);
+    
+    // ⚠️ 로컬 파일 경고 (차단하지 않음)
+    if (window.location.protocol === 'file:') {
+      console.warn('⚠️ 로컬 파일에서 실행 중 - Firebase 로딩이 느릴 수 있습니다');
+      updateLoadingText('로컬 파일 모드', '로딩 시간이 길어질 수 있습니다');
+    }
     
     // 로딩 텍스트 업데이트 함수
     function updateLoadingText(text, details = '') {
