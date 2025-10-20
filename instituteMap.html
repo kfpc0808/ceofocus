@@ -24,7 +24,6 @@
       background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
     }
     
-    /* 헤더 */
     .header {
       position: absolute;
       top: 0;
@@ -63,47 +62,77 @@
       background: rgba(255,255,255,0.25);
     }
     
-    /* 지도 */
     #map { 
       height: 100%; 
       width: 100%;
     }
     
-    /* 팝업 스타일 */
     .infocard { 
       font-size: 14px; 
-      line-height: 1.5;
-      min-width: 250px;
+      line-height: 1.6;
+      min-width: 280px;
+      max-width: 350px;
     }
     
     .infocard h4 { 
-      margin: 0 0 8px; 
-      font-size: 16px;
+      margin: 0 0 10px; 
+      font-size: 17px;
       color: #0c2c54;
       font-weight: 700;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
     }
     
     .infocard .detail {
-      margin: 4px 0;
+      margin: 8px 0;
       color: #475569;
       font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
     }
     
-    .row { 
+    .infocard .detail .icon {
+      font-size: 14px;
+      min-width: 18px;
+    }
+    
+    .infocard .detail a {
+      color: #0c2c54;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .infocard .detail a:hover {
+      color: #FF8802;
+    }
+    
+    .section-title {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 700;
+      margin: 12px 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-group { 
       display: flex; 
       gap: 6px; 
       flex-wrap: wrap; 
-      margin-top: 12px; 
+      margin-top: 4px; 
     }
     
     .btn {
-      display: inline-block; 
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       padding: 8px 12px; 
       border: 1px solid #e2e8f0; 
       border-radius: 8px;
       background: #fff; 
       text-decoration: none; 
-      font-size: 13px; 
+      font-size: 12px; 
       cursor: pointer;
       transition: 0.2s;
       color: #334155;
@@ -113,58 +142,89 @@
     .btn:hover { 
       background: #f1f5f9;
       transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
-    .btn-primary {
-      background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
+    .btn-phone {
+      background: #10b981;
       color: #fff;
       border: none;
     }
     
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #FF6B00 0%, #FF5500 100%);
+    .btn-phone:hover {
+      background: #059669;
     }
     
-    .menu {
-      position: absolute; 
-      background: #fff; 
-      border: 1px solid #e5e7eb; 
-      border-radius: 12px; 
-      padding: 8px; 
-      z-index: 9999;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-      min-width: 200px;
+    .btn-web {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
     }
     
-    .menu button { 
-      display: block; 
-      width: 100%; 
-      text-align: left; 
-      margin: 3px 0; 
-      border: none; 
-      background: none; 
-      padding: 10px 12px; 
-      cursor: pointer; 
-      font-size: 14px;
-      border-radius: 6px;
-      transition: 0.2s;
+    .btn-web:hover {
+      background: #2563eb;
     }
     
-    .menu button:hover {
-      background: #f1f5f9;
+    .btn-kakao {
+      background: #FEE500;
+      color: #000;
+      border: none;
     }
     
-    .lbl { 
+    .btn-kakao:hover {
+      background: #FDDC00;
+    }
+    
+    .btn-naver {
+      background: #03C75A;
+      color: #fff;
+      border: none;
+    }
+    
+    .btn-naver:hover {
+      background: #02B350;
+    }
+    
+    .btn-tmap {
+      background: #1E40AF;
+      color: #fff;
+      border: none;
+    }
+    
+    .btn-tmap:hover {
+      background: #1E3A8A;
+    }
+    
+    .btn-google {
+      background: #EA4335;
+      color: #fff;
+      border: none;
+    }
+    
+    .btn-google:hover {
+      background: #D33426;
+    }
+    
+    .company-label { 
       background: rgba(255,255,255,0.95); 
-      border: 1px solid rgba(0,0,0,0.15); 
-      border-radius: 6px; 
-      padding: 4px 8px; 
+      border: 2px solid #0c2c54;
+      border-radius: 8px; 
+      padding: 5px 10px; 
       font-size: 12px;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-weight: 700;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      color: #0c2c54;
+      cursor: pointer;
+      transition: all 0.2s;
     }
     
-    /* 로딩 화면 */
+    .company-label:hover {
+      background: #FF8802;
+      color: #fff;
+      border-color: #FF8802;
+      transform: scale(1.05);
+    }
+    
     .loading-screen {
       position: fixed;
       inset: 0;
@@ -198,7 +258,12 @@
       font-weight: 600;
     }
     
-    /* 모바일 대응 */
+    .loading-progress {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    
     @media (max-width: 768px) {
       .header h1 {
         font-size: 1.1rem;
@@ -211,32 +276,35 @@
       
       .infocard {
         font-size: 13px;
+        min-width: 250px;
       }
       
       .infocard h4 {
         font-size: 15px;
       }
+      
+      .btn {
+        font-size: 11px;
+        padding: 7px 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- 로딩 화면 -->
   <div class="loading-screen" id="loadingScreen">
     <div class="spinner"></div>
-    <div class="loading-text">지도 로딩 중...</div>
+    <div class="loading-text" id="loadingText">지도 로딩 중...</div>
+    <div class="loading-progress" id="loadingProgress"></div>
   </div>
   
-  <!-- 헤더 -->
   <div class="header">
     <h1>🗺️ 고객 찾기</h1>
     <a href="index.html" class="btn-back">← 돌아가기</a>
   </div>
   
-  <!-- 지도 -->
   <div id="map"></div>
 
   <script>
-    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
       authDomain: "kfpc-company-support-project.firebaseapp.com",
@@ -246,14 +314,19 @@
     let auth = null;
     let institutes = [];
     
-    // Firebase 초기화 및 인증 확인
+    function updateLoadingText(text, progress = '') {
+      const elText = document.getElementById('loadingText');
+      const elProgress = document.getElementById('loadingProgress');
+      if(elText) elText.textContent = text;
+      if(elProgress) elProgress.textContent = progress;
+    }
+    
     async function initApp() {
       try {
-        // Firebase 초기화
+        updateLoadingText('Firebase 초기화 중...');
         firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         
-        // 로그인 확인
         const user = await new Promise((resolve) => {
           auth.onAuthStateChanged((user) => {
             resolve(user);
@@ -268,13 +341,12 @@
         
         console.log('✅ 사용자 로그인 확인:', user.uid);
         
-        // CSV 데이터 로드
+        updateLoadingText('CSV 데이터 로드 중...');
         await loadCSVData();
         
-        // 지도 초기화
+        updateLoadingText('지도 생성 중...');
         initMap();
         
-        // 로딩 화면 숨기기
         document.getElementById('loadingScreen').classList.add('hide');
         
       } catch (error) {
@@ -284,161 +356,108 @@
       }
     }
     
-    // CSV 데이터 로드
     async function loadCSVData() {
       return new Promise((resolve, reject) => {
-        // CSV 파일 경로 (같은 폴더에 있다고 가정)
+        // 실제 파일명으로 수정
         const csvPath = 'institute.csv';
         
         Papa.parse(csvPath, {
           download: true,
           header: true,
-          dynamicTyping: true,
+          dynamicTyping: true,  // 숫자 자동 변환
           skipEmptyLines: true,
           complete: function(results) {
             console.log('✅ CSV 로드 성공:', results.data.length, '개');
+            
+            // lat, lng가 있는 데이터만 필터링
             institutes = results.data.filter(row => {
-              // lat, lng가 있는 데이터만 필터링
-              return row.lat != null && row.lng != null;
+              return row.lat != null && row.lng != null && 
+                     !isNaN(row.lat) && !isNaN(row.lng);
             });
-            console.log('✅ 유효한 위치 데이터:', institutes.length, '개');
+            
+            console.log('✅ 유효한 좌표 데이터:', institutes.length, '개');
+            console.log('샘플 데이터:', institutes[0]);
             resolve();
           },
           error: function(error) {
-            console.warn('⚠️ CSV 로드 실패, 샘플 데이터 사용:', error);
-            // CSV 로드 실패 시 샘플 데이터 사용
-            institutes = [
-              {
-                companyName: "Kyungil Corporation",
-                address: "서울특별시 중구 세종대로 110",
-                lat: 37.5665, lng: 126.9780,
-                phone: "02-1234-5678",
-                website: "https://example.com",
-                industryType: "전자",
-                certificationDate: "2021-06-15"
-              },
-              {
-                companyName: "Market Kurly R&D",
-                address: "서울특별시 송파구 올림픽로 300",
-                lat: 37.5145, lng: 127.1056,
-                phone: "02-9876-5432",
-                website: "https://marketkurly.com",
-                industryType: "유통/물류",
-                certificationDate: "2022-03-08"
-              }
-            ];
-            resolve();
+            console.error('❌ CSV 로드 실패:', error);
+            reject(error);
           }
         });
       });
     }
     
-    // 공용 유틸
-    const APP_NAME = "kr.fpcenter.web";
-    const PREF_KEY = "preferredMap";
     const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const getPref = () => localStorage.getItem(PREF_KEY) || null;
-    const setPref = (v) => localStorage.setItem(PREF_KEY, v);
     const escapeHtml = (s) => (s||"").replace(/[&<>"']/g,(ch)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
     const telHref = (phone) => `tel:${(phone||"").replace(/[^0-9+]/g,"")}`;
     const normalizeUrl = (u) => !u ? null : (/^https?:\/\//i.test(u) ? u : `https://${u}`);
 
-    // 지도앱 딥링크
-    function tmapLinkFor(p){
-      const name = encodeURIComponent(p.companyName || p.address || "목적지");
-      if(p.lng != null && p.lat != null) return { 
-        app: `tmap://route?goalname=${name}&goalx=${p.lng}&goaly=${p.lat}`,
-        web: `https://map.tmap.co.kr/?rGoX=${p.lng}&rGoY=${p.lat}&rGoName=${name}` 
-      };
-      const q = encodeURIComponent(p.address || name);
-      return { app: `tmap://search?name=${q}`, web: `https://map.tmap.co.kr/search?searchKeyword=${q}` };
+    // 인덱스로 데이터 참조하는 함수들
+    function openKakaoMapByIndex(index) {
+      const p = institutesGlobal[index];
+      if(!p) return;
+      openKakaoMap(p);
     }
     
-    function kakaoMapLinkFor(p){
-      const name = encodeURIComponent(p.companyName || p.address || "목적지");
-      if(p.lat != null && p.lng != null) return { 
-        app: `kakaomap://route?ep=${p.lat},${p.lng}&by=CAR`,
-        web: `https://map.kakao.com/link/to/${name},${p.lat},${p.lng}` 
-      };
-      const q = encodeURIComponent(p.address || "");
-      return { app: `kakaomap://search?q=${q}`, web: `https://map.kakao.com/?q=${q}` };
+    function openNaverMapByIndex(index) {
+      const p = institutesGlobal[index];
+      if(!p) return;
+      openNaverMap(p);
     }
     
-    function naverMapLinkFor(p){
-      const name = encodeURIComponent(p.companyName || p.address || "목적지");
-      if(p.lat != null && p.lng != null) return { 
-        app: `nmap://route/car?dlat=${p.lat}&dlng=${p.lng}&dname=${name}&appname=${encodeURIComponent(APP_NAME)}`,
-        web: `https://map.naver.com/v5/search/${name}?c=${p.lng},${p.lat},15,0,0,0` 
-      };
-      const q = encodeURIComponent(p.address || "");
-      return { app: `nmap://search?query=${q}&appname=${encodeURIComponent(APP_NAME)}`, web: `https://map.naver.com/v5/search/${q}` };
+    function openTmapByIndex(index) {
+      const p = institutesGlobal[index];
+      if(!p) return;
+      openTmap(p);
     }
     
-    function openWithFallback(links){
-      const t = setTimeout(() => window.open(links.web, "_blank"), 900);
-      window.location.href = links.app;
-      window.addEventListener("pagehide", () => clearTimeout(t), {once: true});
-      window.addEventListener("blur", () => clearTimeout(t), {once: true});
+    function openGoogleMapByIndex(index) {
+      const p = institutesGlobal[index];
+      if(!p) return;
+      openGoogleMap(p);
+    }
+
+    function openKakaoMap(p){
+      const name = encodeURIComponent(p.companyName || "목적지");
+      const address = p.instituteAddress || p.companyAddress || "";
+      const url = (p.lat && p.lng)
+        ? `https://map.kakao.com/link/to/${name},${p.lat},${p.lng}`
+        : `https://map.kakao.com/?q=${encodeURIComponent(address)}`;
+      window.open(url, "_blank");
     }
     
-    const openTmap = (p) => openWithFallback(tmapLinkFor(p));
-    const openKakaoMap = (p) => openWithFallback(kakaoMapLinkFor(p));
-    const openNaverMap = (p) => openWithFallback(naverMapLinkFor(p));
+    function openNaverMap(p){
+      const name = encodeURIComponent(p.companyName || "목적지");
+      const address = p.instituteAddress || p.companyAddress || "";
+      const url = (p.lat && p.lng)
+        ? `https://map.naver.com/v5/search/${name}?c=${p.lng},${p.lat},15,0,0,0`
+        : `https://map.naver.com/v5/search/${encodeURIComponent(address)}`;
+      window.open(url, "_blank");
+    }
+    
+    function openTmap(p){
+      const name = encodeURIComponent(p.companyName || "목적지");
+      const address = p.instituteAddress || p.companyAddress || "";
+      const url = (p.lat && p.lng)
+        ? `https://map.tmap.co.kr/?rGoX=${p.lng}&rGoY=${p.lat}&rGoName=${name}`
+        : `https://map.tmap.co.kr/search?searchKeyword=${encodeURIComponent(address)}`;
+      window.open(url, "_blank");
+    }
     
     function openGoogleMap(p){
-      const q = (p.lat != null && p.lng != null)
+      const address = p.instituteAddress || p.companyAddress || p.companyName || "";
+      const url = (p.lat && p.lng)
         ? `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`
-        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address || p.companyName || "")}`;
-      window.open(q, "_blank");
+        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+      window.open(url, "_blank");
     }
 
-    // 선호 지도 기반 스마트 길찾기
-    let currentMenu;
-    function smartNavigate(p){
-      const pref = getPref();
-      if(pref === "kakao") return openKakaoMap(p);
-      if(pref === "naver") return openNaverMap(p);
-      if(pref === "tmap")  return openTmap(p);
-      if(pref === "google") return openGoogleMap(p);
-      openProviderMenu(null, p);
-    }
-    
-    function openProviderMenu(anchor, p){
-      if(currentMenu){ currentMenu.remove(); currentMenu = null; }
-      window.__lastPlaceForMenu = p;
-      const m = document.createElement("div");
-      m.className = "menu";
-      m.innerHTML = `
-        <button onclick="chooseProvider('kakao')">🟡 카카오맵으로 계속</button>
-        <button onclick="chooseProvider('naver')">🟢 네이버맵으로 계속</button>
-        <button onclick="chooseProvider('tmap')">🗺️ T맵으로 계속</button>
-        <button onclick="chooseProvider('google')">🔵 구글맵으로 계속</button>
-        <hr style='margin:6px 0; border:none; border-top:1px solid #e2e8f0;'>
-        <button onclick='currentMenu.remove()'>취소</button>`;
-      document.body.appendChild(m); 
-      currentMenu = m;
-      const x = anchor ? anchor.getBoundingClientRect().left : window.innerWidth / 2 - 100;
-      const y = anchor ? anchor.getBoundingClientRect().bottom : 100;
-      m.style.left = x + "px"; 
-      m.style.top = y + "px";
-    }
-    
-    function chooseProvider(v){
-      setPref(v);
-      const p = window.__lastPlaceForMenu;
-      if(v === "kakao") openKakaoMap(p);
-      else if(v === "naver") openNaverMap(p);
-      else if(v === "tmap") openTmap(p);
-      else openGoogleMap(p);
-      if(currentMenu) currentMenu.remove(), currentMenu = null;
-    }
-
-    // Leaflet 지도 초기화
     let map, group;
+    let institutesGlobal = []; // 전역 배열로 저장
     
     function initMap() {
       map = L.map('map', { zoomControl: true });
-      const defaultCenter = [37.5665, 126.9780]; // 서울시청
+      const defaultCenter = [37.5665, 126.9780];
       map.setView(defaultCenter, 11);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -446,67 +465,132 @@
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
-      // 마커 그룹
       group = L.featureGroup().addTo(map);
 
-      institutes.forEach(p => {
-        if(p.lat == null || p.lng == null) return;
+      // 전역 배열에 복사
+      institutesGlobal = [...institutes];
+
+      institutes.forEach((p, index) => {
+        if(!p.lat || !p.lng) return;
         
         const marker = L.marker([p.lat, p.lng]).addTo(group);
 
-        // 회사명 라벨(항상 보이게)
-        marker.bindTooltip(p.companyName || "", {
+        const tooltip = marker.bindTooltip(p.companyName || "회사명 없음", {
           permanent: true,
           direction: 'top',
           offset: [0, -8],
-          className: 'lbl'
+          className: 'company-label'
         }).openTooltip();
+        
+        // 인덱스로 참조하도록 수정
+        marker.bindPopup(() => makePopupHtml(index), { 
+          maxWidth: 380,
+          className: 'custom-popup'
+        });
 
-        // 상세 팝업
-        marker.bindPopup(makePopupHtml(p), { maxWidth: 340 });
-
-        // 클릭 시 팝업 open
         marker.on('click', () => marker.openPopup());
+        
+        const tooltipElement = tooltip.getTooltip().getElement();
+        if(tooltipElement) {
+          tooltipElement.addEventListener('mouseenter', () => {
+            marker.openPopup();
+          });
+        }
       });
 
-      // 데이터에 맞춰 화면 경계 맞춤
       if (group.getLayers().length > 0) {
         map.fitBounds(group.getBounds().pad(0.2));
       }
     }
 
-    function makePopupHtml(p){
-      const phoneBtn = (p.phone && isMobile()) 
-        ? `<a class="btn" href="${telHref(p.phone)}">📞 전화</a>` 
-        : "";
-      const webBtn = p.website 
-        ? `<a class="btn" href="${normalizeUrl(p.website)}" target="_blank" rel="noopener">🌐 웹사이트</a>` 
-        : "";
-      const smartBtn = `<button class="btn btn-primary" onclick='smartNavigate(${JSON.stringify({companyName:p.companyName,address:p.address,lat:p.lat,lng:p.lng})})'>🚗 길찾기</button>`;
+    function makePopupHtml(index){
+      const p = institutesGlobal[index];
+      if(!p) return '<div>데이터를 불러올 수 없습니다.</div>';
       
-      const cert = p.certificationDate 
-        ? `<div class="detail">인정일자: ${escapeHtml(p.certificationDate)}</div>` 
-        : "";
-      const ind = p.industryType 
-        ? `<div class="detail">업종: ${escapeHtml(p.industryType)}</div>` 
-        : "";
-
-      return `
+      const address = p.instituteAddress || p.companyAddress || "";
+      
+      const companyInfo = `
         <div class="infocard">
-          <h4>${escapeHtml(p.companyName)}</h4>
-          <div class="detail">${escapeHtml(p.address || "")}</div>
-          ${ind}
-          ${cert}
-          <div class="row">
-            ${smartBtn}
-            ${phoneBtn}
-            ${webBtn}
+          <h4>${escapeHtml(p.companyName || "회사명 없음")}</h4>
+          
+          <div class="detail">
+            <span class="icon">📍</span>
+            <span>${escapeHtml(address || "주소 정보 없음")}</span>
           </div>
+      `;
+      
+      const industryInfo = p.industryType ? `
+        <div class="detail">
+          <span class="icon">🏢</span>
+          <span>${escapeHtml(p.industryType)}</span>
+        </div>
+      ` : "";
+      
+      const scaleInfo = p.scale ? `
+        <div class="detail">
+          <span class="icon">📊</span>
+          <span>${escapeHtml(p.scale)}</span>
+        </div>
+      ` : "";
+      
+      const categoryInfo = p.category ? `
+        <div class="detail">
+          <span class="icon">🔖</span>
+          <span>${escapeHtml(p.category)}</span>
+        </div>
+      ` : "";
+      
+      const ceoInfo = p.ceoName ? `
+        <div class="detail">
+          <span class="icon">👤</span>
+          <span>대표: ${escapeHtml(p.ceoName)}</span>
+        </div>
+      ` : "";
+      
+      const certInfo = p.certificationDate ? `
+        <div class="detail">
+          <span class="icon">📅</span>
+          <span>인정일자: ${escapeHtml(p.certificationDate)}</span>
+        </div>
+      ` : "";
+      
+      let contactSection = "";
+      if(p.Tel || p.website) {
+        contactSection = '<div class="section-title">📞 연락처</div><div class="btn-group">';
+        
+        if(p.Tel && isMobile()) {
+          contactSection += `<a class="btn btn-phone" href="${telHref(p.Tel)}">📞 전화걸기</a>`;
+        } else if(p.Tel) {
+          contactSection += `<span class="btn" style="cursor:default;">📞 ${escapeHtml(p.Tel)}</span>`;
+        }
+        
+        if(p.website) {
+          contactSection += `<a class="btn btn-web" href="${normalizeUrl(p.website)}" target="_blank" rel="noopener">🌐 웹사이트</a>`;
+        }
+        
+        contactSection += '</div>';
+      }
+      
+      // 인덱스로 참조하도록 수정
+      const navSection = `
+        <div class="section-title">🗺️ 길찾기</div>
+        <div class="btn-group">
+          <button class="btn btn-kakao" onclick="openKakaoMapByIndex(${index})">카카오맵</button>
+          <button class="btn btn-naver" onclick="openNaverMapByIndex(${index})">네이버맵</button>
+          <button class="btn btn-tmap" onclick="openTmapByIndex(${index})">T맵</button>
+          <button class="btn btn-google" onclick="openGoogleMapByIndex(${index})">구글맵</button>
         </div>
       `;
+
+      return companyInfo + industryInfo + scaleInfo + categoryInfo + ceoInfo + certInfo + contactSection + navSection + '</div>';
     }
     
-    // 앱 시작
+    // 전역 스코프로 함수 노출 (HTML onclick에서 사용)
+    window.openKakaoMapByIndex = openKakaoMapByIndex;
+    window.openNaverMapByIndex = openNaverMapByIndex;
+    window.openTmapByIndex = openTmapByIndex;
+    window.openGoogleMapByIndex = openGoogleMapByIndex;
+    
     initApp();
   </script>
 </body>
