@@ -9,14 +9,14 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   
-  <!-- Google Identity Services (수정됨) -->
+  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
   <!-- CryptoJS for 암호화 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   
   <!-- 다음 주소 API -->
-  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   
   <!-- SheetJS for Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -58,17 +58,18 @@
     }
     
     .btn {
-      padding: 0.7rem 1.2rem;
+      padding: 0.6rem 1rem;
       border: none;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.3rem;
       text-decoration: none;
+      white-space: nowrap;
     }
     
     .btn-back {
@@ -571,18 +572,20 @@
     }
     
     .spreadsheet th:nth-child(1), .spreadsheet td:nth-child(1) { min-width: 100px; }
-    .spreadsheet th:nth-child(2), .spreadsheet td:nth-child(2) { min-width: 120px; }
-    .spreadsheet th:nth-child(3), .spreadsheet td:nth-child(3) { min-width: 250px; }
-    .spreadsheet th:nth-child(4), .spreadsheet td:nth-child(4) { min-width: 150px; }
-    .spreadsheet th:nth-child(5), .spreadsheet td:nth-child(5) { min-width: 120px; }
-    .spreadsheet th:nth-child(6), .spreadsheet td:nth-child(6) { min-width: 100px; }
+    .spreadsheet th:nth-child(2), .spreadsheet td:nth-child(2) { min-width: 80px; }
+    .spreadsheet th:nth-child(3), .spreadsheet td:nth-child(3) { min-width: 80px; }
+    .spreadsheet th:nth-child(4), .spreadsheet td:nth-child(4) { min-width: 120px; }
+    .spreadsheet th:nth-child(5), .spreadsheet td:nth-child(5) { min-width: 250px; }
+    .spreadsheet th:nth-child(6), .spreadsheet td:nth-child(6) { min-width: 150px; }
     .spreadsheet th:nth-child(7), .spreadsheet td:nth-child(7) { min-width: 120px; }
-    .spreadsheet th:nth-child(8), .spreadsheet td:nth-child(8) { min-width: 120px; }
-    .spreadsheet th:nth-child(9), .spreadsheet td:nth-child(9) { min-width: 80px; }
-    .spreadsheet th:nth-child(10), .spreadsheet td:nth-child(10) { min-width: 100px; }
-    .spreadsheet th:nth-child(11), .spreadsheet td:nth-child(11) { min-width: 120px; }
-    .spreadsheet th:nth-child(12), .spreadsheet td:nth-child(12) { min-width: 150px; }
-    .spreadsheet th:nth-child(13), .spreadsheet td:nth-child(13) { min-width: 200px; }
+    .spreadsheet th:nth-child(8), .spreadsheet td:nth-child(8) { min-width: 100px; }
+    .spreadsheet th:nth-child(9), .spreadsheet td:nth-child(9) { min-width: 120px; }
+    .spreadsheet th:nth-child(10), .spreadsheet td:nth-child(10) { min-width: 120px; }
+    .spreadsheet th:nth-child(11), .spreadsheet td:nth-child(11) { min-width: 80px; }
+    .spreadsheet th:nth-child(12), .spreadsheet td:nth-child(12) { min-width: 100px; }
+    .spreadsheet th:nth-child(13), .spreadsheet td:nth-child(13) { min-width: 120px; }
+    .spreadsheet th:nth-child(14), .spreadsheet td:nth-child(14) { min-width: 150px; }
+    .spreadsheet th:nth-child(15), .spreadsheet td:nth-child(15) { min-width: 200px; }
     
     .spreadsheet input,
     .spreadsheet select {
@@ -602,23 +605,157 @@
       outline: 2px solid #FF8802;
       background: #fff;
     }
+
+    .map-modal-content {
+      max-width: 90%;
+      max-height: 90vh;
+    }
+
+    #clientMap {
+      width: 100%;
+      height: 70vh;
+      border-radius: 8px;
+    }
+    
+    #addressLayer {
+      display: none;
+      position: fixed;
+      overflow: hidden;
+      z-index: 10000;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #addressLayer.show {
+      display: flex;
+    }
+    
+    #addressWrap {
+      position: relative;
+      width: 90%;
+      max-width: 500px;
+      height: 500px;
+      border: 5px solid #FF8802;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    #addressCloseBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10001;
+      background: #FF8802;
+      color: #fff;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    #addressCloseBtn:hover {
+      background: #FF6B00;
+    }
     
     @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+      }
+      
       .header {
         flex-direction: column;
         gap: 1rem;
+        padding: 1rem;
       }
       
       .header h1 {
-        justify-content: flex-start;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+      
+      .btn-back {
+        position: static !important;
+        width: 100%;
+      }
+      
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      
+      .stat-card {
+        padding: 1rem;
+      }
+      
+      .stat-card h3 {
+        font-size: 0.8rem;
+      }
+      
+      .stat-card .number {
+        font-size: 1.5rem;
+      }
+      
+      .controls {
+        padding: 1rem;
       }
       
       .controls-top {
         flex-direction: column;
+        gap: 0.75rem;
       }
       
+      .search-box {
+        min-width: 100%;
+      }
+      
+      .controls-buttons {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+      
+      .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        gap: 0.2rem;
+      }
+      
+      .table-container {
+        font-size: 0.85rem;
+      }
+      
+      .modal-content {
+        max-width: 95%;
+        margin: 1rem;
+      }
+    }
+    
+    @media (min-width: 769px) and (max-width: 1024px) {
       .stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.3rem;
+      }
+      
+      .btn {
+        padding: 0.45rem 0.6rem;
+        font-size: 0.7rem;
+      }
+      
+      .stat-card .number {
+        font-size: 1.3rem;
       }
     }
   </style>
@@ -666,7 +803,7 @@
         <button class="btn btn-primary" onclick="openAddModal()">➕ 고객 추가</button>
         <button class="btn btn-secondary" onclick="openBulkUploadModal()">📥 단체 등록</button>
         <button class="btn btn-secondary" onclick="exportToExcel()">📤 엑셀 내보내기</button>
-        <button class="btn btn-map" onclick="goToMap()">🗺️ 지도에서 보기</button>
+        <button class="btn btn-map" onclick="openMapModal()">🗺️ 지도에서 보기</button>
         <button class="btn btn-delete-selected" id="deleteSelectedBtn" onclick="deleteSelected()">🗑️ 선택 삭제</button>
         <button class="btn btn-send-selected" id="sendSelectedBtn" onclick="sendToSelected()">📧 선택 발송</button>
       </div>
@@ -679,10 +816,13 @@
             <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
             <th>No</th>
             <th>고객명</th>
+            <th>직함</th>
+            <th>호칭</th>
             <th>연락처</th>
             <th>회사명</th>
             <th>직업</th>
             <th>주소</th>
+            <th>좌표</th>
             <th>생일</th>
             <th>등록일</th>
             <th style="min-width: 280px;">프로그램</th>
@@ -691,7 +831,7 @@
         </thead>
         <tbody id="clientsTableBody">
           <tr>
-            <td colspan="11" class="empty-state">
+            <td colspan="14" class="empty-state">
               <div class="empty-state-icon">📋</div>
               <div>등록된 고객이 없습니다.<br/>고객을 추가해보세요!</div>
             </td>
@@ -701,7 +841,7 @@
     </div>
   </div>
 
-  <!-- 모든 모달 생략 (원본과 동일) -->
+  <!-- 고객 추가/수정 모달 -->
   <div class="modal" id="clientModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -713,6 +853,16 @@
           <div class="form-group">
             <label class="required">고객명</label>
             <input type="text" id="clientName" required placeholder="홍길동">
+          </div>
+          
+          <div class="form-group">
+            <label>직함</label>
+            <input type="text" id="clientTitle" placeholder="과장, 팀장, 대표이사 등">
+          </div>
+          
+          <div class="form-group">
+            <label>호칭</label>
+            <input type="text" id="clientHonorific" value="님" placeholder="님">
           </div>
           
           <div class="form-group">
@@ -790,6 +940,7 @@
     </div>
   </div>
 
+  <!-- 단체 등록 모달 -->
   <div class="modal" id="bulkUploadModal">
     <div class="modal-content" style="max-width: 95%; max-height: 95vh;">
       <div class="modal-header">
@@ -812,6 +963,8 @@
               <thead>
                 <tr>
                   <th>고객명*</th>
+                  <th>직함</th>
+                  <th>호칭</th>
                   <th>연락처*</th>
                   <th>주소*</th>
                   <th>상세주소*</th>
@@ -842,6 +995,7 @@
     </div>
   </div>
 
+  <!-- 상세보기 모달 -->
   <div class="modal" id="viewModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -856,8 +1010,35 @@
     </div>
   </div>
 
+  <!-- 지도 모달 -->
+  <div class="modal" id="mapModal">
+    <div class="modal-content map-modal-content">
+      <div class="modal-header">
+        <h2>🗺️ 고객 지도</h2>
+        <button class="close-btn" onclick="closeModal('mapModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="clientMap"></div>
+        <div id="mapInfo" style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; color: #334155;">
+          <strong>📍 마커 정보:</strong>
+          <span id="markerCount">로딩 중...</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="closeModal('mapModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 주소 검색 레이어 -->
+  <div id="addressLayer">
+    <div id="addressWrap">
+      <button id="addressCloseBtn" onclick="closeAddressLayer()">×</button>
+      <div id="addressContent" style="width:100%;height:100%;"></div>
+    </div>
+  </div>
+
   <script>
-    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
       authDomain: "kfpc-company-support-project.firebaseapp.com",
@@ -867,7 +1048,6 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     
-    // Google API 설정 (수정됨)
     const CLIENT_ID = '288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const ENCRYPTION_KEY = 'KFPC-CEO-FOCUS-MASTER-KEY-2025';
@@ -878,15 +1058,14 @@
     let tokenClient;
     let accessToken = null;
     let gisInited = false;
+    let kakaoMapLoaded = false;
     
-    // 암호화
     function encryptData(data) {
       const jsonString = JSON.stringify(data);
       const encrypted = CryptoJS.AES.encrypt(jsonString, ENCRYPTION_KEY);
       return encrypted.toString();
     }
     
-    // 복호화
     function decryptData(encryptedData) {
       try {
         const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
@@ -898,19 +1077,112 @@
       }
     }
     
-    // Google Identity Services 초기화 (수정됨)
+    function saveLoginState() {
+      if (accessToken) {
+        localStorage.setItem('googleAccessToken', accessToken);
+        localStorage.setItem('tokenExpiry', Date.now() + 3600000);
+      }
+    }
+    
+    function restoreLoginState() {
+      const token = localStorage.getItem('googleAccessToken');
+      const expiry = localStorage.getItem('tokenExpiry');
+      
+      if (token && expiry && Date.now() < parseInt(expiry)) {
+        accessToken = token;
+        return true;
+      }
+      
+      localStorage.removeItem('googleAccessToken');
+      localStorage.removeItem('tokenExpiry');
+      return false;
+    }
+    
     function gisLoaded() {
       console.log('✅ Google Identity Services 로드');
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
-        callback: '', // 나중에 설정
+        callback: '',
       });
       gisInited = true;
       console.log('✅ Google OAuth 준비 완료');
     }
     
-    // Google Drive 연동 버튼 클릭 (수정됨)
+    function initGoogleAPI() {
+      let attempts = 0;
+      const maxAttempts = 50;
+      
+      const checkGIS = setInterval(() => {
+        attempts++;
+        if (typeof google !== 'undefined' && google.accounts) {
+          clearInterval(checkGIS);
+          gisLoaded();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkGIS);
+          console.warn('⚠️ Google API 로드 지연');
+        }
+      }, 100);
+    }
+    
+    async function init() {
+      document.getElementById('loading').classList.add('hide');
+      currentUser = { uid: 'user-' + Date.now() };
+      checkDaumPostcode();
+      initGoogleAPI();
+      
+      if (restoreLoginState()) {
+        console.log('✅ 로그인 상태 복원 중...');
+        loadClients().then(() => {
+          updateStats();
+          console.log('✅ 데이터 로드 완료');
+        }).catch(err => {
+          console.error('데이터 로드 오류:', err);
+        });
+      }
+    }
+    
+    function checkDaumPostcode() {
+      let attempts = 0;
+      const maxAttempts = 50;
+      
+      const checkDaum = setInterval(() => {
+        attempts++;
+        if (typeof daum !== 'undefined' && daum.Postcode) {
+          clearInterval(checkDaum);
+          console.log('✅ 다음 주소 API 로드 완료');
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkDaum);
+          console.warn('⚠️ 다음 주소 API 로드 실패');
+        }
+      }, 100);
+    }
+    
+    function loadKakaoMapAPI() {
+      return new Promise((resolve, reject) => {
+        if (kakaoMapLoaded || (typeof kakao !== 'undefined' && kakao.maps)) {
+          kakaoMapLoaded = true;
+          resolve();
+          return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=1ada66397913195f6a7512567faa5fac&libraries=services&autoload=false';
+        script.onload = () => {
+          kakao.maps.load(() => {
+            kakaoMapLoaded = true;
+            console.log('✅ 카카오 지도 로드 완료');
+            resolve();
+          });
+        };
+        script.onerror = () => {
+          console.error('❌ 카카오 지도 API 로드 실패');
+          reject(new Error('카카오 지도 API 로드 실패'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+    
     function handleGoogleDriveConnect() {
       if (!gisInited) {
         alert('Google API가 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
@@ -919,7 +1191,6 @@
       
       showGoogleDriveInfo();
       
-      // 2초 후 실제 로그인 시작
       setTimeout(() => {
         console.log('🔐 Google 로그인 시작...');
         
@@ -932,6 +1203,7 @@
           }
           
           accessToken = resp.access_token;
+          saveLoginState();
           console.log('✅ Google 로그인 성공!');
           
           await loadClients();
@@ -940,7 +1212,6 @@
           alert('구글 드라이브 연동 완료! ✅');
         };
         
-        // 토큰 요청
         if (accessToken === null) {
           tokenClient.requestAccessToken({prompt: 'consent'});
         } else {
@@ -949,12 +1220,8 @@
       }, 2000);
     }
     
-    // Google Drive 파일 찾기 (fetch 방식으로 수정)
     async function findFile(fileName) {
-      if (!accessToken) {
-        console.log('⚠️ Access Token 없음');
-        return null;
-      }
+      if (!accessToken) return null;
       
       try {
         const response = await fetch(
@@ -973,7 +1240,7 @@
           return data.files[0];
         }
         
-        console.log('ℹ️ 파일 없음 - 새로 생성 필요');
+        console.log('ℹ️ 파일 없음');
         return null;
       } catch (error) {
         console.error('❌ 파일 검색 오류:', error);
@@ -981,7 +1248,6 @@
       }
     }
     
-    // Google Drive에서 파일 다운로드 (fetch 방식으로 수정)
     async function downloadFile(fileId) {
       try {
         const response = await fetch(
@@ -1000,7 +1266,6 @@
       }
     }
     
-    // Google Drive에 파일 업로드 (fetch 방식으로 수정)
     async function uploadFile(fileName, content) {
       try {
         const metadata = {
@@ -1030,7 +1295,6 @@
       }
     }
     
-    // Google Drive에 파일 업데이트 (fetch 방식으로 수정)
     async function updateFile(fileId, content) {
       try {
         const response = await fetch(
@@ -1052,7 +1316,6 @@
       }
     }
     
-    // 구글 드라이브에서 데이터 로드
     async function loadFromDrive() {
       try {
         const file = await findFile('고객목록.fmd');
@@ -1071,7 +1334,6 @@
       }
     }
     
-    // 구글 드라이브에 데이터 저장
     async function saveToDrive() {
       try {
         const encrypted = encryptData(clients);
@@ -1087,35 +1349,6 @@
       } catch (error) {
         console.error('드라이브 저장 오류:', error);
         return false;
-      }
-    }
-    
-    // 초기화 (간소화)
-    async function init() {
-      try {
-        currentUser = { uid: 'user-' + Date.now() };
-        
-        // Google Identity Services 로드 대기
-        const checkGIS = setInterval(() => {
-          if (typeof google !== 'undefined' && google.accounts) {
-            clearInterval(checkGIS);
-            gisLoaded();
-          }
-        }, 100);
-        
-        // 5초 후에도 로드 안되면 타임아웃
-        setTimeout(() => {
-          clearInterval(checkGIS);
-          if (!gisInited) {
-            console.warn('⚠️ Google API 로드 타임아웃');
-          }
-        }, 5000);
-        
-        document.getElementById('loading').classList.add('hide');
-        
-      } catch (error) {
-        console.error('초기화 오류:', error);
-        document.getElementById('loading').classList.add('hide');
       }
     }
     
@@ -1144,13 +1377,24 @@
       return phone;
     }
     
+    function getFullName(client) {
+      let fullName = client.name;
+      if (client.title) {
+        fullName += ' ' + client.title;
+      }
+      if (client.honorific) {
+        fullName += client.honorific;
+      }
+      return fullName;
+    }
+    
     function renderTable() {
       const tbody = document.getElementById('clientsTableBody');
       
       if (clients.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="11" class="empty-state">
+            <td colspan="14" class="empty-state">
               <div class="empty-state-icon">📋</div>
               <div>등록된 고객이 없습니다.<br/>고객을 추가해보세요!</div>
             </td>
@@ -1166,6 +1410,8 @@
           </td>
           <td style="text-align: center;"><strong>${index + 1}</strong></td>
           <td><strong>${client.name}</strong></td>
+          <td>${client.title || '-'}</td>
+          <td>${client.honorific || '-'}</td>
           <td>
             ${formatPhone(client.phone)}
             <a href="tel:${client.phone}" class="btn-icon btn-call" title="전화걸기">📞</a>
@@ -1173,6 +1419,7 @@
           <td>${client.company || '-'}</td>
           <td>${client.job || '-'}</td>
           <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${client.address}">${client.address}</td>
+          <td style="font-size: 0.75rem; color: #64748b;">${client.latitude && client.longitude ? `${client.latitude.toFixed(4)}, ${client.longitude.toFixed(4)}` : '미등록'}</td>
           <td>${client.birthday ? new Date(client.birthday).toLocaleDateString() : '-'}</td>
           <td>${new Date(client.createdAt).toLocaleDateString()}</td>
           <td>
@@ -1233,6 +1480,7 @@
       document.getElementById(modalId).classList.remove('show');
       if (modalId === 'clientModal') {
         document.getElementById('clientForm').reset();
+        document.getElementById('clientHonorific').value = '님';
         currentEditId = null;
       }
     }
@@ -1241,32 +1489,110 @@
       currentEditId = null;
       document.getElementById('modalTitle').textContent = '➕ 고객 추가';
       document.getElementById('clientForm').reset();
+      document.getElementById('clientHonorific').value = '님';
       openModal('clientModal');
     }
     
+    async function getCoordinates(address) {
+      try {
+        if (!kakaoMapLoaded) {
+          try {
+            await loadKakaoMapAPI();
+          } catch (error) {
+            console.error('카카오 지도 API 로드 실패:', error);
+            return { latitude: null, longitude: null };
+          }
+        }
+        
+        if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.services) {
+          console.warn('⚠️ 카카오 지도 API를 사용할 수 없습니다.');
+          return { latitude: null, longitude: null };
+        }
+        
+        const cleanAddress = address.split(' ').slice(0, 5).join(' ');
+        
+        console.log('🗺️ 좌표 변환 시도:', cleanAddress);
+        
+        return new Promise((resolve) => {
+          const geocoder = new kakao.maps.services.Geocoder();
+          geocoder.addressSearch(cleanAddress, function(result, status) {
+            if (status === kakao.maps.services.Status.OK) {
+              console.log('✅ 좌표 변환 성공:', result[0].y, result[0].x);
+              resolve({
+                latitude: parseFloat(result[0].y),
+                longitude: parseFloat(result[0].x)
+              });
+            } else {
+              console.warn('❌ 좌표 변환 실패:', cleanAddress, 'Status:', status);
+              resolve({ latitude: null, longitude: null });
+            }
+          });
+        });
+      } catch (error) {
+        console.error('좌표 변환 오류:', error);
+        return { latitude: null, longitude: null };
+      }
+    }
+    
     function findAddress() {
-      if (typeof daum === 'undefined' || !daum.Postcode) {
-        alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+      if (typeof daum === 'undefined') {
+        alert('주소 검색 API를 불러오는 중입니다.\n페이지를 새로고침 해주세요.');
+        console.error('Daum Postcode API not loaded');
         return;
       }
       
-      new daum.Postcode({
-        oncomplete: function(data) {
-          document.getElementById('postcode').value = data.zonecode;
-          document.getElementById('address').value = data.address;
-          document.getElementById('detailAddress').focus();
-        },
-        width: '100%',
-        height: '100%'
-      }).open({
-        popupTitle: '주소 검색',
-        left: (window.screen.width / 2) - (250),
-        top: (window.screen.height / 2) - (300)
-      });
+      if (!daum.Postcode) {
+        alert('주소 검색 서비스를 초기화할 수 없습니다.\n페이지를 새로고침 해주세요.');
+        console.error('Daum Postcode not available');
+        return;
+      }
+      
+      try {
+        document.getElementById('addressLayer').classList.add('show');
+        
+        new daum.Postcode({
+          oncomplete: function(data) {
+            document.getElementById('postcode').value = data.zonecode;
+            document.getElementById('address').value = data.address;
+            closeAddressLayer();
+            document.getElementById('detailAddress').focus();
+          },
+          width: '100%',
+          height: '100%'
+        }).embed(document.getElementById('addressContent'));
+        
+      } catch (error) {
+        console.error('주소 검색 오류:', error);
+        alert('주소 검색 중 오류가 발생했습니다.\n페이지를 새로고침 후 다시 시도해주세요.');
+        closeAddressLayer();
+      }
     }
+    
+    function closeAddressLayer() {
+      const layer = document.getElementById('addressLayer');
+      layer.classList.remove('show');
+      document.getElementById('addressContent').innerHTML = '';
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const addressLayer = document.getElementById('addressLayer');
+      addressLayer.addEventListener('click', function(e) {
+        if (e.target === addressLayer) {
+          closeAddressLayer();
+        }
+      });
+      
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && addressLayer.classList.contains('show')) {
+          closeAddressLayer();
+        }
+      });
+    });
     
     async function saveClient() {
       const name = document.getElementById('clientName').value.trim();
+      const title = document.getElementById('clientTitle').value.trim();
+      const honorific = document.getElementById('clientHonorific').value.trim();
       const phone1 = document.getElementById('phone1').value.trim();
       const phone2 = document.getElementById('phone2').value.trim();
       const postcode = document.getElementById('postcode').value.trim();
@@ -1282,11 +1608,37 @@
       const fullAddress = `${address} ${detailAddress}`;
       const birthdayType = document.querySelector('input[name="birthdayType"]:checked').value;
       
+      const loading = document.getElementById('loading');
+      loading.classList.remove('hide');
+      loading.querySelector('.loading-text').textContent = '주소를 좌표로 변환 중...';
+      
+      console.log('\n=== 고객 추가: ' + name + ' ===');
+      console.log('기본주소:', address);
+      console.log('상세주소:', detailAddress);
+      console.log('전체주소:', fullAddress);
+      
+      const coordinates = await getCoordinates(address);
+      
+      if (!coordinates.latitude || !coordinates.longitude) {
+        const continueAnyway = confirm(
+          `⚠️ 좌표 변환 실패\n\n주소: ${address}\n\n원인:\n1. 카카오 지도 API 로드 실패\n2. 주소를 인식할 수 없음\n\n💡 해결 방법:\n1. 페이지 새로고침 (F5)\n2. "주소찾기" 버튼 사용 (권장)\n3. 정확한 도로명주소 입력\n4. 건물명이나 동/호수는 상세주소에 입력\n\n그래도 저장하시겠습니까?\n(좌표 없이 저장 후 나중에 수정 가능)`
+        );
+        
+        if (!continueAnyway) {
+          loading.classList.add('hide');
+          return;
+        }
+      }
+      
       const client = {
         name,
+        title,
+        honorific,
         phone,
         address: fullAddress,
         postcode,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         company: document.getElementById('company').value.trim(),
         job: document.getElementById('job').value.trim(),
         birthDate: document.getElementById('birthDate').value,
@@ -1307,8 +1659,14 @@
       }
       
       await saveClients();
+      loading.classList.add('hide');
       closeModal('clientModal');
-      alert('저장되었습니다!');
+      
+      if (coordinates.latitude && coordinates.longitude) {
+        alert('✅ 저장되었습니다!');
+      } else {
+        alert('✅ 저장되었습니다!\n\n⚠️ 좌표는 "미등록" 상태입니다.\n\n수정 버튼을 눌러 다시 저장하면\n좌표가 자동으로 생성될 수 있습니다.');
+      }
     }
     
     function editClient(index) {
@@ -1317,6 +1675,8 @@
       
       document.getElementById('modalTitle').textContent = '✏️ 고객 수정';
       document.getElementById('clientName').value = client.name;
+      document.getElementById('clientTitle').value = client.title || '';
+      document.getElementById('clientHonorific').value = client.honorific || '님';
       
       const cleaned = client.phone.replace(/\D/g, '');
       if (cleaned.length === 11) {
@@ -1401,7 +1761,8 @@
     
     function sendToClient(index) {
       const client = clients[index];
-      alert(`${client.name}님께 메시지 발송 기능은 준비 중입니다.\n\n연락처: ${formatPhone(client.phone)}\n이메일: ${client.email || '없음'}`);
+      const fullName = getFullName(client);
+      alert(`${fullName}께 메시지 발송 기능은 준비 중입니다.\n\n연락처: ${formatPhone(client.phone)}\n이메일: ${client.email || '없음'}`);
     }
     
     function sendToSelected() {
@@ -1418,7 +1779,7 @@
         return clients[index];
       });
       
-      const names = selectedClients.map(c => c.name).join(', ');
+      const names = selectedClients.map(c => getFullName(c)).join(', ');
       alert(`${count}명의 고객에게 일괄 발송 기능은 준비 중입니다.\n\n선택된 고객: ${names}`);
     }
     
@@ -1437,9 +1798,10 @@
           <div style="margin-bottom: 1.5rem;">
             <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">기본 정보</h3>
             <div style="background: #f8fafc; padding: 1rem; border-radius: 8px;">
-              <p style="margin: 0.5rem 0;"><strong>고객명:</strong> ${client.name}</p>
+              <p style="margin: 0.5rem 0;"><strong>고객명:</strong> ${getFullName(client)}</p>
               <p style="margin: 0.5rem 0;"><strong>연락처:</strong> ${formatPhone(client.phone)} <a href="tel:${client.phone}" style="color: #06b6d4;">📞 전화걸기</a></p>
               <p style="margin: 0.5rem 0;"><strong>주소:</strong> ${client.address}</p>
+              ${client.latitude && client.longitude ? `<p style="margin: 0.5rem 0;"><strong>좌표:</strong> ${client.latitude.toFixed(6)}, ${client.longitude.toFixed(6)}</p>` : ''}
               ${client.company ? `<p style="margin: 0.5rem 0;"><strong>회사명:</strong> ${client.company}</p>` : ''}
               ${client.job ? `<p style="margin: 0.5rem 0;"><strong>직업:</strong> ${client.job}</p>` : ''}
             </div>
@@ -1485,8 +1847,136 @@
       window.open(`financialMaster.html?client=${encoded}`, '_blank');
     }
     
-    function goToMap() {
-      window.location.href = 'clientMap.html';
+    // ✅ 완전히 수정된 지도 함수
+    async function openMapModal() {
+      if (clients.length === 0) {
+        alert('지도에 표시할 고객이 없습니다.');
+        return;
+      }
+      
+      const loading = document.getElementById('loading');
+      loading.classList.remove('hide');
+      loading.querySelector('.loading-text').textContent = '지도 로딩 중...';
+      
+      try {
+        await loadKakaoMapAPI();
+        openModal('mapModal');
+        
+        setTimeout(() => {
+          initKakaoMap();
+          loading.classList.add('hide');
+        }, 300);
+      } catch (error) {
+        loading.classList.add('hide');
+        alert(
+          '⚠️ 카카오 지도를 불러올 수 없습니다.\n\n' +
+          '원인:\n' +
+          '1. 카카오 지도 API 키 문제\n' +
+          '2. 네트워크 연결 오류\n' +
+          '3. 브라우저 스크립트 차단\n\n' +
+          '해결 방법:\n' +
+          '1. 페이지 새로고침 (F5)\n' +
+          '2. 네트워크 연결 확인\n' +
+          '3. 브라우저 콘솔(F12)에서 오류 확인\n\n' +
+          '※ 지도 기능 없이도 고객 관리는 가능합니다.'
+        );
+        console.error('지도 로드 오류:', error);
+      }
+    }
+    
+    // ✅ 완전히 수정된 카카오 지도 초기화
+    function initKakaoMap() {
+      if (typeof kakao === 'undefined' || !kakao.maps) {
+        alert('카카오 지도 API를 불러오지 못했습니다.');
+        return;
+      }
+      
+      const container = document.getElementById('clientMap');
+      const options = {
+        center: new kakao.maps.LatLng(37.5665, 126.9780),
+        level: 8
+      };
+      
+      const map = new kakao.maps.Map(container, options);
+      const bounds = new kakao.maps.LatLngBounds();
+      let markerCount = 0;
+      let noCoordCount = 0;
+      
+      // 좌표가 있는 고객들 먼저 표시
+      clients.forEach((client, index) => {
+        if (client.latitude && client.longitude) {
+          const position = new kakao.maps.LatLng(client.latitude, client.longitude);
+          
+          // 마커 생성
+          const marker = new kakao.maps.Marker({
+            map: map,
+            position: position,
+            title: getFullName(client)
+          });
+          
+          // 네비게이션 URL 생성
+          const lat = client.latitude;
+          const lng = client.longitude;
+          const destName = encodeURIComponent(getFullName(client));
+          const destAddress = encodeURIComponent(client.address);
+          
+          const kakaoNaviUrl = `kakaonavi://navigate?ep=${lng},${lat}&by=CAR`;
+          const tmapUrl = `tmap://route?goalname=${destName}&goalx=${lng}&goaly=${lat}`;
+          const naverMapUrl = `nmap://route/car?dlat=${lat}&dlng=${lng}&dname=${destName}&appname=고객관리`;
+          
+          // 인포윈도우 생성
+          const infowindow = new kakao.maps.InfoWindow({
+            content: `<div style="padding:15px;min-width:200px;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;">
+                        <div style="margin-bottom:10px;">
+                          <strong style="font-size:15px;color:#0c2c54;">${getFullName(client)}</strong><br/>
+                          <span style="font-size:12px;color:#666;">${client.company || '회사정보 없음'}</span><br/>
+                          <span style="font-size:12px;color:#06b6d4;">${formatPhone(client.phone)}</span>
+                        </div>
+                        <div style="border-top:1px solid #e2e8f0;padding-top:10px;margin-top:10px;">
+                          <div style="font-size:11px;color:#64748b;margin-bottom:5px;">🚗 길찾기</div>
+                          <div style="display:flex;gap:5px;">
+                            <a href="${kakaoNaviUrl}" style="flex:1;padding:6px 8px;background:#FEE500;color:#000;text-align:center;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">카카오</a>
+                            <a href="${tmapUrl}" style="flex:1;padding:6px 8px;background:#FF6B6B;color:#fff;text-align:center;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">T맵</a>
+                            <a href="${naverMapUrl}" style="flex:1;padding:6px 8px;background:#03C75A;color:#fff;text-align:center;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">네이버</a>
+                          </div>
+                        </div>
+                      </div>`,
+            removable: true
+          });
+          
+          // 마커 클릭 이벤트
+          kakao.maps.event.addListener(marker, 'click', function() {
+            infowindow.open(map, marker);
+          });
+          
+          // 지도 범위에 좌표 추가
+          bounds.extend(position);
+          markerCount++;
+          
+          console.log(`✅ 마커 생성: ${client.name} (${client.latitude}, ${client.longitude})`);
+        } else {
+          noCoordCount++;
+          console.log(`⚠️ 좌표 없음: ${client.name}`);
+        }
+      });
+      
+      // 마커가 있으면 지도 범위 조정
+      if (markerCount > 0) {
+        map.setBounds(bounds);
+        console.log(`✅ 총 ${markerCount}개 마커 표시 완료`);
+      }
+      
+      // 정보 표시
+      const infoText = `✅ 지도에 표시됨: ${markerCount}명${noCoordCount > 0 ? ` | ⚠️ 좌표 없음: ${noCoordCount}명` : ''}`;
+      document.getElementById('markerCount').textContent = infoText;
+      
+      if (noCoordCount > 0) {
+        setTimeout(() => {
+          if (confirm(`⚠️ ${noCoordCount}명의 고객이 좌표가 없어 지도에 표시되지 않습니다.\n\n해당 고객들을 수정하여 주소를 다시 입력하시겠습니까?`)) {
+            closeModal('mapModal');
+          }
+        }, 1000);
+      }
     }
     
     function exportToExcel() {
@@ -1495,21 +1985,38 @@
         return;
       }
       
-      const data = clients.map(c => ({
-        '고객명': c.name,
-        '연락처': formatPhone(c.phone),
-        '주소': c.address.split(' ').slice(0, -1).join(' '),
-        '상세주소': c.address.split(' ').slice(-1)[0],
-        '회사명': c.company || '',
-        '직업': c.job || '',
-        '생년월일': c.birthDate || '',
-        '생일': c.birthday ? new Date(c.birthday).toLocaleDateString() : '',
-        '양/음력': c.birthdayType === 'lunar' ? '음력' : '양력',
-        '기념일명': c.anniversaryName || '',
-        '기념일': c.anniversary ? new Date(c.anniversary).toLocaleDateString() : '',
-        '이메일': c.email || '',
-        '메모': c.memo || ''
-      }));
+      const data = clients.map(c => {
+        const addressParts = c.address.split(' ');
+        let baseAddress = '';
+        let detailAddress = '';
+        
+        if (addressParts.length > 4) {
+          detailAddress = addressParts.pop();
+          baseAddress = addressParts.join(' ');
+        } else {
+          baseAddress = c.address;
+        }
+        
+        return {
+          '고객명': c.name,
+          '직함': c.title || '',
+          '호칭': c.honorific || '',
+          '연락처': formatPhone(c.phone),
+          '주소': baseAddress,
+          '상세주소': detailAddress,
+          '위도': c.latitude || '',
+          '경도': c.longitude || '',
+          '회사명': c.company || '',
+          '직업': c.job || '',
+          '생년월일': c.birthDate || '',
+          '생일': c.birthday ? new Date(c.birthday).toLocaleDateString() : '',
+          '양/음력': c.birthdayType === 'lunar' ? '음력' : '양력',
+          '기념일명': c.anniversaryName || '',
+          '기념일': c.anniversary ? new Date(c.anniversary).toLocaleDateString() : '',
+          '이메일': c.email || '',
+          '메모': c.memo || ''
+        };
+      });
       
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
@@ -1539,18 +2046,38 @@
       const row = tbody.insertRow();
       
       const cells = [
-        'text', 'text', 'text', 'text', 'text', 'text',
+        'text', 'text', 'text', 'text', 'text', 'text', 'text', 'text',
         'date', 'date', 'select', 'text', 'date', 'email', 'text'
+      ];
+      
+      const placeholders = [
+        '홍길동',
+        '과장/팀장/대표 등',
+        '님',
+        '01012345678',
+        '서울특별시 강남구 테헤란로 123',
+        '아파트 101동 1001호',
+        '(주)ABC',
+        '대표이사',
+        '',
+        '',
+        '',
+        '결혼기념일',
+        '',
+        'example@email.com',
+        '특이사항 메모'
       ];
       
       cells.forEach((type, i) => {
         const cell = row.insertCell();
         if (type === 'select') {
           cell.innerHTML = '<select><option value="solar">양력</option><option value="lunar">음력</option></select>';
-        } else if (i === 1) {
-          cell.innerHTML = `<input type="text" placeholder="'-' 빼고 숫자만 입력" inputmode="numeric">`;
+        } else if (i === 2) {
+          cell.innerHTML = '<input type="text" value="님" placeholder="님">';
+        } else if (i === 3) {
+          cell.innerHTML = `<input type="text" placeholder="${placeholders[i]}" inputmode="numeric">`;
         } else {
-          cell.innerHTML = `<input type="${type}">`;
+          cell.innerHTML = `<input type="${type}" placeholder="${placeholders[i] || ''}">`;
         }
       });
     }
@@ -1573,11 +2100,24 @@
         jsonData.forEach(row => {
           const tr = tbody.insertRow();
           
+          let baseAddress = row['주소'] || '';
+          let detailAddress = row['상세주소'] || '';
+          
+          if (!detailAddress && baseAddress) {
+            const addressParts = baseAddress.split(' ');
+            if (addressParts.length > 4) {
+              detailAddress = addressParts.pop();
+              baseAddress = addressParts.join(' ');
+            }
+          }
+          
           const values = [
             row['고객명'] || '',
+            row['직함'] || '',
+            row['호칭'] || '님',
             row['연락처'] || '',
-            row['주소'] || '',
-            row['상세주소'] || '',
+            baseAddress,
+            detailAddress,
             row['회사명'] || '',
             row['직업'] || '',
             row['생년월일'] || '',
@@ -1591,19 +2131,21 @@
           
           values.forEach((value, i) => {
             const td = tr.insertCell();
-            if (i === 8) {
+            if (i === 10) {
               td.innerHTML = `<select><option value="solar" ${value === '양력' || value === 'solar' ? 'selected' : ''}>양력</option><option value="lunar" ${value === '음력' || value === 'lunar' ? 'selected' : ''}>음력</option></select>`;
-            } else if (i === 6 || i === 7 || i === 10) {
+            } else if (i === 8 || i === 9 || i === 12) {
               td.innerHTML = `<input type="date" value="${value}">`;
-            } else if (i === 11) {
+            } else if (i === 13) {
               td.innerHTML = `<input type="email" value="${value}">`;
-            } else if (i === 1) {
+            } else if (i === 3) {
               td.innerHTML = `<input type="text" value="${value}" placeholder="'-' 빼고 숫자만 입력" inputmode="numeric">`;
             } else {
-              td.innerHTML = `<input type="text" value="${value}">`;
+              td.innerHTML = `<input type="text" value="${value}" ${i === 4 ? 'placeholder="도로명주소"' : i === 5 ? 'placeholder="동/호수 등"' : ''}>`;
             }
           });
         });
+        
+        alert(`${jsonData.length}행의 데이터를 불러왔습니다.\n\n주소와 상세주소가 올바르게 분리되었는지 확인해주세요.`);
       };
       reader.readAsArrayBuffer(file);
     }
@@ -1612,42 +2154,153 @@
       const tbody = document.getElementById('spreadsheetBody');
       const rows = tbody.querySelectorAll('tr');
       let added = 0;
+      let failed = [];
+      let skipped = 0;
+      let noCoordinates = 0;
       
-      rows.forEach(row => {
+      const loading = document.getElementById('loading');
+      loading.classList.remove('hide');
+      loading.querySelector('.loading-text').textContent = '고객 데이터 저장 중...';
+      
+      let mapApiAvailable = true;
+      try {
+        if (!kakaoMapLoaded) {
+          loading.querySelector('.loading-text').textContent = '카카오 지도 API 로딩 중...';
+          await loadKakaoMapAPI();
+        }
+      } catch (error) {
+        console.error('카카오 지도 API 로드 실패:', error);
+        mapApiAvailable = false;
+        
+        const proceed = confirm(
+          '⚠️ 카카오 지도 API를 사용할 수 없습니다.\n\n' +
+          '좌표 없이 고객 데이터만 저장됩니다.\n' +
+          '(나중에 개별 수정으로 좌표 추가 가능)\n\n' +
+          '계속 진행하시겠습니까?'
+        );
+        
+        if (!proceed) {
+          loading.classList.add('hide');
+          return;
+        }
+      }
+      
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         const inputs = row.querySelectorAll('input, select');
         const name = inputs[0].value.trim();
-        const phone = inputs[1].value.trim().replace(/\D/g, '');
-        const address = inputs[2].value.trim();
-        const detailAddress = inputs[3].value.trim();
+        const title = inputs[1].value.trim();
+        const honorific = inputs[2].value.trim();
+        const phone = inputs[3].value.trim().replace(/\D/g, '');
+        let address = inputs[4].value.trim();
+        let detailAddress = inputs[5].value.trim();
+        
+        if (!name && !phone && !address) {
+          skipped++;
+          continue;
+        }
         
         if (name && phone && address && detailAddress) {
+          const fullAddress = `${address} ${detailAddress}`;
+          
+          let coordinates = { latitude: null, longitude: null };
+          
+          if (mapApiAvailable) {
+            loading.querySelector('.loading-text').textContent = `${added + 1}번째 고객 "${name}" 좌표 변환 중...`;
+            console.log(`\n=== ${i + 1}행: ${name} ===`);
+            console.log('기본주소:', address);
+            console.log('상세주소:', detailAddress);
+            console.log('전체주소:', fullAddress);
+            
+            coordinates = await getCoordinates(address);
+            
+            if (!coordinates.latitude || !coordinates.longitude) {
+              noCoordinates++;
+              failed.push({
+                row: i + 1,
+                name: name,
+                address: address
+              });
+            }
+          } else {
+            noCoordinates++;
+          }
+          
           clients.push({
             name,
+            title,
+            honorific,
             phone,
-            address: `${address} ${detailAddress}`,
+            address: fullAddress,
             postcode: '',
-            company: inputs[4].value.trim(),
-            job: inputs[5].value.trim(),
-            birthDate: inputs[6].value.trim(),
-            birthday: inputs[7].value.trim(),
-            birthdayType: inputs[8].value,
-            anniversaryName: inputs[9].value.trim(),
-            anniversary: inputs[10].value.trim(),
-            email: inputs[11].value.trim(),
-            memo: inputs[12].value.trim(),
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            company: inputs[6].value.trim(),
+            job: inputs[7].value.trim(),
+            birthDate: inputs[8].value.trim(),
+            birthday: inputs[9].value.trim(),
+            birthdayType: inputs[10].value,
+            anniversaryName: inputs[11].value.trim(),
+            anniversary: inputs[12].value.trim(),
+            email: inputs[13].value.trim(),
+            memo: inputs[14].value.trim(),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
           added++;
+        } else if (name || phone || address) {
+          failed.push({
+            row: i + 1,
+            name: name || '(이름없음)',
+            address: address || '(주소없음)',
+            reason: '필수 항목 누락'
+          });
         }
-      });
+      }
       
       if (added > 0) {
         await saveClients();
+        loading.classList.add('hide');
         closeModal('bulkUploadModal');
-        alert(`${added}명의 고객이 추가되었습니다!`);
+        
+        let message = `✅ ${added}명의 고객이 추가되었습니다!`;
+        
+        if (skipped > 0) {
+          message += `\n\n빈 행 ${skipped}개 건너뜀`;
+        }
+        
+        if (!mapApiAvailable) {
+          message += `\n\n⚠️ 카카오 지도 API 사용 불가\n→ 모든 고객이 좌표 없이 저장되었습니다.\n→ 개별 수정으로 좌표 추가 가능`;
+        } else if (noCoordinates > 0) {
+          message += `\n\n⚠️ 좌표 미등록: ${noCoordinates}명`;
+          if (failed.length > 0) {
+            message += `\n\n좌표 변환 실패 목록:\n`;
+            failed.slice(0, 3).forEach(f => {
+              if (!f.reason) {
+                message += `\n${f.row}행: ${f.name}\n  주소: ${f.address}`;
+              }
+            });
+            
+            if (failed.length > 3) {
+              message += `\n... 외 ${failed.length - 3}건`;
+            }
+          }
+        }
+        
+        if (failed.some(f => f.reason)) {
+          const reasonFailed = failed.filter(f => f.reason);
+          message += `\n\n❌ 저장 실패: ${reasonFailed.length}건\n`;
+          reasonFailed.slice(0, 3).forEach(f => {
+            message += `\n${f.row}행: ${f.name} - ${f.reason}`;
+          });
+        }
+        
+        message += `\n\n💡 주소: 서울시 강남구 테헤란로 20길 27 ✅\n💡 상세주소: 101동 1001호`;
+        
+        alert(message);
       } else {
-        alert('저장할 데이터가 없습니다.');
+        loading.classList.add('hide');
+        alert('저장할 데이터가 없습니다.\n\n필수 항목을 확인해주세요:\n- 고객명\n- 연락처\n- 주소\n- 상세주소');
       }
     }
     
@@ -1706,9 +2359,30 @@
       });
     });
     
-    // 초기화 실행
-    window.addEventListener('load', function() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
       init();
+    }
+    
+    window.addEventListener('load', function() {
+      document.getElementById('searchInput').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#clientsTableBody tr');
+        
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(query) ? '' : 'none';
+        });
+      });
+      
+      document.getElementById('phone1').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '');
+      });
+      
+      document.getElementById('phone2').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '');
+      });
     });
   </script>
 </body>
