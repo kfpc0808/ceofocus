@@ -18,6 +18,9 @@
   <!-- 다음 주소 API -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   
+  <!-- 카카오맵 API - 먼저 로드 -->
+  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=1ada66397913195f6a7512567faa5fac&libraries=services"></script>
+  
   <!-- SheetJS for Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
@@ -239,10 +242,10 @@
     }
     
     th {
-      padding: 1rem;
+      padding: 0.8rem 0.5rem;
       text-align: left;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       white-space: nowrap;
     }
     
@@ -257,9 +260,11 @@
     }
     
     td {
-      padding: 1rem;
+      padding: 0.5rem;
       border-bottom: 1px solid #e2e8f0;
       color: #334155;
+      font-size: 0.85rem;
+      vertical-align: middle;
     }
     
     tbody tr:hover {
@@ -274,35 +279,91 @@
     
     .action-btns {
       display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
+      gap: 0.25rem;
+      flex-wrap: nowrap;
     }
     
     .btn-icon {
-      padding: 0.5rem 0.8rem;
-      border: none;
-      border-radius: 6px;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 0.8rem;
-      background: #f1f5f9;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: #fff;
       white-space: nowrap;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 0.2rem;
+      justify-content: center;
+      min-width: 45px;
     }
     
     .btn-icon:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    .btn-view { background: #3b82f6; color: #fff; }
-    .btn-edit { background: #10b981; color: #fff; }
-    .btn-delete { background: #ef4444; color: #fff; }
-    .btn-ceo { background: #FF8802; color: #fff; }
-    .btn-fm { background: #8b5cf6; color: #fff; }
-    .btn-call { background: #06b6d4; color: #fff; padding: 0.4rem 0.6rem; margin-left: 0.3rem; }
+    .btn-view { 
+      color: #3b82f6; 
+      border-color: #3b82f6;
+    }
+    .btn-view:hover {
+      background: #eff6ff;
+    }
+    
+    .btn-edit { 
+      color: #10b981; 
+      border-color: #10b981;
+    }
+    .btn-edit:hover {
+      background: #f0fdf4;
+    }
+    
+    .btn-delete { 
+      color: #ef4444; 
+      border-color: #ef4444;
+    }
+    .btn-delete:hover {
+      background: #fef2f2;
+    }
+    
+    .btn-ceo { 
+      color: #FF8802; 
+      border-color: #FF8802;
+    }
+    .btn-ceo:hover {
+      background: #fff7ed;
+    }
+    
+    .btn-fm { 
+      color: #8b5cf6; 
+      border-color: #8b5cf6;
+    }
+    .btn-fm:hover {
+      background: #faf5ff;
+    }
+    
+    .btn-call { 
+      color: #06b6d4; 
+      border-color: #06b6d4;
+      padding: 0.3rem 0.4rem;
+      min-width: 35px;
+    }
+    .btn-call:hover {
+      background: #ecfeff;
+    }
+    
+    .btn-send {
+      color: #10b981;
+      border-color: #10b981;
+      padding: 0.3rem 0.5rem;
+      min-width: 45px;
+    }
+    .btn-send:hover {
+      background: #f0fdf4;
+    }
     
     .modal {
       display: none;
@@ -571,22 +632,6 @@
       font-size: 0.85rem;
     }
     
-    .spreadsheet th:nth-child(1), .spreadsheet td:nth-child(1) { min-width: 100px; }
-    .spreadsheet th:nth-child(2), .spreadsheet td:nth-child(2) { min-width: 80px; }
-    .spreadsheet th:nth-child(3), .spreadsheet td:nth-child(3) { min-width: 80px; }
-    .spreadsheet th:nth-child(4), .spreadsheet td:nth-child(4) { min-width: 120px; }
-    .spreadsheet th:nth-child(5), .spreadsheet td:nth-child(5) { min-width: 250px; }
-    .spreadsheet th:nth-child(6), .spreadsheet td:nth-child(6) { min-width: 150px; }
-    .spreadsheet th:nth-child(7), .spreadsheet td:nth-child(7) { min-width: 120px; }
-    .spreadsheet th:nth-child(8), .spreadsheet td:nth-child(8) { min-width: 100px; }
-    .spreadsheet th:nth-child(9), .spreadsheet td:nth-child(9) { min-width: 120px; }
-    .spreadsheet th:nth-child(10), .spreadsheet td:nth-child(10) { min-width: 120px; }
-    .spreadsheet th:nth-child(11), .spreadsheet td:nth-child(11) { min-width: 80px; }
-    .spreadsheet th:nth-child(12), .spreadsheet td:nth-child(12) { min-width: 100px; }
-    .spreadsheet th:nth-child(13), .spreadsheet td:nth-child(13) { min-width: 120px; }
-    .spreadsheet th:nth-child(14), .spreadsheet td:nth-child(14) { min-width: 150px; }
-    .spreadsheet th:nth-child(15), .spreadsheet td:nth-child(15) { min-width: 200px; }
-    
     .spreadsheet input,
     .spreadsheet select {
       width: 100%;
@@ -735,27 +780,6 @@
       .modal-content {
         max-width: 95%;
         margin: 1rem;
-      }
-    }
-    
-    @media (min-width: 769px) and (max-width: 1024px) {
-      .stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .header h1 {
-        font-size: 1.3rem;
-      }
-      
-      .btn {
-        padding: 0.45rem 0.6rem;
-        font-size: 0.7rem;
-      }
-      
-      .stat-card .number {
-        font-size: 1.3rem;
       }
     }
   </style>
@@ -950,7 +974,7 @@
       <div class="modal-body">
         <div style="margin-bottom: 1rem;">
           <label class="btn btn-secondary" style="cursor: pointer;">
-            📁 엑셀 파일 선택
+            📂 엑셀 파일 선택
             <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleFileUpload(event)">
           </label>
           <span style="margin: 0 1rem; color: #64748b;">또는</span>
@@ -1129,6 +1153,7 @@
       document.getElementById('loading').classList.add('hide');
       currentUser = { uid: 'user-' + Date.now() };
       checkDaumPostcode();
+      checkKakaoMap();
       initGoogleAPI();
       
       if (restoreLoginState()) {
@@ -1158,28 +1183,38 @@
       }, 100);
     }
     
+    function checkKakaoMap() {
+      let attempts = 0;
+      const maxAttempts = 50;
+      
+      const checkKakao = setInterval(() => {
+        attempts++;
+        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
+          clearInterval(checkKakao);
+          kakaoMapLoaded = true;
+          console.log('✅ 카카오맵 API 로드 완료');
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkKakao);
+          console.warn('⚠️ 카카오맵 API 로드 실패 - 좌표 변환 불가');
+          kakaoMapLoaded = false;
+        }
+      }, 100);
+    }
+    
     function loadKakaoMapAPI() {
       return new Promise((resolve, reject) => {
-        if (kakaoMapLoaded || (typeof kakao !== 'undefined' && kakao.maps)) {
+        if (kakaoMapLoaded && typeof kakao !== 'undefined' && kakao.maps) {
+          resolve();
+          return;
+        }
+        
+        if (typeof kakao !== 'undefined' && kakao.maps) {
           kakaoMapLoaded = true;
           resolve();
           return;
         }
         
-        const script = document.createElement('script');
-        script.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=1ada66397913195f6a7512567faa5fac&libraries=services&autoload=false';
-        script.onload = () => {
-          kakao.maps.load(() => {
-            kakaoMapLoaded = true;
-            console.log('✅ 카카오 지도 로드 완료');
-            resolve();
-          });
-        };
-        script.onerror = () => {
-          console.error('❌ 카카오 지도 API 로드 실패');
-          reject(new Error('카카오 지도 API 로드 실패'));
-        };
-        document.head.appendChild(script);
+        reject(new Error('카카오맵 API 로드 실패'));
       });
     }
     
@@ -1412,27 +1447,27 @@
           <td><strong>${client.name}</strong></td>
           <td>${client.title || '-'}</td>
           <td>${client.honorific || '-'}</td>
-          <td>
+          <td style="white-space: nowrap;">
             ${formatPhone(client.phone)}
             <a href="tel:${client.phone}" class="btn-icon btn-call" title="전화걸기">📞</a>
           </td>
           <td>${client.company || '-'}</td>
           <td>${client.job || '-'}</td>
-          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${client.address}">${client.address}</td>
-          <td style="font-size: 0.75rem; color: #64748b;">${client.latitude && client.longitude ? `${client.latitude.toFixed(4)}, ${client.longitude.toFixed(4)}` : '미등록'}</td>
-          <td>${client.birthday ? new Date(client.birthday).toLocaleDateString() : '-'}</td>
-          <td>${new Date(client.createdAt).toLocaleDateString()}</td>
+          <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${client.address}">${client.address}</td>
+          <td style="font-size: 0.7rem; color: #64748b;">${client.latitude && client.longitude ? '✓' : '미등록'}</td>
+          <td>${client.birthday ? new Date(client.birthday).toLocaleDateString('ko-KR', {month: 'numeric', day: 'numeric'}) : '-'}</td>
+          <td>${new Date(client.createdAt).toLocaleDateString('ko-KR', {month: 'numeric', day: 'numeric'})}</td>
           <td>
             <div class="action-btns">
               <button class="btn-icon btn-ceo" onclick="openCEOFocus(${index})" title="CEO Focus">CEO</button>
               <button class="btn-icon btn-fm" onclick="openFM(${index})" title="FM">FM</button>
-              <button class="btn-icon btn-view" onclick="viewClient(${index})" title="상세보기">👁️</button>
-              <button class="btn-icon btn-edit" onclick="editClient(${index})" title="수정">✏️</button>
-              <button class="btn-icon btn-delete" onclick="deleteClient(${index})" title="삭제">🗑️</button>
+              <button class="btn-icon btn-view" onclick="viewClient(${index})" title="상세보기">보기</button>
+              <button class="btn-icon btn-edit" onclick="editClient(${index})" title="수정">수정</button>
+              <button class="btn-icon btn-delete" onclick="deleteClient(${index})" title="삭제">삭제</button>
             </div>
           </td>
           <td style="text-align: center;">
-            <button class="btn-icon" onclick="sendToClient(${index})" style="background: #10b981; color: #fff;" title="발송">📧</button>
+            <button class="btn-icon btn-send" onclick="sendToClient(${index})" title="발송">발송</button>
           </td>
         </tr>
       `).join('');
@@ -1496,16 +1531,12 @@
     async function getCoordinates(address) {
       try {
         if (!kakaoMapLoaded) {
-          try {
-            await loadKakaoMapAPI();
-          } catch (error) {
-            console.error('카카오 지도 API 로드 실패:', error);
-            return { latitude: null, longitude: null };
-          }
+          console.warn('⚠️ 카카오맵 API가 로드되지 않았습니다.');
+          return { latitude: null, longitude: null };
         }
         
         if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.services) {
-          console.warn('⚠️ 카카오 지도 API를 사용할 수 없습니다.');
+          console.warn('⚠️ 카카오맵 API를 사용할 수 없습니다.');
           return { latitude: null, longitude: null };
         }
         
@@ -1616,6 +1647,7 @@
       console.log('기본주소:', address);
       console.log('상세주소:', detailAddress);
       console.log('전체주소:', fullAddress);
+      console.log('카카오맵 API 상태:', kakaoMapLoaded ? '사용가능' : '사용불가');
       
       const coordinates = await getCoordinates(address);
       
@@ -1847,7 +1879,6 @@
       window.open(`financialMaster.html?client=${encoded}`, '_blank');
     }
     
-    // ✅ 완전히 수정된 지도 함수
     async function openMapModal() {
       if (clients.length === 0) {
         alert('지도에 표시할 고객이 없습니다.');
@@ -1884,7 +1915,6 @@
       }
     }
     
-    // ✅ 완전히 수정된 카카오 지도 초기화
     function initKakaoMap() {
       if (typeof kakao === 'undefined' || !kakao.maps) {
         alert('카카오 지도 API를 불러오지 못했습니다.');
@@ -1902,35 +1932,30 @@
       let markerCount = 0;
       let noCoordCount = 0;
       
-      // 좌표가 있는 고객들 먼저 표시
       clients.forEach((client, index) => {
         if (client.latitude && client.longitude) {
           const position = new kakao.maps.LatLng(client.latitude, client.longitude);
           
-          // 마커 생성
           const marker = new kakao.maps.Marker({
             map: map,
             position: position,
             title: getFullName(client)
           });
           
-          // 네비게이션 URL 생성
           const lat = client.latitude;
           const lng = client.longitude;
           const destName = encodeURIComponent(getFullName(client));
-          const destAddress = encodeURIComponent(client.address);
           
           const kakaoNaviUrl = `kakaonavi://navigate?ep=${lng},${lat}&by=CAR`;
           const tmapUrl = `tmap://route?goalname=${destName}&goalx=${lng}&goaly=${lat}`;
           const naverMapUrl = `nmap://route/car?dlat=${lat}&dlng=${lng}&dname=${destName}&appname=고객관리`;
           
-          // 인포윈도우 생성
           const infowindow = new kakao.maps.InfoWindow({
             content: `<div style="padding:15px;min-width:200px;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;">
                         <div style="margin-bottom:10px;">
                           <strong style="font-size:15px;color:#0c2c54;">${getFullName(client)}</strong><br/>
                           <span style="font-size:12px;color:#666;">${client.company || '회사정보 없음'}</span><br/>
-                          <span style="font-size:12px;color:#06b6d4;">${formatPhone(client.phone)}</span>
+                          <a href="tel:${client.phone}" style="font-size:12px;color:#06b6d4;text-decoration:none;">📞 ${formatPhone(client.phone)}</a>
                         </div>
                         <div style="border-top:1px solid #e2e8f0;padding-top:10px;margin-top:10px;">
                           <div style="font-size:11px;color:#64748b;margin-bottom:5px;">🚗 길찾기</div>
@@ -1944,12 +1969,10 @@
             removable: true
           });
           
-          // 마커 클릭 이벤트
           kakao.maps.event.addListener(marker, 'click', function() {
             infowindow.open(map, marker);
           });
           
-          // 지도 범위에 좌표 추가
           bounds.extend(position);
           markerCount++;
           
@@ -1960,13 +1983,11 @@
         }
       });
       
-      // 마커가 있으면 지도 범위 조정
       if (markerCount > 0) {
         map.setBounds(bounds);
         console.log(`✅ 총 ${markerCount}개 마커 표시 완료`);
       }
       
-      // 정보 표시
       const infoText = `✅ 지도에 표시됨: ${markerCount}명${noCoordCount > 0 ? ` | ⚠️ 좌표 없음: ${noCoordCount}명` : ''}`;
       document.getElementById('markerCount').textContent = infoText;
       
@@ -2162,16 +2183,7 @@
       loading.classList.remove('hide');
       loading.querySelector('.loading-text').textContent = '고객 데이터 저장 중...';
       
-      let mapApiAvailable = true;
-      try {
-        if (!kakaoMapLoaded) {
-          loading.querySelector('.loading-text').textContent = '카카오 지도 API 로딩 중...';
-          await loadKakaoMapAPI();
-        }
-      } catch (error) {
-        console.error('카카오 지도 API 로드 실패:', error);
-        mapApiAvailable = false;
-        
+      if (!kakaoMapLoaded) {
         const proceed = confirm(
           '⚠️ 카카오 지도 API를 사용할 수 없습니다.\n\n' +
           '좌표 없이 고객 데이터만 저장됩니다.\n' +
@@ -2205,7 +2217,7 @@
           
           let coordinates = { latitude: null, longitude: null };
           
-          if (mapApiAvailable) {
+          if (kakaoMapLoaded) {
             loading.querySelector('.loading-text').textContent = `${added + 1}번째 고객 "${name}" 좌표 변환 중...`;
             console.log(`\n=== ${i + 1}행: ${name} ===`);
             console.log('기본주소:', address);
@@ -2269,7 +2281,7 @@
           message += `\n\n빈 행 ${skipped}개 건너뜀`;
         }
         
-        if (!mapApiAvailable) {
+        if (!kakaoMapLoaded) {
           message += `\n\n⚠️ 카카오 지도 API 사용 불가\n→ 모든 고객이 좌표 없이 저장되었습니다.\n→ 개별 수정으로 좌표 추가 가능`;
         } else if (noCoordinates > 0) {
           message += `\n\n⚠️ 좌표 미등록: ${noCoordinates}명`;
