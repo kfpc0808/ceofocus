@@ -17,8 +17,8 @@
   <!-- SheetJS for Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
-  <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVtAzm9UjgGB1pqChvGvGKH7RpH0KCiVM&libraries=places" async defer></script>
+  <!-- Kakao Maps API -->
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=1ada66397913195f6a7512567faa5fac&libraries=services"></script>
   
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -1938,7 +1938,7 @@
       window.open(`financialMaster.html?client=${encoded}`, '_blank');
     }
     
-    // 간단한 지도 보기 - 외부 서비스 이용
+    // 간단한 지도 보기 - Kakao Maps 사용
     async function openMapModal() {
       if (clients.length === 0) {
         alert('지도에 표시할 고객이 없습니다.');
@@ -1953,9 +1953,9 @@
         return;
       }
       
-      // Google Maps API 로딩 확인
-      if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-        alert('⚠️ Google Maps API 로딩 실패\n\n다음을 확인해주세요:\n\n1. 인터넷 연결 확인\n2. Google Cloud Console에서 Maps JavaScript API 활성화\n3. API 키 확인\n\n잠시 후 다시 시도해주세요.');
+      // Kakao Maps API 로딩 확인
+      if (typeof kakao === 'undefined' || !kakao.maps) {
+        alert('⚠️ Kakao Maps API 로딩 실패\n\n다음을 확인해주세요:\n\n1. 인터넷 연결 확인\n2. Kakao Developers에서 앱 키 발급\n3. HTML 파일 21번 줄에 YOUR_KAKAO_APP_KEY를 실제 앱 키로 교체\n\n자세한 내용: https://developers.kakao.com');
         return;
       }
       
@@ -1968,140 +1968,150 @@
         if (!mapDiv) return;
         
         // 첫 번째 고객 위치를 중심으로
-        const center = {
-          lat: clientsWithCoords[0].latitude,
-          lng: clientsWithCoords[0].longitude
-        };
+        const center = new kakao.maps.LatLng(clientsWithCoords[0].latitude, clientsWithCoords[0].longitude);
         
-      // Google Maps 생성
-      const map = new google.maps.Map(mapDiv, {
-        center: center,
-        zoom: 12,
-        mapTypeControl: true,
-        fullscreenControl: true,
-        streetViewControl: true,
-        zoomControl: true
-      });
-      
-      // 모든 고객의 마커 생성
-      const bounds = new google.maps.LatLngBounds();
-      const infoWindows = []; // 정보창들을 저장
-      
-      clientsWithCoords.forEach((client, index) => {
-        const position = {
-          lat: client.latitude,
-          lng: client.longitude
-        };
-        
-        // 마커 생성
-        const marker = new google.maps.Marker({
-          position: position,
-          map: map,
-          title: client.name,
-          label: {
-            text: client.name,
-            color: '#FFFFFF',
-            fontSize: '11px',
-            fontWeight: 'bold'
-          },
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12,
-            fillColor: '#FF6B00',
-            fillOpacity: 0.9,
-            strokeColor: '#FFFFFF',
-            strokeWeight: 3
-          },
-          animation: google.maps.Animation.DROP
+        // Kakao 지도 생성
+        const map = new kakao.maps.Map(mapDiv, {
+          center: center,
+          level: 6
         });
         
-        // 정보창 내용
-        const infoContent = `
-          <div style="padding: 14px; min-width: 250px; max-width: 350px; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;">
-            <h3 style="margin: 0 0 10px 0; color: #FF6B00; font-size: 17px; font-weight: 700;">
-              ${client.name}${client.honorific || ''}
-            </h3>
-            ${client.title ? `<p style="margin: 4px 0; color: #64748b; font-size: 13px; font-weight: 500;">${client.title}</p>` : ''}
-            ${client.company ? `<p style="margin: 4px 0; color: #64748b; font-size: 13px;">${client.company}</p>` : ''}
-            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
-            <p style="margin: 8px 0; font-size: 14px;">
-              <strong>📞</strong> 
-              <a href="tel:${client.phone}" 
-                 style="color: #0c2c54; text-decoration: none; font-weight: 600; margin-left: 4px;">
-                ${formatPhone(client.phone)}
-              </a>
-            </p>
-            <p style="margin: 8px 0; font-size: 13px; color: #475569; line-height: 1.5;">
-              <strong>📍</strong> ${client.address}
-            </p>
-            ${client.birthDate ? `<p style="margin: 6px 0; font-size: 12px; color: #64748b;">
-              🎂 생년월일: ${new Date(client.birthDate).toLocaleDateString()}
-            </p>` : ''}
-            ${client.sangryeong ? `<p style="margin: 6px 0; font-size: 12px; color: #64748b;">
-              🎁 상령일: ${client.sangryeong}
-            </p>` : ''}
-            <div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
-              <a href="tel:${client.phone}" 
-                 style="padding: 8px 14px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">
-                📞 전화
-              </a>
-              <a href="https://www.google.com/maps/dir/?api=1&destination=${client.latitude},${client.longitude}" 
-                 target="_blank" 
-                 style="padding: 8px 14px; background: #4285F4; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">
-                🧭 네비
-              </a>
+        // 지도 타입 컨트롤 추가
+        const mapTypeControl = new kakao.maps.MapTypeControl();
+        map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+        
+        // 줌 컨트롤 추가
+        const zoomControl = new kakao.maps.ZoomControl();
+        map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+        
+        // 모든 고객의 마커와 정보창 생성
+        const bounds = new kakao.maps.LatLngBounds();
+        const infoWindows = []; // 열린 정보창 관리
+        
+        clientsWithCoords.forEach((client, index) => {
+          const position = new kakao.maps.LatLng(client.latitude, client.longitude);
+          
+          // 마커 생성
+          const marker = new kakao.maps.Marker({
+            position: position,
+            map: map
+          });
+          
+          // 마커 위에 고객 이름 라벨 표시 (클릭 가능)
+          const labelContent = `
+            <div onclick="openClientInfo_${index}()" style="cursor: pointer; position: relative; bottom: 45px; background: #FF6B00; color: white; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 13px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 2px solid white;">
+              ${client.name}
+              <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #FF6B00;"></div>
             </div>
-          </div>
-        `;
-        
-        const infoWindow = new google.maps.InfoWindow({
-          content: infoContent,
-          maxWidth: 350
+          `;
+          
+          const customOverlay = new kakao.maps.CustomOverlay({
+            position: position,
+            content: labelContent,
+            yAnchor: 1
+          });
+          
+          customOverlay.setMap(map);
+          
+          // 정보창 내용 (닫기 버튼 포함)
+          const infoContent = `
+            <div style="position: relative; padding: 14px; min-width: 240px; max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+              <button onclick="closeAllInfoWindows()" style="position: absolute; top: 8px; right: 8px; background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; padding: 4px 8px; line-height: 1;">×</button>
+              <h3 style="margin: 0 0 8px 0; color: #FF6B00; font-size: 16px; font-weight: 700; padding-right: 24px;">
+                ${client.name}${client.honorific || ''}
+              </h3>
+              ${client.title ? `<p style="margin: 3px 0; color: #64748b; font-size: 12px; font-weight: 500;">${client.title}</p>` : ''}
+              ${client.company ? `<p style="margin: 3px 0; color: #64748b; font-size: 12px;">${client.company}</p>` : ''}
+              <hr style="margin: 8px 0; border: none; border-top: 1px solid #e2e8f0;">
+              <div style="margin: 6px 0; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                <strong>📞</strong> 
+                <span style="color: #0c2c54; font-weight: 600;">
+                  ${formatPhone(client.phone)}
+                </span>
+                <a href="tel:${client.phone}" 
+                   style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;">
+                  📞
+                </a>
+              </div>
+              <p style="margin: 6px 0; font-size: 12px; color: #475569; line-height: 1.4;">
+                <strong>📍</strong> ${client.address}
+              </p>
+              ${client.birthDate ? `<p style="margin: 4px 0; font-size: 11px; color: #64748b;">
+                🎂 ${new Date(client.birthDate).toLocaleDateString()}
+              </p>` : ''}
+              ${client.sangryeong ? `<p style="margin: 4px 0; font-size: 11px; color: #64748b;">
+                🎁 상령일: ${client.sangryeong}
+              </p>` : ''}
+              <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
+                <a href="tmap://route?goalx=${client.longitude}&goaly=${client.latitude}&goalname=${encodeURIComponent(client.name)}" 
+                   style="padding: 6px 10px; background: #1E40AF; color: white; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 600; display: inline-block;">
+                  🗺️ T맵
+                </a>
+                <a href="https://map.kakao.com/link/to/${encodeURIComponent(client.name)},${client.latitude},${client.longitude}" 
+                   target="_blank" 
+                   style="padding: 6px 10px; background: #FEE500; color: #000; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 600; display: inline-block;">
+                  🗺️ 카카오
+                </a>
+              </div>
+            </div>
+          `;
+          
+          // 정보창 생성
+          const infoWindow = new kakao.maps.InfoWindow({
+            content: infoContent
+          });
+          
+          infoWindows.push(infoWindow);
+          
+          // 마커 클릭 이벤트
+          kakao.maps.event.addListener(marker, 'click', function() {
+            // 모든 정보창 닫기
+            infoWindows.forEach(iw => iw.close());
+            // 현재 정보창 열기
+            infoWindow.open(map, marker);
+          });
+          
+          // 라벨 클릭 시 정보창 열기 (전역 함수)
+          window[`openClientInfo_${index}`] = function() {
+            // 모든 정보창 닫기
+            infoWindows.forEach(iw => iw.close());
+            // 현재 정보창 열기
+            infoWindow.open(map, marker);
+          };
+          
+          // 지도 범위 확장
+          bounds.extend(position);
         });
         
-        infoWindows.push(infoWindow);
-        
-        // 마커 클릭 이벤트 - 다른 정보창 닫고 현재 정보창 열기
-        marker.addListener('click', () => {
-          // 모든 정보창 닫기
+        // 전역 함수로 정보창 닫기 (정보창 내부 버튼에서 호출)
+        window.closeAllInfoWindows = function() {
           infoWindows.forEach(iw => iw.close());
-          // 현재 정보창 열기
-          infoWindow.open(map, marker);
-        });
+        };
         
-        bounds.extend(position);
-      });
-      
-      // 모든 마커가 보이도록 지도 범위 조정
-      if (clientsWithCoords.length > 1) {
-        map.fitBounds(bounds);
-      }
-      
-      // 마커 개수 표시
-      const markerCount = document.getElementById('markerCount');
-      if (markerCount) {
-        markerCount.innerHTML = `총 <strong style="color: #FF6B00;">${clientsWithCoords.length}명</strong>의 고객 위치 | 마커를 클릭하면 상세 정보를 볼 수 있습니다`;
-      }
-      
-      console.log(`✅ 지도 열기: 총 ${clientsWithCoords.length}명 마커 표시 완료`);
-      
+        // 모든 마커가 보이도록 지도 범위 조정
+        if (clientsWithCoords.length > 1) {
+          map.setBounds(bounds);
+        }
+        
+        // 마커 개수 표시
+        const markerCount = document.getElementById('markerCount');
+        if (markerCount) {
+          markerCount.innerHTML = `총 <strong style="color: #FF6B00;">${clientsWithCoords.length}명</strong>의 고객 위치 | 마커를 클릭하면 상세 정보를 볼 수 있습니다`;
+        }
+        
+        console.log(`✅ 카카오 지도 열기: 총 ${clientsWithCoords.length}명 마커 표시 완료`);
+        
       } catch (error) {
         console.error('지도 생성 오류:', error);
         closeModal('mapModal');
         
         let errorMessage = '⚠️ 지도를 표시할 수 없습니다.\n\n';
-        
-        if (error.message && error.message.includes('ApiNotActivatedMapError')) {
-          errorMessage += '📍 Google Maps API가 활성화되지 않았습니다.\n\n';
-          errorMessage += '해결 방법:\n';
-          errorMessage += '1. Google Cloud Console 접속\n';
-          errorMessage += '2. Maps JavaScript API 활성화\n';
-          errorMessage += '3. Geocoding API 활성화\n\n';
-          errorMessage += '자세한 내용: https://console.cloud.google.com';
-        } else {
-          errorMessage += '오류: ' + error.message + '\n\n';
-          errorMessage += '브라우저 콘솔(F12)에서 자세한 오류를 확인하세요.';
-        }
+        errorMessage += '오류: ' + error.message + '\n\n';
+        errorMessage += '다음을 확인해주세요:\n';
+        errorMessage += '1. Kakao Developers에서 앱 키 발급\n';
+        errorMessage += '2. HTML 파일 21번 줄에 YOUR_KAKAO_APP_KEY를 실제 앱 키로 교체\n';
+        errorMessage += '3. 브라우저 콘솔(F12)에서 자세한 오류 확인\n\n';
+        errorMessage += '자세한 내용: https://developers.kakao.com';
         
         alert(errorMessage);
       }
