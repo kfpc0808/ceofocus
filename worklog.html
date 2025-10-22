@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     <title>📘 업무일지 Pro - Worklog Management System</title>
@@ -1076,6 +1077,12 @@
                 <button class="btn btn-primary" id="driveConnectBtn" onclick="handleGoogleDriveConnect()">
                     🔗 Drive 연결
                 </button>
+                <button class="btn btn-success" onclick="manualSave()" title="수동 저장" style="min-width: 100px;">
+                    💾 저장
+                </button>
+                <button class="btn btn-primary" onclick="manualLoad()" title="최신 데이터 불러오기" style="min-width: 100px;">
+                    🔄 불러오기
+                </button>
             </div>
         </div>
 
@@ -1332,16 +1339,23 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">카테고리</label>
-                            <select class="form-select" id="taskCategory">
+                            <select class="form-select" id="taskCategory" onchange="handleCategoryChange()">
                                 <option value="">선택하세요</option>
-                                <option value="보험상담">보험상담</option>
+                                <option value="보험">보험</option>
+                                <option value="연금">연금</option>
                                 <option value="계약">계약</option>
                                 <option value="청구">청구</option>
                                 <option value="리뷰">리뷰</option>
                                 <option value="세무">세무</option>
+                                <option value="컨설팅">컨설팅</option>
                                 <option value="법인">법인</option>
                                 <option value="기타">기타</option>
+                                <option value="직접입력">직접입력</option>
                             </select>
+                        </div>
+                        <div class="form-group" id="customCategoryGroup" style="display: none;">
+                            <label class="form-label">카테고리 입력</label>
+                            <input type="text" class="form-input" id="customCategory" placeholder="카테고리를 입력하세요">
                         </div>
                         <div class="form-group">
                             <label class="form-label">소요 시간</label>
@@ -1404,6 +1418,9 @@
         let currentMonth = new Date().getMonth();
         const ENCRYPTION_KEY = 'CEO_FOCUS_2025_SECURE_KEY_FOR_ENCRYPTION';
         const FILE_NAME = 'worklog.fmd';
+        let autoSaveTimer = null;
+        let hasUnsavedChanges = false;
+        let lastSaveTime = null;
 
         // Notification Settings
         let notificationSettings = {
@@ -1413,6 +1430,20 @@
             notifyD3: false,
             notifyHighOnly: false
         };
+
+        // Save before unload
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges) {
+                // Try to save immediately
+                if (accessToken) {
+                    saveToDrive(false);
+                } else {
+                    localStorage.setItem('worklog_backup', JSON.stringify(tasks));
+                }
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -1613,9 +1644,13 @@
         }
 
         async function loadFromDrive() {
-            if (!accessToken) return;
+            if (!accessToken) {
+                showToast('Google Drive에 연결되지 않았습니다', 'warning');
+                return;
+            }
 
             try {
+                updateSaveStatus('불러오는 중...');
                 showToast('데이터 불러오는 중...', 'info');
                 
                 const searchResponse = await fetch(
@@ -1637,15 +1672,40 @@
                     updateStats();
                     renderCalendar();
                     checkDeadlines();
-                    showToast('데이터를 불러왔습니다', 'success');
+                    lastSaveTime = new Date();
+                    updateSaveStatus('불러오기 완료');
+                    showToast('Google Drive에서 데이터를 불러왔습니다', 'success');
+                } else {
+                    updateSaveStatus('데이터 없음');
+                    showToast('Google Drive에 저장된 데이터가 없습니다', 'info');
+                    // Try to load from localStorage backup
+                    const backup = localStorage.getItem('worklog_backup');
+                    if (backup) {
+                        tasks = JSON.parse(backup);
+                        renderTasks();
+                        updateStats();
+                        renderCalendar();
+                        checkDeadlines();
+                        showToast('로컬 백업에서 데이터를 불러왔습니다', 'info');
+                    }
                 }
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
                 showToast('데이터 로드 실패', 'error');
+                // Try to load from localStorage backup
+                const backup = localStorage.getItem('worklog_backup');
+                if (backup) {
+                    tasks = JSON.parse(backup);
+                    renderTasks();
+                    updateStats();
+                    renderCalendar();
+                    checkDeadlines();
+                    showToast('백업에서 데이터를 불러왔습니다', 'info');
+                }
             }
         }
 
-        async function saveToDrive() {
+        async function saveToDrive(showMessage = true) {
             if (!accessToken) {
                 showToast('Google Drive에 연결해주세요', 'warning');
                 return;
@@ -1684,10 +1744,28 @@
                     body: form
                 });
 
-                showToast('저장되었습니다', 'success');
+                lastSaveTime = new Date();
+                hasUnsavedChanges = false;
+                updateSaveStatus('저장됨');
+                if (showMessage) showToast('저장되었습니다', 'success');
+                // Also save to localStorage as backup
+                localStorage.setItem('worklog_backup', JSON.stringify(tasks));
             } catch (error) {
                 console.error('저장 실패:', error);
-                showToast('저장 실패', 'error');
+                
+                // Check if token expired
+                if (error.message && error.message.includes('401')) {
+                    updateSaveStatus('토큰 만료');
+                    showToast('Google Drive 재연결이 필요합니다', 'error');
+                    accessToken = null;
+                    localStorage.removeItem('gdrive_access_token');
+                    updateDriveStatus(false);
+                } else {
+                    updateSaveStatus('저장 실패');
+                    showToast('저장 실패: ' + error.message, 'error');
+                }
+                // Save to localStorage as fallback
+                localStorage.setItem('worklog_backup', JSON.stringify(tasks));
             }
         }
 
@@ -1706,6 +1784,83 @@
                 result += String.fromCharCode(decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
             }
             return result;
+
+
+        // Manual save function
+        async function manualSave() {
+            if (accessToken) {
+                updateSaveStatus('저장 중...');
+                await saveToDrive(true);
+            } else {
+                localStorage.setItem('worklog_backup', JSON.stringify(tasks));
+                updateSaveStatus('로컬 저장됨');
+                showToast('로컬에 저장되었습니다. Google Drive에 저장하려면 연결하세요.', 'info');
+            }
+        }
+
+        // Manual load function
+        async function manualLoad() {
+            if (accessToken) {
+                updateSaveStatus('불러오는 중...');
+                await loadFromDrive();
+            } else {
+                // Try to load from localStorage backup
+                const backup = localStorage.getItem('worklog_backup');
+                if (backup) {
+                    try {
+                        tasks = JSON.parse(backup);
+                        renderTasks();
+                        updateStats();
+                        renderCalendar();
+                        checkDeadlines();
+                        showToast('백업에서 데이터를 불러왔습니다', 'success');
+                    } catch (error) {
+                        showToast('백업 데이터를 불러올 수 없습니다', 'error');
+                    }
+                } else {
+                    showToast('Google Drive에 연결하여 데이터를 불러오세요', 'warning');
+                }
+            }
+        }
+
+        // Auto-save functionality
+        function scheduleAutoSave() {
+            hasUnsavedChanges = true;
+            updateSaveStatus('저장 중...');
+            
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+            }
+            
+            autoSaveTimer = setTimeout(() => {
+                if (accessToken && hasUnsavedChanges) {
+                    saveToDrive(false);
+                } else if (hasUnsavedChanges) {
+                    // Save to localStorage if no Google Drive connection
+                    localStorage.setItem('worklog_backup', JSON.stringify(tasks));
+                    hasUnsavedChanges = false;
+                    updateSaveStatus('로컬 저장됨');
+                }
+            }, 2000); // Auto-save after 2 seconds of no changes
+        }
+
+        function updateSaveStatus(status) {
+            const btn = document.getElementById('driveConnectBtn');
+            if (btn && status) {
+                const originalText = btn.textContent;
+                btn.textContent = status;
+                if (status === '저장됨' || status === '로컬 저장됨') {
+                    setTimeout(() => {
+                        if (accessToken) {
+                            btn.textContent = '✓ 연결됨';
+                        } else {
+                            btn.textContent = '🔗 Drive 연결';
+                        }
+                    }, 2000);
+                }
+            }
+        }
+
         }
 
         // Client Management Integration
@@ -1749,6 +1904,21 @@
             }
         }
 
+        // Category handling
+        function handleCategoryChange() {
+            const categorySelect = document.getElementById('taskCategory');
+            const customCategoryGroup = document.getElementById('customCategoryGroup');
+            const customCategoryInput = document.getElementById('customCategory');
+            
+            if (categorySelect.value === '직접입력') {
+                customCategoryGroup.style.display = 'block';
+                customCategoryInput.focus();
+            } else {
+                customCategoryGroup.style.display = 'none';
+                customCategoryInput.value = '';
+            }
+        }
+
         function selectClient(name, position, contact, dropdownId) {
             if (dropdownId === 'autocompleteDropdown') {
                 document.getElementById('quickClient').value = name;
@@ -1780,7 +1950,7 @@
             };
 
             tasks.unshift(task);
-            saveToDrive();
+            scheduleAutoSave();
             renderTasks();
             updateStats();
             renderCalendar();
@@ -1801,6 +1971,9 @@
             document.getElementById('taskSuffix').value = '님';
             document.getElementById('taskId').value = '';
             document.getElementById('deleteBtn').style.display = 'none';
+            // Reset category fields
+            document.getElementById('customCategoryGroup').style.display = 'none';
+            document.getElementById('customCategory').value = '';
             document.getElementById('taskModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -1818,7 +1991,28 @@
             document.getElementById('taskSuffix').value = task.suffix || '님';
             document.getElementById('taskContact').value = task.contact || '';
             document.getElementById('taskTitle').value = task.title || '';
-            document.getElementById('taskCategory').value = task.category || '';
+            
+            // Handle category - check if it's a predefined option or custom
+            const categorySelect = document.getElementById('taskCategory');
+            const customCategoryGroup = document.getElementById('customCategoryGroup');
+            const customCategoryInput = document.getElementById('customCategory');
+            const categoryValue = task.category || '';
+            
+            // Check if category is in the predefined list
+            const predefinedCategories = ['보험', '연금', '계약', '청구', '리뷰', '세무', '컨설팅', '법인', '기타'];
+            if (predefinedCategories.includes(categoryValue)) {
+                categorySelect.value = categoryValue;
+                customCategoryGroup.style.display = 'none';
+            } else if (categoryValue) {
+                // Custom category
+                categorySelect.value = '직접입력';
+                customCategoryInput.value = categoryValue;
+                customCategoryGroup.style.display = 'block';
+            } else {
+                categorySelect.value = '';
+                customCategoryGroup.style.display = 'none';
+            }
+            
             document.getElementById('taskDuration').value = task.duration || '';
             document.getElementById('taskContent').value = task.content || '';
             document.getElementById('taskStatus').value = task.status || 'progress';
@@ -1835,6 +2029,9 @@
             document.getElementById('taskModal').style.display = 'none';
             document.body.style.overflow = 'auto';
             editingTaskId = null;
+            // Reset category fields
+            document.getElementById('customCategoryGroup').style.display = 'none';
+            document.getElementById('customCategory').value = '';
         }
 
         function saveTask(event) {
@@ -1848,7 +2045,9 @@
                 suffix: document.getElementById('taskSuffix').value,
                 contact: document.getElementById('taskContact').value,
                 title: document.getElementById('taskTitle').value,
-                category: document.getElementById('taskCategory').value,
+                category: document.getElementById('taskCategory').value === '직접입력' 
+                    ? document.getElementById('customCategory').value 
+                    : document.getElementById('taskCategory').value,
                 duration: document.getElementById('taskDuration').value,
                 content: document.getElementById('taskContent').value,
                 status: document.getElementById('taskStatus').value,
@@ -1869,7 +2068,7 @@
                 tasks.unshift(taskData);
             }
 
-            saveToDrive();
+            scheduleAutoSave();
             renderTasks();
             updateStats();
             renderCalendar();
@@ -1883,7 +2082,7 @@
             if (!confirm('정말 이 업무를 삭제하시겠습니까?')) return;
 
             tasks = tasks.filter(t => t.id !== editingTaskId);
-            saveToDrive();
+            scheduleAutoSave();
             renderTasks();
             updateStats();
             renderCalendar();
