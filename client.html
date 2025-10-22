@@ -858,11 +858,11 @@
           <div class="form-group">
             <label class="required">주소</label>
             <div class="address-group">
-              <input type="text" id="postcode" placeholder="우편번호 (직접입력 또는 검색)">
+              <input type="text" id="postcode" placeholder="우편번호 (직접입력 또는 검색)" autocomplete="off">
               <button type="button" class="btn btn-secondary" onclick="searchAddress()" style="flex-shrink: 0;">🔍 주소 검색</button>
             </div>
-            <input type="text" id="address" placeholder="기본주소 (예: 서울 송파구 위례서로 252)" required style="margin-bottom:0.5rem;">
-            <input type="text" id="detailAddress" placeholder="상세주소 (예: 101동 1001호)" required>
+            <input type="text" id="address" placeholder="기본주소 (예: 서울 송파구 위례서로 252)" required style="margin-bottom:0.5rem;" autocomplete="off">
+            <input type="text" id="detailAddress" placeholder="상세주소 (예: 101동 1001호, 건물명 등)" required autocomplete="off">
             <div style="margin-top:0.5rem; padding:0.5rem; background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; font-size:0.85rem;">
               <div style="color:#0369a1; font-weight:600; margin-bottom:0.3rem;">📍 좌표 (자동 변환)</div>
               <div id="coordinatesDisplay" style="color:#0c4a6e;">주소 입력 후 자동으로 표시됩니다</div>
@@ -1545,7 +1545,7 @@
     // 주소 검색 기능
     function searchAddress() {
       new daum.Postcode({
-        oncomplete: function(data) {
+        oncomplete: async function(data) {
           // 우편번호와 주소 정보 입력
           document.getElementById('postcode').value = data.zonecode;
           
@@ -1558,6 +1558,21 @@
           }
           
           document.getElementById('address').value = addr;
+          
+          // 자동으로 좌표 변환 시작
+          const coordsDisplay = document.getElementById('coordinatesDisplay');
+          coordsDisplay.textContent = '좌표 변환 중...';
+          coordsDisplay.style.color = '#f59e0b';
+          
+          const coords = await getCoordinates(addr);
+          
+          if (coords.latitude && coords.longitude) {
+            coordsDisplay.innerHTML = `<strong>위도:</strong> ${coords.latitude.toFixed(6)} | <strong>경도:</strong> ${coords.longitude.toFixed(6)} ✅`;
+            coordsDisplay.style.color = '#059669';
+          } else {
+            coordsDisplay.textContent = '⚠️ 좌표 변환 실패 - 주소를 확인해주세요';
+            coordsDisplay.style.color = '#dc2626';
+          }
           
           // 상세주소 입력란에 포커스
           document.getElementById('detailAddress').focus();
@@ -2042,15 +2057,14 @@
               ${client.sangryeong ? `<p style="margin: 4px 0; font-size: 11px; color: #64748b;">
                 🎁 상령일: ${client.sangryeong}
               </p>` : ''}
-              <div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
-                <a href="tmap://route?goalx=${client.longitude}&goaly=${client.latitude}&goalname=${encodeURIComponent(client.name)}" 
-                   style="padding: 6px 10px; background: #1E40AF; color: white; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 600; display: inline-block;">
-                  🗺️ T맵
-                </a>
-                <a href="https://map.kakao.com/link/to/${encodeURIComponent(client.name)},${client.latitude},${client.longitude}" 
-                   target="_blank" 
-                   style="padding: 6px 10px; background: #FEE500; color: #000; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 600; display: inline-block;">
+              <div style="margin-top: 10px; display: flex; gap: 6px;">
+                <a href="kakaonavi://navigate?ep=${client.longitude},${client.latitude}&by=CAR" 
+                   style="padding: 8px 14px; background: #FEE500; color: #3C1E1E; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 600; display: inline-block; flex: 1; text-align: center;">
                   🗺️ 카카오
+                </a>
+                <a href="tmap://route?goalname=${encodeURIComponent(client.name)}&goalx=${client.longitude}&goaly=${client.latitude}" 
+                   style="padding: 8px 14px; background: #1E40AF; color: white; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 600; display: inline-block; flex: 1; text-align: center;">
+                  🗺️ T맵
                 </a>
               </div>
             </div>
