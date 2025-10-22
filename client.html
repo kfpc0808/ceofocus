@@ -5,24 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>고객 관리 - Executive Consulting Solution</title>
   
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
   <!-- CryptoJS for 암호화 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   
-  <!-- 다음 주소 API -->
+  <!-- Daum Postcode API -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  
-  <!-- 카카오맵 API - 먼저 로드 -->
-  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=1ada66397913195f6a7512567faa5fac&libraries=services"></script>
   
   <!-- SheetJS for Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVtAzm9UjgGB1pqChvGvGKH7RpH0KCiVM&libraries=places" async defer></script>
   
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -662,54 +658,6 @@
       border-radius: 8px;
     }
     
-    #addressLayer {
-      display: none;
-      position: fixed;
-      overflow: hidden;
-      z-index: 10000;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      align-items: center;
-      justify-content: center;
-    }
-    
-    #addressLayer.show {
-      display: flex;
-    }
-    
-    #addressWrap {
-      position: relative;
-      width: 90%;
-      max-width: 500px;
-      height: 500px;
-      border: 5px solid #FF8802;
-      background: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    
-    #addressCloseBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 10001;
-      background: #FF8802;
-      color: #fff;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    #addressCloseBtn:hover {
-      background: #FF6B00;
-    }
     
     @media (max-width: 768px) {
       body {
@@ -801,9 +749,13 @@
         <h3>총 고객</h3>
         <div class="number" id="totalClients">0</div>
       </div>
-      <div class="stat-card">
-        <h3>이번 달 추가</h3>
-        <div class="number" id="monthlyClients">0</div>
+      <div class="stat-card" onclick="filterBySangryeong('next')" style="cursor: pointer;">
+        <h3>익월 상령일</h3>
+        <div class="number" id="nextMonthSangryeong">0</div>
+      </div>
+      <div class="stat-card" onclick="filterBySangryeong('afternext')" style="cursor: pointer;">
+        <h3>익익월 상령일</h3>
+        <div class="number" id="afterNextMonthSangryeong">0</div>
       </div>
       <div class="stat-card">
         <h3>생일 예정</h3>
@@ -846,8 +798,11 @@
             <th>회사명</th>
             <th>직업</th>
             <th>주소</th>
+            <th>위도</th>
+            <th>경도</th>
             <th>좌표</th>
-            <th>생일</th>
+            <th>실제생일</th>
+            <th>상령일</th>
             <th>등록일</th>
             <th style="min-width: 280px;">프로그램</th>
             <th>발송</th>
@@ -855,7 +810,7 @@
         </thead>
         <tbody id="clientsTableBody">
           <tr>
-            <td colspan="14" class="empty-state">
+            <td colspan="17" class="empty-state">
               <div class="empty-state-icon">📋</div>
               <div>등록된 고객이 없습니다.<br/>고객을 추가해보세요!</div>
             </td>
@@ -903,11 +858,15 @@
           <div class="form-group">
             <label class="required">주소</label>
             <div class="address-group">
-              <input type="text" id="postcode" placeholder="우편번호" readonly>
-              <button type="button" class="btn-address" onclick="findAddress()">🔍 주소찾기</button>
+              <input type="text" id="postcode" placeholder="우편번호 (직접입력 또는 검색)">
+              <button type="button" class="btn btn-secondary" onclick="searchAddress()" style="flex-shrink: 0;">🔍 주소 검색</button>
             </div>
-            <input type="text" id="address" placeholder="기본주소" readonly style="margin-bottom:0.5rem;">
-            <input type="text" id="detailAddress" placeholder="상세주소 (필수)" required>
+            <input type="text" id="address" placeholder="기본주소 (예: 서울 송파구 위례서로 252)" required style="margin-bottom:0.5rem;">
+            <input type="text" id="detailAddress" placeholder="상세주소 (예: 101동 1001호)" required>
+            <div style="margin-top:0.5rem; padding:0.5rem; background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; font-size:0.85rem;">
+              <div style="color:#0369a1; font-weight:600; margin-bottom:0.3rem;">📍 좌표 (자동 변환)</div>
+              <div id="coordinatesDisplay" style="color:#0c4a6e;">주소 입력 후 자동으로 표시됩니다</div>
+            </div>
           </div>
           
           <div class="form-group">
@@ -922,11 +881,14 @@
           
           <div class="form-group">
             <label>생년월일</label>
-            <input type="date" id="birthDate">
+            <input type="date" id="birthDate" onchange="updateSangryeongDisplay()">
+            <div id="sangryeongDisplay" style="margin-top: 0.5rem; padding: 0.5rem; background: #FFF9E6; border-radius: 4px; color: #FF8802; font-weight: 600; display: none;">
+              📅 상령일: <span id="sangryeongValue"></span>
+            </div>
           </div>
           
           <div class="form-group">
-            <label>생일</label>
+            <label>실제생일</label>
             <input type="date" id="birthday">
             <div class="calendar-type">
               <label>
@@ -995,7 +957,8 @@
                   <th>회사명</th>
                   <th>직업</th>
                   <th>생년월일</th>
-                  <th>생일</th>
+                  <th>상령일</th>
+                  <th>실제생일</th>
                   <th>양/음력</th>
                   <th>기념일명</th>
                   <th>기념일</th>
@@ -1055,12 +1018,10 @@
   </div>
 
   <!-- 주소 검색 레이어 -->
-  <div id="addressLayer">
-    <div id="addressWrap">
-      <button id="addressCloseBtn" onclick="closeAddressLayer()">×</button>
-      <div id="addressContent" style="width:100%;height:100%;"></div>
-    </div>
-  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -1069,8 +1030,21 @@
       projectId: "kfpc-company-support-project"
     };
     
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    let auth = null;
+    
+    // Firebase 초기화 (오류 발생 시 로컬 모드로 전환)
+    try {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        console.log('✅ Firebase 초기화 성공');
+      } else {
+        console.warn('⚠️ Firebase SDK를 사용할 수 없습니다. 로컬 모드로 작동합니다.');
+      }
+    } catch (error) {
+      console.warn('⚠️ Firebase 초기화 실패:', error.message);
+      console.log('💾 로컬 저장소 모드로 작동합니다.');
+    }
     
     const CLIENT_ID = '288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -1082,7 +1056,8 @@
     let tokenClient;
     let accessToken = null;
     let gisInited = false;
-    let kakaoMapLoaded = false;
+    
+    
     
     function encryptData(data) {
       const jsonString = JSON.stringify(data);
@@ -1150,74 +1125,30 @@
     }
     
     async function init() {
-      document.getElementById('loading').classList.add('hide');
+      document.getElementById('loading').classList.remove('hide');
+      document.getElementById('loading').querySelector('.loading-text').textContent = '시스템 초기화 중...';
+      
       currentUser = { uid: 'user-' + Date.now() };
-      checkDaumPostcode();
-      checkKakaoMap();
       initGoogleAPI();
       
       if (restoreLoginState()) {
         console.log('✅ 로그인 상태 복원 중...');
+        document.getElementById('loading').querySelector('.loading-text').textContent = '데이터 로드 중...';
         loadClients().then(() => {
           updateStats();
+          document.getElementById('loading').classList.add('hide');
           console.log('✅ 데이터 로드 완료');
         }).catch(err => {
           console.error('데이터 로드 오류:', err);
+          document.getElementById('loading').classList.add('hide');
         });
+      } else {
+        document.getElementById('loading').classList.add('hide');
       }
     }
     
-    function checkDaumPostcode() {
-      let attempts = 0;
-      const maxAttempts = 50;
-      
-      const checkDaum = setInterval(() => {
-        attempts++;
-        if (typeof daum !== 'undefined' && daum.Postcode) {
-          clearInterval(checkDaum);
-          console.log('✅ 다음 주소 API 로드 완료');
-        } else if (attempts >= maxAttempts) {
-          clearInterval(checkDaum);
-          console.warn('⚠️ 다음 주소 API 로드 실패');
-        }
-      }, 100);
-    }
-    
-    function checkKakaoMap() {
-      let attempts = 0;
-      const maxAttempts = 50;
-      
-      const checkKakao = setInterval(() => {
-        attempts++;
-        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
-          clearInterval(checkKakao);
-          kakaoMapLoaded = true;
-          console.log('✅ 카카오맵 API 로드 완료');
-        } else if (attempts >= maxAttempts) {
-          clearInterval(checkKakao);
-          console.warn('⚠️ 카카오맵 API 로드 실패 - 좌표 변환 불가');
-          kakaoMapLoaded = false;
-        }
-      }, 100);
-    }
-    
-    function loadKakaoMapAPI() {
-      return new Promise((resolve, reject) => {
-        if (kakaoMapLoaded && typeof kakao !== 'undefined' && kakao.maps) {
-          resolve();
-          return;
-        }
-        
-        if (typeof kakao !== 'undefined' && kakao.maps) {
-          kakaoMapLoaded = true;
-          resolve();
-          return;
-        }
-        
-        reject(new Error('카카오맵 API 로드 실패'));
-      });
-    }
-    
+
+
     function handleGoogleDriveConnect() {
       if (!gisInited) {
         alert('Google API가 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
@@ -1429,7 +1360,7 @@
       if (clients.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="14" class="empty-state">
+            <td colspan="17" class="empty-state">
               <div class="empty-state-icon">📋</div>
               <div>등록된 고객이 없습니다.<br/>고객을 추가해보세요!</div>
             </td>
@@ -1454,8 +1385,11 @@
           <td>${client.company || '-'}</td>
           <td>${client.job || '-'}</td>
           <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${client.address}">${client.address}</td>
-          <td style="font-size: 0.7rem; color: #64748b;">${client.latitude && client.longitude ? '✓' : '미등록'}</td>
+          <td style="font-size: 0.75rem; color: #059669;" title="위도">${client.latitude ? client.latitude.toFixed(6) : '-'}</td>
+          <td style="font-size: 0.75rem; color: #059669;" title="경도">${client.longitude ? client.longitude.toFixed(6) : '-'}</td>
+          <td style="text-align: center;">${client.latitude && client.longitude ? '✅' : '❌'}</td>
           <td>${client.birthday ? new Date(client.birthday).toLocaleDateString('ko-KR', {month: 'numeric', day: 'numeric'}) : '-'}</td>
+          <td style="text-align: center; color: #FF8802; font-weight: 600;">${client.sangryeong || '-'}</td>
           <td>${new Date(client.createdAt).toLocaleDateString('ko-KR', {month: 'numeric', day: 'numeric'})}</td>
           <td>
             <div class="action-btns">
@@ -1480,11 +1414,26 @@
       document.getElementById('totalClients').textContent = clients.length;
       
       const now = new Date();
-      const thisMonth = clients.filter(c => {
-        const created = new Date(c.createdAt);
-        return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+      const currentMonth = now.getMonth() + 1; // 1-12
+      const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+      const afterNextMonth = nextMonth === 12 ? 1 : nextMonth + 1;
+      
+      // 익월 상령일 인원
+      const nextMonthSangryeong = clients.filter(c => {
+        if (!c.sangryeong) return false;
+        const sangMonth = getSangryeongMonth(c.sangryeong);
+        return sangMonth === nextMonth;
       }).length;
-      document.getElementById('monthlyClients').textContent = thisMonth;
+      
+      // 익익월 상령일 인원
+      const afterNextMonthSangryeong = clients.filter(c => {
+        if (!c.sangryeong) return false;
+        const sangMonth = getSangryeongMonth(c.sangryeong);
+        return sangMonth === afterNextMonth;
+      }).length;
+      
+      document.getElementById('nextMonthSangryeong').textContent = nextMonthSangryeong;
+      document.getElementById('afterNextMonthSangryeong').textContent = afterNextMonthSangryeong;
       
       const today = new Date();
       const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -1507,6 +1456,79 @@
       document.getElementById('upcomingAnniversaries').textContent = upcomingAnniversaries;
     }
     
+    function filterBySangryeong(type) {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+      const afterNextMonth = nextMonth === 12 ? 1 : nextMonth + 1;
+      
+      const targetMonth = type === 'next' ? nextMonth : afterNextMonth;
+      const tbody = document.getElementById('clientsTableBody');
+      
+      const filtered = clients.filter(c => {
+        if (!c.sangryeong) return false;
+        const sangMonth = getSangryeongMonth(c.sangryeong);
+        return sangMonth === targetMonth;
+      });
+      
+      if (filtered.length === 0) {
+        alert(`${type === 'next' ? '익월' : '익익월'} 상령일 대상자가 없습니다.`);
+        return;
+      }
+      
+      // 필터링된 결과만 표시
+      tbody.innerHTML = filtered.map((client) => {
+        const index = clients.indexOf(client);
+        return `
+        <tr style="background-color: #FFF9E6;">
+          <td style="text-align: center;">
+            <input type="checkbox" class="client-checkbox" value="${index}" onchange="updateSelectedButtons()">
+          </td>
+          <td style="text-align: center;"><strong>${index + 1}</strong></td>
+          <td><strong>${client.name}</strong></td>
+          <td>${client.title || '-'}</td>
+          <td>${client.honorific || '-'}</td>
+          <td style="white-space: nowrap;">
+            ${formatPhone(client.phone)}
+            <a href="tel:${client.phone}" class="btn-icon btn-call" title="전화걸기">📞</a>
+          </td>
+          <td>${client.company || '-'}</td>
+          <td>${client.job || '-'}</td>
+          <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${client.address}">${client.address}</td>
+          <td style="font-size: 0.75rem; color: #059669;">${client.latitude ? client.latitude.toFixed(6) : '-'}</td>
+          <td style="font-size: 0.75rem; color: #059669;">${client.longitude ? client.longitude.toFixed(6) : '-'}</td>
+          <td style="text-align: center;">${client.latitude && client.longitude ? '✅' : '❌'}</td>
+          <td>${client.birthday ? new Date(client.birthday).toLocaleDateString('ko-KR', {month: 'numeric', day: 'numeric'}) : '-'}</td>
+          <td style="text-align: center; color: #FF8802; font-weight: 600; background-color: #FFE5CC;">${client.sangryeong || '-'}</td>
+          <td>${new Date(client.createdAt).toLocaleDateString('ko-KR', {month: 'numeric', day: 'numeric'})}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-icon btn-ceo" onclick="openCEOFocus(${index})" title="CEO Focus">CEO</button>
+              <button class="btn-icon btn-fm" onclick="openFM(${index})" title="FM">FM</button>
+              <button class="btn-icon btn-view" onclick="viewClient(${index})" title="상세보기">보기</button>
+              <button class="btn-icon btn-edit" onclick="editClient(${index})" title="수정">수정</button>
+              <button class="btn-icon btn-delete" onclick="deleteClient(${index})" title="삭제">삭제</button>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <button class="btn-icon btn-send" onclick="sendToClient(${index})" title="발송">발송</button>
+          </td>
+        </tr>
+        `;
+      }).join('');
+      
+      // 필터 해제 버튼 추가
+      const resetBtn = document.createElement('div');
+      resetBtn.style.cssText = 'padding: 1rem; background: #FFF3CD; text-align: center; margin-bottom: 1rem; border-radius: 8px;';
+      resetBtn.innerHTML = `
+        <strong>🔍 ${type === 'next' ? '익월' : '익익월'} 상령일 대상자: ${filtered.length}명</strong>
+        <button onclick="renderTable()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0c2c54; color: white; border: none; border-radius: 4px; cursor: pointer;">전체 보기</button>
+      `;
+      tbody.parentElement.parentElement.insertBefore(resetBtn, tbody.parentElement);
+      
+      updateSelectedButtons();
+    }
+    
     function openModal(modalId) {
       document.getElementById(modalId).classList.add('show');
     }
@@ -1520,6 +1542,29 @@
       }
     }
     
+    // 주소 검색 기능
+    function searchAddress() {
+      new daum.Postcode({
+        oncomplete: function(data) {
+          // 우편번호와 주소 정보 입력
+          document.getElementById('postcode').value = data.zonecode;
+          
+          // 도로명 주소 또는 지번 주소를 선택
+          let addr = '';
+          if (data.userSelectedType === 'R') {
+            addr = data.roadAddress;
+          } else {
+            addr = data.jibunAddress;
+          }
+          
+          document.getElementById('address').value = addr;
+          
+          // 상세주소 입력란에 포커스
+          document.getElementById('detailAddress').focus();
+        }
+      }).open();
+    }
+    
     function openAddModal() {
       currentEditId = null;
       document.getElementById('modalTitle').textContent = '➕ 고객 추가';
@@ -1528,98 +1573,96 @@
       openModal('clientModal');
     }
     
+    // Google Geocoding API를 사용한 좌표 변환 함수
     async function getCoordinates(address) {
+      const GOOGLE_GEOCODING_API_KEY = 'AIzaSyAVtAzm9UjgGB1pqChvGvGKH7RpH0KCiVM';
+      
+      if (!address || address.trim() === '') {
+        console.warn('⚠️ 주소가 비어있습니다.');
+        return { latitude: null, longitude: null };
+      }
+      
+      const cleanAddress = address.trim();
+      console.log('🗺️ Google Geocoding으로 좌표 변환 시도:', cleanAddress);
+      
       try {
-        if (!kakaoMapLoaded) {
-          console.warn('⚠️ 카카오맵 API가 로드되지 않았습니다.');
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cleanAddress)}&key=${GOOGLE_GEOCODING_API_KEY}&language=ko`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'OK' && data.results && data.results.length > 0) {
+          const location = data.results[0].geometry.location;
+          const lat = location.lat;
+          const lng = location.lng;
+          
+          console.log('✅ 좌표 변환 성공:', lat, lng);
+          console.log('📍 상세 주소:', data.results[0].formatted_address);
+          
+          return { 
+            latitude: lat, 
+            longitude: lng,
+            formattedAddress: data.results[0].formatted_address
+          };
+        } else {
+          console.warn('❌ 좌표 변환 실패 - Status:', data.status, '주소:', cleanAddress);
+          if (data.error_message) {
+            console.error('오류 메시지:', data.error_message);
+          }
           return { latitude: null, longitude: null };
         }
-        
-        if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.services) {
-          console.warn('⚠️ 카카오맵 API를 사용할 수 없습니다.');
-          return { latitude: null, longitude: null };
-        }
-        
-        const cleanAddress = address.split(' ').slice(0, 5).join(' ');
-        
-        console.log('🗺️ 좌표 변환 시도:', cleanAddress);
-        
-        return new Promise((resolve) => {
-          const geocoder = new kakao.maps.services.Geocoder();
-          geocoder.addressSearch(cleanAddress, function(result, status) {
-            if (status === kakao.maps.services.Status.OK) {
-              console.log('✅ 좌표 변환 성공:', result[0].y, result[0].x);
-              resolve({
-                latitude: parseFloat(result[0].y),
-                longitude: parseFloat(result[0].x)
-              });
-            } else {
-              console.warn('❌ 좌표 변환 실패:', cleanAddress, 'Status:', status);
-              resolve({ latitude: null, longitude: null });
-            }
-          });
-        });
       } catch (error) {
-        console.error('좌표 변환 오류:', error);
+        console.error('❌ 좌표 변환 API 호출 오류:', error);
         return { latitude: null, longitude: null };
       }
     }
     
-    function findAddress() {
-      if (typeof daum === 'undefined') {
-        alert('주소 검색 API를 불러오는 중입니다.\n페이지를 새로고침 해주세요.');
-        console.error('Daum Postcode API not loaded');
-        return;
+    function calculateSangryeong(birthDate) {
+      if (!birthDate) return '';
+      
+      // YYYY-MM-DD 형식에서 월-일 추출
+      const parts = birthDate.split('-');
+      if (parts.length !== 3) return '';
+      
+      let month = parseInt(parts[1]);
+      let day = parseInt(parts[2]);
+      
+      // 6개월 전으로 계산
+      month -= 6;
+      if (month <= 0) {
+        month += 12;
       }
       
-      if (!daum.Postcode) {
-        alert('주소 검색 서비스를 초기화할 수 없습니다.\n페이지를 새로고침 해주세요.');
-        console.error('Daum Postcode not available');
-        return;
-      }
+      // MM-DD 형식으로 반환
+      return `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    
+    function getSangryeongMonth(sangryeong) {
+      if (!sangryeong) return null;
+      const parts = sangryeong.split('-');
+      return parts.length === 2 ? parseInt(parts[0]) : null;
+    }
+    
+    function updateSangryeongDisplay() {
+      const birthDate = document.getElementById('birthDate').value;
+      const display = document.getElementById('sangryeongDisplay');
+      const valueSpan = document.getElementById('sangryeongValue');
       
-      try {
-        document.getElementById('addressLayer').classList.add('show');
-        
-        new daum.Postcode({
-          oncomplete: function(data) {
-            document.getElementById('postcode').value = data.zonecode;
-            document.getElementById('address').value = data.address;
-            closeAddressLayer();
-            document.getElementById('detailAddress').focus();
-          },
-          width: '100%',
-          height: '100%'
-        }).embed(document.getElementById('addressContent'));
-        
-      } catch (error) {
-        console.error('주소 검색 오류:', error);
-        alert('주소 검색 중 오류가 발생했습니다.\n페이지를 새로고침 후 다시 시도해주세요.');
-        closeAddressLayer();
+      if (birthDate) {
+        const sangryeong = calculateSangryeong(birthDate);
+        if (sangryeong) {
+          valueSpan.textContent = sangryeong;
+          display.style.display = 'block';
+        } else {
+          display.style.display = 'none';
+        }
+      } else {
+        display.style.display = 'none';
       }
     }
     
-    function closeAddressLayer() {
-      const layer = document.getElementById('addressLayer');
-      layer.classList.remove('show');
-      document.getElementById('addressContent').innerHTML = '';
-    }
-    
-    document.addEventListener('DOMContentLoaded', function() {
-      const addressLayer = document.getElementById('addressLayer');
-      addressLayer.addEventListener('click', function(e) {
-        if (e.target === addressLayer) {
-          closeAddressLayer();
-        }
-      });
-      
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && addressLayer.classList.contains('show')) {
-          closeAddressLayer();
-        }
-      });
-    });
-    
+
+
     async function saveClient() {
       const name = document.getElementById('clientName').value.trim();
       const title = document.getElementById('clientTitle').value.trim();
@@ -1641,19 +1684,26 @@
       
       const loading = document.getElementById('loading');
       loading.classList.remove('hide');
-      loading.querySelector('.loading-text').textContent = '주소를 좌표로 변환 중...';
+      loading.querySelector('.loading-text').textContent = '저장 준비 중...';
       
-      console.log('\n=== 고객 추가: ' + name + ' ===');
+      console.log('\n=== 고객 저장: ' + name + ' ===');
       console.log('기본주소:', address);
       console.log('상세주소:', detailAddress);
       console.log('전체주소:', fullAddress);
-      console.log('카카오맵 API 상태:', kakaoMapLoaded ? '사용가능' : '사용불가');
       
-      const coordinates = await getCoordinates(address);
+      let coordinates = { latitude: null, longitude: null };
       
-      if (!coordinates.latitude || !coordinates.longitude) {
+      // Google Geocoding API로 좌표 변환
+      loading.querySelector('.loading-text').textContent = '주소를 좌표로 변환 중...';
+      coordinates = await getCoordinates(address);
+      
+      if (coordinates.latitude && coordinates.longitude) {
+        console.log('✅ 좌표 변환 성공:', coordinates.latitude, coordinates.longitude);
+      } else {
+        console.warn('⚠️ 좌표 변환 실패 - 좌표 없이 저장됩니다.');
         const continueAnyway = confirm(
-          `⚠️ 좌표 변환 실패\n\n주소: ${address}\n\n원인:\n1. 카카오 지도 API 로드 실패\n2. 주소를 인식할 수 없음\n\n💡 해결 방법:\n1. 페이지 새로고침 (F5)\n2. "주소찾기" 버튼 사용 (권장)\n3. 정확한 도로명주소 입력\n4. 건물명이나 동/호수는 상세주소에 입력\n\n그래도 저장하시겠습니까?\n(좌표 없이 저장 후 나중에 수정 가능)`
+          `⚠️ 좌표 변환 실패\n\n주소: ${address}\n\n` +
+          `좌표 없이 저장하시겠습니까?\n(나중에 수정하여 좌표 추가 가능)`
         );
         
         if (!continueAnyway) {
@@ -1661,6 +1711,10 @@
           return;
         }
       }
+      
+      
+      const birthDate = document.getElementById('birthDate').value;
+      const sangryeong = calculateSangryeong(birthDate);
       
       const client = {
         name,
@@ -1673,9 +1727,10 @@
         longitude: coordinates.longitude,
         company: document.getElementById('company').value.trim(),
         job: document.getElementById('job').value.trim(),
-        birthDate: document.getElementById('birthDate').value,
+        birthDate: birthDate,
         birthday: document.getElementById('birthday').value,
         birthdayType,
+        sangryeong: sangryeong,
         anniversaryName: document.getElementById('anniversaryName').value.trim(),
         anniversary: document.getElementById('anniversary').value,
         email: document.getElementById('email').value.trim(),
@@ -1690,14 +1745,15 @@
         clients.push(client);
       }
       
+      loading.querySelector('.loading-text').textContent = '구글 드라이브에 저장 중...';
       await saveClients();
       loading.classList.add('hide');
       closeModal('clientModal');
       
       if (coordinates.latitude && coordinates.longitude) {
-        alert('✅ 저장되었습니다!');
+        alert('✅ 저장 완료!\n\n좌표가 정상적으로 등록되었습니다.');
       } else {
-        alert('✅ 저장되었습니다!\n\n⚠️ 좌표는 "미등록" 상태입니다.\n\n수정 버튼을 눌러 다시 저장하면\n좌표가 자동으로 생성될 수 있습니다.');
+        alert('✅ 저장 완료!\n\n⚠️ 좌표는 "미등록" 상태입니다.\n수정 버튼으로 다시 저장하면 좌표 추가 가능합니다.');
       }
     }
     
@@ -1726,6 +1782,9 @@
       document.getElementById('job').value = client.job || '';
       document.getElementById('birthDate').value = client.birthDate || '';
       document.getElementById('birthday').value = client.birthday || '';
+      
+      // 상령일 표시
+      updateSangryeongDisplay();
       
       const birthdayTypeRadio = document.querySelector(`input[name="birthdayType"][value="${client.birthdayType || 'solar'}"]`);
       if (birthdayTypeRadio) birthdayTypeRadio.checked = true;
@@ -1844,7 +1903,7 @@
             <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">기념일 정보</h3>
             <div style="background: #f8fafc; padding: 1rem; border-radius: 8px;">
               ${client.birthDate ? `<p style="margin: 0.5rem 0;"><strong>생년월일:</strong> ${client.birthDate}</p>` : ''}
-              ${client.birthday ? `<p style="margin: 0.5rem 0;"><strong>생일:</strong> ${new Date(client.birthday).toLocaleDateString()} (${client.birthdayType === 'lunar' ? '🌙 음력' : '☀️ 양력'})</p>` : ''}
+              ${client.birthday ? `<p style="margin: 0.5rem 0;"><strong>실제생일:</strong> ${new Date(client.birthday).toLocaleDateString()} (${client.birthdayType === 'lunar' ? '🌙 음력' : '☀️ 양력'})</p>` : ''}
               ${client.anniversary ? `<p style="margin: 0.5rem 0;"><strong>${client.anniversaryName || '기념일'}:</strong> ${new Date(client.anniversary).toLocaleDateString()}</p>` : ''}
             </div>
           </div>
@@ -1879,124 +1938,172 @@
       window.open(`financialMaster.html?client=${encoded}`, '_blank');
     }
     
+    // 간단한 지도 보기 - 외부 서비스 이용
     async function openMapModal() {
       if (clients.length === 0) {
         alert('지도에 표시할 고객이 없습니다.');
         return;
       }
       
-      const loading = document.getElementById('loading');
-      loading.classList.remove('hide');
-      loading.querySelector('.loading-text').textContent = '지도 로딩 중...';
+      // 좌표가 있는 고객 필터링
+      const clientsWithCoords = clients.filter(c => c.latitude && c.longitude);
       
-      try {
-        await loadKakaoMapAPI();
-        openModal('mapModal');
-        
-        setTimeout(() => {
-          initKakaoMap();
-          loading.classList.add('hide');
-        }, 300);
-      } catch (error) {
-        loading.classList.add('hide');
-        alert(
-          '⚠️ 카카오 지도를 불러올 수 없습니다.\n\n' +
-          '원인:\n' +
-          '1. 카카오 지도 API 키 문제\n' +
-          '2. 네트워크 연결 오류\n' +
-          '3. 브라우저 스크립트 차단\n\n' +
-          '해결 방법:\n' +
-          '1. 페이지 새로고침 (F5)\n' +
-          '2. 네트워크 연결 확인\n' +
-          '3. 브라우저 콘솔(F12)에서 오류 확인\n\n' +
-          '※ 지도 기능 없이도 고객 관리는 가능합니다.'
-        );
-        console.error('지도 로드 오류:', error);
-      }
-    }
-    
-    function initKakaoMap() {
-      if (typeof kakao === 'undefined' || !kakao.maps) {
-        alert('카카오 지도 API를 불러오지 못했습니다.');
+      if (clientsWithCoords.length === 0) {
+        alert('⚠️ 좌표가 등록된 고객이 없습니다.\n\n좌표는 고객 정보를 개별 수정할 때 자동으로 생성됩니다.\n\n💡 고객 수정 → 주소 입력 후 저장');
         return;
       }
       
-      const container = document.getElementById('clientMap');
-      const options = {
-        center: new kakao.maps.LatLng(37.5665, 126.9780),
-        level: 8
-      };
-      
-      const map = new kakao.maps.Map(container, options);
-      const bounds = new kakao.maps.LatLngBounds();
-      let markerCount = 0;
-      let noCoordCount = 0;
-      
-      clients.forEach((client, index) => {
-        if (client.latitude && client.longitude) {
-          const position = new kakao.maps.LatLng(client.latitude, client.longitude);
-          
-          const marker = new kakao.maps.Marker({
-            map: map,
-            position: position,
-            title: getFullName(client)
-          });
-          
-          const lat = client.latitude;
-          const lng = client.longitude;
-          const destName = encodeURIComponent(getFullName(client));
-          
-          const kakaoNaviUrl = `kakaonavi://navigate?ep=${lng},${lat}&by=CAR`;
-          const tmapUrl = `tmap://route?goalname=${destName}&goalx=${lng}&goaly=${lat}`;
-          const naverMapUrl = `nmap://route/car?dlat=${lat}&dlng=${lng}&dname=${destName}&appname=고객관리`;
-          
-          const infowindow = new kakao.maps.InfoWindow({
-            content: `<div style="padding:15px;min-width:200px;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;">
-                        <div style="margin-bottom:10px;">
-                          <strong style="font-size:15px;color:#0c2c54;">${getFullName(client)}</strong><br/>
-                          <span style="font-size:12px;color:#666;">${client.company || '회사정보 없음'}</span><br/>
-                          <a href="tel:${client.phone}" style="font-size:12px;color:#06b6d4;text-decoration:none;">📞 ${formatPhone(client.phone)}</a>
-                        </div>
-                        <div style="border-top:1px solid #e2e8f0;padding-top:10px;margin-top:10px;">
-                          <div style="font-size:11px;color:#64748b;margin-bottom:5px;">🚗 길찾기</div>
-                          <div style="display:flex;gap:5px;">
-                            <a href="${kakaoNaviUrl}" style="flex:1;padding:6px 8px;background:#FEE500;color:#000;text-align:center;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">카카오</a>
-                            <a href="${tmapUrl}" style="flex:1;padding:6px 8px;background:#FF6B6B;color:#fff;text-align:center;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">T맵</a>
-                            <a href="${naverMapUrl}" style="flex:1;padding:6px 8px;background:#03C75A;color:#fff;text-align:center;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">네이버</a>
-                          </div>
-                        </div>
-                      </div>`,
-            removable: true
-          });
-          
-          kakao.maps.event.addListener(marker, 'click', function() {
-            infowindow.open(map, marker);
-          });
-          
-          bounds.extend(position);
-          markerCount++;
-          
-          console.log(`✅ 마커 생성: ${client.name} (${client.latitude}, ${client.longitude})`);
-        } else {
-          noCoordCount++;
-          console.log(`⚠️ 좌표 없음: ${client.name}`);
-        }
-      });
-      
-      if (markerCount > 0) {
-        map.setBounds(bounds);
-        console.log(`✅ 총 ${markerCount}개 마커 표시 완료`);
+      // Google Maps API 로딩 확인
+      if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        alert('⚠️ Google Maps API 로딩 실패\n\n다음을 확인해주세요:\n\n1. 인터넷 연결 확인\n2. Google Cloud Console에서 Maps JavaScript API 활성화\n3. API 키 확인\n\n잠시 후 다시 시도해주세요.');
+        return;
       }
       
-      const infoText = `✅ 지도에 표시됨: ${markerCount}명${noCoordCount > 0 ? ` | ⚠️ 좌표 없음: ${noCoordCount}명` : ''}`;
-      document.getElementById('markerCount').textContent = infoText;
+      // 모달 열기
+      openModal('mapModal');
       
-      if (noCoordCount > 0) {
-        setTimeout(() => {
-          if (confirm(`⚠️ ${noCoordCount}명의 고객이 좌표가 없어 지도에 표시되지 않습니다.\n\n해당 고객들을 수정하여 주소를 다시 입력하시겠습니까?`)) {
-            closeModal('mapModal');
-          }
-        }, 1000);
+      try {
+        // 지도 컨테이너
+        const mapDiv = document.getElementById('clientMap');
+        if (!mapDiv) return;
+        
+        // 첫 번째 고객 위치를 중심으로
+        const center = {
+          lat: clientsWithCoords[0].latitude,
+          lng: clientsWithCoords[0].longitude
+        };
+        
+      // Google Maps 생성
+      const map = new google.maps.Map(mapDiv, {
+        center: center,
+        zoom: 12,
+        mapTypeControl: true,
+        fullscreenControl: true,
+        streetViewControl: true,
+        zoomControl: true
+      });
+      
+      // 모든 고객의 마커 생성
+      const bounds = new google.maps.LatLngBounds();
+      const infoWindows = []; // 정보창들을 저장
+      
+      clientsWithCoords.forEach((client, index) => {
+        const position = {
+          lat: client.latitude,
+          lng: client.longitude
+        };
+        
+        // 마커 생성
+        const marker = new google.maps.Marker({
+          position: position,
+          map: map,
+          title: client.name,
+          label: {
+            text: client.name,
+            color: '#FFFFFF',
+            fontSize: '11px',
+            fontWeight: 'bold'
+          },
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: '#FF6B00',
+            fillOpacity: 0.9,
+            strokeColor: '#FFFFFF',
+            strokeWeight: 3
+          },
+          animation: google.maps.Animation.DROP
+        });
+        
+        // 정보창 내용
+        const infoContent = `
+          <div style="padding: 14px; min-width: 250px; max-width: 350px; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;">
+            <h3 style="margin: 0 0 10px 0; color: #FF6B00; font-size: 17px; font-weight: 700;">
+              ${client.name}${client.honorific || ''}
+            </h3>
+            ${client.title ? `<p style="margin: 4px 0; color: #64748b; font-size: 13px; font-weight: 500;">${client.title}</p>` : ''}
+            ${client.company ? `<p style="margin: 4px 0; color: #64748b; font-size: 13px;">${client.company}</p>` : ''}
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 8px 0; font-size: 14px;">
+              <strong>📞</strong> 
+              <a href="tel:${client.phone}" 
+                 style="color: #0c2c54; text-decoration: none; font-weight: 600; margin-left: 4px;">
+                ${formatPhone(client.phone)}
+              </a>
+            </p>
+            <p style="margin: 8px 0; font-size: 13px; color: #475569; line-height: 1.5;">
+              <strong>📍</strong> ${client.address}
+            </p>
+            ${client.birthDate ? `<p style="margin: 6px 0; font-size: 12px; color: #64748b;">
+              🎂 생년월일: ${new Date(client.birthDate).toLocaleDateString()}
+            </p>` : ''}
+            ${client.sangryeong ? `<p style="margin: 6px 0; font-size: 12px; color: #64748b;">
+              🎁 상령일: ${client.sangryeong}
+            </p>` : ''}
+            <div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
+              <a href="tel:${client.phone}" 
+                 style="padding: 8px 14px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">
+                📞 전화
+              </a>
+              <a href="https://www.google.com/maps/dir/?api=1&destination=${client.latitude},${client.longitude}" 
+                 target="_blank" 
+                 style="padding: 8px 14px; background: #4285F4; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">
+                🧭 네비
+              </a>
+            </div>
+          </div>
+        `;
+        
+        const infoWindow = new google.maps.InfoWindow({
+          content: infoContent,
+          maxWidth: 350
+        });
+        
+        infoWindows.push(infoWindow);
+        
+        // 마커 클릭 이벤트 - 다른 정보창 닫고 현재 정보창 열기
+        marker.addListener('click', () => {
+          // 모든 정보창 닫기
+          infoWindows.forEach(iw => iw.close());
+          // 현재 정보창 열기
+          infoWindow.open(map, marker);
+        });
+        
+        bounds.extend(position);
+      });
+      
+      // 모든 마커가 보이도록 지도 범위 조정
+      if (clientsWithCoords.length > 1) {
+        map.fitBounds(bounds);
+      }
+      
+      // 마커 개수 표시
+      const markerCount = document.getElementById('markerCount');
+      if (markerCount) {
+        markerCount.innerHTML = `총 <strong style="color: #FF6B00;">${clientsWithCoords.length}명</strong>의 고객 위치 | 마커를 클릭하면 상세 정보를 볼 수 있습니다`;
+      }
+      
+      console.log(`✅ 지도 열기: 총 ${clientsWithCoords.length}명 마커 표시 완료`);
+      
+      } catch (error) {
+        console.error('지도 생성 오류:', error);
+        closeModal('mapModal');
+        
+        let errorMessage = '⚠️ 지도를 표시할 수 없습니다.\n\n';
+        
+        if (error.message && error.message.includes('ApiNotActivatedMapError')) {
+          errorMessage += '📍 Google Maps API가 활성화되지 않았습니다.\n\n';
+          errorMessage += '해결 방법:\n';
+          errorMessage += '1. Google Cloud Console 접속\n';
+          errorMessage += '2. Maps JavaScript API 활성화\n';
+          errorMessage += '3. Geocoding API 활성화\n\n';
+          errorMessage += '자세한 내용: https://console.cloud.google.com';
+        } else {
+          errorMessage += '오류: ' + error.message + '\n\n';
+          errorMessage += '브라우저 콘솔(F12)에서 자세한 오류를 확인하세요.';
+        }
+        
+        alert(errorMessage);
       }
     }
     
@@ -2030,7 +2137,7 @@
           '회사명': c.company || '',
           '직업': c.job || '',
           '생년월일': c.birthDate || '',
-          '생일': c.birthday ? new Date(c.birthday).toLocaleDateString() : '',
+          '실제생일': c.birthday ? new Date(c.birthday).toLocaleDateString() : '',
           '양/음력': c.birthdayType === 'lunar' ? '음력' : '양력',
           '기념일명': c.anniversaryName || '',
           '기념일': c.anniversary ? new Date(c.anniversary).toLocaleDateString() : '',
@@ -2068,7 +2175,7 @@
       
       const cells = [
         'text', 'text', 'text', 'text', 'text', 'text', 'text', 'text',
-        'date', 'date', 'select', 'text', 'date', 'email', 'text'
+        'date', 'text', 'date', 'select', 'text', 'date', 'email', 'text'
       ];
       
       const placeholders = [
@@ -2080,6 +2187,7 @@
         '아파트 101동 1001호',
         '(주)ABC',
         '대표이사',
+        '',
         '',
         '',
         '',
@@ -2097,6 +2205,9 @@
           cell.innerHTML = '<input type="text" value="님" placeholder="님">';
         } else if (i === 3) {
           cell.innerHTML = `<input type="text" placeholder="${placeholders[i]}" inputmode="numeric">`;
+        } else if (i === 9) {
+          // 상령일 - 읽기 전용
+          cell.innerHTML = `<input type="text" readonly style="background: #f1f5f9; color: #64748b;" placeholder="자동계산">`;
         } else {
           cell.innerHTML = `<input type="${type}" placeholder="${placeholders[i] || ''}">`;
         }
@@ -2132,6 +2243,9 @@
             }
           }
           
+          const birthDate = row['생년월일'] || '';
+          const sangryeong = birthDate ? calculateSangryeong(birthDate) : '';
+          
           const values = [
             row['고객명'] || '',
             row['직함'] || '',
@@ -2141,8 +2255,9 @@
             detailAddress,
             row['회사명'] || '',
             row['직업'] || '',
-            row['생년월일'] || '',
-            row['생일'] || '',
+            birthDate,
+            sangryeong,
+            row['생일'] || row['실제생일'] || '',
             row['양/음력'] || 'solar',
             row['기념일명'] || '',
             row['기념일'] || '',
@@ -2152,11 +2267,14 @@
           
           values.forEach((value, i) => {
             const td = tr.insertCell();
-            if (i === 10) {
+            if (i === 11) {
               td.innerHTML = `<select><option value="solar" ${value === '양력' || value === 'solar' ? 'selected' : ''}>양력</option><option value="lunar" ${value === '음력' || value === 'lunar' ? 'selected' : ''}>음력</option></select>`;
-            } else if (i === 8 || i === 9 || i === 12) {
+            } else if (i === 8 || i === 10 || i === 13) {
               td.innerHTML = `<input type="date" value="${value}">`;
-            } else if (i === 13) {
+            } else if (i === 9) {
+              // 상령일 - 읽기 전용
+              td.innerHTML = `<input type="text" value="${value}" readonly style="background: #f1f5f9; color: #64748b;">`;
+            } else if (i === 14) {
               td.innerHTML = `<input type="email" value="${value}">`;
             } else if (i === 3) {
               td.innerHTML = `<input type="text" value="${value}" placeholder="'-' 빼고 숫자만 입력" inputmode="numeric">`;
@@ -2181,21 +2299,7 @@
       
       const loading = document.getElementById('loading');
       loading.classList.remove('hide');
-      loading.querySelector('.loading-text').textContent = '고객 데이터 저장 중...';
-      
-      if (!kakaoMapLoaded) {
-        const proceed = confirm(
-          '⚠️ 카카오 지도 API를 사용할 수 없습니다.\n\n' +
-          '좌표 없이 고객 데이터만 저장됩니다.\n' +
-          '(나중에 개별 수정으로 좌표 추가 가능)\n\n' +
-          '계속 진행하시겠습니까?'
-        );
-        
-        if (!proceed) {
-          loading.classList.add('hide');
-          return;
-        }
-      }
+      loading.querySelector('.loading-text').textContent = '저장 준비 중...';
       
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -2215,28 +2319,11 @@
         if (name && phone && address && detailAddress) {
           const fullAddress = `${address} ${detailAddress}`;
           
-          let coordinates = { latitude: null, longitude: null };
+          // 단체입력은 좌표 없이 빠르게 저장 (나중에 개별 수정 시 좌표 추가 가능)
+          loading.querySelector('.loading-text').textContent = `${added + 1}번째 "${name}" 저장 중...`;
           
-          if (kakaoMapLoaded) {
-            loading.querySelector('.loading-text').textContent = `${added + 1}번째 고객 "${name}" 좌표 변환 중...`;
-            console.log(`\n=== ${i + 1}행: ${name} ===`);
-            console.log('기본주소:', address);
-            console.log('상세주소:', detailAddress);
-            console.log('전체주소:', fullAddress);
-            
-            coordinates = await getCoordinates(address);
-            
-            if (!coordinates.latitude || !coordinates.longitude) {
-              noCoordinates++;
-              failed.push({
-                row: i + 1,
-                name: name,
-                address: address
-              });
-            }
-          } else {
-            noCoordinates++;
-          }
+          const birthDate = inputs[8].value.trim();
+          const sangryeong = calculateSangryeong(birthDate);
           
           clients.push({
             name,
@@ -2245,21 +2332,23 @@
             phone,
             address: fullAddress,
             postcode: '',
-            latitude: coordinates.latitude,
-            longitude: coordinates.longitude,
+            latitude: null,
+            longitude: null,
             company: inputs[6].value.trim(),
             job: inputs[7].value.trim(),
-            birthDate: inputs[8].value.trim(),
-            birthday: inputs[9].value.trim(),
-            birthdayType: inputs[10].value,
-            anniversaryName: inputs[11].value.trim(),
-            anniversary: inputs[12].value.trim(),
-            email: inputs[13].value.trim(),
-            memo: inputs[14].value.trim(),
+            birthDate: birthDate,
+            birthday: inputs[10].value.trim(),
+            birthdayType: inputs[11].value,
+            sangryeong: sangryeong,
+            anniversaryName: inputs[12].value.trim(),
+            anniversary: inputs[13].value.trim(),
+            email: inputs[14].value.trim(),
+            memo: inputs[15].value.trim(),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
           added++;
+          noCoordinates++;
         } else if (name || phone || address) {
           failed.push({
             row: i + 1,
@@ -2271,6 +2360,7 @@
       }
       
       if (added > 0) {
+        loading.querySelector('.loading-text').textContent = '구글 드라이브에 저장 중...';
         await saveClients();
         loading.classList.add('hide');
         closeModal('bulkUploadModal');
@@ -2281,22 +2371,9 @@
           message += `\n\n빈 행 ${skipped}개 건너뜀`;
         }
         
-        if (!kakaoMapLoaded) {
-          message += `\n\n⚠️ 카카오 지도 API 사용 불가\n→ 모든 고객이 좌표 없이 저장되었습니다.\n→ 개별 수정으로 좌표 추가 가능`;
-        } else if (noCoordinates > 0) {
-          message += `\n\n⚠️ 좌표 미등록: ${noCoordinates}명`;
-          if (failed.length > 0) {
-            message += `\n\n좌표 변환 실패 목록:\n`;
-            failed.slice(0, 3).forEach(f => {
-              if (!f.reason) {
-                message += `\n${f.row}행: ${f.name}\n  주소: ${f.address}`;
-              }
-            });
-            
-            if (failed.length > 3) {
-              message += `\n... 외 ${failed.length - 3}건`;
-            }
-          }
+        if (noCoordinates > 0) {
+          message += `\n\n📍 좌표 미등록: ${noCoordinates}명`;
+          message += `\n(개별 수정으로 좌표 추가 가능)`;
         }
         
         if (failed.some(f => f.reason)) {
@@ -2307,12 +2384,12 @@
           });
         }
         
-        message += `\n\n💡 주소: 서울시 강남구 테헤란로 20길 27 ✅\n💡 상세주소: 101동 1001호`;
+        message += `\n\n💡 빠른 저장을 위해 좌표는 나중에 개별 수정 시 자동 추가됩니다.`;
         
         alert(message);
       } else {
         loading.classList.add('hide');
-        alert('저장할 데이터가 없습니다.\n\n필수 항목을 확인해주세요:\n- 고객명\n- 연락처\n- 주소\n- 상세주소');
+        alert('저장할 데이터가 없습니다.\n\n필수 항목:\n- 고객명\n- 연락처\n- 주소\n- 상세주소');
       }
     }
     
@@ -2396,6 +2473,57 @@
         this.value = this.value.replace(/\D/g, '');
       });
     });
+    document.getElementById('address').addEventListener('blur', async function() {
+      const address = this.value.trim();
+      const coordsDisplay = document.getElementById('coordinatesDisplay');
+      
+      if (!address) {
+        coordsDisplay.textContent = '주소 입력 후 자동으로 표시됩니다';
+        coordsDisplay.style.color = '#0c4a6e';
+        return;
+      }
+      
+      coordsDisplay.textContent = '좌표 변환 중...';
+      coordsDisplay.style.color = '#f59e0b';
+      
+      const coords = await getCoordinates(address);
+      
+      if (coords.latitude && coords.longitude) {
+        coordsDisplay.innerHTML = `<strong>위도:</strong> ${coords.latitude.toFixed(6)} | <strong>경도:</strong> ${coords.longitude.toFixed(6)} ✅`;
+        coordsDisplay.style.color = '#059669';
+      } else {
+        coordsDisplay.textContent = '⚠️ 좌표 변환 실패 - 주소를 확인해주세요';
+        coordsDisplay.style.color = '#dc2626';
+      }
+    });
+    
+    // 단체입력 스프레드시트에서 생년월일 입력 시 상령일 자동 계산
+    document.addEventListener('input', function(e) {
+      if (e.target && e.target.type === 'date' && e.target.closest('.spreadsheet')) {
+        const cell = e.target.closest('td');
+        if (!cell) return;
+        
+        const row = cell.parentElement;
+        const cells = row.querySelectorAll('td');
+        const cellIndex = Array.from(cells).indexOf(cell);
+        
+        // 생년월일 컬럼(8번째)인 경우
+        if (cellIndex === 8) {
+          const birthDate = e.target.value;
+          if (birthDate) {
+            const sangryeong = calculateSangryeong(birthDate);
+            const sangryeongCell = cells[9]; // 상령일은 9번째
+            if (sangryeongCell) {
+              const input = sangryeongCell.querySelector('input');
+              if (input) {
+                input.value = sangryeong;
+              }
+            }
+          }
+        }
+      }
+    });
+    
   </script>
 </body>
 </html>
