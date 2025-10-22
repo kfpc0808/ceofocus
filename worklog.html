@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>📘 업무일지 Pro - Worklog Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --dark-text: #2c3e50;
+            --gray-text: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --hover-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            
+            /* iOS Safe Area */
+            --safe-area-inset-top: env(safe-area-inset-top);
+            --safe-area-inset-bottom: env(safe-area-inset-bottom);
+            --safe-area-inset-left: env(safe-area-inset-left);
+            --safe-area-inset-right: env(safe-area-inset-right);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            padding: 20px;
+            padding-top: calc(20px + var(--safe-area-inset-top));
+            padding-bottom: calc(20px + var(--safe-area-inset-bottom));
+            padding-left: calc(20px + var(--safe-area-inset-left));
+            padding-right: calc(20px + var(--safe-area-inset-right));
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: clamp(20px, 5vw, 28px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .drive-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #27ae60;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: #2980b9;
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:active {
+            background: #229954;
+            transform: scale(0.98);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-outline:active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+        }
+
+        /* Notification Banner */
+        .notification-banner {
+            background: linear-gradient(135deg, #ff6b6b15 0%, #ee5a6f15 100%);
+            border-left: 4px solid var(--danger-color);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .notification-banner.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .notification-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--danger-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-close {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.1);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .notification-item {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid var(--danger-color);
+        }
+
+        .notification-item:active {
+            transform: scale(0.98);
+            background: var(--light-bg);
+        }
+
+        .notification-item-title {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+        }
+
+        .notification-item-meta {
+            font-size: 13px;
+            color: var(--gray-text);
+        }
+
+        /* Quick Add Section */
+        .quick-add {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .quick-add-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-add-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .quick-add-form input,
+        .quick-add-form select {
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s;
+            min-height: 44px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .quick-add-form input:focus,
+        .quick-add-form select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--light-bg);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .tab-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-text);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            min-height: 44px;
+        }
+
+        .tab-btn.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+        }
+
+        .tab-btn:active {
+            background: var(--light-bg);
+        }
+
+        /* Search & Filter Bar */
+        .search-filter-bar {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--light-bg);
+            border-radius: 10px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            min-height: 44px;
+            -webkit-appearance: none;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-text);
+            pointer-events: none;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-text);
+            text-transform: uppercase;
+        }
+
+        .filter-group select {
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            min-height: 44px;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237f8c8d' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 35px;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid var(--light-bg);
+            transition: all 0.3s;
+        }
+
+        .stat-card:active {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .stat-card.primary { border-left: 4px solid var(--secondary-color); }
+        .stat-card.success { border-left: 4px solid var(--success-color); }
+        .stat-card.warning { border-left: 4px solid var(--warning-color); }
+        .stat-card.danger { border-left: 4px solid var(--danger-color); }
+
+        .stat-number {
+            font-size: clamp(24px, 6vw, 32px);
+            font-weight: 700;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray-text);
+        }
+
+        /* Task List */
+        .task-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .task-card {
+            background: white;
+            border: 2px solid var(--light-bg);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .task-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: var(--secondary-color);
+        }
+
+        .task-card.high::before { background: var(--danger-color); }
+        .task-card.normal::before { background: var(--warning-color); }
+        .task-card.low::before { background: var(--info-color); }
+
+        .task-card:active {
+            transform: scale(0.98);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--secondary-color);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .task-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .task-client {
+            font-size: 14px;
+            color: var(--gray-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-personal { background: #e8f5e9; color: #27ae60; }
+        .badge-corporate { background: #e3f2fd; color: #2196f3; }
+        .badge-progress { background: #fff3e0; color: #f57c00; }
+        .badge-complete { background: #e8f5e9; color: #2e7d32; }
+        .badge-hold { background: #f3e5f5; color: #7b1fa2; }
+        .badge-high { background: #ffebee; color: #c62828; }
+        .badge-normal { background: #fff3e0; color: #ef6c00; }
+        .badge-low { background: #e0f2f1; color: #00695c; }
+
+        .task-content {
+            font-size: 14px;
+            color: var(--gray-text);
+            line-height: 1.6;
+            margin-bottom: 15px;
+            word-break: break-word;
+        }
+
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--gray-text);
+        }
+
+        .task-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .task-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: var(--light-bg);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--dark-text);
+        }
+
+        /* Calendar View */
+        .calendar-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-bg);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .calendar-title {
+            font-size: clamp(20px, 5vw, 24px);
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .calendar-nav-btn {
+            width: 44px;
+            height: 44px;
+            border: 2px solid var(--border-color);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+
+        .calendar-nav-btn:active {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+            transform: scale(0.95);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            color: var(--gray-text);
+            padding: 10px 5px;
+            font-size: 12px;
+        }
+
+        .calendar-day-header.sunday { color: var(--danger-color); }
+        .calendar-day-header.saturday { color: var(--secondary-color); }
+
+        .calendar-day {
+            min-height: 80px;
+            border: 2px solid var(--light-bg);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            background: white;
+            touch-action: manipulation;
+        }
+
+        .calendar-day:active {
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow);
+            transform: scale(0.98);
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.3;
+        }
+
+        .calendar-day.today {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-color: var(--secondary-color);
+            border-width: 3px;
+        }
+
+        .calendar-day-number {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .calendar-day.sunday .calendar-day-number { color: var(--danger-color); }
+        .calendar-day.saturday .calendar-day-number { color: var(--secondary-color); }
+
+        .calendar-task-count {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 5px;
+        }
+
+        .calendar-task-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .calendar-task-dot.high { background: var(--danger-color); }
+        .calendar-task-dot.normal { background: var(--warning-color); }
+        .calendar-task-dot.low { background: var(--info-color); }
+
+        .calendar-task-badge {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            position: relative;
+            margin: 50px auto;
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header h2 {
+            font-size: clamp(18px, 5vw, 22px);
+        }
+
+        .close-btn {
+            font-size: 28px;
+            cursor: pointer;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            color: white;
+        }
+
+        .close-btn:active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .modal-body {
+            padding: 25px;
+            max-height: 60vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: var(--danger-color);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s;
+            min-height: 44px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237f8c8d' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 35px;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-footer {
+            padding: 15px 25px;
+            background: var(--light-bg);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+            border-radius: 0 0 15px 15px;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: calc(30px + var(--safe-area-inset-bottom));
+            right: 20px;
+            left: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            animation: slideInUp 0.3s;
+            border-left: 4px solid var(--success-color);
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: var(--danger-color); }
+        .toast.warning { border-left-color: var(--warning-color); }
+        .toast.info { border-left-color: var(--info-color); }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-text);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* Autocomplete */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            z-index: 100;
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid var(--light-bg);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:active {
+            background: var(--light-bg);
+        }
+
+        .autocomplete-item-name {
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .autocomplete-item-info {
+            font-size: 12px;
+            color: var(--gray-text);
+            margin-top: 3px;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .settings-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--light-bg);
+        }
+
+        .settings-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .settings-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: var(--dark-text);
+            cursor: pointer;
+        }
+
+        /* Tablet Responsive */
+        @media (min-width: 768px) {
+            .quick-add-form {
+                grid-template-columns: 1fr 1fr 1fr auto;
+            }
+
+            .search-filter-bar {
+                grid-template-columns: 2fr 1fr 1fr 1fr auto;
+                align-items: end;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .calendar-grid {
+                gap: 10px;
+            }
+
+            .calendar-day {
+                min-height: 100px;
+            }
+
+            .calendar-task-dot {
+                width: 8px;
+                height: 8px;
+            }
+
+            .calendar-task-badge {
+                font-size: 11px;
+            }
+        }
+
+        /* Desktop Responsive */
+        @media (min-width: 1024px) {
+            body {
+                padding: 20px;
+            }
+
+            .main-content {
+                padding: 30px;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .task-card:hover {
+                transform: translateX(5px);
+                box-shadow: var(--hover-shadow);
+                border-color: var(--secondary-color);
+            }
+
+            .calendar-day:hover {
+                border-color: var(--secondary-color);
+                box-shadow: var(--shadow);
+                transform: translateY(-2px);
+            }
+
+            .toast {
+                right: 30px;
+                left: auto;
+            }
+        }
+
+        /* iOS Specific Fixes */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                min-height: -webkit-fill-available;
+            }
+            
+            .modal {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Prevent iOS zoom on input focus */
+        @media screen and (max-width: 767px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📘 업무일지 Pro</h1>
+            <div class="drive-status">
+                <span id="userName">로그인 필요</span>
+                <div class="status-indicator" id="statusIndicator" style="background: #e74c3c;"></div>
+                <button class="btn btn-primary" id="driveConnectBtn" onclick="handleGoogleDriveConnect()">
+                    🔗 Drive 연결
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Notification Banner -->
+            <div class="notification-banner" id="notificationBanner">
+                <div class="notification-header">
+                    <div class="notification-title">
+                        🔔 마감일 알림
+                    </div>
+                    <button class="notification-close" onclick="closeNotificationBanner()">×</button>
+                </div>
+                <div class="notification-list" id="notificationList"></div>
+            </div>
+
+            <!-- Quick Add Section -->
+            <div class="quick-add">
+                <div class="quick-add-title">⚡ 빠른 등록</div>
+                <form class="quick-add-form" id="quickAddForm" onsubmit="quickAddTask(event)">
+                    <input type="text" placeholder="제목 입력" id="quickTitle" required>
+                    <div style="position: relative;">
+                        <input type="text" placeholder="고객명 입력" id="quickClient" autocomplete="off" oninput="handleClientAutocomplete(this)">
+                        <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                    </div>
+                    <select id="quickType" required>
+                        <option value="">고객 유형 선택</option>
+                        <option value="personal">🙋‍♂️ 개인고객</option>
+                        <option value="corporate">🏢 법인고객</option>
+                    </select>
+                    <button type="submit" class="btn btn-success">✚ 추가</button>
+                </form>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('all')">
+                    📋 전체 <span id="countAll">0</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('personal')">
+                    🙋‍♂️ 개인 <span id="countPersonal">0</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('corporate')">
+                    🏢 법인 <span id="countCorporate">0</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('calendar')">
+                    📅 캘린더
+                </button>
+                <button class="tab-btn" onclick="switchTab('settings')">
+                    ⚙️ 설정
+                </button>
+            </div>
+
+            <!-- Search & Filter Bar -->
+            <div class="search-filter-bar" id="searchFilterBar">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="검색..." id="searchInput" oninput="filterTasks()">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">정렬</label>
+                    <select id="sortBy" onchange="filterTasks()">
+                        <option value="date-desc">최신순</option>
+                        <option value="date-asc">오래된순</option>
+                        <option value="name-asc">성명순</option>
+                        <option value="priority-desc">우선순위</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">상태</label>
+                    <select id="filterStatus" onchange="filterTasks()">
+                        <option value="all">전체</option>
+                        <option value="progress">진행중</option>
+                        <option value="complete">완료</option>
+                        <option value="hold">보류</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">우선순위</label>
+                    <select id="filterPriority" onchange="filterTasks()">
+                        <option value="all">전체</option>
+                        <option value="high">높음</option>
+                        <option value="normal">보통</option>
+                        <option value="low">낮음</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline" onclick="openAddModal()">
+                    ➕ 등록
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row" id="statsRow">
+                <div class="stat-card primary">
+                    <div class="stat-number" id="statTotal">0</div>
+                    <div class="stat-label">전체 업무</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number" id="statProgress">0</div>
+                    <div class="stat-label">진행중</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-number" id="statComplete">0</div>
+                    <div class="stat-label">완료</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-number" id="statHold">0</div>
+                    <div class="stat-label">보류</div>
+                </div>
+            </div>
+
+            <!-- Task List -->
+            <div class="task-list" id="taskList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-text">등록된 업무가 없습니다</div>
+                    <p>빠른 등록 또는 상세 등록 버튼을 눌러 업무를 추가하세요.</p>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="calendarView" style="display: none;">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="calendar-title" id="calendarTitle">2025년 10월</div>
+                        <div class="calendar-nav">
+                            <button class="calendar-nav-btn" onclick="changeMonth(-1)">◀</button>
+                            <button class="btn btn-outline" onclick="goToToday()">오늘</button>
+                            <button class="calendar-nav-btn" onclick="changeMonth(1)">▶</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" style="display: none;">
+                <div class="settings-panel">
+                    <div class="settings-title">🔔 마감일 알림 설정</div>
+                    
+                    <div class="settings-group">
+                        <label class="settings-label">알림 활성화</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="notificationEnabled" onchange="saveNotificationSettings()">
+                            <label for="notificationEnabled">마감일 알림 받기</label>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-text); margin-top: 8px;">
+                            ℹ️ 브라우저 알림 권한이 필요합니다
+                        </p>
+                    </div>
+
+                    <div class="settings-group">
+                        <label class="settings-label">알림 시점</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="notifyD1" checked onchange="saveNotificationSettings()">
+                            <label for="notifyD1">마감 1일 전</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="notifyToday" checked onchange="saveNotificationSettings()">
+                            <label for="notifyToday">마감 당일</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="notifyD3" onchange="saveNotificationSettings()">
+                            <label for="notifyD3">마감 3일 전</label>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <label class="settings-label">알림 우선순위</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="notifyHigh" checked onchange="saveNotificationSettings()">
+                            <label for="notifyHigh">높은 우선순위만</label>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-text); margin-top: 8px;">
+                            ℹ️ 체크하면 높은 우선순위 업무만 알림을 받습니다
+                        </p>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="requestNotificationPermission()">
+                        🔔 알림 권한 요청
+                    </button>
+                </div>
+
+                <div class="settings-panel">
+                    <div class="settings-title">📊 데이터 관리</div>
+                    <div class="settings-group">
+                        <button class="btn btn-success" onclick="saveToDrive()">
+                            💾 수동 저장
+                        </button>
+                        <p style="font-size: 13px; color: var(--gray-text); margin-top: 8px;">
+                            ℹ️ 데이터는 자동으로 저장되지만 수동 저장도 가능합니다
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Modal -->
+    <div class="modal" id="dayModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="dayModalTitle">날짜</h2>
+                <button class="close-btn" onclick="closeDayModal()">×</button>
+            </div>
+            <div class="modal-body" id="dayModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">새 업무 등록</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm" onsubmit="saveTask(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label required">고객 유형</label>
+                            <select class="form-select" id="taskType" required>
+                                <option value="">선택하세요</option>
+                                <option value="personal">🙋‍♂️ 개인고객</option>
+                                <option value="corporate">🏢 법인고객</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">날짜</label>
+                            <input type="date" class="form-input" id="taskDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">고객명</label>
+                            <div style="position: relative;">
+                                <input type="text" class="form-input" id="taskClient" required autocomplete="off" oninput="handleClientAutocomplete(this)">
+                                <div class="autocomplete-dropdown" id="autocompleteDropdownModal"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">직함</label>
+                            <input type="text" class="form-input" id="taskPosition" placeholder="예: 과장">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">호칭</label>
+                            <input type="text" class="form-input" id="taskSuffix" value="님">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">연락처</label>
+                            <input type="tel" class="form-input" id="taskContact" placeholder="010-0000-0000">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label required">제목</label>
+                            <input type="text" class="form-input" id="taskTitle" required placeholder="업무 제목">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">카테고리</label>
+                            <select class="form-select" id="taskCategory">
+                                <option value="">선택하세요</option>
+                                <option value="보험상담">보험상담</option>
+                                <option value="계약">계약</option>
+                                <option value="청구">청구</option>
+                                <option value="리뷰">리뷰</option>
+                                <option value="세무">세무</option>
+                                <option value="법인">법인</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">소요 시간</label>
+                            <input type="text" class="form-input" id="taskDuration" placeholder="예: 2.5h">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">업무 내용</label>
+                            <textarea class="form-textarea" id="taskContent" placeholder="상담 내용"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">상태</label>
+                            <select class="form-select" id="taskStatus">
+                                <option value="progress">진행중</option>
+                                <option value="complete">완료</option>
+                                <option value="hold">보류</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">우선순위</label>
+                            <select class="form-select" id="taskPriority">
+                                <option value="normal">보통</option>
+                                <option value="high">높음</option>
+                                <option value="low">낮음</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">마감일</label>
+                            <input type="date" class="form-input" id="taskDeadline">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">태그</label>
+                            <input type="text" class="form-input" id="taskTags" placeholder="#태그1 #태그2">
+                        </div>
+                    </div>
+                    <input type="hidden" id="taskId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="deleteBtn" onclick="deleteTask()" style="display: none;">
+                    🗑️ 삭제
+                </button>
+                <button type="button" class="btn btn-outline" onclick="closeModal()">
+                    취소
+                </button>
+                <button type="submit" form="taskForm" class="btn btn-success">
+                    💾 저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let tasks = [];
+        let clients = [];
+        let currentTab = 'all';
+        let accessToken = null;
+        let editingTaskId = null;
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        const ENCRYPTION_KEY = 'CEO_FOCUS_2025_SECURE_KEY_FOR_ENCRYPTION';
+        const FILE_NAME = 'worklog.fmd';
+
+        // Notification Settings
+        let notificationSettings = {
+            enabled: false,
+            notifyD1: true,
+            notifyToday: true,
+            notifyD3: false,
+            notifyHighOnly: false
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('taskDate').valueAsDate = new Date();
+            checkGoogleDriveConnection();
+            loadClientsFromClientManagement();
+            renderCalendar();
+            loadNotificationSettings();
+            checkDeadlines();
+        });
+
+        // Notification Functions
+        function loadNotificationSettings() {
+            const saved = localStorage.getItem('notification_settings');
+            if (saved) {
+                notificationSettings = JSON.parse(saved);
+                document.getElementById('notificationEnabled').checked = notificationSettings.enabled;
+                document.getElementById('notifyD1').checked = notificationSettings.notifyD1;
+                document.getElementById('notifyToday').checked = notificationSettings.notifyToday;
+                document.getElementById('notifyD3').checked = notificationSettings.notifyD3;
+                document.getElementById('notifyHigh').checked = notificationSettings.notifyHighOnly;
+            }
+        }
+
+        function saveNotificationSettings() {
+            notificationSettings = {
+                enabled: document.getElementById('notificationEnabled').checked,
+                notifyD1: document.getElementById('notifyD1').checked,
+                notifyToday: document.getElementById('notifyToday').checked,
+                notifyD3: document.getElementById('notifyD3').checked,
+                notifyHighOnly: document.getElementById('notifyHigh').checked
+            };
+            localStorage.setItem('notification_settings', JSON.stringify(notificationSettings));
+            showToast('알림 설정이 저장되었습니다', 'success');
+        }
+
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                showToast('이 브라우저는 알림을 지원하지 않습니다', 'error');
+                return;
+            }
+
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                showToast('알림 권한이 허용되었습니다', 'success');
+                document.getElementById('notificationEnabled').checked = true;
+                saveNotificationSettings();
+            } else {
+                showToast('알림 권한이 거부되었습니다', 'error');
+            }
+        }
+
+        function checkDeadlines() {
+            if (!notificationSettings.enabled) return;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const notifications = [];
+
+            tasks.forEach(task => {
+                if (!task.deadline) return;
+                if (notificationSettings.notifyHighOnly && task.priority !== 'high') return;
+
+                const deadline = new Date(task.deadline);
+                deadline.setHours(0, 0, 0, 0);
+                
+                const diffTime = deadline - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let shouldNotify = false;
+                let message = '';
+
+                if (diffDays === 0 && notificationSettings.notifyToday) {
+                    shouldNotify = true;
+                    message = '🔴 오늘 마감!';
+                } else if (diffDays === 1 && notificationSettings.notifyD1) {
+                    shouldNotify = true;
+                    message = '🟡 내일 마감!';
+                } else if (diffDays === 3 && notificationSettings.notifyD3) {
+                    shouldNotify = true;
+                    message = '🔵 3일 후 마감';
+                }
+
+                if (shouldNotify) {
+                    notifications.push({
+                        task: task,
+                        message: message,
+                        days: diffDays
+                    });
+
+                    // Browser Notification
+                    if (Notification.permission === 'granted') {
+                        showBrowserNotification(task, message);
+                    }
+                }
+            });
+
+            if (notifications.length > 0) {
+                showNotificationBanner(notifications);
+            }
+        }
+
+        function showBrowserNotification(task, message) {
+            const clientDisplay = task.client + (task.position ? ' ' + task.position : '') + (task.suffix ? task.suffix : '');
+            
+            new Notification('📘 업무일지 Pro', {
+                body: `${message}\n${clientDisplay}\n${task.title}`,
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">📘</text></svg>',
+                tag: task.id,
+                requireInteraction: true
+            });
+        }
+
+        function showNotificationBanner(notifications) {
+            const banner = document.getElementById('notificationBanner');
+            const list = document.getElementById('notificationList');
+            
+            list.innerHTML = notifications.map(n => {
+                const clientDisplay = n.task.client + (n.task.position ? ' ' + n.task.position : '') + (n.task.suffix ? n.task.suffix : '');
+                return `
+                    <div class="notification-item" onclick="openEditModal('${n.task.id}'); closeNotificationBanner();">
+                        <div class="notification-item-title">${n.message}</div>
+                        <div class="notification-item-meta">
+                            ${clientDisplay} - ${n.task.title}
+                            <br>마감: ${n.task.deadline}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            banner.classList.add('show');
+        }
+
+        function closeNotificationBanner() {
+            document.getElementById('notificationBanner').classList.remove('show');
+        }
+
+        // Google Drive Functions
+        async function handleGoogleDriveConnect() {
+            const CLIENT_ID = '1031649774547-9d88crg2onn1kbjm2jtnqfrtqs9d5h0t.apps.googleusercontent.com';
+            const REDIRECT_URI = window.location.origin + window.location.pathname;
+            const SCOPE = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
+
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(SCOPE)}`;
+            window.location.href = authUrl;
+        }
+
+        function checkGoogleDriveConnection() {
+            const hash = window.location.hash;
+            if (hash.includes('access_token')) {
+                const params = new URLSearchParams(hash.substring(1));
+                accessToken = params.get('access_token');
+                if (accessToken) {
+                    localStorage.setItem('gdrive_access_token', accessToken);
+                    window.history.replaceState(null, null, window.location.pathname);
+                    updateDriveStatus(true);
+                    loadUserProfile();
+                    loadFromDrive();
+                }
+            } else {
+                const savedToken = localStorage.getItem('gdrive_access_token');
+                if (savedToken) {
+                    accessToken = savedToken;
+                    updateDriveStatus(true);
+                    loadUserProfile();
+                    loadFromDrive();
+                }
+            }
+        }
+
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await response.json();
+                document.getElementById('userName').textContent = data.name || data.email;
+            } catch (error) {
+                console.error('프로필 로드 실패:', error);
+            }
+        }
+
+        function updateDriveStatus(connected) {
+            const indicator = document.getElementById('statusIndicator');
+            const btn = document.getElementById('driveConnectBtn');
+            if (connected) {
+                indicator.style.background = '#27ae60';
+                btn.textContent = '✓ 연결됨';
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+            } else {
+                indicator.style.background = '#e74c3c';
+                btn.textContent = '🔗 Drive 연결';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+
+        async function loadFromDrive() {
+            if (!accessToken) return;
+
+            try {
+                showToast('데이터 불러오는 중...', 'info');
+                
+                const searchResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'&spaces=drive`,
+                    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+                );
+                const searchData = await searchResponse.json();
+
+                if (searchData.files && searchData.files.length > 0) {
+                    const fileId = searchData.files[0].id;
+                    const fileResponse = await fetch(
+                        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+                        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+                    );
+                    const encryptedData = await fileResponse.text();
+                    const decryptedData = simpleDecrypt(encryptedData);
+                    tasks = JSON.parse(decryptedData);
+                    renderTasks();
+                    updateStats();
+                    renderCalendar();
+                    checkDeadlines();
+                    showToast('데이터를 불러왔습니다', 'success');
+                }
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                showToast('데이터 로드 실패', 'error');
+            }
+        }
+
+        async function saveToDrive() {
+            if (!accessToken) {
+                showToast('Google Drive에 연결해주세요', 'warning');
+                return;
+            }
+
+            try {
+                const encryptedData = simpleEncrypt(JSON.stringify(tasks));
+                const blob = new Blob([encryptedData], { type: 'text/plain' });
+
+                const searchResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'&spaces=drive`,
+                    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+                );
+                const searchData = await searchResponse.json();
+
+                let fileId = searchData.files && searchData.files.length > 0 ? searchData.files[0].id : null;
+
+                const metadata = {
+                    name: FILE_NAME,
+                    mimeType: 'text/plain'
+                };
+
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', blob);
+
+                const url = fileId
+                    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+                const method = fileId ? 'PATCH' : 'POST';
+
+                await fetch(url, {
+                    method: method,
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: form
+                });
+
+                showToast('저장되었습니다', 'success');
+            } catch (error) {
+                console.error('저장 실패:', error);
+                showToast('저장 실패', 'error');
+            }
+        }
+
+        function simpleEncrypt(text) {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                result += String.fromCharCode(text.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
+            }
+            return btoa(result);
+        }
+
+        function simpleDecrypt(encrypted) {
+            const decoded = atob(encrypted);
+            let result = '';
+            for (let i = 0; i < decoded.length; i++) {
+                result += String.fromCharCode(decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
+            }
+            return result;
+        }
+
+        // Client Management Integration
+        function loadClientsFromClientManagement() {
+            try {
+                const clientData = localStorage.getItem('clients_encrypted');
+                if (clientData) {
+                    const decryptedData = simpleDecrypt(clientData);
+                    clients = JSON.parse(decryptedData);
+                }
+            } catch (error) {
+                console.log('회원관리 데이터 없음');
+            }
+        }
+
+        function handleClientAutocomplete(input) {
+            const value = input.value.toLowerCase();
+            const dropdownId = input.id === 'quickClient' ? 'autocompleteDropdown' : 'autocompleteDropdownModal';
+            const dropdown = document.getElementById(dropdownId);
+
+            if (value.length < 1) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            const filtered = clients.filter(client => 
+                client.name.toLowerCase().includes(value) ||
+                (client.contact && client.contact.includes(value))
+            );
+
+            if (filtered.length > 0) {
+                dropdown.innerHTML = filtered.map(client => `
+                    <div class="autocomplete-item" onclick="selectClient('${client.name}', '${client.position || ''}', '${client.contact || ''}', '${dropdownId}')">
+                        <div class="autocomplete-item-name">${client.name} ${client.position || ''}</div>
+                        <div class="autocomplete-item-info">${client.contact || ''}</div>
+                    </div>
+                `).join('');
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function selectClient(name, position, contact, dropdownId) {
+            if (dropdownId === 'autocompleteDropdown') {
+                document.getElementById('quickClient').value = name;
+            } else {
+                document.getElementById('taskClient').value = name;
+                document.getElementById('taskPosition').value = position;
+                document.getElementById('taskContact').value = contact;
+            }
+            document.getElementById(dropdownId).style.display = 'none';
+        }
+
+        // Task Management Functions
+        function quickAddTask(event) {
+            event.preventDefault();
+            const title = document.getElementById('quickTitle').value;
+            const client = document.getElementById('quickClient').value;
+            const type = document.getElementById('quickType').value;
+
+            const task = {
+                id: Date.now().toString(),
+                type: type,
+                date: new Date().toISOString().split('T')[0],
+                client: client,
+                title: title,
+                status: 'progress',
+                priority: 'normal',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            tasks.unshift(task);
+            saveToDrive();
+            renderTasks();
+            updateStats();
+            renderCalendar();
+            checkDeadlines();
+            document.getElementById('quickAddForm').reset();
+            showToast('업무가 추가되었습니다', 'success');
+        }
+
+        function openAddModal(date = null) {
+            editingTaskId = null;
+            document.getElementById('modalTitle').textContent = '새 업무 등록';
+            document.getElementById('taskForm').reset();
+            if (date) {
+                document.getElementById('taskDate').value = date;
+            } else {
+                document.getElementById('taskDate').valueAsDate = new Date();
+            }
+            document.getElementById('taskSuffix').value = '님';
+            document.getElementById('taskId').value = '';
+            document.getElementById('deleteBtn').style.display = 'none';
+            document.getElementById('taskModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openEditModal(taskId) {
+            editingTaskId = taskId;
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('modalTitle').textContent = '업무 수정';
+            document.getElementById('taskType').value = task.type || '';
+            document.getElementById('taskDate').value = task.date || '';
+            document.getElementById('taskClient').value = task.client || '';
+            document.getElementById('taskPosition').value = task.position || '';
+            document.getElementById('taskSuffix').value = task.suffix || '님';
+            document.getElementById('taskContact').value = task.contact || '';
+            document.getElementById('taskTitle').value = task.title || '';
+            document.getElementById('taskCategory').value = task.category || '';
+            document.getElementById('taskDuration').value = task.duration || '';
+            document.getElementById('taskContent').value = task.content || '';
+            document.getElementById('taskStatus').value = task.status || 'progress';
+            document.getElementById('taskPriority').value = task.priority || 'normal';
+            document.getElementById('taskDeadline').value = task.deadline || '';
+            document.getElementById('taskTags').value = task.tags ? task.tags.join(' ') : '';
+            document.getElementById('taskId').value = taskId;
+            document.getElementById('deleteBtn').style.display = 'inline-flex';
+            document.getElementById('taskModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            editingTaskId = null;
+        }
+
+        function saveTask(event) {
+            event.preventDefault();
+
+            const taskData = {
+                type: document.getElementById('taskType').value,
+                date: document.getElementById('taskDate').value,
+                client: document.getElementById('taskClient').value,
+                position: document.getElementById('taskPosition').value,
+                suffix: document.getElementById('taskSuffix').value,
+                contact: document.getElementById('taskContact').value,
+                title: document.getElementById('taskTitle').value,
+                category: document.getElementById('taskCategory').value,
+                duration: document.getElementById('taskDuration').value,
+                content: document.getElementById('taskContent').value,
+                status: document.getElementById('taskStatus').value,
+                priority: document.getElementById('taskPriority').value,
+                deadline: document.getElementById('taskDeadline').value,
+                tags: document.getElementById('taskTags').value.split(/\s+/).filter(t => t.startsWith('#')),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (editingTaskId) {
+                const index = tasks.findIndex(t => t.id === editingTaskId);
+                if (index !== -1) {
+                    tasks[index] = { ...tasks[index], ...taskData };
+                }
+            } else {
+                taskData.id = Date.now().toString();
+                taskData.createdAt = new Date().toISOString();
+                tasks.unshift(taskData);
+            }
+
+            saveToDrive();
+            renderTasks();
+            updateStats();
+            renderCalendar();
+            checkDeadlines();
+            closeModal();
+            showToast(editingTaskId ? '업무가 수정되었습니다' : '업무가 추가되었습니다', 'success');
+        }
+
+        function deleteTask() {
+            if (!editingTaskId) return;
+            if (!confirm('정말 이 업무를 삭제하시겠습니까?')) return;
+
+            tasks = tasks.filter(t => t.id !== editingTaskId);
+            saveToDrive();
+            renderTasks();
+            updateStats();
+            renderCalendar();
+            checkDeadlines();
+            closeModal();
+            showToast('업무가 삭제되었습니다', 'success');
+        }
+
+        // Rendering Functions
+        function renderTasks() {
+            const container = document.getElementById('taskList');
+            const filtered = getFilteredTasks();
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-text">표시할 업무가 없습니다</div>
+                        <p>검색 조건을 변경하거나 새 업무를 추가하세요.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(task => {
+                const typeLabel = task.type === 'personal' ? '개인' : '법인';
+                const typeBadge = task.type === 'personal' ? 'badge-personal' : 'badge-corporate';
+                const statusLabel = task.status === 'progress' ? '진행중' : task.status === 'complete' ? '완료' : '보류';
+                const statusBadge = `badge-${task.status}`;
+                const priorityLabel = task.priority === 'high' ? '높음' : task.priority === 'low' ? '낮음' : '보통';
+                const priorityBadge = `badge-${task.priority}`;
+                const clientDisplay = task.client + (task.position ? ' ' + task.position : '') + (task.suffix ? task.suffix : '');
+
+                return `
+                    <div class="task-card ${task.priority}" onclick="openEditModal('${task.id}')">
+                        <div class="task-header">
+                            <div style="flex: 1;">
+                                <div class="task-title">${task.title}</div>
+                                <div class="task-client">
+                                    ${task.type === 'personal' ? '🙋‍♂️' : '🏢'} ${clientDisplay}
+                                    <span class="badge ${typeBadge}">${typeLabel}</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="badge ${statusBadge}">${statusLabel}</span>
+                                <span class="badge ${priorityBadge}">${priorityLabel}</span>
+                            </div>
+                        </div>
+                        ${task.content ? `<div class="task-content">${task.content.substring(0, 100)}${task.content.length > 100 ? '...' : ''}</div>` : ''}
+                        <div class="task-meta">
+                            <div class="task-meta-item">📅 ${task.date}</div>
+                            ${task.category ? `<div class="task-meta-item">📂 ${task.category}</div>` : ''}
+                            ${task.duration ? `<div class="task-meta-item">⏱️ ${task.duration}</div>` : ''}
+                            ${task.deadline ? `<div class="task-meta-item">🚩 ${task.deadline}</div>` : ''}
+                        </div>
+                        ${task.tags && task.tags.length > 0 ? `
+                            <div class="task-tags">
+                                ${task.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFilteredTasks() {
+            let filtered = [...tasks];
+
+            if (currentTab !== 'all' && currentTab !== 'calendar' && currentTab !== 'settings') {
+                filtered = filtered.filter(t => t.type === currentTab);
+            }
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(t => 
+                    (t.client && t.client.toLowerCase().includes(searchTerm)) ||
+                    (t.title && t.title.toLowerCase().includes(searchTerm)) ||
+                    (t.content && t.content.toLowerCase().includes(searchTerm)) ||
+                    (t.category && t.category.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            const status = document.getElementById('filterStatus').value;
+            if (status !== 'all') {
+                filtered = filtered.filter(t => t.status === status);
+            }
+
+            const priority = document.getElementById('filterPriority').value;
+            if (priority !== 'all') {
+                filtered = filtered.filter(t => t.priority === priority);
+            }
+
+            const sortBy = document.getElementById('sortBy').value;
+            switch (sortBy) {
+                case 'date-desc':
+                    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    break;
+                case 'date-asc':
+                    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    break;
+                case 'name-asc':
+                    filtered.sort((a, b) => (a.client || '').localeCompare(b.client || '', 'ko'));
+                    break;
+                case 'priority-desc':
+                    const priorityOrder = { high: 3, normal: 2, low: 1 };
+                    filtered.sort((a, b) => priorityOrder[b.priority || 'normal'] - priorityOrder[a.priority || 'normal']);
+                    break;
+            }
+
+            return filtered;
+        }
+
+        function filterTasks() {
+            renderTasks();
+        }
+
+        function updateStats() {
+            const total = tasks.length;
+            const progress = tasks.filter(t => t.status === 'progress').length;
+            const complete = tasks.filter(t => t.status === 'complete').length;
+            const hold = tasks.filter(t => t.status === 'hold').length;
+            const personal = tasks.filter(t => t.type === 'personal').length;
+            const corporate = tasks.filter(t => t.type === 'corporate').length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statProgress').textContent = progress;
+            document.getElementById('statComplete').textContent = complete;
+            document.getElementById('statHold').textContent = hold;
+            document.getElementById('countAll').textContent = total;
+            document.getElementById('countPersonal').textContent = personal;
+            document.getElementById('countCorporate').textContent = corporate;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('taskList').style.display = 'none';
+            document.getElementById('calendarView').style.display = 'none';
+            document.getElementById('settingsView').style.display = 'none';
+            document.getElementById('searchFilterBar').style.display = 'none';
+            document.getElementById('statsRow').style.display = 'none';
+
+            if (tab === 'settings') {
+                document.getElementById('settingsView').style.display = 'block';
+            } else if (tab === 'calendar') {
+                document.getElementById('calendarView').style.display = 'block';
+                renderCalendar();
+            } else {
+                document.getElementById('taskList').style.display = 'grid';
+                document.getElementById('searchFilterBar').style.display = 'grid';
+                document.getElementById('statsRow').style.display = 'grid';
+                renderTasks();
+            }
+        }
+
+        // Calendar Functions
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const title = document.getElementById('calendarTitle');
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const prevLastDay = new Date(currentYear, currentMonth, 0);
+            
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            title.textContent = `${currentYear}년 ${monthNames[currentMonth]}`;
+
+            let html = '';
+            
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            days.forEach((day, index) => {
+                const classNames = ['calendar-day-header'];
+                if (index === 0) classNames.push('sunday');
+                if (index === 6) classNames.push('saturday');
+                html += `<div class="${classNames.join(' ')}">${day}</div>`;
+            });
+
+            const firstDayOfWeek = firstDay.getDay();
+            for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                const day = prevLastDay.getDate() - i;
+                html += `<div class="calendar-day other-month">
+                    <div class="calendar-day-number">${day}</div>
+                </div>`;
+            }
+
+            const today = new Date();
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dateString = date.toISOString().split('T')[0];
+                const dayOfWeek = date.getDay();
+                
+                const classNames = ['calendar-day'];
+                if (dayOfWeek === 0) classNames.push('sunday');
+                if (dayOfWeek === 6) classNames.push('saturday');
+                
+                if (date.toDateString() === today.toDateString()) {
+                    classNames.push('today');
+                }
+
+                const dayTasks = tasks.filter(t => t.date === dateString);
+                const taskCount = dayTasks.length;
+
+                html += `<div class="${classNames.join(' ')}" onclick="showDayTasks('${dateString}')">
+                    <div class="calendar-day-number">${day}</div>
+                    ${taskCount > 0 ? `
+                        <div class="calendar-task-count">
+                            ${dayTasks.slice(0, 3).map(t => 
+                                `<span class="calendar-task-dot ${t.priority || 'normal'}"></span>`
+                            ).join('')}
+                        </div>
+                        <span class="calendar-task-badge">${taskCount}개</span>
+                    ` : ''}
+                </div>`;
+            }
+
+            const lastDayOfWeek = lastDay.getDay();
+            const remainingDays = 6 - lastDayOfWeek;
+            for (let day = 1; day <= remainingDays; day++) {
+                html += `<div class="calendar-day other-month">
+                    <div class="calendar-day-number">${day}</div>
+                </div>`;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        }
+
+        function goToToday() {
+            const today = new Date();
+            currentYear = today.getFullYear();
+            currentMonth = today.getMonth();
+            renderCalendar();
+        }
+
+        function showDayTasks(dateString) {
+            const date = new Date(dateString);
+            const dayTasks = tasks.filter(t => t.date === dateString);
+
+            const title = document.getElementById('dayModalTitle');
+            const body = document.getElementById('dayModalBody');
+            
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+            
+            title.textContent = `${year}년 ${month}월 ${day}일 (${dayOfWeek})`;
+
+            if (dayTasks.length === 0) {
+                body.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-text">이 날짜에 등록된 업무가 없습니다</div>
+                        <button class="btn btn-success" onclick="closeDayModal(); openAddModal('${dateString}')">
+                            ➕ 업무 추가하기
+                        </button>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <button class="btn btn-success" onclick="closeDayModal(); openAddModal('${dateString}')">
+                            ➕ 새 업무 추가
+                        </button>
+                    </div>
+                    ${dayTasks.map(task => {
+                        const typeLabel = task.type === 'personal' ? '🙋‍♂️ 개인' : '🏢 법인';
+                        const statusLabel = task.status === 'progress' ? '진행중' : task.status === 'complete' ? '완료' : '보류';
+                        const priorityLabel = task.priority === 'high' ? '높음' : task.priority === 'low' ? '낮음' : '보통';
+                        const clientDisplay = task.client + (task.position ? ' ' + task.position : '') + (task.suffix ? task.suffix : '');
+
+                        return `
+                            <div class="notification-item" onclick="closeDayModal(); openEditModal('${task.id}')">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                    <div style="font-weight: 600; font-size: 16px;">${task.title}</div>
+                                    <div>
+                                        <span class="badge badge-${task.status}">${statusLabel}</span>
+                                        <span class="badge badge-${task.priority}">${priorityLabel}</span>
+                                    </div>
+                                </div>
+                                <div style="color: var(--gray-text); font-size: 14px;">
+                                    ${typeLabel} ${clientDisplay}
+                                    ${task.category ? ` | 📂 ${task.category}` : ''}
+                                    ${task.duration ? ` | ⏱️ ${task.duration}` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                `;
+            }
+
+            document.getElementById('dayModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDayModal() {
+            document.getElementById('dayModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Toast Notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Close dropdowns and modals
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.search-box') && !event.target.matches('#quickClient') && !event.target.matches('#taskClient')) {
+                document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.style.display = 'none');
+            }
+        });
+
+        window.onclick = function(event) {
+            const taskModal = document.getElementById('taskModal');
+            const dayModal = document.getElementById('dayModal');
+            if (event.target === taskModal) {
+                closeModal();
+            }
+            if (event.target === dayModal) {
+                closeDayModal();
+            }
+        }
+    </script>
+</body>
+</html>
