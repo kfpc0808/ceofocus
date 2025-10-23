@@ -1975,9 +1975,25 @@
         return;
       }
       
-      // Kakao Maps API 로딩 확인
-      if (typeof kakao === 'undefined' || !kakao.maps) {
-        alert('⚠️ Kakao Maps API 로딩 실패\n\n다음을 확인해주세요:\n\n1. 인터넷 연결 확인\n2. Kakao Developers에서 앱 키 발급\n3. HTML 파일 21번 줄에 YOUR_KAKAO_APP_KEY를 실제 앱 키로 교체\n\n자세한 내용: https://developers.kakao.com');
+      // ✅ Kakao Maps API 로딩 확인 및 대기
+      console.log('🗺️ Kakao Maps SDK 로딩 확인 중...');
+      
+      // SDK가 로드될 때까지 최대 5초 대기
+      let attempts = 0;
+      const maxAttempts = 50;
+      
+      while (attempts < maxAttempts) {
+        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.Map) {
+          console.log('✅ Kakao Maps SDK 로드 완료!');
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
+        alert('⚠️ Kakao Maps API 로딩 실패\n\n페이지를 새로고침 후 다시 시도해주세요.\n\n인터넷 연결을 확인해주세요.');
+        console.error('❌ Kakao Maps SDK 로딩 실패');
         return;
       }
       
@@ -1987,12 +2003,23 @@
       // ✅ 모바일 지원: 모달 애니메이션이 완료된 후 지도 생성 (300ms 대기)
       setTimeout(() => {
         try {
+          console.log('🗺️ 지도 생성 시작...');
+          
           // 지도 컨테이너
           const mapDiv = document.getElementById('clientMap');
-          if (!mapDiv) return;
+          if (!mapDiv) {
+            console.error('❌ clientMap 요소를 찾을 수 없습니다.');
+            alert('지도 컨테이너를 찾을 수 없습니다.');
+            return;
+          }
+          
+          console.log('✅ 지도 컨테이너 확인 완료');
+          console.log('📍 첫 번째 고객 좌표:', clientsWithCoords[0].latitude, clientsWithCoords[0].longitude);
           
           // 첫 번째 고객 위치를 중심으로
           const center = new kakao.maps.LatLng(clientsWithCoords[0].latitude, clientsWithCoords[0].longitude);
+          
+          console.log('🗺️ 카카오 지도 객체 생성 중...');
           
           // Kakao 지도 생성
           const map = new kakao.maps.Map(mapDiv, {
@@ -2000,9 +2027,13 @@
             level: 6
           });
           
+          console.log('✅ 카카오 지도 객체 생성 완료!');
+          
           // ✅ 모바일 지원: 지도 크기 재계산 (필수!)
           setTimeout(() => {
+            console.log('🔄 지도 크기 재계산 중...');
             map.relayout();
+            console.log('✅ 지도 크기 재계산 완료!');
           }, 100);
         
         // 지도 타입 컨트롤 추가
@@ -2130,16 +2161,18 @@
         console.log(`✅ 카카오 지도 열기: 총 ${clientsWithCoords.length}명 마커 표시 완료`);
         
       } catch (error) {
-        console.error('지도 생성 오류:', error);
+        console.error('❌ 지도 생성 오류:', error);
+        console.error('오류 상세:', error.message);
+        console.error('오류 스택:', error.stack);
         closeModal('mapModal');
         
         let errorMessage = '⚠️ 지도를 표시할 수 없습니다.\n\n';
         errorMessage += '오류: ' + error.message + '\n\n';
         errorMessage += '다음을 확인해주세요:\n';
-        errorMessage += '1. Kakao Developers에서 앱 키 발급\n';
-        errorMessage += '2. HTML 파일 21번 줄에 YOUR_KAKAO_APP_KEY를 실제 앱 키로 교체\n';
+        errorMessage += '1. 인터넷 연결 확인\n';
+        errorMessage += '2. 페이지 새로고침 후 다시 시도\n';
         errorMessage += '3. 브라우저 콘솔(F12)에서 자세한 오류 확인\n\n';
-        errorMessage += '자세한 내용: https://developers.kakao.com';
+        errorMessage += 'kakao 객체 상태: ' + (typeof kakao !== 'undefined' ? '로드됨' : '로드 안됨');
         
         alert(errorMessage);
       }
