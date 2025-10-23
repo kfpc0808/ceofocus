@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📨 발송관리 - Send Management</title>
+    
+    <!-- Google OAuth -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* 상단 네비게이션 */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .back-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .drive-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .drive-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+        }
+        
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+        }
+        
+        /* 헤더 */
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        /* 탭 버튼 */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 카드 */
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 폼 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+        
+        /* 고객 리스트 */
+        .customer-search {
+            margin-bottom: 15px;
+        }
+        
+        .customer-search input {
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 25px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .customer-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .customer-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+        
+        .customer-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .customer-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .customer-info {
+            flex: 1;
+        }
+        
+        .customer-name {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+        
+        .customer-meta {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .position-input {
+            width: 100px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            color: #333;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        
+        .position-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-right: 5px;
+            flex-shrink: 0;
+        }
+        
+        .select-all-container {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .select-all-container label {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .selected-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        /* 기념일 달력 */
+        .anniversary-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .anniversary-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .anniversary-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .anniversary-item.birthday {
+            border-left-color: #ff6b9d;
+        }
+        
+        .anniversary-item.anniversary {
+            border-left-color: #ffd93d;
+        }
+        
+        .anniversary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .anniversary-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .anniversary-date {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+        }
+        
+        .anniversary-type {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        /* 개인화 변수 안내 */
+        .personalization-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        
+        .personalization-info strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .variable-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-family: monospace;
+        }
+        
+        /* 반복 설정 */
+        .repeat-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        /* 통계 카드 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label input {
+            width: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .repeat-settings {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 상단 네비게이션 -->
+        <div class="top-nav">
+            <button class="back-btn" onclick="goBack()">← 뒤로가기</button>
+            <div class="nav-buttons">
+                <button class="drive-btn" onclick="connectDrive()" id="driveBtn">🔗 드라이브 연동</button>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <!-- 헤더 -->
+        <h1>📨 발송관리</h1>
+        <p class="subtitle">고객 메시지 발송 및 기념일 자동 발송 관리</p>
+
+        <!-- 탭 -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('send')">📤 메시지 발송</button>
+            <button class="tab-btn" onclick="switchTab('anniversary')">🎂 기념일 자동발송</button>
+            <button class="tab-btn" onclick="switchTab('log')">📋 발송 로그</button>
+            <button class="tab-btn" onclick="switchTab('template')">📝 템플릿</button>
+        </div>
+
+        <!-- 발송 탭 -->
+        <div id="sendTab" class="tab-content">
+            <div class="grid-2">
+                <!-- 고객 선택 -->
+                <div class="card">
+                    <h2>👥 발송 대상 선택</h2>
+                    
+                    <div class="customer-search">
+                        <input type="text" id="customerSearch" placeholder="🔍 고객 이름, 회사명으로 검색..." onkeyup="searchCustomers()">
+                    </div>
+                    
+                    <div class="select-all-container">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        <label for="selectAll">전체 선택</label>
+                        <div class="selected-count" id="selectedCount">0명 선택됨</div>
+                    </div>
+                    
+                    <div class="customer-list" id="customerList">
+                        <p style="text-align: center; opacity: 0.7; padding: 20px;">
+                            드라이브 연동 후 고객 목록이 표시됩니다
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 메시지 작성 -->
+                <div class="card">
+                    <h2>✍️ 메시지 작성</h2>
+                    
+                    <div class="personalization-info">
+                        <strong>💡 개인화 변수 사용하기:</strong>
+                        <span class="variable-tag">{name}</span> = 고객 이름<br>
+                        <span class="variable-tag">{position}</span> = 직함<br>
+                        예시: "{name} {position}님 생일 축하드립니다!"<br>
+                        → "홍길동 과장님 생일 축하드립니다!"
+                    </div>
+                    
+                    <form id="sendForm" onsubmit="sendMessage(event)">
+                        <div class="form-group">
+                            <label>제목</label>
+                            <input type="text" id="messageTitle" required placeholder="메시지 제목">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>본문</label>
+                            <textarea id="messageBody" required placeholder="{name} {position}님, 안녕하세요!"></textarea>
+                        </div>
+                        
+                        <div class="checkbox-label">
+                            <input type="checkbox" id="usePosition" checked>
+                            <label for="usePosition">직함 사용 ("{position}님" 형식)</label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>발송 유형</label>
+                            <select id="sendType" onchange="toggleSchedule()">
+                                <option value="immediate">즉시 발송</option>
+                                <option value="scheduled">예약 발송</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group hidden" id="scheduleGroup">
+                            <label>예약 날짜/시간</label>
+                            <input type="datetime-local" id="scheduleTime">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="resetSendForm()">취소</button>
+                            <button type="submit" class="btn btn-primary">🚀 발송하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 기념일 자동발송 탭 -->
+        <div id="anniversaryTab" class="tab-content hidden">
+            <div class="card">
+                <h2>🎂 기념일 목록</h2>
+                <p style="opacity: 0.8; margin-bottom: 20px;">
+                    기념일을 클릭하면 자동 발송을 설정할 수 있습니다
+                </p>
+                
+                <div class="anniversary-list" id="anniversaryList">
+                    <p style="text-align: center; opacity: 0.7; padding: 20px;">
+                        드라이브 연동 후 기념일이 표시됩니다
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그 탭 -->
+        <div id="logTab" class="tab-content hidden">
+            <div class="card">
+                <h2>📋 발송 로그</h2>
+                <div id="logList">
+                    <p style="text-align: center; opacity: 0.7; padding: 20px;">
+                        발송 내역이 없습니다
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 템플릿 탭 -->
+        <div id="templateTab" class="tab-content hidden">
+            <div class="card">
+                <h2>📝 메시지 템플릿</h2>
+                <button class="btn btn-primary" style="margin-bottom: 20px;" onclick="openTemplateModal()">➕ 새 템플릿 추가</button>
+                <div id="templateList">
+                    <p style="text-align: center; opacity: 0.7; padding: 20px;">
+                        등록된 템플릿이 없습니다
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 기념일 자동발송 설정 모달 -->
+    <div id="anniversaryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="anniversaryModalTitle">🎂 생일 자동발송 설정</h2>
+                <button class="close-modal" onclick="closeAnniversaryModal()">&times;</button>
+            </div>
+            <form id="anniversaryForm" onsubmit="saveAnniversarySchedule(event)">
+                <div class="form-group">
+                    <label>대상 고객</label>
+                    <input type="text" id="anniversaryCustomer" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label>기념일 날짜</label>
+                    <input type="text" id="anniversaryDate" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label>제목</label>
+                    <input type="text" id="anniversaryTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>본문</label>
+                    <textarea id="anniversaryBody" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>발송 시각</label>
+                    <input type="time" id="anniversarySendTime" value="09:00" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>반복 설정</label>
+                    <select id="repeatCycle" onchange="toggleRepeatOptions()">
+                        <option value="once">1회만 발송</option>
+                        <option value="yearly">매년 반복</option>
+                        <option value="monthly">매월 반복</option>
+                    </select>
+                </div>
+                
+                <div id="repeatOptions" class="hidden">
+                    <div class="repeat-settings">
+                        <div class="form-group">
+                            <label>발송 횟수</label>
+                            <input type="number" id="repeatCount" min="1" placeholder="무제한은 비워두세요">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>만료일</label>
+                            <input type="date" id="repeatEndDate">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAnniversaryModal()">취소</button>
+                    <button type="submit" class="btn btn-success">✅ 자동발송 설정</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 템플릿 모달 -->
+    <div id="templateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 템플릿 추가</h2>
+                <button class="close-modal" onclick="closeTemplateModal()">&times;</button>
+            </div>
+            <form id="templateForm" onsubmit="saveTemplate(event)">
+                <div class="form-group">
+                    <label>템플릿 이름</label>
+                    <input type="text" id="templateName" required>
+                </div>
+                <div class="form-group">
+                    <label>제목</label>
+                    <input type="text" id="templateTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>본문</label>
+                    <textarea id="templateBody" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeTemplateModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ===== 전역 변수 =====
+        let customers = [];
+        let messages = [];
+        let templates = [];
+        let anniversarySchedules = [];
+        let selectedCustomersData = {}; // { customerId: { selected: true, position: '수정된직함' } }
+        let accessToken = null;
+        let isDriveConnected = false;
+        let currentAnniversaryCustomer = null;
+
+        // ===== 암호화/복호화 =====
+        const ENCRYPTION_KEY = 'ceofocus-secret-key-2025';
+
+        function encryptData(data) {
+            const jsonStr = JSON.stringify(data);
+            let encrypted = '';
+            for (let i = 0; i < jsonStr.length; i++) {
+                encrypted += String.fromCharCode(
+                    jsonStr.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length)
+                );
+            }
+            return btoa(encrypted);
+        }
+
+        function decryptData(encrypted) {
+            try {
+                const decoded = atob(encrypted);
+                let decrypted = '';
+                for (let i = 0; i < decoded.length; i++) {
+                    decrypted += String.fromCharCode(
+                        decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length)
+                    );
+                }
+                return JSON.parse(decrypted);
+            } catch (e) {
+                console.error('복호화 실패:', e);
+                return null;
+            }
+        }
+
+        // ===== Google Drive 연동 =====
+        function connectDrive() {
+            if (isDriveConnected) {
+                alert('이미 Google Drive에 연결되어 있습니다.');
+                return;
+            }
+
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: '288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: (response) => {
+                    if (response.access_token) {
+                        accessToken = response.access_token;
+                        isDriveConnected = true;
+                        localStorage.setItem('googleAccessToken', accessToken);
+                        document.getElementById('driveBtn').textContent = '✅ 연동 완료';
+                        alert('✅ Google Drive 연동 완료!');
+                        loadAllData();
+                    }
+                }
+            });
+
+            client.requestAccessToken();
+        }
+
+        async function loadAllData() {
+            await loadCustomersFromDrive();
+            await loadMessagesFromDrive();
+            renderCustomers();
+            renderAnniversaries();
+        }
+
+        async function loadCustomersFromDrive() {
+            if (!isDriveConnected || !accessToken) return;
+
+            try {
+                const searchResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='clients.fmd'&spaces=drive`,
+                    { headers: { Authorization: `Bearer ${accessToken}` } }
+                );
+
+                const searchResult = await searchResponse.json();
+                const fileId = searchResult.files && searchResult.files[0]?.id;
+
+                if (!fileId) {
+                    console.log('고객 파일 없음');
+                    return;
+                }
+
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+                    { headers: { Authorization: `Bearer ${accessToken}` } }
+                );
+
+                const encryptedData = await response.text();
+                const data = decryptData(encryptedData);
+
+                if (data && data.customers) {
+                    customers = data.customers;
+                    console.log('✅ 고객 데이터 로드:', customers.length + '명');
+                }
+            } catch (error) {
+                console.error('고객 로드 오류:', error);
+            }
+        }
+
+        async function loadMessagesFromDrive() {
+            if (!isDriveConnected || !accessToken) return;
+
+            try {
+                const searchResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='messages.fmd'&spaces=drive`,
+                    { headers: { Authorization: `Bearer ${accessToken}` } }
+                );
+
+                const searchResult = await searchResponse.json();
+                const fileId = searchResult.files && searchResult.files[0]?.id;
+
+                if (!fileId) {
+                    console.log('메시지 파일 없음');
+                    return;
+                }
+
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+                    { headers: { Authorization: `Bearer ${accessToken}` } }
+                );
+
+                const encryptedData = await response.text();
+                const data = decryptData(encryptedData);
+
+                if (data) {
+                    messages = data.messages || [];
+                    templates = data.templates || [];
+                    anniversarySchedules = data.anniversarySchedules || [];
+                    console.log('✅ 메시지 데이터 로드');
+                }
+            } catch (error) {
+                console.error('메시지 로드 오류:', error);
+            }
+        }
+
+        async function saveMessagesToDrive() {
+            if (!isDriveConnected || !accessToken) return;
+
+            try {
+                const data = {
+                    messages: messages,
+                    templates: templates,
+                    anniversarySchedules: anniversarySchedules,
+                    lastUpdate: new Date().toISOString()
+                };
+
+                const encryptedData = encryptData(data);
+                const blob = new Blob([encryptedData], { type: 'text/plain' });
+
+                const searchResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='messages.fmd'&spaces=drive`,
+                    { headers: { Authorization: `Bearer ${accessToken}` } }
+                );
+
+                const searchResult = await searchResponse.json();
+                let fileId = searchResult.files && searchResult.files[0]?.id;
+
+                const metadata = {
+                    name: 'messages.fmd',
+                    mimeType: 'text/plain'
+                };
+
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', blob);
+
+                const url = fileId
+                    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+                const method = fileId ? 'PATCH' : 'POST';
+
+                await fetch(url, {
+                    method: method,
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                    body: form
+                });
+
+                console.log('✅ Drive 저장 완료');
+            } catch (error) {
+                console.error('Drive 저장 오류:', error);
+            }
+        }
+
+        // ===== 고객 렌더링 =====
+        function renderCustomers() {
+            const customerList = document.getElementById('customerList');
+            
+            if (customers.length === 0) {
+                customerList.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 20px;">등록된 고객이 없습니다</p>';
+                return;
+            }
+
+            const searchTerm = document.getElementById('customerSearch')?.value.toLowerCase() || '';
+            const filtered = customers.filter(c => 
+                c.name.toLowerCase().includes(searchTerm) || 
+                (c.company && c.company.toLowerCase().includes(searchTerm))
+            );
+
+            customerList.innerHTML = filtered.map(customer => {
+                const isSelected = selectedCustomersData[customer.id]?.selected || false;
+                const currentPosition = selectedCustomersData[customer.id]?.position || customer.position || '';
+                
+                return `
+                    <div class="customer-item">
+                        <input type="checkbox" 
+                               id="customer-${customer.id}" 
+                               value="${customer.id}"
+                               ${isSelected ? 'checked' : ''}
+                               onchange="toggleCustomer(${customer.id})">
+                        <div class="customer-info" style="cursor: pointer;" onclick="document.getElementById('customer-${customer.id}').click()">
+                            <div class="customer-name">${customer.name}</div>
+                            <div class="customer-meta">
+                                ${customer.company || ''} | 
+                                ${customer.phone || ''} | 
+                                생일: ${customer.birth ? formatBirthDate(customer.birth) : '미등록'}
+                            </div>
+                        </div>
+                        <span class="position-label">직함:</span>
+                        <input type="text" 
+                               class="position-input" 
+                               value="${currentPosition}" 
+                               placeholder="직함 입력"
+                               onchange="updateCustomerPosition(${customer.id}, this.value)"
+                               onclick="event.stopPropagation()">
+                    </div>
+                `;
+            }).join('');
+
+            updateSelectedCount();
+        }
+
+        function searchCustomers() {
+            renderCustomers();
+        }
+
+        function toggleCustomer(customerId) {
+            if (!selectedCustomersData[customerId]) {
+                selectedCustomersData[customerId] = { selected: false, position: '' };
+            }
+            
+            selectedCustomersData[customerId].selected = !selectedCustomersData[customerId].selected;
+            
+            // 직함이 없으면 원본 고객 직함 사용
+            if (!selectedCustomersData[customerId].position) {
+                const customer = customers.find(c => c.id === customerId);
+                if (customer) {
+                    selectedCustomersData[customerId].position = customer.position || '';
+                }
+            }
+            
+            updateSelectedCount();
+        }
+
+        function updateCustomerPosition(customerId, position) {
+            if (!selectedCustomersData[customerId]) {
+                selectedCustomersData[customerId] = { selected: false, position: position };
+            } else {
+                selectedCustomersData[customerId].position = position;
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            
+            if (selectAll.checked) {
+                customers.forEach(customer => {
+                    selectedCustomersData[customer.id] = {
+                        selected: true,
+                        position: customer.position || ''
+                    };
+                });
+            } else {
+                selectedCustomersData = {};
+            }
+            
+            renderCustomers();
+        }
+
+        function updateSelectedCount() {
+            const count = Object.values(selectedCustomersData).filter(data => data.selected).length;
+            document.getElementById('selectedCount').textContent = count + '명 선택됨';
+        }
+
+        // ===== 기념일 렌더링 =====
+        function renderAnniversaries() {
+            const anniversaryList = document.getElementById('anniversaryList');
+            
+            if (customers.length === 0) {
+                anniversaryList.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 20px;">등록된 고객이 없습니다</p>';
+                return;
+            }
+
+            const anniversaries = [];
+            const today = new Date();
+            const currentYear = today.getFullYear();
+
+            customers.forEach(customer => {
+                // 생일
+                if (customer.birth) {
+                    const birthDate = new Date(customer.birth);
+                    const nextBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+                    if (nextBirthday < today) {
+                        nextBirthday.setFullYear(currentYear + 1);
+                    }
+                    
+                    anniversaries.push({
+                        customer: customer,
+                        type: 'birthday',
+                        date: nextBirthday,
+                        label: '생일'
+                    });
+                }
+                
+                // 기념일
+                if (customer.anniversary) {
+                    const anniversaryDate = new Date(customer.anniversary);
+                    const nextAnniversary = new Date(currentYear, anniversaryDate.getMonth(), anniversaryDate.getDate());
+                    if (nextAnniversary < today) {
+                        nextAnniversary.setFullYear(currentYear + 1);
+                    }
+                    
+                    anniversaries.push({
+                        customer: customer,
+                        type: 'anniversary',
+                        date: nextAnniversary,
+                        label: '기념일'
+                    });
+                }
+            });
+
+            // 날짜순 정렬
+            anniversaries.sort((a, b) => a.date - b.date);
+
+            anniversaryList.innerHTML = anniversaries.map(item => {
+                const daysUntil = Math.ceil((item.date - today) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="anniversary-item ${item.type}" onclick="openAnniversaryModal('${item.type}', ${item.customer.id})">
+                        <div class="anniversary-header">
+                            <div class="anniversary-name">
+                                ${item.type === 'birthday' ? '🎂' : '🎉'} ${item.customer.name} ${item.customer.position || ''}
+                            </div>
+                            <div class="anniversary-date">
+                                ${formatDate(item.date)} (D-${daysUntil})
+                            </div>
+                        </div>
+                        <div class="anniversary-type">
+                            ${item.label} | ${item.customer.company || ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ===== 메시지 발송 =====
+        function sendMessage(e) {
+            e.preventDefault();
+
+            const selectedCustomers = Object.keys(selectedCustomersData).filter(id => selectedCustomersData[id].selected);
+            
+            if (selectedCustomers.length === 0) {
+                alert('발송 대상을 선택해주세요!');
+                return;
+            }
+
+            const title = document.getElementById('messageTitle').value;
+            const body = document.getElementById('messageBody').value;
+            const usePosition = document.getElementById('usePosition').checked;
+            const sendType = document.getElementById('sendType').value;
+            const scheduleTime = document.getElementById('scheduleTime').value;
+
+            let sentCount = 0;
+
+            // 각 고객에게 개인화된 메시지 발송
+            selectedCustomers.forEach(customerId => {
+                const customer = customers.find(c => c.id == customerId);
+                if (!customer) return;
+
+                // 수정된 직함 우선 사용
+                const position = selectedCustomersData[customerId].position || customer.position || '';
+                
+                let personalizedBody = body
+                    .replace(/{name}/g, customer.name)
+                    .replace(/{position}/g, usePosition && position ? position + '님' : '님');
+
+                const message = {
+                    id: Date.now() + Math.random(),
+                    customerId: customer.id,
+                    customerName: customer.name,
+                    title: title,
+                    body: personalizedBody,
+                    originalBody: body,
+                    position: position,
+                    sendType: sendType,
+                    scheduleTime: sendType === 'scheduled' ? scheduleTime : null,
+                    status: sendType === 'scheduled' ? 'scheduled' : 'success',
+                    sentAt: sendType === 'immediate' ? new Date().toISOString() : null,
+                    createdAt: new Date().toISOString()
+                };
+
+                messages.unshift(message);
+                sentCount++;
+            });
+
+            saveMessagesToDrive();
+            resetSendForm();
+            selectedCustomersData = {};
+            renderCustomers();
+            
+            alert(`✅ ${sentCount}명의 고객에게 메시지가 ${sendType === 'scheduled' ? '예약' : '발송'}되었습니다!`);
+            
+            switchTab('log');
+        }
+
+        function resetSendForm() {
+            document.getElementById('sendForm').reset();
+            document.getElementById('scheduleGroup').classList.add('hidden');
+        }
+
+        function toggleSchedule() {
+            const sendType = document.getElementById('sendType').value;
+            const scheduleGroup = document.getElementById('scheduleGroup');
+            
+            if (sendType === 'scheduled') {
+                scheduleGroup.classList.remove('hidden');
+            } else {
+                scheduleGroup.classList.add('hidden');
+            }
+        }
+
+        // ===== 기념일 자동발송 =====
+        function openAnniversaryModal(type, customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) return;
+
+            currentAnniversaryCustomer = customer;
+
+            const modal = document.getElementById('anniversaryModal');
+            const title = document.getElementById('anniversaryModalTitle');
+            const customerInput = document.getElementById('anniversaryCustomer');
+            const dateInput = document.getElementById('anniversaryDate');
+            const titleInput = document.getElementById('anniversaryTitle');
+            const bodyInput = document.getElementById('anniversaryBody');
+
+            title.textContent = type === 'birthday' ? '🎂 생일 자동발송 설정' : '🎉 기념일 자동발송 설정';
+            customerInput.value = `${customer.name} ${customer.position || ''}`;
+            dateInput.value = type === 'birthday' ? formatBirthDate(customer.birth) : formatBirthDate(customer.anniversary);
+
+            if (type === 'birthday') {
+                titleInput.value = '생일 축하 메시지';
+                bodyInput.value = `{name} {position}님,\n\n생일을 진심으로 축하드립니다!\n건강하고 행복한 한 해 되시길 바랍니다.`;
+            } else {
+                titleInput.value = '기념일 축하 메시지';
+                bodyInput.value = `{name} {position}님,\n\n소중한 기념일을 축하드립니다!`;
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeAnniversaryModal() {
+            document.getElementById('anniversaryModal').classList.remove('active');
+            currentAnniversaryCustomer = null;
+        }
+
+        function toggleRepeatOptions() {
+            const repeatCycle = document.getElementById('repeatCycle').value;
+            const repeatOptions = document.getElementById('repeatOptions');
+            
+            if (repeatCycle !== 'once') {
+                repeatOptions.classList.remove('hidden');
+            } else {
+                repeatOptions.classList.add('hidden');
+            }
+        }
+
+        function saveAnniversarySchedule(e) {
+            e.preventDefault();
+
+            if (!currentAnniversaryCustomer) return;
+
+            const schedule = {
+                id: Date.now(),
+                customerId: currentAnniversaryCustomer.id,
+                customerName: currentAnniversaryCustomer.name,
+                anniversaryDate: document.getElementById('anniversaryDate').value,
+                title: document.getElementById('anniversaryTitle').value,
+                body: document.getElementById('anniversaryBody').value,
+                sendTime: document.getElementById('anniversarySendTime').value,
+                repeatCycle: document.getElementById('repeatCycle').value,
+                repeatCount: document.getElementById('repeatCount').value || null,
+                repeatEndDate: document.getElementById('repeatEndDate').value || null,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+
+            anniversarySchedules.push(schedule);
+            saveMessagesToDrive();
+            closeAnniversaryModal();
+            
+            alert('✅ 기념일 자동발송이 설정되었습니다!');
+        }
+
+        // ===== 템플릿 =====
+        function openTemplateModal() {
+            document.getElementById('templateModal').classList.add('active');
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('templateModal').classList.remove('active');
+        }
+
+        function saveTemplate(e) {
+            e.preventDefault();
+
+            const template = {
+                id: Date.now(),
+                name: document.getElementById('templateName').value,
+                title: document.getElementById('templateTitle').value,
+                body: document.getElementById('templateBody').value,
+                createdAt: new Date().toISOString()
+            };
+
+            templates.push(template);
+            saveMessagesToDrive();
+            closeTemplateModal();
+            renderTemplates();
+            
+            alert('✅ 템플릿이 저장되었습니다!');
+        }
+
+        function renderTemplates() {
+            const templateList = document.getElementById('templateList');
+            
+            if (templates.length === 0) {
+                templateList.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 20px;">등록된 템플릿이 없습니다</p>';
+                return;
+            }
+
+            templateList.innerHTML = templates.map(template => `
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: bold; margin-bottom: 5px;">${template.name}</div>
+                        <div style="font-size: 13px; opacity: 0.8;">${template.title}</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="useTemplate(${template.id})">사용</button>
+                        <button class="btn btn-danger" onclick="deleteTemplate(${template.id})">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function useTemplate(id) {
+            const template = templates.find(t => t.id === id);
+            if (!template) return;
+
+            switchTab('send');
+            document.getElementById('messageTitle').value = template.title;
+            document.getElementById('messageBody').value = template.body;
+        }
+
+        function deleteTemplate(id) {
+            if (!confirm('이 템플릿을 삭제하시겠습니까?')) return;
+            
+            templates = templates.filter(t => t.id !== id);
+            saveMessagesToDrive();
+            renderTemplates();
+        }
+
+        // ===== 유틸리티 =====
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
+
+        function formatBirthDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
+
+        // ===== 탭 전환 =====
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            
+            event.target.classList.add('active');
+            
+            const tabMap = {
+                'send': 'sendTab',
+                'anniversary': 'anniversaryTab',
+                'log': 'logTab',
+                'template': 'templateTab'
+            };
+            
+            document.getElementById(tabMap[tab]).classList.remove('hidden');
+        }
+
+        // ===== 네비게이션 =====
+        function goBack() {
+            if (confirm('발송관리를 종료하고 메인으로 돌아가시겠습니까?')) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('googleAccessToken');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // ===== 초기화 =====
+        function init() {
+            const savedToken = localStorage.getItem('googleAccessToken');
+            if (savedToken) {
+                accessToken = savedToken;
+                isDriveConnected = true;
+                document.getElementById('driveBtn').textContent = '✅ 연동 완료';
+                loadAllData();
+            }
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
