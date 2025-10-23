@@ -1601,46 +1601,42 @@
     
     // Google Geocoding API를 사용한 좌표 변환 함수
     async function getCoordinates(address) {
-      const GOOGLE_GEOCODING_API_KEY = 'AIzaSyAVtAzm9UjgGB1pqChvGvGKH7RpH0KCiVM';
-      
       if (!address || address.trim() === '') {
         console.warn('⚠️ 주소가 비어있습니다.');
         return { latitude: null, longitude: null };
       }
       
       const cleanAddress = address.trim();
-      console.log('🗺️ Google Geocoding으로 좌표 변환 시도:', cleanAddress);
+      console.log('🗺️ Kakao Local API로 좌표 변환 시도:', cleanAddress);
       
-      try {
-        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cleanAddress)}&key=${GOOGLE_GEOCODING_API_KEY}&language=ko`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === 'OK' && data.results && data.results.length > 0) {
-          const location = data.results[0].geometry.location;
-          const lat = location.lat;
-          const lng = location.lng;
-          
-          console.log('✅ 좌표 변환 성공:', lat, lng);
-          console.log('📍 상세 주소:', data.results[0].formatted_address);
-          
-          return { 
-            latitude: lat, 
-            longitude: lng,
-            formattedAddress: data.results[0].formatted_address
-          };
-        } else {
-          console.warn('❌ 좌표 변환 실패 - Status:', data.status, '주소:', cleanAddress);
-          if (data.error_message) {
-            console.error('오류 메시지:', data.error_message);
-          }
-          return { latitude: null, longitude: null };
-        }
-      } catch (error) {
-        console.error('❌ 좌표 변환 API 호출 오류:', error);
+      // ✅ Kakao Local API 사용 (무료)
+      if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.services) {
+        console.error('❌ Kakao Maps API가 로드되지 않았습니다.');
         return { latitude: null, longitude: null };
       }
+      
+      return new Promise((resolve) => {
+        const geocoder = new kakao.maps.services.Geocoder();
+        
+        geocoder.addressSearch(cleanAddress, function(result, status) {
+          if (status === kakao.maps.services.Status.OK) {
+            const lat = parseFloat(result[0].y);
+            const lng = parseFloat(result[0].x);
+            
+            console.log('✅ 좌표 변환 성공:', lat, lng);
+            console.log('📍 상세 주소:', result[0].address_name);
+            
+            resolve({ 
+              latitude: lat, 
+              longitude: lng,
+              formattedAddress: result[0].address_name
+            });
+          } else {
+            console.warn('❌ 좌표 변환 실패 - Status:', status, '주소:', cleanAddress);
+            resolve({ latitude: null, longitude: null });
+          }
+        });
+      });
     }
     
     function calculateSangryeong(birthDate) {
