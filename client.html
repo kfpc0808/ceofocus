@@ -658,6 +658,15 @@
       border-radius: 8px;
     }
     
+    #mapInfo {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      background: #f1f5f9;
+      border-radius: 8px;
+      color: #334155;
+      font-size: 0.9rem;
+    }
+    
     
     @media (max-width: 768px) {
       body {
@@ -697,15 +706,36 @@
         font-size: 1.5rem;
       }
       
-      /* ✅ 모바일 지도 높이 최적화 */
-      #clientMap {
-        height: 60vh !important;
-        min-height: 400px;
+      /* ✅ 모바일 지도 - 거의 전체 화면으로! */
+      .map-modal-content {
+        max-width: 100% !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
       }
       
-      .map-modal-content {
-        max-width: 95%;
-        max-height: 95vh;
+      .map-modal-content .modal-body {
+        padding: 0.3rem !important;
+      }
+      
+      .map-modal-content .modal-header {
+        padding: 0.8rem 1rem !important;
+      }
+      
+      .map-modal-content .modal-header h2 {
+        font-size: 1.1rem !important;
+      }
+      
+      #clientMap {
+        height: calc(100vh - 150px) !important;
+        min-height: 500px !important;
+        border-radius: 0 !important;
+      }
+      
+      #mapInfo {
+        padding: 0.4rem !important;
+        font-size: 0.7rem !important;
+        margin-top: 0.3rem !important;
       }
       
       .controls {
@@ -747,6 +777,12 @@
   <div class="loading" id="loading">
     <div class="spinner"></div>
     <div class="loading-text">구글 드라이브 연결 중...</div>
+  </div>
+
+  <!-- 모바일 디버그 로그 (지도 문제 해결용) -->
+  <div id="mobileDebug" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.9); color:#0f0; padding:10px; max-height:200px; overflow-y:auto; z-index:99999; font-size:11px; font-family:monospace;">
+    <button onclick="document.getElementById('mobileDebug').style.display='none'" style="position:absolute; top:5px; right:5px; background:#f00; color:#fff; border:none; padding:5px 10px; cursor:pointer;">닫기</button>
+    <div id="debugLog"></div>
   </div>
 
   <div class="container">
@@ -1015,15 +1051,12 @@
         <h2>🗺️ 고객 지도</h2>
         <button class="close-btn" onclick="closeModal('mapModal')">×</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="padding: 0.5rem;">
         <div id="clientMap"></div>
-        <div id="mapInfo" style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; color: #334155;">
+        <div id="mapInfo">
           <strong>📍 마커 정보:</strong>
           <span id="markerCount">로딩 중...</span>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-cancel" onclick="closeModal('mapModal')">닫기</button>
       </div>
     </div>
   </div>
@@ -1067,6 +1100,25 @@
     let tokenClient;
     let accessToken = null;
     let gisInited = false;
+    
+    // ✅ 모바일 디버그 로그 함수
+    function mobileLog(message) {
+      const debugDiv = document.getElementById('mobileDebug');
+      const logDiv = document.getElementById('debugLog');
+      if (debugDiv && logDiv) {
+        debugDiv.style.display = 'block';
+        const time = new Date().toLocaleTimeString();
+        logDiv.innerHTML += `<div>[${time}] ${message}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+      }
+      console.log(message); // 콘솔에도 출력
+    }
+    
+    // ✅ 디버그 로그 초기화
+    function clearMobileLog() {
+      const logDiv = document.getElementById('debugLog');
+      if (logDiv) logDiv.innerHTML = '';
+    }
     
     
     
@@ -1612,6 +1664,7 @@
       // ✅ Kakao Local API 사용 (무료)
       if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.services) {
         console.error('❌ Kakao Maps API가 로드되지 않았습니다.');
+        mobileLog('❌ 좌표변환 실패: Kakao API 미로드');
         return { latitude: null, longitude: null };
       }
       
@@ -1625,6 +1678,7 @@
             
             console.log('✅ 좌표 변환 성공:', lat, lng);
             console.log('📍 상세 주소:', result[0].address_name);
+            mobileLog(`✅ 좌표변환 성공: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
             
             resolve({ 
               latitude: lat, 
@@ -1633,6 +1687,7 @@
             });
           } else {
             console.warn('❌ 좌표 변환 실패 - Status:', status, '주소:', cleanAddress);
+            mobileLog(`❌ 좌표변환 실패: ${cleanAddress}`);
             resolve({ latitude: null, longitude: null });
           }
         });
@@ -1962,6 +2017,9 @@
     
     // 간단한 지도 보기 - Kakao Maps 사용
     async function openMapModal() {
+      clearMobileLog(); // 로그 초기화
+      mobileLog('🗺️ 지도 열기 시작...');
+      
       if (clients.length === 0) {
         alert('지도에 표시할 고객이 없습니다.');
         return;
@@ -1969,6 +2027,7 @@
       
       // 좌표가 있는 고객 필터링
       const clientsWithCoords = clients.filter(c => c.latitude && c.longitude);
+      mobileLog(`📊 전체 고객: ${clients.length}명, 좌표 있음: ${clientsWithCoords.length}명`);
       
       if (clientsWithCoords.length === 0) {
         alert('⚠️ 좌표가 등록된 고객이 없습니다.\n\n좌표는 고객 정보를 개별 수정할 때 자동으로 생성됩니다.\n\n💡 고객 수정 → 주소 입력 후 저장');
@@ -1976,7 +2035,7 @@
       }
       
       // ✅ Kakao Maps API 로딩 확인 및 대기
-      console.log('🗺️ Kakao Maps SDK 로딩 확인 중...');
+      mobileLog('🔍 Kakao Maps SDK 로딩 확인 중...');
       
       // SDK가 로드될 때까지 최대 5초 대기
       let attempts = 0;
@@ -1984,42 +2043,46 @@
       
       while (attempts < maxAttempts) {
         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.Map) {
-          console.log('✅ Kakao Maps SDK 로드 완료!');
+          mobileLog(`✅ Kakao Maps SDK 로드 완료! (${attempts * 100}ms)`);
           break;
         }
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
+        if (attempts % 10 === 0) {
+          mobileLog(`⏳ SDK 로딩 대기 중... (${attempts * 100}ms)`);
+        }
       }
       
       if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
+        mobileLog('❌ Kakao Maps SDK 로딩 실패!');
         alert('⚠️ Kakao Maps API 로딩 실패\n\n페이지를 새로고침 후 다시 시도해주세요.\n\n인터넷 연결을 확인해주세요.');
-        console.error('❌ Kakao Maps SDK 로딩 실패');
         return;
       }
       
       // 모달 열기
+      mobileLog('📱 모달 창 열기...');
       openModal('mapModal');
       
       // ✅ 모바일 지원: 모달 애니메이션이 완료된 후 지도 생성 (300ms 대기)
       setTimeout(() => {
         try {
-          console.log('🗺️ 지도 생성 시작...');
+          mobileLog('🗺️ 지도 생성 시작...');
           
           // 지도 컨테이너
           const mapDiv = document.getElementById('clientMap');
           if (!mapDiv) {
-            console.error('❌ clientMap 요소를 찾을 수 없습니다.');
+            mobileLog('❌ clientMap 요소를 찾을 수 없습니다.');
             alert('지도 컨테이너를 찾을 수 없습니다.');
             return;
           }
           
-          console.log('✅ 지도 컨테이너 확인 완료');
-          console.log('📍 첫 번째 고객 좌표:', clientsWithCoords[0].latitude, clientsWithCoords[0].longitude);
+          mobileLog('✅ 지도 컨테이너 확인 완료');
+          mobileLog(`📍 첫 고객 좌표: ${clientsWithCoords[0].latitude}, ${clientsWithCoords[0].longitude}`);
           
           // 첫 번째 고객 위치를 중심으로
           const center = new kakao.maps.LatLng(clientsWithCoords[0].latitude, clientsWithCoords[0].longitude);
           
-          console.log('🗺️ 카카오 지도 객체 생성 중...');
+          mobileLog('🗺️ 카카오 지도 객체 생성 중...');
           
           // Kakao 지도 생성
           const map = new kakao.maps.Map(mapDiv, {
@@ -2027,13 +2090,13 @@
             level: 6
           });
           
-          console.log('✅ 카카오 지도 객체 생성 완료!');
+          mobileLog('✅ 카카오 지도 객체 생성 완료!');
           
           // ✅ 모바일 지원: 지도 크기 재계산 (필수!)
           setTimeout(() => {
-            console.log('🔄 지도 크기 재계산 중...');
+            mobileLog('🔄 지도 크기 재계산 중...');
             map.relayout();
-            console.log('✅ 지도 크기 재계산 완료!');
+            mobileLog('✅ 지도 크기 재계산 완료!');
           }, 100);
         
         // 지도 타입 컨트롤 추가
@@ -2103,13 +2166,15 @@
                 🎁 상령일: ${client.sangryeong}
               </p>` : ''}
               <div style="margin-top: 10px; display: flex; gap: 6px;">
-                <a href="kakaonavi://navigate?ep=${client.longitude},${client.latitude}&by=CAR" 
+                <a href="https://map.kakao.com/link/to/${encodeURIComponent(client.name)},${client.latitude},${client.longitude}" 
+                   target="_blank"
                    style="padding: 8px 14px; background: #FEE500; color: #3C1E1E; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 600; display: inline-block; flex: 1; text-align: center;">
-                  🗺️ 카카오
+                  🗺️ 카카오맵
                 </a>
-                <a href="tmap://route?goalname=${encodeURIComponent(client.name)}&goalx=${client.longitude}&goaly=${client.latitude}" 
-                   style="padding: 8px 14px; background: #1E40AF; color: white; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 600; display: inline-block; flex: 1; text-align: center;">
-                  🗺️ T맵
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${client.latitude},${client.longitude}" 
+                   target="_blank"
+                   style="padding: 8px 14px; background: #4285F4; color: white; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 600; display: inline-block; flex: 1; text-align: center;">
+                  🗺️ 구글맵
                 </a>
               </div>
             </div>
@@ -2158,9 +2223,14 @@
           markerCount.innerHTML = `총 <strong style="color: #FF6B00;">${clientsWithCoords.length}명</strong>의 고객 위치 | 마커를 클릭하면 상세 정보를 볼 수 있습니다`;
         }
         
-        console.log(`✅ 카카오 지도 열기: 총 ${clientsWithCoords.length}명 마커 표시 완료`);
+        mobileLog(`✅✅✅ 지도 표시 완료! 총 ${clientsWithCoords.length}명 마커 표시`);
+        mobileLog('💡 이제 지도를 확인하세요!');
         
       } catch (error) {
+        mobileLog('❌ 지도 생성 오류 발생!');
+        mobileLog(`오류 내용: ${error.message}`);
+        mobileLog(`kakao 객체: ${typeof kakao !== 'undefined' ? '있음' : '없음'}`);
+        
         console.error('❌ 지도 생성 오류:', error);
         console.error('오류 상세:', error.message);
         console.error('오류 스택:', error.stack);
@@ -2168,11 +2238,7 @@
         
         let errorMessage = '⚠️ 지도를 표시할 수 없습니다.\n\n';
         errorMessage += '오류: ' + error.message + '\n\n';
-        errorMessage += '다음을 확인해주세요:\n';
-        errorMessage += '1. 인터넷 연결 확인\n';
-        errorMessage += '2. 페이지 새로고침 후 다시 시도\n';
-        errorMessage += '3. 브라우저 콘솔(F12)에서 자세한 오류 확인\n\n';
-        errorMessage += 'kakao 객체 상태: ' + (typeof kakao !== 'undefined' ? '로드됨' : '로드 안됨');
+        errorMessage += '화면 하단의 디버그 로그를 확인해주세요.';
         
         alert(errorMessage);
       }
