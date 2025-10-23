@@ -847,15 +847,16 @@
         </div>
       </div>
       <div class="controls-buttons">
-        <button class="btn btn-google-drive" onclick="handleGoogleDriveConnect()">🔗 구글 드라이브 연동</button>
-        <button class="btn btn-primary" onclick="openAddModal()">➕ 고객 추가</button>
-        <button class="btn btn-secondary" onclick="openBulkUploadModal()">📥 단체 등록</button>
-        <button class="btn btn-contacts-import" onclick="importFromGoogleContacts()">📱 폰 연락처 가져오기</button>
-        <button class="btn btn-contacts-sync" onclick="syncWithGoogleContacts()">🔄 연락처 동기화</button>
-        <button class="btn btn-secondary" onclick="exportToExcel()">📤 엑셀 내보내기</button>
-        <button class="btn btn-map" onclick="openMapModal()">🗺️ 지도에서 보기</button>
-        <button class="btn btn-delete-selected" id="deleteSelectedBtn" onclick="deleteSelected()">🗑️ 선택 삭제</button>
-        <button class="btn btn-send-selected" id="sendSelectedBtn" onclick="sendToSelected()">📧 선택 발송</button>
+        <button class="btn btn-google-drive" onclick="handleGoogleDriveConnect()">구글연동</button>
+        <button class="btn btn-primary" onclick="openAddModal()">고객+</button>
+        <button class="btn btn-secondary" onclick="openBulkUploadModal()">단체+</button>
+        <button class="btn btn-contacts-import" onclick="importFromGoogleContacts()">폰→PG</button>
+        <button class="btn btn-contacts-sync" onclick="syncWithGoogleContacts()">연락처동기화</button>
+        <button class="btn btn-contacts-import" onclick="exportToGoogleContacts()">PG→폰</button>
+        <button class="btn btn-secondary" onclick="exportToExcel()">to엑셀</button>
+        <button class="btn btn-map" onclick="openMapModal()">지도</button>
+        <button class="btn btn-delete-selected" id="deleteSelectedBtn" onclick="deleteSelected()">선택삭제</button>
+        <button class="btn btn-send-selected" id="sendSelectedBtn" onclick="sendToSelected()">선택발송</button>
       </div>
     </div>
 
@@ -2789,7 +2790,7 @@
           anniversaryName: '',
           anniversary: '',
           email: contact.emailAddresses?.[0]?.value || '',
-          memo: '폰 연락처에서 가져옴',
+          memo: '폰→PG 가져옴',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -2805,6 +2806,64 @@
       loading.classList.add('hide');
       
       alert(`✅ 완료!\n\n추가: ${added}명\n건너뜀: ${skipped}명\n\n(중복 또는 정보 부족)`);
+    }
+    
+    // 프로그램 → 폰 연락처 내보내기 (단방향)
+    async function exportToGoogleContacts() {
+      if (!accessToken) {
+        alert('먼저 "구글연동" 버튼을 클릭하여 로그인해주세요.');
+        return;
+      }
+      
+      if (clients.length === 0) {
+        alert('내보낼 고객이 없습니다.');
+        return;
+      }
+      
+      const confirmed = confirm(
+        `📱 PG → 폰 연락처 내보내기\n\n` +
+        `프로그램의 ${clients.length}명 고객을 폰 연락처에 저장하시겠습니까?\n\n` +
+        `⚠️ 시간이 다소 걸릴 수 있습니다.`
+      );
+      
+      if (!confirmed) return;
+      
+      const loading = document.getElementById('loading');
+      loading.classList.remove('hide');
+      loading.querySelector('.loading-text').textContent = '폰에 저장 중...';
+      
+      try {
+        let uploaded = 0;
+        let failed = 0;
+        
+        for (const client of clients) {
+          loading.querySelector('.loading-text').textContent = `폰에 저장 중... (${uploaded + 1}/${clients.length}) - ${client.name}`;
+          
+          try {
+            await saveToGoogleContacts(client);
+            uploaded++;
+          } catch (error) {
+            console.error(`${client.name} 저장 실패:`, error);
+            failed++;
+          }
+          
+          // API 제한 방지를 위한 짧은 지연
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        loading.classList.add('hide');
+        
+        if (failed > 0) {
+          alert(`✅ 내보내기 완료!\n\n성공: ${uploaded}명\n실패: ${failed}명\n\n폰 연락처에 저장되었습니다! 📱`);
+        } else {
+          alert(`✅ 내보내기 완료!\n\n${uploaded}명의 고객이 폰 연락처에 저장되었습니다! 📱`);
+        }
+        
+      } catch (error) {
+        console.error('❌ 내보내기 오류:', error);
+        loading.classList.add('hide');
+        alert('폰 연락처 내보내기 중 오류가 발생했습니다.\n\n나중에 다시 시도해주세요.');
+      }
     }
     
     // 양방향 동기화
