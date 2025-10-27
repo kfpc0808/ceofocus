@@ -1343,38 +1343,101 @@
         }
 
         // ===== 데이터 및 템플릿 =====
-        const COVERAGE_TEMPLATES = [
-            { name: '일반사망', recommended: 100000000, category: '사망' },
-            { name: '재해사망', recommended: 100000000, category: '사망' },
-            { name: '교통재해사망', recommended: 50000000, category: '사망' },
-            { name: '일반암 진단금', recommended: 100000000, category: '암' },
-            { name: '소액암 진단금', recommended: 5000000, category: '암' },
-            { name: '고액암 진단금', recommended: 30000000, category: '암' },
-            { name: '유사암 진단금', recommended: 2000000, category: '암' },
-            { name: '암 직접치료비', recommended: 30000000, category: '암' },
-            { name: '암입원비', recommended: 50000, category: '암' },
-            { name: '암수술비', recommended: 2000000, category: '암' },
-            { name: '뇌출혈 진단금', recommended: 50000000, category: '뇌/심장' },
-            { name: '뇌경색 진단금', recommended: 50000000, category: '뇌/심장' },
-            { name: '급성심근경색 진단금', recommended: 50000000, category: '뇌/심장' },
-            { name: '허혈성심장질환', recommended: 30000000, category: '뇌/심장' },
-            { name: '중대한질병(CI)', recommended: 50000000, category: 'CI' },
-            { name: '입원일당(질병)', recommended: 50000, category: '일상생활' },
-            { name: '입원일당(재해)', recommended: 50000, category: '일상생활' },
-            { name: '수술비(질병)', recommended: 1000000, category: '일상생활' },
-            { name: '수술비(재해)', recommended: 1000000, category: '일상생활' },
-            { name: '수술종별 1종', recommended: 500000, category: '일상생활' },
-            { name: '수술종별 2종', recommended: 250000, category: '일상생활' },
-            { name: '수술종별 3종', recommended: 100000, category: '일상생활' },
-            { name: '통원(외래)', recommended: 30000, category: '일상생활' },
-            { name: '처방조제비', recommended: 20000, category: '일상생활' },
-            { name: '실손의료비', recommended: 50000000, category: '일상생활' },
-            { name: '골절진단금', recommended: 500000, category: '기타' },
-            { name: '화상진단금', recommended: 1000000, category: '기타' },
-            { name: '깁스치료비', recommended: 100000, category: '기타' },
-            { name: '장해80% 보장', recommended: 50000000, category: '기타' },
-            { name: '장해100% 보장', recommended: 100000000, category: '기타' }
+        // 기본 권장 보장 금액 (개인화 전 기준값)
+        const BASE_COVERAGE = [
+            { name: '일반사망', base: 100000000, category: '사망', type: 'death' },
+            { name: '재해사망', base: 100000000, category: '사망', type: 'death' },
+            { name: '교통재해사망', base: 50000000, category: '사망', type: 'death' },
+            { name: '일반암 진단금', base: 100000000, category: '암', type: 'critical' },
+            { name: '소액암 진단금', base: 5000000, category: '암', type: 'critical' },
+            { name: '고액암 진단금', base: 30000000, category: '암', type: 'critical' },
+            { name: '유사암 진단금', base: 2000000, category: '암', type: 'critical' },
+            { name: '암 직접치료비', base: 30000000, category: '암', type: 'critical' },
+            { name: '암입원비', base: 50000, category: '암', type: 'daily' },
+            { name: '암수술비', base: 2000000, category: '암', type: 'surgery' },
+            { name: '뇌출혈 진단금', base: 50000000, category: '뇌/심장', type: 'critical' },
+            { name: '뇌경색 진단금', base: 50000000, category: '뇌/심장', type: 'critical' },
+            { name: '급성심근경색 진단금', base: 50000000, category: '뇌/심장', type: 'critical' },
+            { name: '허혈성심장질환', base: 30000000, category: '뇌/심장', type: 'critical' },
+            { name: '중대한질병(CI)', base: 50000000, category: 'CI', type: 'critical' },
+            { name: '입원일당(질병)', base: 50000, category: '일상생활', type: 'daily' },
+            { name: '입원일당(재해)', base: 50000, category: '일상생활', type: 'daily' },
+            { name: '수술비(질병)', base: 1000000, category: '일상생활', type: 'surgery' },
+            { name: '수술비(재해)', base: 1000000, category: '일상생활', type: 'surgery' },
+            { name: '수술종별 1종', base: 500000, category: '일상생활', type: 'surgery' },
+            { name: '수술종별 2종', base: 250000, category: '일상생활', type: 'surgery' },
+            { name: '수술종별 3종', base: 100000, category: '일상생활', type: 'surgery' },
+            { name: '통원(외래)', base: 30000, category: '일상생활', type: 'daily' },
+            { name: '처방조제비', base: 20000, category: '일상생활', type: 'daily' },
+            { name: '실손의료비', base: 50000000, category: '일상생활', type: 'medical' },
+            { name: '골절진단금', base: 500000, category: '기타', type: 'injury' },
+            { name: '화상진단금', base: 1000000, category: '기타', type: 'injury' },
+            { name: '깁스치료비', base: 100000, category: '기타', type: 'injury' },
+            { name: '장해80% 보장', base: 50000000, category: '기타', type: 'disability' },
+            { name: '장해100% 보장', base: 100000000, category: '기타', type: 'disability' }
         ];
+
+        // 개인화된 권장 보장 금액 계산 함수
+        const calculateRecommendedAmount = (coverageItem, customer) => {
+            const baseItem = BASE_COVERAGE.find(item => item.name === coverageItem.name);
+            if (!baseItem) return coverageItem.base || 0;
+            
+            let recommended = baseItem.base;
+            const age = parseInt(customer.age) || 40;
+            const annualIncome = parseInt(customer.annualIncome) || 0;
+            const hasSpouse = customer.hasSpouse || false;
+            const childrenCount = customer.children ? customer.children.filter(c => c.name && c.name.trim()).length : 0;
+            
+            // 1. 연령별 보정 (나이가 많을수록 보장 필요성 증가)
+            let ageFactor = 1.0;
+            if (age < 30) ageFactor = 0.7;
+            else if (age < 40) ageFactor = 0.85;
+            else if (age < 50) ageFactor = 1.0;
+            else if (age < 60) ageFactor = 1.15;
+            else ageFactor = 1.3;
+            
+            // 2. 소득 반영 (일정 금액 이상만)
+            let incomeFactor = 1.0;
+            if (annualIncome > 0) {
+                if (baseItem.type === 'death') {
+                    // 사망 보장: 연소득의 5배를 기준으로 (최소 기본값)
+                    recommended = Math.max(baseItem.base, annualIncome * 5);
+                } else if (baseItem.type === 'critical') {
+                    // 중대 질병: 연소득의 2배를 기준으로 (최소 기본값)
+                    recommended = Math.max(baseItem.base, annualIncome * 2);
+                }
+            }
+            
+            // 3. 가족 구성 반영 (사망 보장에만 적용)
+            if (baseItem.type === 'death') {
+                if (hasSpouse) recommended *= 1.2; // 배우자 있으면 +20%
+                if (childrenCount > 0) recommended *= (1 + childrenCount * 0.1); // 자녀 1명당 +10%
+            }
+            
+            // 4. 연령 보정 최종 적용 (사망 보장 제외, 이미 소득 반영됨)
+            if (baseItem.type !== 'death') {
+                recommended *= ageFactor;
+            }
+            
+            // 만원 단위로 반올림
+            return Math.round(recommended / 10000) * 10000;
+        };
+
+        // COVERAGE_TEMPLATES 호환을 위한 함수
+        const getCoverageTemplates = (customer = {}) => {
+            return BASE_COVERAGE.map(item => ({
+                name: item.name,
+                recommended: calculateRecommendedAmount(item, customer),
+                category: item.category
+            }));
+        };
+
+        // 기본 COVERAGE_TEMPLATES (고객 정보 없을 때)
+        const COVERAGE_TEMPLATES = BASE_COVERAGE.map(item => ({
+            name: item.name,
+            recommended: item.base,
+            category: item.category
+        }));
 
         const CATEGORIES = ['사망', '암', '뇌/심장', 'CI', '일상생활', '기타'];
         
@@ -2861,7 +2924,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     });
                 });
 
-                const results = COVERAGE_TEMPLATES.map(template => {
+                const results = getCoverageTemplates(customer).map(template => {
                     const currentAmount = coverageMap.get(template.name) || 0;
                     const recommendedAmount = template.recommended;
                     const coverageRate = recommendedAmount > 0 ? Math.min((currentAmount / recommendedAmount) * 100, 100) : 0;
@@ -3619,6 +3682,28 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                             ))}
                                         </div>
                                     )}
+                                    
+                                    {/* 권장 보장 기준 안내 */}
+                                    <div style={{
+                                        marginTop: '1.5rem', 
+                                        padding: '1rem 1.25rem', 
+                                        background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+                                        borderLeft: '4px solid var(--primary-color)',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <div style={{display: 'flex', alignItems: 'start', gap: '0.75rem'}}>
+                                            <span style={{fontSize: '1.25rem', marginTop: '0.125rem'}}>ℹ️</span>
+                                            <div>
+                                                <div style={{fontWeight: '600', color: 'var(--primary-color)', marginBottom: '0.5rem'}}>
+                                                    권장 보장금 산정 기준
+                                                </div>
+                                                <div style={{fontSize: '0.9rem', lineHeight: '1.6', color: 'var(--gray-700)'}}>
+                                                    입력하신 <strong>연령, 연소득, 가족 구성</strong>은 고객님께 최적화된 권장 보장금액을 산정하는 중요한 기준이 됩니다. 
+                                                    정확한 정보를 입력하실수록 더 적합한 보장 분석을 받으실 수 있습니다.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="form-section">
@@ -3791,6 +3876,123 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                         {currentTab === 'analysis' && (
                             <div className="form-section analysis-result">
                                 <h2>📊 보장 분석 현황</h2>
+                                
+                                {/* 권장 보장 기준 상세 설명 */}
+                                <div style={{
+                                    padding: '1.5rem',
+                                    background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                                    borderRadius: '12px',
+                                    border: '2px solid #3b82f6',
+                                    marginBottom: '2rem'
+                                }}>
+                                    <div style={{display: 'flex', alignItems: 'start', gap: '1rem', marginBottom: '1rem'}}>
+                                        <span style={{fontSize: '1.75rem'}}>📐</span>
+                                        <div style={{flex: 1}}>
+                                            <h3 style={{
+                                                color: 'var(--primary-color)', 
+                                                marginBottom: '0.75rem',
+                                                fontSize: '1.1rem',
+                                                fontWeight: '700'
+                                            }}>
+                                                권장 보장금 산정 기준 안내
+                                            </h3>
+                                            <div style={{
+                                                fontSize: '0.95rem',
+                                                lineHeight: '1.8',
+                                                color: 'var(--gray-800)'
+                                            }}>
+                                                <p style={{marginBottom: '1rem'}}>
+                                                    {customer.name}님의 보장 분석에 적용된 권장 금액은 입력하신 정보를 바탕으로 개인화되었습니다:
+                                                </p>
+                                                
+                                                <div style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                                                    gap: '1rem',
+                                                    marginBottom: '1rem'
+                                                }}>
+                                                    <div style={{
+                                                        background: 'white',
+                                                        padding: '1rem',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #bfdbfe'
+                                                    }}>
+                                                        <div style={{fontWeight: '600', color: '#2563eb', marginBottom: '0.5rem'}}>
+                                                            📅 연령별 보정
+                                                        </div>
+                                                        <div style={{fontSize: '0.875rem', lineHeight: '1.6'}}>
+                                                            • 20대: 기본 금액의 70%<br/>
+                                                            • 30대: 기본 금액의 85%<br/>
+                                                            • 40대: 기본 금액의 100%<br/>
+                                                            • 50대: 기본 금액의 115%<br/>
+                                                            • 60대 이상: 기본 금액의 130%<br/>
+                                                            <em style={{color: '#6b7280', fontSize: '0.8125rem'}}>
+                                                                ※ 나이가 많을수록 위험도 증가
+                                                            </em>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div style={{
+                                                        background: 'white',
+                                                        padding: '1rem',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #bfdbfe'
+                                                    }}>
+                                                        <div style={{fontWeight: '600', color: '#2563eb', marginBottom: '0.5rem'}}>
+                                                            💰 소득별 보정
+                                                        </div>
+                                                        <div style={{fontSize: '0.875rem', lineHeight: '1.6'}}>
+                                                            • <strong>사망 보장:</strong> 연소득 × 5배<br/>
+                                                            <em style={{color: '#6b7280', fontSize: '0.8125rem'}}>
+                                                                (유족의 생활 안정 기준)
+                                                            </em><br/>
+                                                            • <strong>중대 질병:</strong> 연소득 × 2배<br/>
+                                                            <em style={{color: '#6b7280', fontSize: '0.8125rem'}}>
+                                                                (치료비 + 소득 상실)
+                                                            </em><br/>
+                                                            • <strong>일상 보장:</strong> 기본 금액 적용
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div style={{
+                                                        background: 'white',
+                                                        padding: '1rem',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #bfdbfe'
+                                                    }}>
+                                                        <div style={{fontWeight: '600', color: '#2563eb', marginBottom: '0.5rem'}}>
+                                                            👨‍👩‍👧‍👦 가족 구성 반영
+                                                        </div>
+                                                        <div style={{fontSize: '0.875rem', lineHeight: '1.6'}}>
+                                                            <strong>사망 보장에만 적용:</strong><br/>
+                                                            • 배우자 있음: +20%<br/>
+                                                            • 자녀 1명당: +10%<br/>
+                                                            <em style={{color: '#6b7280', fontSize: '0.8125rem', display: 'block', marginTop: '0.5rem'}}>
+                                                                예) 배우자 + 자녀 2명<br/>
+                                                                → 기본금액 × 1.4배
+                                                            </em>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style={{
+                                                    padding: '0.875rem',
+                                                    background: '#dbeafe',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.875rem',
+                                                    color: '#1e40af'
+                                                }}>
+                                                    <strong>💡 {customer.name}님의 적용 정보:</strong><br/>
+                                                    연령 {customer.age}세 / 연소득 {customer.annualIncome ? formatAmountKorean(customer.annualIncome) : '미입력'} / 
+                                                    가족 {customer.hasSpouse ? '배우자 있음' : '배우자 없음'}
+                                                    {customer.hasSpouse && customer.children && customer.children.filter(c => c.name && c.name.trim()).length > 0 
+                                                        ? `, 자녀 ${customer.children.filter(c => c.name && c.name.trim()).length}명` 
+                                                        : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 {/* Before & After 비교 카드 */}
                                 <div className="before-after-container">
