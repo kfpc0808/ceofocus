@@ -1289,7 +1289,7 @@
                 <div class="status-dot" id="statusDot"></div>
                 <span id="statusText">오프라인</span>
             </div>
-            <button class="btn btn-secondary" id="installBtn" onclick="installPWA()" style="display:none;">
+            <button class="btn btn-secondary" id="installBtn" onclick="installPWA()">
                 📱 홈추가
             </button>
             <button class="btn" id="connectBtn" onclick="connectDrive()">☁️ Drive 연결</button>
@@ -4136,37 +4136,33 @@ Backspace      빈 줄에서 누르면 삭제</pre>
     
     // PWA 설치 이벤트 처리
     let deferredPrompt;
-    const installBtn = document.getElementById('installBtn');
     
     window.addEventListener('beforeinstallprompt', (e) => {
         // 기본 설치 배너 방지
         e.preventDefault();
         deferredPrompt = e;
-        // 설치 버튼 표시
-        installBtn.style.display = 'inline-block';
         console.log('💡 PWA 설치 가능');
     });
     
     window.installPWA = async () => {
-        if (!deferredPrompt) {
-            // iOS Safari 또는 이미 설치된 경우
-            showIOSInstallInstructions();
+        // Chrome/Edge에서 설치 가능한 경우
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('✅ PWA 설치됨');
+                showToast('✅ 홈화면에 추가되었습니다!');
+            } else {
+                console.log('❌ PWA 설치 취소됨');
+            }
+            
+            deferredPrompt = null;
             return;
         }
         
-        // 설치 프롬프트 표시
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        
-        if (outcome === 'accepted') {
-            console.log('✅ PWA 설치됨');
-            showToast('✅ 홈화면에 추가되었습니다!');
-        } else {
-            console.log('❌ PWA 설치 취소됨');
-        }
-        
-        deferredPrompt = null;
-        installBtn.style.display = 'none';
+        // 설치 프롬프트가 없는 경우 - 플랫폼별 안내
+        showIOSInstallInstructions();
     };
     
     // iOS Safari를 위한 설치 안내
@@ -4186,14 +4182,12 @@ Backspace      빈 줄에서 누르면 삭제</pre>
     // 앱 설치 완료 이벤트
     window.addEventListener('appinstalled', () => {
         console.log('✅ PWA 설치 완료');
-        installBtn.style.display = 'none';
         deferredPrompt = null;
     });
     
     // 페이지 로드 시 이미 설치되어 있는지 확인
     if (window.matchMedia('(display-mode: standalone)').matches) {
         console.log('✅ 앱 모드로 실행 중');
-        installBtn.style.display = 'none';
     }
 </script>
 
