@@ -1409,7 +1409,7 @@
 
         // ===== 유틸리티 함수 =====
         const formatNumber = (num) => {
-            if (!num && num !== 0) return '';
+            if (!num || num === 0 || num === '' || num === '0') return '';
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         };
 
@@ -2140,10 +2140,10 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             
             const [customer, setCustomer] = useState({
                 name: '',
-                age: 30,
+                age: '', // 빈 값으로 시작
                 gender: '남성',
                 occupation: '',
-                annualIncome: 0,
+                annualIncome: '', // 빈 값으로 시작
                 hasSpouse: false,
                 spouse: {
                     name: '',
@@ -2284,7 +2284,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     });
                     
                     setSyncStatus('동기화됨');
-                }, 200); // 200ms 디바운싱 (더 빠른 실시간 동기화)
+                }, 800); // 800ms 디바운싱 (타이핑 완료 후 업데이트)
 
                 return () => clearTimeout(timeoutId);
             }, [customer, insurances, consultant, analysisResults, summary, opinions, currentSessionId]);
@@ -2388,12 +2388,19 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             const startNewAnalysis = () => {
                 setCustomer({
                     name: '',
-                    age: 30,
+                    age: '', // 빈 값으로 시작
                     gender: '남성',
                     occupation: '',
-                    annualIncome: 0,
+                    annualIncome: '', // 빈 값으로 시작
                     hasSpouse: false,
-                    numberOfChildren: 0
+                    spouse: {
+                        name: '',
+                        birthDate: ''
+                    },
+                    children: [
+                        { id: 1, name: '', birthDate: '' },
+                        { id: 2, name: '', birthDate: '' }
+                    ]
                 });
                 setInsurances([]);
                 setAnalysisResults([]);
@@ -2446,7 +2453,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     id: Date.now(),
                     company: '',
                     productName: '',
-                    monthlyPremium: 0,
+                    monthlyPremium: '', // 빈 값으로 시작
                     startDate: '',
                     endDate: '',
                     coverages: []
@@ -2507,7 +2514,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                 ...names.map(name => ({
                                     id: Date.now() + Math.random(),
                                     name: name,
-                                    amount: 0
+                                    amount: '' // 빈 값으로 시작
                                 }))
                             ]
                         }
@@ -2533,7 +2540,11 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
 
             const handleStartAnalysis = () => {
                 if (!customer.name) {
-                    alert('고객 정보를 먼저 입력해주세요.');
+                    alert('고객 이름을 입력해주세요.');
+                    return;
+                }
+                if (!customer.age || customer.age === '' || customer.age < 1 || customer.age > 120) {
+                    alert('고객 나이를 올바르게 입력해주세요. (1~120세)');
                     return;
                 }
                 if (insurances.length === 0) {
@@ -2550,7 +2561,8 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 insurances.forEach(insurance => {
                     insurance.coverages.forEach(coverage => {
                         const current = coverageMap.get(coverage.name) || 0;
-                        coverageMap.set(coverage.name, current + coverage.amount);
+                        const amount = typeof coverage.amount === 'number' ? coverage.amount : (parseInt(coverage.amount) || 0);
+                        coverageMap.set(coverage.name, current + amount);
                     });
                 });
 
@@ -2584,7 +2596,10 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 const recommend = results.filter(r => r.status === 'recommend').length;
                 const insufficient = results.filter(r => r.status === 'insufficient').length;
                 const none = results.filter(r => r.status === 'none').length;
-                const totalPremium = insurances.reduce((sum, ins) => sum + ins.monthlyPremium, 0);
+                const totalPremium = insurances.reduce((sum, ins) => {
+                    const premium = typeof ins.monthlyPremium === 'number' ? ins.monthlyPremium : (parseInt(ins.monthlyPremium) || 0);
+                    return sum + premium;
+                }, 0);
                 const summaryText = generateSummary(customer, adequate, recommend, insufficient, none, totalPremium, consultant);
                 setSummary(summaryText);
 
@@ -3100,8 +3115,17 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                             <label>나이 *</label>
                                             <input
                                                 type="number"
-                                                value={customer.age}
-                                                onChange={(e) => setCustomer({...customer, age: parseInt(e.target.value) || 0})}
+                                                value={customer.age === '' ? '' : customer.age}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setCustomer({
+                                                        ...customer, 
+                                                        age: value === '' ? '' : parseInt(value) || ''
+                                                    });
+                                                }}
+                                                placeholder="나이 입력"
+                                                min="1"
+                                                max="120"
                                             />
                                         </div>
                                         <div className="form-group compact">
@@ -3131,9 +3155,12 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                 value={formatNumber(customer.annualIncome)}
                                                 onChange={(e) => {
                                                     const value = e.target.value.replace(/,/g, '');
-                                                    setCustomer({...customer, annualIncome: parseInt(value) || 0});
+                                                    setCustomer({
+                                                        ...customer, 
+                                                        annualIncome: value === '' ? '' : parseInt(value) || ''
+                                                    });
                                                 }}
-                                                placeholder="예) 60,000,000"
+                                                placeholder="연소득 입력 (예: 60,000,000)"
                                             />
                                         </div>
                                         <div className="form-group compact checkbox-group">
@@ -3353,9 +3380,9 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                                 value={formatNumber(insurance.monthlyPremium)}
                                                                 onChange={(e) => {
                                                                     const value = e.target.value.replace(/,/g, '');
-                                                                    updateInsurance(insurance.id, 'monthlyPremium', parseInt(value) || 0);
+                                                                    updateInsurance(insurance.id, 'monthlyPremium', value === '' ? '' : parseInt(value) || '');
                                                                 }}
-                                                                placeholder="예) 150,000"
+                                                                placeholder="월 보험료 입력 (예: 150,000)"
                                                             />
                                                         </div>
                                                         <div className="form-group" style={{margin: 0}}>
@@ -3416,9 +3443,9 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                                                 value={formatNumber(coverage.amount)}
                                                                                 onChange={(e) => {
                                                                                     const value = e.target.value.replace(/,/g, '');
-                                                                                    updateCoverage(insurance.id, coverage.id, parseInt(value) || 0);
+                                                                                    updateCoverage(insurance.id, coverage.id, value === '' ? '' : parseInt(value) || '');
                                                                                 }}
-                                                                                placeholder="0"
+                                                                                placeholder="금액 입력"
                                                                                 style={{padding: '0.5rem', border: '1px solid var(--gray-300)', borderRadius: '0.25rem'}}
                                                                             />
                                                                             <span className="coverage-unit">원 💡</span>
