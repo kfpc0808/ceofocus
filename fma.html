@@ -1536,47 +1536,107 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
         };
 
-        // Google Drive 초기화 (간소화)
+        // Google Drive 초기화 및 인증 (client.html 방식)
+        let tokenClient;
+        let accessToken = null;
+        let gisInited = false;
+        
+        // 로그인 상태 저장
+        const saveLoginState = () => {
+            if (accessToken) {
+                localStorage.setItem('googleAccessToken', accessToken);
+                localStorage.setItem('tokenExpiry', Date.now() + 3600000); // 1시간
+            }
+        };
+        
+        // 로그인 상태 복원
+        const restoreLoginState = () => {
+            const token = localStorage.getItem('googleAccessToken');
+            const expiry = localStorage.getItem('tokenExpiry');
+            
+            if (token && expiry && Date.now() < parseInt(expiry)) {
+                accessToken = token;
+                return true;
+            }
+            
+            localStorage.removeItem('googleAccessToken');
+            localStorage.removeItem('tokenExpiry');
+            return false;
+        };
+        
+        // Google Identity Services 초기화 (페이지 로드 시 한 번만)
         const initGoogleDrive = async () => {
-            // fetch API를 사용하므로 gapi.client 초기화 불필요
-            // 단순히 Google Identity Services 로드 대기
             return new Promise((resolve) => {
-                // GIS 라이브러리 로드 확인
+                let attempts = 0;
+                const maxAttempts = 50;
+                
                 const checkGIS = setInterval(() => {
+                    attempts++;
                     if (window.google && window.google.accounts) {
                         clearInterval(checkGIS);
+                        
+                        // tokenClient 초기화 (한 번만)
+                        tokenClient = google.accounts.oauth2.initTokenClient({
+                            client_id: GOOGLE_CLIENT_ID,
+                            scope: 'https://www.googleapis.com/auth/drive.file',
+                            callback: (response) => {
+                                if (response.error) {
+                                    console.error('❌ 인증 오류:', response.error);
+                                    alert('Google 로그인에 실패했습니다: ' + response.error);
+                                } else {
+                                    accessToken = response.access_token;
+                                    saveLoginState();
+                                    console.log('✅ Google Drive 인증 완료!');
+                                }
+                            }
+                        });
+                        
+                        gisInited = true;
                         console.log('✅ Google Identity Services 로드 완료');
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkGIS);
+                        console.warn('⚠️ Google API 로드 지연');
                         resolve();
                     }
                 }, 100);
-                
-                // 5초 타임아웃
-                setTimeout(() => {
-                    clearInterval(checkGIS);
-                    console.warn('⚠️ Google Identity Services 로드 시간 초과');
-                    resolve(); // 에러 대신 resolve (계속 진행)
-                }, 5000);
             });
         };
-
-        let tokenClient;
-        let accessToken = null; // 전역 변수로 토큰 저장
         
+        // Drive 접근 권한 요청 (필요 시에만)
         const requestDriveAccess = async () => {
+            // 이미 토큰이 있으면 재사용
+            if (accessToken) {
+                console.log('✅ 기존 토큰 사용');
+                return accessToken;
+            }
+            
+            // GIS가 초기화되지 않았으면 먼저 초기화
+            if (!gisInited) {
+                await initGoogleDrive();
+            }
+            
+            // 토큰 요청 (처음 한 번만 또는 만료 시)
             return new Promise((resolve, reject) => {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: 'https://www.googleapis.com/auth/drive.file',
-                    callback: (response) => {
-                        if (response.error) {
-                            reject(response);
-                        } else {
-                            accessToken = response.access_token; // 토큰 저장
-                            resolve(response.access_token);
-                        }
+                if (!tokenClient) {
+                    reject(new Error('Google API가 초기화되지 않았습니다'));
+                    return;
+                }
+                
+                console.log('🔐 Google 로그인 시작...');
+                
+                // 이미 callback이 설정되어 있으므로 그냥 요청만
+                const originalCallback = tokenClient.callback;
+                tokenClient.callback = (response) => {
+                    originalCallback(response);
+                    if (response.error) {
+                        reject(response);
+                    } else {
+                        resolve(response.access_token);
                     }
-                });
-                tokenClient.requestAccessToken();
+                };
+                
+                tokenClient.requestAccessToken({ prompt: '' });
             });
         };
 
@@ -2323,12 +2383,23 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
 
             useEffect(() => {
                 if (!isCustomerMode) {
-                    initGoogleDrive().then(() => {
+                    // 저장된 로그인 상태 복원 시도
+                    if (restoreLoginState()) {
+                        console.log('✅ 로그인 상태 복원 완료');
                         setDriveReady(true);
                         loadSavedSessions();
-                    }).catch(err => {
-                        console.error('Drive 초기화 실패:', err);
-                    });
+                    } else {
+                        // 로그인 상태가 없으면 Google API 초기화만
+                        initGoogleDrive().then(() => {
+                            setDriveReady(true);
+                            // 세션 목록은 로그인 후에만 로드
+                            if (accessToken) {
+                                loadSavedSessions();
+                            }
+                        }).catch(err => {
+                            console.error('Drive 초기화 실패:', err);
+                        });
+                    }
                 }
             }, [isCustomerMode]);
             
