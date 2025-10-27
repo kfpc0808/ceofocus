@@ -1260,7 +1260,6 @@
     <!-- 헤더 -->
     <div class="header">
         <h1>📝 To Do List</h1>
-        <button class="btn" onclick="location.href='index.html'" style="margin-left: 10px;">🏠 Main</button>
         <div class="header-controls">
             <!-- 검색 바 -->
             <div class="search-container">
@@ -1290,6 +1289,7 @@
             <button class="btn btn-secondary" id="loadBtn" onclick="loadFromDrive()" style="display:none;">
                 📥 불러오기
             </button>
+            <button class="btn btn-secondary" onclick="location.href='index.html'">🏠 Main</button>
         </div>
     </div>
 
@@ -2653,6 +2653,58 @@ Backspace      빈 줄에서 누르면 삭제</pre>
                 return;
             }
             
+            // 전체 아이템 개수 확인 (재귀적으로 모든 자식 포함)
+            function countAllItems(items) {
+                let count = 0;
+                for (let item of items) {
+                    count++;
+                    if (item.children && item.children.length > 0) {
+                        count += countAllItems(item.children);
+                    }
+                }
+                return count;
+            }
+            
+            const totalItems = countAllItems(data.items);
+            
+            // 마지막 하나 남은 경우 삭제하지 않고 텍스트만 비움
+            if (totalItems === 1) {
+                if (item) {
+                    item.text = '';
+                    item.completed = false;
+                    item.important = false;
+                    item.children = [];
+                }
+                saveToLocalStorage();
+                render();
+                // 렌더링 후 포커스
+                setTimeout(() => {
+                    const textEl = document.querySelector(`[data-id="${id}"].text`);
+                    if (textEl) {
+                        textEl.focus();
+                    }
+                }, 10);
+                return;
+            }
+            
+            // 이전 아이템 찾기 (포커스 이동용)
+            let prevItemId = null;
+            function findPreviousItem(items, targetId, prevId = null) {
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].id === targetId) {
+                        return prevId;
+                    }
+                    const foundInChildren = findPreviousItem(items[i].children || [], targetId, items[i].id);
+                    if (foundInChildren !== null) {
+                        return foundInChildren;
+                    }
+                    prevId = items[i].id;
+                }
+                return null;
+            }
+            
+            prevItemId = findPreviousItem(data.items, id);
+            
             function removeFromArray(items) {
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].id === id) {
@@ -2669,6 +2721,23 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             removeFromArray(data.items);
             saveToLocalStorage();
             render();
+            
+            // 이전 아이템으로 포커스 이동
+            if (prevItemId) {
+                setTimeout(() => {
+                    const prevTextEl = document.querySelector(`[data-id="${prevItemId}"].text`);
+                    if (prevTextEl) {
+                        prevTextEl.focus();
+                        // 커서를 끝으로 이동
+                        const range = document.createRange();
+                        const sel = window.getSelection();
+                        range.selectNodeContents(prevTextEl);
+                        range.collapse(false);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                }, 10);
+            }
         }
 
         // ========================================
@@ -3436,10 +3505,83 @@ Backspace      빈 줄에서 누르면 삭제</pre>
                 }
             }
             
-            // Backspace: 빈 아이템 삭제
-            else if (e.key === 'Backspace' && el.textContent.trim() === '') {
-                e.preventDefault();
-                deleteItem(id);
+            // Backspace 처리
+            else if (e.key === 'Backspace') {
+                const selection = window.getSelection();
+                const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+                
+                // 빈 아이템 삭제
+                if (el.textContent.trim() === '') {
+                    e.preventDefault();
+                    deleteItem(id);
+                }
+                // 커서가 맨 앞에 있고 텍스트가 있는 경우 - 이전 행으로 병합
+                else if (range && range.startOffset === 0 && range.collapsed) {
+                    // 이전 아이템 찾기
+                    let prevItemId = null;
+                    function findPreviousItem(items, targetId, prevId = null) {
+                        for (let i = 0; i < items.length; i++) {
+                            if (items[i].id === targetId) {
+                                return prevId;
+                            }
+                            const foundInChildren = findPreviousItem(items[i].children || [], targetId, items[i].id);
+                            if (foundInChildren !== null) {
+                                return foundInChildren;
+                            }
+                            prevId = items[i].id;
+                        }
+                        return null;
+                    }
+                    
+                    prevItemId = findPreviousItem(data.items, id);
+                    
+                    if (prevItemId) {
+                        e.preventDefault();
+                        const prevItem = findItemInArray(data.items, prevItemId);
+                        if (prevItem && !prevItem.locked) {
+                            // 현재 아이템의 텍스트를 이전 아이템에 병합
+                            const currentText = item.text || '';
+                            prevItem.text = (prevItem.text || '') + currentText;
+                            
+                            // 현재 아이템 삭제
+                            function removeFromArray(items) {
+                                for (let i = 0; i < items.length; i++) {
+                                    if (items[i].id === id) {
+                                        items.splice(i, 1);
+                                        return true;
+                                    }
+                                    if (items[i].children && removeFromArray(items[i].children)) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }
+                            
+                            removeFromArray(data.items);
+                            saveToLocalStorage();
+                            render();
+                            
+                            // 이전 아이템의 끝으로 포커스 이동
+                            setTimeout(() => {
+                                const prevTextEl = document.querySelector(`[data-id="${prevItemId}"].text`);
+                                if (prevTextEl) {
+                                    prevTextEl.focus();
+                                    // 커서를 병합 지점으로 이동 (이전 텍스트의 끝)
+                                    const range = document.createRange();
+                                    const sel = window.getSelection();
+                                    const textNode = prevTextEl.childNodes[0];
+                                    if (textNode) {
+                                        const offset = (prevItem.text.length - currentText.length);
+                                        range.setStart(textNode, Math.min(offset, textNode.length));
+                                        range.collapse(true);
+                                        sel.removeAllRanges();
+                                        sel.addRange(range);
+                                    }
+                                }
+                            }, 10);
+                        }
+                    }
+                }
             }
 
             // ESC: 날짜 선택기 닫기
