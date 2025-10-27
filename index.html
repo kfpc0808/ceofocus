@@ -418,6 +418,65 @@
         font-size:0.7rem;
       }
     }
+
+    /* AI 버튼 스타일 */
+    .ai-buttons-container {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,.15);
+    }
+    .ai-buttons-label {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      text-align: center;
+      margin-bottom: 0.75rem;
+      font-weight: 500;
+    }
+    .ai-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .ai-btn {
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      backdrop-filter: blur(10px);
+      -webkit-tap-highlight-color: rgba(255,255,255,0.1);
+      user-select: none;
+    }
+    .ai-btn:hover {
+      background: rgba(255,255,255,.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    }
+    .ai-btn:active {
+      transform: translateY(0);
+    }
+    .ai-icon {
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 480px) {
+      .ai-buttons {
+        gap: 0.4rem;
+      }
+      .ai-btn {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.7rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -435,7 +494,6 @@
           <p>사용하실 프로그램을 선택해주세요.</p>
         </div>
         <div class="top-right-buttons">
-          <button class="btn btn-drive" onclick="enableDrive()">드라이브 연동</button>
           <button class="btn btn-mypage" onclick="goToMyPage()">My page</button>
           <button class="btn btn-logout" onclick="logout()">로그아웃</button>
         </div>
@@ -453,11 +511,15 @@
         <p>실시간 법인컨설팅 시뮬레이션</p>
       </div>
       <div class="program-card" onclick="go('fm.html')">
-        <h2>Financial Master</h2>
+        <h2>FF Simulation</h2>
         <p>프리미엄 재무 Fact Finding</p>
       </div>
+      <div class="program-card" onclick="go('fma.html')">
+        <h2>FMA</h2>
+        <p>보장분석 시스템</p>
+      </div>
       
-      <div class="dropdown-wrapper" onmouseenter="openDropdownHover()">
+      <div class="dropdown-wrapper">
         <div class="program-card" onclick="toggleDropdown(event)">
           <h2>재무계산기</h2>
           <p>복리·은퇴·연금·세금 등</p>
@@ -535,6 +597,11 @@
         </div>
       </div>
 
+<div class="program-card" onclick="go('todolist.html')">
+        <h2>To Do List</h2>
+        <p>업무 할 일 관리</p>
+      </div>
+
 <div class="program-card" onclick="go('worklog.html')">
         <h2>업무일지</h2>
         <p>고객상담내역 및 To-do list</p>
@@ -554,9 +621,28 @@
         <h2>회원관리</h2>
         <p>고객 Database</p>
       </div>
-      <div class="program-card" onclick="go('clientMap.html')">
-        <h2>고객찾기</h2>
-        <p>지도로 주변고객찾기</p>
+    </div>
+
+    <!-- AI 생성형 도구 -->
+    <div class="ai-buttons-container">
+      <div class="ai-buttons-label">🤖 AI 생성형 도구</div>
+      <div class="ai-buttons">
+        <a href="https://chat.openai.com" target="_blank" class="ai-btn">
+          <span class="ai-icon">🟢</span>
+          <span>ChatGPT</span>
+        </a>
+        <a href="https://gemini.google.com" target="_blank" class="ai-btn">
+          <span class="ai-icon">💎</span>
+          <span>Gemini</span>
+        </a>
+        <a href="https://claude.ai" target="_blank" class="ai-btn">
+          <span class="ai-icon">🟠</span>
+          <span>Claude</span>
+        </a>
+        <a href="https://www.perplexity.ai" target="_blank" class="ai-btn">
+          <span class="ai-icon">🔵</span>
+          <span>Perplexity</span>
+        </a>
       </div>
     </div>
   </div>
