@@ -2192,6 +2192,10 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             const [inviteLink, setInviteLink] = useState('');
             const [syncStatus, setSyncStatus] = useState('대기중');
             
+            // 입력 중 체크 (타이핑 중에는 Firebase로부터 업데이트 받지 않음)
+            const isTypingRef = useRef(false);
+            const typingTimeoutRef = useRef(null);
+            
             // Google Drive 저장 상태 추적
             const [isSavedToDrive, setIsSavedToDrive] = useState(false);
             const [lastSavedTime, setLastSavedTime] = useState(null);
@@ -2256,25 +2260,28 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     if (data) {
                         setSyncStatus('동기화됨');
                         
-                        // 모든 데이터 항상 동기화 (컨설턴트, 고객 모두)
-                        if (data.customer) setCustomer(data.customer);
-                        if (data.consultant) setConsultant(data.consultant);
-                        if (data.summary) setSummary(data.summary);
-                        if (data.opinions) setOpinions(data.opinions);
-                        
-                        // insurances와 analysisResults 동기화
-                        if (data.insurances) {
-                            const insurancesArray = Array.isArray(data.insurances) 
-                                ? data.insurances 
-                                : Object.values(data.insurances).filter(v => v && typeof v === 'object');
-                            setInsurances(insurancesArray);
-                        }
-                        
-                        if (data.analysisResults) {
-                            const resultsArray = Array.isArray(data.analysisResults)
-                                ? data.analysisResults
-                                : Object.values(data.analysisResults).filter(v => v && typeof v === 'object');
-                            setAnalysisResults(resultsArray);
+                        // 입력 중이 아닐 때만 업데이트 받기 (타이핑 방해 방지)
+                        if (!isTypingRef.current) {
+                            // 모든 데이터 동기화 (컨설턴트, 고객 모두)
+                            if (data.customer) setCustomer(data.customer);
+                            if (data.consultant) setConsultant(data.consultant);
+                            if (data.summary) setSummary(data.summary);
+                            if (data.opinions) setOpinions(data.opinions);
+                            
+                            // insurances와 analysisResults 동기화
+                            if (data.insurances) {
+                                const insurancesArray = Array.isArray(data.insurances) 
+                                    ? data.insurances 
+                                    : Object.values(data.insurances).filter(v => v && typeof v === 'object');
+                                setInsurances(insurancesArray);
+                            }
+                            
+                            if (data.analysisResults) {
+                                const resultsArray = Array.isArray(data.analysisResults)
+                                    ? data.analysisResults
+                                    : Object.values(data.analysisResults).filter(v => v && typeof v === 'object');
+                                setAnalysisResults(resultsArray);
+                            }
                         }
                     }
                 });
@@ -2288,6 +2295,9 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             useEffect(() => {
                 if (!database || !currentSessionId) return;
 
+                // 타이핑 시작 표시
+                isTypingRef.current = true;
+                
                 const timeoutId = setTimeout(() => {
                     const updateData = {
                         customer,
@@ -2305,14 +2315,29 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     });
                     
                     setSyncStatus('동기화됨');
-                }, 800); // 800ms 디바운싱 (타이핑 완료 후 업데이트)
+                    
+                    // 타이핑 종료 표시 (500ms 후)
+                    isTypingRef.current = false;
+                }, 500); // 500ms 디바운싱 (안정적인 실시간 동기화)
 
-                return () => clearTimeout(timeoutId);
+                return () => {
+                    clearTimeout(timeoutId);
+                    // cleanup 시에도 타이핑 플래그 해제
+                    if (typingTimeoutRef.current) {
+                        clearTimeout(typingTimeoutRef.current);
+                    }
+                    typingTimeoutRef.current = setTimeout(() => {
+                        isTypingRef.current = false;
+                    }, 100);
+                };
             }, [customer, insurances, consultant, analysisResults, summary, opinions, currentSessionId]);
             
             // 즉시 Firebase 업데이트 (중요한 변경사항용)
             const immediateFirebaseUpdate = () => {
                 if (!database || !currentSessionId) return;
+                
+                // 짧게 타이핑 플래그 설정
+                isTypingRef.current = true;
                 
                 const updateData = {
                     customer,
@@ -2329,6 +2354,11 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 });
                 
                 setSyncStatus('동기화됨 ✓');
+                
+                // 200ms 후 타이핑 플래그 해제
+                setTimeout(() => {
+                    isTypingRef.current = false;
+                }, 200);
             };
             
             // 분석 완료 시 자동 Google Drive 저장 (컨설턴트만)
@@ -2484,6 +2514,9 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 
                 // 즉시 Firebase 업데이트
                 if (database && currentSessionId) {
+                    // 짧게 타이핑 플래그 설정
+                    isTypingRef.current = true;
+                    
                     database.ref(`sessions/${currentSessionId}`).update({
                         customer,
                         insurances: updatedInsurances,
@@ -2494,6 +2527,11 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                         updatedAt: Date.now()
                     });
                     setSyncStatus('보험 추가됨 ✓');
+                    
+                    // 200ms 후 타이핑 플래그 해제
+                    setTimeout(() => {
+                        isTypingRef.current = false;
+                    }, 200);
                 }
             };
 
@@ -2510,6 +2548,9 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     
                     // 즉시 Firebase 업데이트
                     if (database && currentSessionId) {
+                        // 짧게 타이핑 플래그 설정
+                        isTypingRef.current = true;
+                        
                         database.ref(`sessions/${currentSessionId}`).update({
                             customer,
                             insurances: updatedInsurances,
@@ -2520,6 +2561,11 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                             updatedAt: Date.now()
                         });
                         setSyncStatus('보험 삭제됨 ✓');
+                        
+                        // 200ms 후 타이핑 플래그 해제
+                        setTimeout(() => {
+                            isTypingRef.current = false;
+                        }, 200);
                     }
                 }
             };
@@ -3223,6 +3269,9 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                         
                                                         // 즉시 Firebase 업데이트
                                                         if (database && currentSessionId) {
+                                                            // 짧게 타이핑 플래그 설정 (즉시 업데이트 방해 방지)
+                                                            isTypingRef.current = true;
+                                                            
                                                             database.ref(`sessions/${currentSessionId}`).update({
                                                                 customer: updatedCustomer,
                                                                 insurances,
@@ -3233,6 +3282,11 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                                 updatedAt: Date.now()
                                                             });
                                                             setSyncStatus('동기화됨 ✓');
+                                                            
+                                                            // 200ms 후 타이핑 플래그 해제
+                                                            setTimeout(() => {
+                                                                isTypingRef.current = false;
+                                                            }, 200);
                                                         }
                                                     }}
                                                     style={{marginRight: '0.5rem', flexShrink: 0}}
