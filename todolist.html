@@ -1505,6 +1505,7 @@ Backspace      빈 줄에서 누르면 삭제</pre>
         let fileId = localStorage.getItem('gdrive_file_id');
         let isConnected = false;
         let autoSaveInterval = null;
+        let autoSaveDebounceTimer = null;  // 3초 디바운스용
         let syncCheckInterval = null;
         let lastModifiedTime = null;
         let isEditing = false;
@@ -1821,6 +1822,30 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             }
         };
         
+        // 자동 저장 스케줄링 (3초 디바운스)
+        const scheduleAutoSave = async () => {
+            if (!newAccessToken || !isConnected) return;
+            
+            // 기존 타이머 취소
+            if (autoSaveDebounceTimer) {
+                clearTimeout(autoSaveDebounceTimer);
+            }
+            
+            // 3초 후 저장
+            autoSaveDebounceTimer = setTimeout(async () => {
+                await saveToNewDrive(data);
+                console.log('🔄 자동 저장 완료 (디바운스)');
+                // 상태 표시 업데이트
+                const statusText = document.getElementById('statusText');
+                if (statusText) {
+                    statusText.textContent = '저장 완료';
+                    setTimeout(() => {
+                        statusText.textContent = '연결됨';
+                    }, 1500);
+                }
+            }, 3000);
+        };
+        
         // 새로운 Drive 연결 완료 시
         const onNewDriveConnected = async () => {
             console.log('✅ 새로운 Google Drive 연결 완료');
@@ -1863,23 +1888,9 @@ Backspace      빈 줄에서 누르면 삭제</pre>
                 console.log('ℹ️ 첫 방문: 기본 항목 생성');
             }
             
-            // 자동 저장 시작 (5분마다)
-            if (autoSaveInterval) {
-                clearInterval(autoSaveInterval);
-            }
-            autoSaveInterval = setInterval(async () => {
-                await saveToNewDrive(data);
-                console.log('🔄 자동 저장 완료');
-                // 상태 표시 업데이트
-                document.getElementById('statusText').textContent = '저장 완료';
-                setTimeout(() => {
-                    document.getElementById('statusText').textContent = '연결됨';
-                }, 1500);
-            }, 300000); // 5분
-            
-            // 실시간 동기화 체크 시작 (10초마다)
+            // 실시간 동기화 체크 시작 (3초마다)
             if (syncCheckInterval) clearInterval(syncCheckInterval);
-            syncCheckInterval = setInterval(checkForUpdatesNew, 10000);
+            syncCheckInterval = setInterval(checkForUpdatesNew, 3000);
             
             showToast('✅ Google Drive 연결 완료!');
         };
@@ -2412,6 +2423,8 @@ Backspace      빈 줄에서 누르면 삭제</pre>
         // ========================================
         function saveToLocalStorage() {
             localStorage.setItem('workflowy_data', JSON.stringify(data));
+            // Drive 자동 저장 스케줄링 (3초 디바운스)
+            scheduleAutoSave();
         }
 
         function loadFromLocalStorage() {
