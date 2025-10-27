@@ -1113,8 +1113,10 @@
 
             .header-controls {
                 width: 100%;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
                 justify-content: space-between;
+                gap: 4px;
+                overflow-x: auto;
             }
 
             .search-container {
@@ -1136,8 +1138,9 @@
             }
 
             .btn {
-                padding: 8px 12px;
-                font-size: 13px;
+                padding: 6px 8px;
+                font-size: 11px;
+                white-space: nowrap;
             }
 
             .sync-notification {
@@ -1290,16 +1293,16 @@
                 <span id="statusText">오프라인</span>
             </div>
             <button class="btn btn-secondary" id="installBtn" onclick="installPWA()">
-                📱 홈추가
+                홈추가
             </button>
-            <button class="btn" id="connectBtn" onclick="connectDrive()">☁️ Drive 연결</button>
+            <button class="btn" id="connectBtn" onclick="connectDrive()">Drive 연결</button>
             <button class="btn btn-secondary" id="saveBtn" onclick="saveToDrive()" style="display:none;">
-                💾 저장
+                저장
             </button>
             <button class="btn btn-secondary" id="loadBtn" onclick="loadFromDrive()" style="display:none;">
-                📥 불러오기
+                불러오기
             </button>
-            <button class="btn btn-secondary" onclick="location.href='index.html'">🏠 Main</button>
+            <button class="btn btn-secondary" onclick="location.href='index.html'">Main</button>
         </div>
     </div>
 
@@ -4111,6 +4114,44 @@ Backspace      빈 줄에서 누르면 삭제</pre>
 
 <!-- PWA 설치 기능 -->
 <script>
+    // Service Worker 등록
+    if ('serviceWorker' in navigator) {
+        // Service Worker 코드를 Blob으로 생성
+        const swCode = `
+            self.addEventListener('install', (event) => {
+                console.log('Service Worker 설치됨');
+                self.skipWaiting();
+            });
+            
+            self.addEventListener('activate', (event) => {
+                console.log('Service Worker 활성화됨');
+                event.waitUntil(self.clients.claim());
+            });
+            
+            self.addEventListener('fetch', (event) => {
+                // 네트워크 우선 전략 (항상 최신 데이터)
+                event.respondWith(
+                    fetch(event.request).catch(() => {
+                        return new Response('오프라인 상태입니다.', {
+                            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+                        });
+                    })
+                );
+            });
+        `;
+        
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        
+        navigator.serviceWorker.register(swUrl)
+            .then(registration => {
+                console.log('✅ Service Worker 등록 완료:', registration);
+            })
+            .catch(error => {
+                console.log('❌ Service Worker 등록 실패:', error);
+            });
+    }
+    
     // PWA Manifest 동적 생성
     const manifestData = {
         "name": "To Do List",
