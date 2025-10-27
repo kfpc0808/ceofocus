@@ -1290,7 +1290,7 @@
                 <span id="statusText">오프라인</span>
             </div>
             <button class="btn btn-secondary" id="installBtn" onclick="installPWA()" style="display:none;">
-                📱 홈화면에 추가
+                📱 홈추가
             </button>
             <button class="btn" id="connectBtn" onclick="connectDrive()">☁️ Drive 연결</button>
             <button class="btn btn-secondary" id="saveBtn" onclick="saveToDrive()" style="display:none;">
@@ -1916,8 +1916,10 @@ Backspace      빈 줄에서 누르면 삭제</pre>
                 const cloudModifiedTime = new Date(file.modifiedTime).getTime();
                 
                 if (lastModifiedTime && cloudModifiedTime > lastModifiedTime) {
-                    // 새 버전 감지
-                    document.getElementById('syncNotification').classList.add('show');
+                    // 새 버전 감지 - 자동 업데이트 실행
+                    console.log('🔄 새 버전 감지, 자동 업데이트 중...');
+                    await loadFromDrive();
+                    showToast('🔄 최신 버전으로 업데이트되었습니다!');
                 }
             } catch (error) {
                 console.error('업데이트 체크 오류:', error);
@@ -2163,16 +2165,16 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             if (autoSaveInterval) clearInterval(autoSaveInterval);
             autoSaveInterval = setInterval(autoSaveToDrive, 30000);
 
-            // 실시간 동기화 체크 시작 (10초마다)
+            // 실시간 동기화 체크 시작 (3초마다)
             if (syncCheckInterval) clearInterval(syncCheckInterval);
-            syncCheckInterval = setInterval(checkForUpdates, 10000);
+            syncCheckInterval = setInterval(checkForUpdates, 3000);
 
             // 즉시 한 번 불러오기
             loadFromDrive();
         }
 
         // ========================================
-        // 실시간 동기화 체크 (10초마다)
+        // 실시간 동기화 체크 (3초마다)
         // ========================================
         async function checkForUpdates() {
             if (!isConnected || !fileId || isEditing) return;
@@ -2186,9 +2188,11 @@ Backspace      빈 줄에서 누르면 삭제</pre>
                     const fileMetadata = await response.json();
                     const cloudModifiedTime = new Date(fileMetadata.modifiedTime).getTime();
 
-                    // 로컬보다 클라우드가 최신인 경우
+                    // 로컬보다 클라우드가 최신인 경우 - 자동 업데이트 실행
                     if (lastModifiedTime && cloudModifiedTime > lastModifiedTime) {
-                        showSyncNotification();
+                        console.log('🔄 새 버전 감지, 자동 업데이트 중...');
+                        await loadFromDrive();
+                        showToast('🔄 최신 버전으로 업데이트되었습니다!');
                     }
                 }
             } catch (error) {
