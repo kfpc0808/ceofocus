@@ -1314,9 +1314,9 @@
         const { useState, useEffect, useRef } = React;
 
         // ===== 설정 =====
-        const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
-        const GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY";
-        const ENCRYPTION_KEY = "your-32-character-encryption-key-change-this";
+        const GOOGLE_CLIENT_ID = "288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com";
+        const GOOGLE_API_KEY = "AIzaSyAVtAzm9UjgGB1pqChvGvGKH7RpH0KCiVM";
+        const ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
 
         // Firebase 설정 - KFPC Company Support Project
         const firebaseConfig = {
@@ -2170,6 +2170,10 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             const [currentSessionId, setCurrentSessionId] = useState(sessionId || null);
             const [inviteLink, setInviteLink] = useState('');
             const [syncStatus, setSyncStatus] = useState('대기중');
+            
+            // Google Drive 저장 상태 추적
+            const [isSavedToDrive, setIsSavedToDrive] = useState(false);
+            const [lastSavedTime, setLastSavedTime] = useState(null);
 
             const chartsRef = useRef(null);
             const comparisonChartRef = useRef(null);
@@ -2191,6 +2195,33 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     });
                 }
             }, [isCustomerMode]);
+            
+            // Session ID localStorage 저장/복원 (고객, 컨설턴트 모두)
+            useEffect(() => {
+                const urlSessionId = urlParams.get('session');
+                
+                if (urlSessionId) {
+                    // URL에 session이 있으면 localStorage에 저장
+                    localStorage.setItem('currentSessionId', urlSessionId);
+                    setCurrentSessionId(urlSessionId);
+                    
+                    // URL도 업데이트 (새로고침 후에도 유지)
+                    if (!isCustomerMode) {
+                        window.history.replaceState({}, '', `?session=${urlSessionId}`);
+                    }
+                } else {
+                    // URL에 없으면 localStorage에서 복원
+                    const savedSessionId = localStorage.getItem('currentSessionId');
+                    if (savedSessionId) {
+                        setCurrentSessionId(savedSessionId);
+                        
+                        // URL도 업데이트 (새로고침 후에도 유지)
+                        if (!isCustomerMode) {
+                            window.history.replaceState({}, '', `?session=${savedSessionId}`);
+                        }
+                    }
+                }
+            }, []);
 
             // Firebase 실시간 동기화 설정
             useEffect(() => {
@@ -2199,53 +2230,105 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 const sessionRef = database.ref(`sessions/${currentSessionId}`);
                 
                 // 실시간 리스너 설정
-                sessionRef.on('value', (snapshot) => {
+                const listener = sessionRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
                         setSyncStatus('동기화됨');
+                        
+                        // 모든 데이터 항상 동기화 (컨설턴트, 고객 모두)
                         if (data.customer) setCustomer(data.customer);
-                        // Firebase에서 배열이 객체로 변환될 수 있으므로 배열로 변환
+                        if (data.consultant) setConsultant(data.consultant);
+                        if (data.summary) setSummary(data.summary);
+                        if (data.opinions) setOpinions(data.opinions);
+                        
+                        // insurances와 analysisResults 동기화
                         if (data.insurances) {
                             const insurancesArray = Array.isArray(data.insurances) 
                                 ? data.insurances 
                                 : Object.values(data.insurances).filter(v => v && typeof v === 'object');
                             setInsurances(insurancesArray);
                         }
-                        if (data.consultant) setConsultant(data.consultant);
+                        
                         if (data.analysisResults) {
                             const resultsArray = Array.isArray(data.analysisResults)
                                 ? data.analysisResults
                                 : Object.values(data.analysisResults).filter(v => v && typeof v === 'object');
                             setAnalysisResults(resultsArray);
                         }
-                        if (data.summary) setSummary(data.summary);
-                        if (data.opinions) setOpinions(data.opinions);
                     }
                 });
 
                 return () => {
-                    sessionRef.off();
+                    sessionRef.off('value', listener);
                 };
-            }, [currentSessionId]);
+            }, [currentSessionId, isCustomerMode]);
 
-            // 데이터 변경 시 Firebase 업데이트
+            // 데이터 변경 시 Firebase 업데이트 (디바운싱 적용)
             useEffect(() => {
-                if (!database || !currentSessionId || isCustomerMode) return;
+                if (!database || !currentSessionId) return;
 
-                const updateData = {
-                    customer,
-                    insurances,
-                    consultant,
-                    analysisResults,
-                    summary,
-                    opinions,
-                    updatedAt: Date.now()
-                };
+                const timeoutId = setTimeout(() => {
+                    const updateData = {
+                        customer,
+                        insurances,
+                        consultant,
+                        analysisResults,
+                        summary,
+                        opinions,
+                        updatedAt: Date.now()
+                    };
 
-                database.ref(`sessions/${currentSessionId}`).set(updateData).catch(err => {
-                    console.error('Firebase 저장 실패:', err);
-                });
-            }, [customer, insurances, consultant, analysisResults, summary, opinions, currentSessionId, isCustomerMode]);
+                    database.ref(`sessions/${currentSessionId}`).set(updateData).catch(err => {
+                        console.error('Firebase 저장 실패:', err);
+                        setSyncStatus('저장 실패');
+                    });
+                    
+                    setSyncStatus('동기화됨');
+                }, 500); // 500ms 디바운싱
+
+                return () => clearTimeout(timeoutId);
+            }, [customer, insurances, consultant, analysisResults, summary, opinions, currentSessionId]);
+            
+            // 분석 완료 시 자동 Google Drive 저장 (컨설턴트만)
+            useEffect(() => {
+                if (isCustomerMode || !currentSessionId || analysisResults.length === 0) return;
+                
+                // 이미 저장되었으면 스킵
+                if (isSavedToDrive) return;
+                
+                // 3초 후 자동 저장 (사용자가 입력을 마칠 시간)
+                const autoSaveTimer = setTimeout(async () => {
+                    try {
+                        console.log('🔄 분석 완료 - 자동 Google Drive 저장 시작...');
+                        
+                        const session = {
+                            customer,
+                            insurances,
+                            consultant,
+                            analysisResults,
+                            summary,
+                            opinions,
+                            sessionId: currentSessionId,
+                            savedAt: new Date().toISOString()
+                        };
+
+                        const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.json`;
+                        const encryptedData = encryptData(session);
+                        
+                        await uploadToDrive(fileName, encryptedData);
+                        
+                        setIsSavedToDrive(true);
+                        setLastSavedTime(new Date());
+                        setSyncStatus('저장 완료');
+                        
+                        console.log('✅ Google Drive 자동 저장 완료:', fileName);
+                    } catch (error) {
+                        console.error('❌ Google Drive 자동 저장 실패:', error);
+                    }
+                }, 3000);
+
+                return () => clearTimeout(autoSaveTimer);
+            }, [analysisResults, customer, insurances, consultant, summary, opinions, currentSessionId, isSavedToDrive, isCustomerMode]);
 
             const loadSavedSessions = async () => {
                 try {
@@ -2663,41 +2746,82 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 }
             };
 
-            const handleSaveToDrive = async () => {
+            const handleSaveToDrive = async (isAuto = false) => {
                 if (!customer.name) {
-                    alert('고객 이름을 먼저 입력해주세요.');
+                    if (!isAuto) alert('고객 이름을 먼저 입력해주세요.');
                     return;
                 }
                 
                 if (!driveReady) {
-                    alert('Google Drive API가 설정되지 않았습니다.\n\n코드 상단의 다음 값을 설정해주세요:\n- GOOGLE_CLIENT_ID\n- GOOGLE_API_KEY\n- ENCRYPTION_KEY\n\n설정 방법은 Google Cloud Console에서 확인하세요.');
+                    if (!isAuto) alert('Google Drive API가 설정되지 않았습니다.\n\n코드 상단의 다음 값을 설정해주세요:\n- GOOGLE_CLIENT_ID\n- GOOGLE_API_KEY\n- ENCRYPTION_KEY\n\n설정 방법은 Google Cloud Console에서 확인하세요.');
                     return;
                 }
 
                 try {
-                    setLoading(true);
+                    if (!isAuto) setLoading(true);
+                    
                     const session = {
                         customer,
                         consultant,
                         insurances,
                         analysisResults,
                         summary,
-                        opinions
+                        opinions,
+                        sessionId: currentSessionId,
+                        savedAt: new Date().toISOString()
                     };
 
+                    const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.json`;
                     const encryptedData = encryptData(session);
-                    const fileName = `FMA_${customer.name}_${new Date().toISOString().split('T')[0]}.enc`;
                     
                     await uploadToDrive(fileName, encryptedData);
-                    alert('Google Drive에 성공적으로 저장되었습니다!');
+                    
+                    setIsSavedToDrive(true);
+                    setLastSavedTime(new Date());
+                    setSyncStatus('저장 완료');
+                    
+                    if (!isAuto) {
+                        alert('✅ Google Drive에 저장되었습니다!');
+                    }
+                    
+                    console.log('✅ Google Drive 저장 완료:', fileName);
                     
                     // 목록 갱신
                     await loadSavedSessions();
                 } catch (error) {
                     console.error('저장 실패:', error);
-                    alert('Google Drive 저장에 실패했습니다.\n에러: ' + error.message);
+                    setSyncStatus('저장 실패');
+                    if (!isAuto) alert('❌ 저장에 실패했습니다: ' + error.message);
                 } finally {
-                    setLoading(false);
+                    if (!isAuto) setLoading(false);
+                }
+            };
+            
+            // 세션 종료 함수 (컨설턴트만 - 저장 확인 포함)
+            const endSession = () => {
+                if (!isSavedToDrive && analysisResults.length > 0) {
+                    if (!confirm('⚠️ Google Drive에 저장하지 않았습니다!\n\n저장하지 않고 종료하시겠습니까?')) {
+                        return;
+                    }
+                }
+                
+                if (confirm('현재 세션을 종료하시겠습니까?')) {
+                    // Firebase 세션 데이터 삭제 (선택사항)
+                    if (database && currentSessionId) {
+                        database.ref(`sessions/${currentSessionId}`).remove();
+                    }
+                    
+                    // localStorage 정리
+                    localStorage.removeItem('currentSessionId');
+                    
+                    // 상태 초기화
+                    setCurrentSessionId(null);
+                    setInviteLink('');
+                    setIsSavedToDrive(false);
+                    setLastSavedTime(null);
+                    
+                    // 기본 화면으로 이동
+                    window.location.href = window.location.pathname;
                 }
             };
 
@@ -2803,11 +2927,29 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                     {consultant.name} {consultant.jobTitle === '직접입력' ? consultant.customJobTitle : consultant.jobTitle}
                                 </span>
                             )}
+                            {!isCustomerMode && currentSessionId && (
+                                <span className="customer-badge" style={{ 
+                                    background: isSavedToDrive ? '#10b981' : '#f59e0b',
+                                    color: 'white'
+                                }}>
+                                    {isSavedToDrive ? '✅ 저장됨' : '⚠️ 미저장'}
+                                    {lastSavedTime && (
+                                        <span style={{ fontSize: '0.75rem', marginLeft: '0.5rem' }}>
+                                            ({lastSavedTime.toLocaleTimeString('ko-KR')})
+                                        </span>
+                                    )}
+                                </span>
+                            )}
                             {!isCustomerMode && (
                                 <>
                                     <button className="btn btn-secondary btn-sm" onClick={() => setCurrentScreen('customerList')}>
                                         📂 불러오기
                                     </button>
+                                    {currentSessionId && (
+                                        <button className="btn btn-danger btn-sm" onClick={endSession}>
+                                            🚪 세션 종료
+                                        </button>
+                                    )}
                                     <button className="btn btn-secondary btn-sm" onClick={() => setCurrentScreen('customerList')}>
                                         ← 고객 목록
                                     </button>
@@ -3233,8 +3375,16 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
 
                                 {!isCustomerMode && (
                                     <div className="action-buttons">
-                                        <button className="btn btn-secondary" onClick={handleSaveToDrive} disabled={loading}>
-                                            💾 저장하기
+                                        <button 
+                                            className="btn btn-primary" 
+                                            onClick={handleSaveToDrive} 
+                                            disabled={loading}
+                                            style={{
+                                                background: isSavedToDrive ? 'var(--success-color)' : 'var(--warning-color)',
+                                                borderColor: isSavedToDrive ? 'var(--success-color)' : 'var(--warning-color)'
+                                            }}
+                                        >
+                                            {isSavedToDrive ? '✅ 저장완료' : '💾 Google Drive 저장'}
                                         </button>
                                         <button className="btn btn-primary" onClick={handleStartAnalysis} disabled={loading}>
                                             📊 분석 시작하기
@@ -3473,8 +3623,16 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                     <p className="hint">자동 생성된 종합 의견을 수정할 수 있습니다. 고객별로 맞춤화하세요.</p>
 
                                     <div className="action-buttons">
-                                        <button className="btn btn-secondary" onClick={handleSaveToDrive} disabled={loading}>
-                                            💾 저장하기
+                                        <button 
+                                            className="btn btn-primary" 
+                                            onClick={handleSaveToDrive} 
+                                            disabled={loading}
+                                            style={{
+                                                background: isSavedToDrive ? 'var(--success-color)' : 'var(--warning-color)',
+                                                borderColor: isSavedToDrive ? 'var(--success-color)' : 'var(--warning-color)'
+                                            }}
+                                        >
+                                            {isSavedToDrive ? '✅ 저장완료' : '💾 Google Drive 저장'}
                                         </button>
                                         <button className="btn btn-success" onClick={handleGeneratePDF} disabled={loading}>
                                             📄 PDF 리포트 다운로드
