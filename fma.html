@@ -2644,6 +2644,22 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     
                     console.log('✅ 세션 로드 완료:', session.customer.name);
                     
+                    // 🔥 중요: Firebase에 데이터 저장 (링크 공유 시 동기화 위해)
+                    if (database && session.sessionId) {
+                        const firebaseData = {
+                            customer: session.customer,
+                            consultant: session.consultant,
+                            insurances: session.insurances,
+                            analysisResults: session.analysisResults || [],
+                            summary: session.summary || '',
+                            opinions: session.opinions || {},
+                            updatedAt: Date.now()
+                        };
+                        
+                        await database.ref(`sessions/${session.sessionId}`).set(firebaseData);
+                        console.log('✅ Firebase 동기화 완료:', session.sessionId);
+                    }
+                    
                     setCurrentScreen('analysis');
                     setCurrentTab('input');
                 } catch (error) {
