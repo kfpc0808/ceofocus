@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To Do List</title>
     
-    <!-- PWA 설정 -->
-    <meta name="theme-color" content="#4285f4">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="To Do List">
-    <link rel="manifest" id="manifest-placeholder">
-    
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
@@ -32,7 +25,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #fafafa;
             padding: 20px;
-            padding-top: 80px;
+            padding-top: 70px;
         }
 
         /* 상단 고정 헤더 */
@@ -52,9 +45,15 @@
         }
 
         .header h1 {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 24px;
+            font-weight: 700;
             color: #333;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .header-controls {
@@ -1094,7 +1093,7 @@
         @media (max-width: 768px) {
             body {
                 padding: 10px;
-                padding-top: 180px;
+                padding-top: 90px;
             }
 
             .container {
@@ -1102,27 +1101,40 @@
             }
 
             .header {
+                flex-direction: row;
+                gap: 8px;
+                padding: 8px 10px;
+                flex-wrap: wrap;
+            }
+
+            .header-left {
                 flex-direction: column;
-                gap: 10px;
-                padding: 10px;
+                align-items: flex-start;
+                gap: 4px;
+                flex-shrink: 0;
             }
 
             .header h1 {
-                font-size: 16px;
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .status {
+                font-size: 11px;
             }
 
             .header-controls {
-                width: 100%;
+                width: calc(100% - 120px);
                 flex-wrap: nowrap;
-                justify-content: space-between;
+                justify-content: flex-end;
                 gap: 4px;
                 overflow-x: auto;
             }
 
             .search-container {
-                order: -1;
-                width: 100%;
-                margin-bottom: 8px;
+                width: auto;
+                flex: 1;
+                min-width: 120px;
             }
 
             .search-input {
@@ -1269,7 +1281,13 @@
 <body>
     <!-- 헤더 -->
     <div class="header">
-        <h1>📝 To Do List</h1>
+        <div class="header-left">
+            <h1>📝 To Do List</h1>
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">오프라인</span>
+            </div>
+        </div>
         <div class="header-controls">
             <!-- 검색 바 -->
             <div class="search-container">
@@ -1288,13 +1306,6 @@
                 <button class="search-nav-btn" onclick="nextSearchResult()">↓</button>
             </div>
             
-            <div class="status">
-                <div class="status-dot" id="statusDot"></div>
-                <span id="statusText">오프라인</span>
-            </div>
-            <button class="btn btn-secondary" id="installBtn" onclick="installPWA()">
-                홈추가
-            </button>
             <button class="btn" id="connectBtn" onclick="connectDrive()">Drive 연결</button>
             <button class="btn btn-secondary" id="saveBtn" onclick="saveToDrive()" style="display:none;">
                 저장
@@ -4112,125 +4123,6 @@ Backspace      빈 줄에서 누르면 삭제</pre>
 })();
 </script>
 
-<!-- PWA 설치 기능 -->
-<script>
-    // Service Worker 등록
-    if ('serviceWorker' in navigator) {
-        // Service Worker 코드를 Blob으로 생성
-        const swCode = `
-            self.addEventListener('install', (event) => {
-                console.log('Service Worker 설치됨');
-                self.skipWaiting();
-            });
-            
-            self.addEventListener('activate', (event) => {
-                console.log('Service Worker 활성화됨');
-                event.waitUntil(self.clients.claim());
-            });
-            
-            self.addEventListener('fetch', (event) => {
-                // 네트워크 우선 전략 (항상 최신 데이터)
-                event.respondWith(
-                    fetch(event.request).catch(() => {
-                        return new Response('오프라인 상태입니다.', {
-                            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-                        });
-                    })
-                );
-            });
-        `;
-        
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        
-        navigator.serviceWorker.register(swUrl)
-            .then(registration => {
-                console.log('✅ Service Worker 등록 완료:', registration);
-            })
-            .catch(error => {
-                console.log('❌ Service Worker 등록 실패:', error);
-            });
-    }
-    
-    // PWA Manifest 동적 생성
-    const manifestData = {
-        "name": "To Do List",
-        "short_name": "ToDo",
-        "description": "할 일 관리 앱",
-        "start_url": window.location.pathname,
-        "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#4285f4",
-        "icons": [
-            {
-                "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%234285f4' width='100' height='100' rx='20'/%3E%3Cpath fill='white' d='M30 50 L45 65 L70 35' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E",
-                "sizes": "512x512",
-                "type": "image/svg+xml",
-                "purpose": "any maskable"
-            }
-        ]
-    };
-    
-    const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(manifestBlob);
-    document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
-    
-    // PWA 설치 이벤트 처리
-    let deferredPrompt;
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // 기본 설치 배너 방지
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('💡 PWA 설치 가능');
-    });
-    
-    window.installPWA = async () => {
-        // Chrome/Edge에서 설치 가능한 경우
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            
-            if (outcome === 'accepted') {
-                console.log('✅ PWA 설치됨');
-                showToast('✅ 홈화면에 추가되었습니다!');
-            } else {
-                console.log('❌ PWA 설치 취소됨');
-            }
-            
-            deferredPrompt = null;
-            return;
-        }
-        
-        // 설치 프롬프트가 없는 경우 - 플랫폼별 안내
-        showIOSInstallInstructions();
-    };
-    
-    // iOS Safari를 위한 설치 안내
-    function showIOSInstallInstructions() {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-        
-        if (isIOS && !isInStandaloneMode) {
-            showToast('📱 Safari에서 공유 버튼(↑) > "홈 화면에 추가"를 선택하세요', 5000);
-        } else if (isInStandaloneMode) {
-            showToast('✅ 이미 홈화면에 추가되어 있습니다');
-        } else {
-            showToast('ℹ️ 브라우저 메뉴에서 "홈 화면에 추가"를 선택하세요', 5000);
-        }
-    }
-    
-    // 앱 설치 완료 이벤트
-    window.addEventListener('appinstalled', () => {
-        console.log('✅ PWA 설치 완료');
-        deferredPrompt = null;
-    });
-    
-    // 페이지 로드 시 이미 설치되어 있는지 확인
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        console.log('✅ 앱 모드로 실행 중');
-    }
-</script>
 
 </body>
 </html>
