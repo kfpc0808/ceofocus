@@ -1824,6 +1824,14 @@ Backspace      빈 줄에서 누르면 삭제</pre>
         const onNewDriveConnected = async () => {
             console.log('✅ 새로운 Google Drive 연결 완료');
             
+            // 기존 시스템 호환을 위한 플래그
+            isConnected = true;
+            
+            // 버튼 표시 (기존 시스템과 동일)
+            document.getElementById('connectBtn').style.display = 'none';
+            document.getElementById('saveBtn').style.display = 'inline-block';
+            document.getElementById('loadBtn').style.display = 'inline-block';
+            
             // 상태 업데이트
             document.getElementById('statusDot').className = 'status-dot connected';
             document.getElementById('statusText').textContent = '연결됨';
@@ -1848,9 +1856,37 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             autoSaveInterval = setInterval(async () => {
                 await saveToNewDrive(data);
                 console.log('🔄 자동 저장 완료');
+                // 상태 표시 업데이트
+                document.getElementById('statusText').textContent = '저장 완료';
+                setTimeout(() => {
+                    document.getElementById('statusText').textContent = '연결됨';
+                }, 1500);
             }, 300000); // 5분
             
+            // 실시간 동기화 체크 시작 (10초마다)
+            if (syncCheckInterval) clearInterval(syncCheckInterval);
+            syncCheckInterval = setInterval(checkForUpdatesNew, 10000);
+            
             showToast('✅ Google Drive 연결 완료!');
+        };
+        
+        // 새로운 시스템의 업데이트 체크
+        const checkForUpdatesNew = async () => {
+            if (!newAccessToken || isEditing) return;
+            
+            try {
+                const file = await findFile('todolist.tdd');
+                if (!file) return;
+                
+                const cloudModifiedTime = new Date(file.modifiedTime).getTime();
+                
+                if (lastModifiedTime && cloudModifiedTime > lastModifiedTime) {
+                    // 새 버전 감지
+                    document.getElementById('syncNotification').classList.add('show');
+                }
+            } catch (error) {
+                console.error('업데이트 체크 오류:', error);
+            }
         };
         
         // Firebase 로그인 체크
@@ -2156,7 +2192,38 @@ Backspace      빈 줄에서 누르면 삭제</pre>
         // ========================================
         async function saveToDrive() {
             if (!isConnected) return;
+            
+            // 새로운 Google Drive 시스템 우선 사용
+            if (newAccessToken && gisInited) {
+                try {
+                    document.getElementById('statusDot').className = 'status-dot syncing';
+                    document.getElementById('statusText').textContent = '저장 중...';
+                    
+                    const success = await saveToNewDrive(data);
+                    
+                    if (success) {
+                        // 저장 시간 업데이트
+                        const file = await findFile('todolist.tdd');
+                        if (file) {
+                            lastModifiedTime = new Date(file.modifiedTime).getTime();
+                        }
+                        
+                        document.getElementById('statusDot').className = 'status-dot connected';
+                        document.getElementById('statusText').textContent = '저장 완료';
+                        setTimeout(() => {
+                            document.getElementById('statusText').textContent = '연결됨';
+                        }, 2000);
+                        showToast('💾 저장 완료!');
+                    } else {
+                        throw new Error('저장 실패');
+                    }
+                    return;
+                } catch (error) {
+                    console.error('새 시스템 저장 실패, 기존 시스템 시도:', error);
+                }
+            }
 
+            // 기존 시스템 (폴백)
             try {
                 document.getElementById('statusDot').className = 'status-dot syncing';
                 document.getElementById('statusText').textContent = '저장 중...';
@@ -2222,7 +2289,48 @@ Backspace      빈 줄에서 누르면 삭제</pre>
 
         async function loadFromDrive() {
             if (!isConnected) return;
+            
+            // 새로운 Google Drive 시스템 우선 사용
+            if (newAccessToken && gisInited) {
+                try {
+                    document.getElementById('statusDot').className = 'status-dot syncing';
+                    document.getElementById('statusText').textContent = '불러오는 중...';
+                    
+                    const savedData = await loadFromNewDrive();
+                    
+                    if (savedData) {
+                        data = savedData;
+                        
+                        // 저장 시간 업데이트
+                        const file = await findFile('todolist.tdd');
+                        if (file) {
+                            lastModifiedTime = new Date(file.modifiedTime).getTime();
+                        }
+                        
+                        saveToLocalStorage();
+                        render();
+                        document.getElementById('statusDot').className = 'status-dot connected';
+                        document.getElementById('statusText').textContent = '불러오기 완료';
+                        setTimeout(() => {
+                            document.getElementById('statusText').textContent = '연결됨';
+                        }, 2000);
+                        showToast('📥 불러오기 완료!');
+                        return;
+                    } else {
+                        // 파일이 없는 경우
+                        document.getElementById('statusDot').className = 'status-dot connected';
+                        document.getElementById('statusText').textContent = '저장된 파일 없음';
+                        setTimeout(() => {
+                            document.getElementById('statusText').textContent = '연결됨';
+                        }, 2000);
+                        return;
+                    }
+                } catch (error) {
+                    console.error('새 시스템 불러오기 실패, 기존 시스템 시도:', error);
+                }
+            }
 
+            // 기존 시스템 (폴백)
             try {
                 document.getElementById('statusDot').className = 'status-dot syncing';
                 document.getElementById('statusText').textContent = '불러오는 중...';
