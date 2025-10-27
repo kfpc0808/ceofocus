@@ -62,6 +62,12 @@
             align-items: center;
         }
 
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         /* 검색 바 */
         .search-container {
             display: flex;
@@ -1093,7 +1099,7 @@
         @media (max-width: 768px) {
             body {
                 padding: 10px;
-                padding-top: 90px;
+                padding-top: 110px;
             }
 
             .container {
@@ -1101,17 +1107,16 @@
             }
 
             .header {
-                flex-direction: row;
+                flex-direction: column;
                 gap: 8px;
                 padding: 8px 10px;
-                flex-wrap: wrap;
+                align-items: stretch;
             }
 
             .header-left {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 4px;
-                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
             }
 
             .header h1 {
@@ -1124,17 +1129,22 @@
             }
 
             .header-controls {
-                width: calc(100% - 120px);
-                flex-wrap: nowrap;
-                justify-content: flex-end;
-                gap: 4px;
-                overflow-x: auto;
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 8px;
             }
 
             .search-container {
-                width: auto;
-                flex: 1;
+                flex: 0 1 auto;
                 min-width: 120px;
+                max-width: 140px;
+            }
+
+            .header-buttons {
+                display: flex;
+                gap: 4px;
+                flex-wrap: nowrap;
             }
 
             .search-input {
@@ -1143,6 +1153,7 @@
 
             .search-results {
                 order: -1;
+                width: 100%;
             }
 
             .search-nav {
@@ -1283,10 +1294,6 @@
     <div class="header">
         <div class="header-left">
             <h1>📝 To Do List</h1>
-            <div class="status">
-                <div class="status-dot" id="statusDot"></div>
-                <span id="statusText">오프라인</span>
-            </div>
         </div>
         <div class="header-controls">
             <!-- 검색 바 -->
@@ -1306,14 +1313,23 @@
                 <button class="search-nav-btn" onclick="nextSearchResult()">↓</button>
             </div>
             
-            <button class="btn" id="connectBtn" onclick="connectDrive()">Drive 연결</button>
-            <button class="btn btn-secondary" id="saveBtn" onclick="saveToDrive()" style="display:none;">
-                저장
-            </button>
-            <button class="btn btn-secondary" id="loadBtn" onclick="loadFromDrive()" style="display:none;">
-                불러오기
-            </button>
-            <button class="btn btn-secondary" onclick="location.href='index.html'">Main</button>
+            <div class="header-buttons">
+                <button class="btn" id="connectBtn" onclick="connectDrive()">Drive 연결</button>
+                <button class="btn btn-secondary" id="saveBtn" onclick="saveToDrive()" style="display:none;">
+                    저장
+                </button>
+                <button class="btn btn-secondary" id="loadBtn" onclick="loadFromDrive()" style="display:none;">
+                    불러오기
+                </button>
+                <button class="btn btn-secondary" onclick="location.href='index.html'">Main</button>
+            </div>
+            
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">오프라인</span>
+            </div>
+        </div>
+    </div>
         </div>
     </div>
 
