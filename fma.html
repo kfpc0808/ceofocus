@@ -2284,10 +2284,31 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     });
                     
                     setSyncStatus('동기화됨');
-                }, 500); // 500ms 디바운싱
+                }, 200); // 200ms 디바운싱 (더 빠른 실시간 동기화)
 
                 return () => clearTimeout(timeoutId);
             }, [customer, insurances, consultant, analysisResults, summary, opinions, currentSessionId]);
+            
+            // 즉시 Firebase 업데이트 (중요한 변경사항용)
+            const immediateFirebaseUpdate = () => {
+                if (!database || !currentSessionId) return;
+                
+                const updateData = {
+                    customer,
+                    insurances,
+                    consultant,
+                    analysisResults,
+                    summary,
+                    opinions,
+                    updatedAt: Date.now()
+                };
+
+                database.ref(`sessions/${currentSessionId}`).set(updateData).catch(err => {
+                    console.error('Firebase 즉시 저장 실패:', err);
+                });
+                
+                setSyncStatus('동기화됨 ✓');
+            };
             
             // 분석 완료 시 자동 Google Drive 저장 (컨설턴트만)
             useEffect(() => {
@@ -2421,7 +2442,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             };
 
             const addInsurance = () => {
-                setInsurances([...insurances, {
+                const newInsurance = {
                     id: Date.now(),
                     company: '',
                     productName: '',
@@ -2429,7 +2450,23 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     startDate: '',
                     endDate: '',
                     coverages: []
-                }]);
+                };
+                const updatedInsurances = [...insurances, newInsurance];
+                setInsurances(updatedInsurances);
+                
+                // 즉시 Firebase 업데이트
+                if (database && currentSessionId) {
+                    database.ref(`sessions/${currentSessionId}`).update({
+                        customer,
+                        insurances: updatedInsurances,
+                        consultant,
+                        analysisResults,
+                        summary,
+                        opinions,
+                        updatedAt: Date.now()
+                    });
+                    setSyncStatus('보험 추가됨 ✓');
+                }
             };
 
             const updateInsurance = (id, field, value) => {
@@ -2440,7 +2477,22 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
 
             const removeInsurance = (id) => {
                 if (confirm('이 보험을 삭제하시겠습니까?')) {
-                    setInsurances(insurances.filter(ins => ins.id !== id));
+                    const updatedInsurances = insurances.filter(ins => ins.id !== id);
+                    setInsurances(updatedInsurances);
+                    
+                    // 즉시 Firebase 업데이트
+                    if (database && currentSessionId) {
+                        database.ref(`sessions/${currentSessionId}`).update({
+                            customer,
+                            insurances: updatedInsurances,
+                            consultant,
+                            analysisResults,
+                            summary,
+                            opinions,
+                            updatedAt: Date.now()
+                        });
+                        setSyncStatus('보험 삭제됨 ✓');
+                    }
                 }
             };
 
@@ -3091,7 +3143,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                     checked={customer.hasSpouse}
                                                     onChange={(e) => {
                                                         const isChecked = e.target.checked;
-                                                        setCustomer({
+                                                        const updatedCustomer = {
                                                             ...customer, 
                                                             hasSpouse: isChecked,
                                                             spouse: customer.spouse || { name: '', birthDate: '' },
@@ -3099,7 +3151,22 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                                 { id: 1, name: '', birthDate: '' },
                                                                 { id: 2, name: '', birthDate: '' }
                                                             ]
-                                                        });
+                                                        };
+                                                        setCustomer(updatedCustomer);
+                                                        
+                                                        // 즉시 Firebase 업데이트
+                                                        if (database && currentSessionId) {
+                                                            database.ref(`sessions/${currentSessionId}`).update({
+                                                                customer: updatedCustomer,
+                                                                insurances,
+                                                                consultant,
+                                                                analysisResults,
+                                                                summary,
+                                                                opinions,
+                                                                updatedAt: Date.now()
+                                                            });
+                                                            setSyncStatus('동기화됨 ✓');
+                                                        }
                                                     }}
                                                     style={{marginRight: '0.5rem', flexShrink: 0}}
                                                 />
