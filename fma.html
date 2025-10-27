@@ -2642,6 +2642,14 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     setOpinions(session.opinions || {});
                     setCurrentSessionId(session.sessionId);
                     
+                    // 🔥 중요: 불러온 세션의 초대 링크 재생성
+                    if (session.sessionId) {
+                        const baseUrl = window.location.origin + window.location.pathname;
+                        const link = `${baseUrl}?session=${session.sessionId}`;
+                        setInviteLink(link);
+                        console.log('✅ 초대 링크 생성:', link);
+                    }
+                    
                     console.log('✅ 세션 로드 완료:', session.customer.name);
                     
                     // 🔥 중요: Firebase에 데이터 저장 (링크 공유 시 동기화 위해)
