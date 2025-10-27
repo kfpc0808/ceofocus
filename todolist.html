@@ -4,8 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To Do List</title>
-    <!-- Google API - 필요시 아래 주석 해제 -->
-    <!-- <script src="https://apis.google.com/js/api.js"></script> -->
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -1508,6 +1516,371 @@ Backspace      빈 줄에서 누르면 삭제</pre>
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
         // ========================================
+        // Firebase + Google Drive 통합 (FMA 방식)
+        // ========================================
+        
+        // 암호화 키 및 Google Client ID
+        const ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
+        const GOOGLE_CLIENT_ID = "1012609333373-7dtjkn5j0fqkk7u3qhvftvk7jkh5r1md.apps.googleusercontent.com";
+        
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+            authDomain: "kfpc-company-support-project.firebaseapp.com",
+            databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "kfpc-company-support-project",
+            storageBucket: "kfpc-company-support-project.firebasestorage.app",
+            messagingSenderId: "1012609333373",
+            appId: "1:1012609333373:web:ffba9039a7f9568356d914",
+            measurementId: "G-Y757PLYBEE"
+        };
+        
+        // Firebase 초기화
+        let firebaseAuth = null;
+        let currentUser = null;
+        try {
+            if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                firebaseAuth = firebase.auth();
+            }
+        } catch (error) {
+            console.warn('Firebase 초기화 실패:', error);
+        }
+        
+        // 새로운 Google Drive 변수들
+        let newAccessToken = null;
+        let tokenClient = null;
+        let gisInited = false;
+        
+        // ========================================
+        // 암호화 함수들
+        // ========================================
+        
+        const encryptData = (data) => {
+            return CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
+        };
+        
+        const decryptData = (encryptedData) => {
+            const bytes = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
+            return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        };
+        
+        // ========================================
+        // Google Drive 함수들 (FMA 방식)
+        // ========================================
+        
+        // 로그인 상태 저장/복원
+        const saveLoginState = () => {
+            if (newAccessToken) {
+                localStorage.setItem('googleAccessToken', newAccessToken);
+                localStorage.setItem('tokenExpiry', Date.now() + 3600000);
+            }
+        };
+        
+        const restoreLoginState = () => {
+            const token = localStorage.getItem('googleAccessToken');
+            const expiry = localStorage.getItem('tokenExpiry');
+            
+            if (token && expiry && Date.now() < parseInt(expiry)) {
+                newAccessToken = token;
+                return true;
+            }
+            
+            localStorage.removeItem('googleAccessToken');
+            localStorage.removeItem('tokenExpiry');
+            return false;
+        };
+        
+        // Google Identity Services 초기화
+        const initGoogleDrive = async () => {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50;
+                
+                const checkGIS = setInterval(() => {
+                    attempts++;
+                    if (window.google && window.google.accounts) {
+                        clearInterval(checkGIS);
+                        
+                        tokenClient = google.accounts.oauth2.initTokenClient({
+                            client_id: GOOGLE_CLIENT_ID,
+                            scope: 'https://www.googleapis.com/auth/drive.file',
+                            callback: (response) => {
+                                if (response.error) {
+                                    console.error('❌ 인증 오류:', response.error);
+                                    alert('Google 로그인에 실패했습니다: ' + response.error);
+                                } else {
+                                    newAccessToken = response.access_token;
+                                    saveLoginState();
+                                    gisInited = true;
+                                    console.log('✅ Google Drive 인증 완료');
+                                    onNewDriveConnected();
+                                }
+                            },
+                        });
+                        
+                        gisInited = true;
+                        resolve();
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkGIS);
+                        console.error('❌ Google Identity Services 로드 실패');
+                        resolve();
+                    }
+                }, 100);
+            });
+        };
+        
+        // Drive 접근 권한 요청
+        const requestDriveAccess = async () => {
+            if (newAccessToken) {
+                const expiry = localStorage.getItem('tokenExpiry');
+                if (expiry && Date.now() < parseInt(expiry)) {
+                    return true;
+                }
+            }
+            
+            if (!gisInited) {
+                await initGoogleDrive();
+            }
+            
+            return new Promise((resolve) => {
+                if (!tokenClient) {
+                    console.error('❌ Token Client가 초기화되지 않았습니다');
+                    resolve(false);
+                    return;
+                }
+                
+                const originalCallback = tokenClient.callback;
+                tokenClient.callback = (response) => {
+                    tokenClient.callback = originalCallback;
+                    if (response.error) {
+                        resolve(false);
+                    } else {
+                        newAccessToken = response.access_token;
+                        saveLoginState();
+                        resolve(true);
+                    }
+                };
+                
+                tokenClient.requestAccessToken();
+            });
+        };
+        
+        // 파일 찾기
+        const findFile = async (fileName) => {
+            try {
+                await requestDriveAccess();
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'&fields=files(id,name,modifiedTime)`,
+                    {
+                        headers: { 'Authorization': `Bearer ${newAccessToken}` }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Search failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.files && data.files.length > 0 ? data.files[0] : null;
+            } catch (error) {
+                console.error('❌ 파일 검색 오류:', error);
+                return null;
+            }
+        };
+        
+        // 파일 다운로드
+        const downloadFromDrive = async (fileId) => {
+            try {
+                await requestDriveAccess();
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+                    {
+                        headers: { 'Authorization': `Bearer ${newAccessToken}` }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Download failed: ${response.status}`);
+                }
+                
+                return await response.text();
+            } catch (error) {
+                console.error('❌ 파일 다운로드 오류:', error);
+                return null;
+            }
+        };
+        
+        // 파일 업로드
+        const uploadToDrive = async (fileName, content) => {
+            try {
+                await requestDriveAccess();
+                
+                const metadata = {
+                    name: fileName,
+                    mimeType: 'application/octet-stream'
+                };
+                
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', new Blob([content], { type: 'application/octet-stream' }));
+                
+                const response = await fetch(
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                    {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${newAccessToken}` },
+                        body: form
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('❌ 파일 업로드 오류:', error);
+                return null;
+            }
+        };
+        
+        // 파일 업데이트
+        const updateFile = async (fileId, content) => {
+            try {
+                await requestDriveAccess();
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${newAccessToken}`,
+                            'Content-Type': 'application/octet-stream'
+                        },
+                        body: content
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Update failed: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('❌ 파일 업데이트 오류:', error);
+                return null;
+            }
+        };
+        
+        // 드라이브에서 불러오기
+        const loadFromNewDrive = async () => {
+            try {
+                const file = await findFile('todolist.tdd');
+                
+                if (file) {
+                    const encryptedData = await downloadFromDrive(file.id);
+                    if (encryptedData) {
+                        const todoData = decryptData(encryptedData);
+                        console.log('✅ To Do List 로드 완료');
+                        return todoData;
+                    }
+                }
+                
+                console.log('ℹ️ 저장된 To Do List 없음');
+                return null;
+            } catch (error) {
+                console.error('❌ 드라이브 로드 오류:', error);
+                return null;
+            }
+        };
+        
+        // 드라이브에 저장
+        const saveToNewDrive = async (todoData) => {
+            try {
+                const encrypted = encryptData(todoData);
+                const file = await findFile('todolist.tdd');
+                
+                if (file) {
+                    await updateFile(file.id, encrypted);
+                    console.log('✅ To Do List 업데이트 완료');
+                } else {
+                    await uploadToDrive('todolist.tdd', encrypted);
+                    console.log('✅ To Do List 저장 완료');
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ 드라이브 저장 오류:', error);
+                return false;
+            }
+        };
+        
+        // 새로운 Drive 연결 완료 시
+        const onNewDriveConnected = async () => {
+            console.log('✅ 새로운 Google Drive 연결 완료');
+            
+            // 상태 업데이트
+            document.getElementById('statusDot').className = 'status-dot connected';
+            document.getElementById('statusText').textContent = '연결됨';
+            
+            // Firebase 로그인 체크
+            if (firebaseAuth) {
+                await checkFirebaseLogin();
+            }
+            
+            // 자동으로 데이터 불러오기
+            const savedData = await loadFromNewDrive();
+            if (savedData) {
+                data = savedData;
+                render();
+                showToast('✅ 저장된 데이터를 불러왔습니다');
+            }
+            
+            // 자동 저장 시작 (5분마다)
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+            autoSaveInterval = setInterval(async () => {
+                await saveToNewDrive(data);
+                console.log('🔄 자동 저장 완료');
+            }, 300000); // 5분
+            
+            showToast('✅ Google Drive 연결 완료!');
+        };
+        
+        // Firebase 로그인 체크
+        const checkFirebaseLogin = async () => {
+            if (!firebaseAuth) return;
+            
+            return new Promise((resolve) => {
+                firebaseAuth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        currentUser = user;
+                        console.log('✅ Firebase 로그인 완료:', user.email);
+                        resolve(true);
+                    } else {
+                        console.log('ℹ️ Firebase 로그인 필요');
+                        
+                        try {
+                            const provider = new firebase.auth.GoogleAuthProvider();
+                            await firebaseAuth.signInWithPopup(provider);
+                            console.log('✅ Firebase 자동 로그인 완료');
+                            resolve(true);
+                        } catch (error) {
+                            console.warn('Firebase 로그인 실패:', error);
+                            resolve(false);
+                        }
+                    }
+                });
+            });
+        };
+
+        // ========================================
         // 가이드 아코디언
         // ========================================
         function toggleGuide() {
@@ -1530,7 +1903,24 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             loadFromLocalStorage();
             render();
             
-            // Google Drive 버튼 초기 상태 - 비활성화
+            // 새로운 Google Drive 초기화 시작
+            initGoogleDrive().then(() => {
+                // 저장된 로그인 상태 확인
+                if (restoreLoginState()) {
+                    console.log('✅ 로그인 상태 복원');
+                    onNewDriveConnected();
+                } else {
+                    console.log('ℹ️ 로그인 필요');
+                    // Drive 연결 버튼 활성화
+                    const connectBtn = document.getElementById('connectBtn');
+                    connectBtn.disabled = false;
+                    connectBtn.textContent = '☁️ Drive 연결';
+                    connectBtn.style.opacity = '1';
+                    connectBtn.style.cursor = 'pointer';
+                }
+            });
+            
+            // Google Drive 버튼 초기 상태 - 준비 중
             const connectBtn = document.getElementById('connectBtn');
             connectBtn.style.display = 'inline-block';
             connectBtn.disabled = true;
@@ -1539,7 +1929,7 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             connectBtn.style.cursor = 'not-allowed';
             document.getElementById('statusText').textContent = '오프라인';
             
-            // Google API 자동 로드
+            // Google API 자동 로드 (기존 시스템 유지)
             setTimeout(() => {
                 loadGoogleAPI();
             }, 100);
@@ -1547,6 +1937,17 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             // 텍스트 선택시 포맷 툴바 표시
             document.addEventListener('mouseup', showFormatToolbar);
             document.addEventListener('touchend', showFormatToolbar);
+            
+            // 입력 후 자동 저장 (1초 후)
+            document.addEventListener('input', () => {
+                if (newAccessToken && gisInited) {
+                    clearTimeout(editTimeout);
+                    editTimeout = setTimeout(async () => {
+                        await saveToNewDrive(data);
+                        console.log('💾 자동 저장 완료 (입력 후)');
+                    }, 1000);
+                }
+            });
         };
 
         function initClient() {
@@ -1640,6 +2041,19 @@ Backspace      빈 줄에서 누르면 삭제</pre>
                 return;
             }
             
+            // 새로운 Google Drive 시스템 사용 (우선)
+            if (gisInited && tokenClient) {
+                requestDriveAccess().then(success => {
+                    if (success) {
+                        onNewDriveConnected();
+                    } else {
+                        showToast('❌ Google Drive 연결 실패');
+                    }
+                });
+                return;
+            }
+            
+            // 기존 시스템 폴백
             // Google API가 로드되지 않은 경우
             if (typeof gapi === 'undefined') {
                 showToast('⚠️ Google API가 아직 로드되지 않았습니다. 잠시만 기다려주세요.');
