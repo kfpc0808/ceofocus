@@ -479,6 +479,38 @@
                 flex-direction: column;
             }
         }
+
+        /* 닫기 버튼 스타일 */
+        .close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 40px;
+            height: 40px;
+            background: #ff6f00;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(230, 81, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .close-btn:hover {
+            background: #e65100;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(230, 81, 0, 0.5);
+        }
+
+        .close-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -532,6 +564,7 @@
         <div class="logo">KFPC</div>
 
         <div class="header">
+            <button class="close-btn" onclick="closeWindow()" title="닫기">×</button>
             <h1 class="page-title">
                 양도소득세 완전 계산기
                 <span class="warning-badge">세법 완전 준수</span>
@@ -1418,5 +1451,21 @@
             calculateHoldingPeriod();
         };
     </script>
+
+<script>
+// 닫기 버튼 함수
+function closeWindow() {
+    if (confirm('창을 닫으시겠습니까?')) {
+        window.close();
+        setTimeout(function() {
+            if (document.referrer) {
+                window.history.back();
+            } else {
+                window.location.href = 'about:blank';
+            }
+        }, 100);
+    }
+}
+</script>
 </body>
 </html>
