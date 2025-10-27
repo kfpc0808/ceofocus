@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1535,24 +1536,32 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
         };
 
-        // Google Drive 초기화
+        // Google Drive 초기화 (간소화)
         const initGoogleDrive = async () => {
-            return new Promise((resolve, reject) => {
-                gapi.load('client', async () => {
-                    try {
-                        await gapi.client.init({
-                            apiKey: GOOGLE_API_KEY,
-                            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                        });
+            // fetch API를 사용하므로 gapi.client 초기화 불필요
+            // 단순히 Google Identity Services 로드 대기
+            return new Promise((resolve) => {
+                // GIS 라이브러리 로드 확인
+                const checkGIS = setInterval(() => {
+                    if (window.google && window.google.accounts) {
+                        clearInterval(checkGIS);
+                        console.log('✅ Google Identity Services 로드 완료');
                         resolve();
-                    } catch (error) {
-                        reject(error);
                     }
-                });
+                }, 100);
+                
+                // 5초 타임아웃
+                setTimeout(() => {
+                    clearInterval(checkGIS);
+                    console.warn('⚠️ Google Identity Services 로드 시간 초과');
+                    resolve(); // 에러 대신 resolve (계속 진행)
+                }, 5000);
             });
         };
 
         let tokenClient;
+        let accessToken = null; // 전역 변수로 토큰 저장
+        
         const requestDriveAccess = async () => {
             return new Promise((resolve, reject) => {
                 tokenClient = google.accounts.oauth2.initTokenClient({
@@ -1562,6 +1571,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                         if (response.error) {
                             reject(response);
                         } else {
+                            accessToken = response.access_token; // 토큰 저장
                             resolve(response.access_token);
                         }
                     }
@@ -1570,54 +1580,38 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             });
         };
 
-        const uploadToDrive = async (fileName, content) => {
+        // ===== Google Drive 함수 (client.html 방식 - 단일 파일) =====
+        
+        // 파일 검색
+        const findFile = async (fileName) => {
+            if (!accessToken) return null;
+            
             try {
                 await requestDriveAccess();
                 
-                const metadata = {
-                    name: fileName,
-                    mimeType: 'text/plain',  // 암호화된 텍스트로 저장 (더 호환성 좋음)
-                    description: 'Encrypted FMA session data (AES-256)'
-                };
-
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([content], { type: 'text/plain' }));
-
                 const response = await fetch(
-                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                    `https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and trashed=false&fields=files(id,name)`,
                     {
-                        method: 'POST',
-                        headers: new Headers({ Authorization: `Bearer ${gapi.client.getToken().access_token}` }),
-                        body: form,
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
-
+                
                 const data = await response.json();
-                return data.id;
+                
+                if (data.files && data.files.length > 0) {
+                    console.log('✅ 파일 발견:', data.files[0].id);
+                    return data.files[0];
+                }
+                
+                console.log('ℹ️ 파일 없음:', fileName);
+                return null;
             } catch (error) {
-                console.error('Drive 업로드 실패:', error);
-                throw error;
+                console.error('❌ 파일 검색 오류:', error);
+                return null;
             }
         };
-
-        const listDriveFiles = async () => {
-            try {
-                await requestDriveAccess();
-                
-                const response = await gapi.client.drive.files.list({
-                    pageSize: 100,
-                    fields: 'files(id, name, modifiedTime)',
-                    q: "name contains 'FMA_' and (name contains '.enc' or name contains '.json')"
-                });
-                
-                return response.result.files || [];
-            } catch (error) {
-                console.error('파일 목록 조회 실패:', error);
-                return [];
-            }
-        };
-
+        
+        // 파일 다운로드
         const downloadFromDrive = async (fileId) => {
             try {
                 await requestDriveAccess();
@@ -1625,9 +1619,13 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 const response = await fetch(
                     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
                     {
-                        headers: new Headers({ Authorization: `Bearer ${gapi.client.getToken().access_token}` })
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
+                
+                if (!response.ok) {
+                    throw new Error(`Download failed: ${response.status}`);
+                }
                 
                 return await response.text();
             } catch (error) {
@@ -1635,160 +1633,270 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 throw error;
             }
         };
+        
+        // 파일 업로드 (신규)
+        const uploadToDrive = async (fileName, content) => {
+            try {
+                await requestDriveAccess();
+                
+                const metadata = {
+                    name: fileName,
+                    mimeType: 'application/octet-stream'
+                };
+                
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', new Blob([content], { type: 'application/octet-stream' }));
+                
+                const response = await fetch(
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                    {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${accessToken}` },
+                        body: form
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('❌ 파일 업로드 오류:', error);
+                return null;
+            }
+        };
+        
+        // 파일 업데이트 (기존 파일 덮어쓰기)
+        const updateFile = async (fileId, content) => {
+            try {
+                await requestDriveAccess();
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/octet-stream'
+                        },
+                        body: content
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Update failed: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('❌ 파일 업데이트 오류:', error);
+                return null;
+            }
+        };
+        
+        // 드라이브에서 세션 목록 불러오기 (단일 파일 방식)
+        const loadFromDrive = async () => {
+            try {
+                const file = await findFile('보장분석목록.fmd');
+                
+                if (file) {
+                    const encryptedData = await downloadFromDrive(file.id);
+                    if (encryptedData) {
+                        const sessions = decryptData(encryptedData);
+                        console.log('✅ 세션 목록 로드 완료:', sessions.length, '개');
+                        return sessions;
+                    }
+                }
+                
+                console.log('ℹ️ 저장된 세션 없음');
+                return [];
+            } catch (error) {
+                console.error('❌ 드라이브 로드 오류:', error);
+                return [];
+            }
+        };
+        
+        // 드라이브에 세션 목록 저장 (단일 파일 방식)
+        const saveToDrive = async (sessions) => {
+            try {
+                const encrypted = encryptData(sessions);
+                const file = await findFile('보장분석목록.fmd');
+                
+                if (file) {
+                    console.log('📝 기존 파일 업데이트 중...');
+                    await updateFile(file.id, encrypted);
+                } else {
+                    console.log('📝 신규 파일 생성 중...');
+                    await uploadToDrive('보장분석목록.fmd', encrypted);
+                }
+                
+                console.log('✅ 세션 목록 저장 완료:', sessions.length, '개');
+                return true;
+            } catch (error) {
+                console.error('❌ 드라이브 저장 오류:', error);
+                return false;
+            }
+        };
 
-        // PDF 생성 (개선된 버전)
+        // PDF 생성 (html2canvas 기반 - 한글 완벽 지원)
         const generatePDF = async (customer, consultant, insurances, analysisResults, summary, opinions) => {
             const { jsPDF } = window.jspdf;
+            
+            // 통계 계산
+            const adequateCount = analysisResults.filter(r => r.status === 'adequate').length;
+            const recommendCount = analysisResults.filter(r => r.status === 'recommend').length;
+            const insufficientCount = analysisResults.filter(r => r.status === 'insufficient').length;
+            const noneCount = analysisResults.filter(r => r.status === 'none').length;
+            const totalPremium = insurances.reduce((sum, ins) => sum + (parseInt(ins.monthlyPremium) || 0), 0);
+            const title = consultant.jobTitle === '직접입력' ? consultant.customJobTitle : consultant.jobTitle;
+            const today = new Date().toLocaleDateString('ko-KR');
+            
+            // HTML 템플릿 생성
+            const htmlContent = `
+                <div id="pdf-content" style="width: 794px; background: white; padding: 40px; font-family: 'Malgun Gothic', 'Noto Sans KR', sans-serif; display: none;">
+                    <!-- 표지 -->
+                    <div style="height: 1000px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; text-align: center; margin-bottom: 40px; border-radius: 10px;">
+                        <h1 style="font-size: 60px; margin: 0; font-weight: bold;">FMA</h1>
+                        <h2 style="font-size: 32px; margin: 20px 0;">Financial Master Analysis</h2>
+                        <h3 style="font-size: 24px; margin: 10px 0;">보험 보장 분석 리포트</h3>
+                        <p style="font-size: 28px; margin: 60px 0; font-weight: bold;">${customer.name} 고객님</p>
+                        <p style="font-size: 16px; margin-top: 100px;">${today}</p>
+                    </div>
+                    
+                    <!-- 고객 프로필 -->
+                    <div style="padding: 30px 0; margin-bottom: 40px;">
+                        <h2 style="color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 25px; font-size: 24px;">📋 고객 프로필</h2>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 12px; font-weight: bold; width: 30%; background: #f9fafb;">이름</td><td style="padding: 12px;">${customer.name}</td></tr>
+                            <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 12px; font-weight: bold; background: #f9fafb;">나이</td><td style="padding: 12px;">${customer.age}세</td></tr>
+                            <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 12px; font-weight: bold; background: #f9fafb;">성별</td><td style="padding: 12px;">${customer.gender}</td></tr>
+                            <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 12px; font-weight: bold; background: #f9fafb;">직업</td><td style="padding: 12px;">${customer.occupation || '-'}</td></tr>
+                            <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 12px; font-weight: bold; background: #f9fafb;">연소득</td><td style="padding: 12px;">${formatAmountKorean(customer.annualIncome)}</td></tr>
+                            <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 12px; font-weight: bold; background: #f9fafb;">배우자</td><td style="padding: 12px;">${customer.hasSpouse ? '있음' : '없음'}</td></tr>
+                            <tr><td style="padding: 12px; font-weight: bold; background: #f9fafb;">자녀</td><td style="padding: 12px;">${customer.numberOfChildren || 0}명</td></tr>
+                        </table>
+                    </div>
+                    
+                    <!-- 보험 가입 현황 -->
+                    <div style="padding: 30px 0; margin-bottom: 40px;">
+                        <h2 style="color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 25px; font-size: 24px;">💼 보험 가입 현황</h2>
+                        ${insurances.map((ins, idx) => `
+                            <div style="background: #f9fafb; padding: 15px; margin-bottom: 12px; border-radius: 6px; border-left: 4px solid #2563eb;">
+                                <div style="font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #1f2937;">${idx + 1}. ${ins.company} - ${ins.productName}</div>
+                                <div style="font-size: 13px; color: #6b7280;">월 보험료: <strong style="color: #2563eb;">${formatAmountKorean(ins.monthlyPremium)}</strong></div>
+                                ${ins.startDate ? `<div style="font-size: 13px; color: #6b7280; margin-top: 4px;">가입일: ${ins.startDate}</div>` : ''}
+                            </div>
+                        `).join('')}
+                        <div style="margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 16px; font-weight: bold; color: #2563eb;">총 월 보험료: ${formatAmountKorean(totalPremium)}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 보장 분석 요약 -->
+                    <div style="padding: 30px 0; margin-bottom: 40px;">
+                        <h2 style="color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 25px; font-size: 24px;">📊 보장 분석 요약</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="background: #10b981; color: white; padding: 25px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 40px; font-weight: bold;">${adequateCount}</div>
+                                <div style="font-size: 16px; margin-top: 8px;">✓ 적정 보장</div>
+                            </div>
+                            <div style="background: #f59e0b; color: white; padding: 25px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 40px; font-weight: bold;">${recommendCount}</div>
+                                <div style="font-size: 16px; margin-top: 8px;">⚠ 보완 권장</div>
+                            </div>
+                            <div style="background: #ef4444; color: white; padding: 25px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 40px; font-weight: bold;">${insufficientCount}</div>
+                                <div style="font-size: 16px; margin-top: 8px;">✗ 부족</div>
+                            </div>
+                            <div style="background: #6b7280; color: white; padding: 25px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 40px; font-weight: bold;">${noneCount}</div>
+                                <div style="font-size: 16px; margin-top: 8px;">- 미가입</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 항목별 상세 분석 -->
+                    <div style="padding: 30px 0;">
+                        <h2 style="color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 25px; font-size: 24px;">📝 항목별 상세 분석</h2>
+                        ${analysisResults.filter(r => r.status !== 'adequate').slice(0, 10).map((result) => `
+                            <div style="background: ${result.status === 'none' ? '#f3f4f6' : result.status === 'insufficient' ? '#fef2f2' : '#fffbeb'}; padding: 18px; margin-bottom: 15px; border-radius: 6px; border-left: 4px solid ${result.status === 'none' ? '#6b7280' : result.status === 'insufficient' ? '#ef4444' : '#f59e0b'};">
+                                <h3 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: bold;">${result.coverageItem}</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; font-size: 13px;">
+                                    <div><div style="color: #6b7280;">현재 보장</div><div style="font-weight: bold; color: #1f2937; margin-top: 4px;">${formatAmountKorean(result.currentAmount)}</div></div>
+                                    <div><div style="color: #6b7280;">권장 보장</div><div style="font-weight: bold; color: #2563eb; margin-top: 4px;">${formatAmountKorean(result.recommendedAmount)}</div></div>
+                                    <div><div style="color: #6b7280;">보장률</div><div style="font-weight: bold; color: ${result.coverageRate >= 90 ? '#10b981' : result.coverageRate >= 70 ? '#f59e0b' : '#ef4444'}; margin-top: 4px;">${Math.round(result.coverageRate)}%</div></div>
+                                </div>
+                                <div style="background: white; padding: 12px; border-radius: 4px; line-height: 1.6; color: #374151; font-size: 13px; white-space: pre-wrap;">${opinions[result.coverageItem] || result.opinion}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- 종합 총평 -->
+                    <div style="padding: 30px 0; margin-bottom: 40px;">
+                        <h2 style="color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 25px; font-size: 24px;">💬 종합 총평</h2>
+                        <div style="background: #f9fafb; padding: 25px; border-radius: 6px; line-height: 1.8; white-space: pre-wrap; color: #1f2937; font-size: 14px;">${summary}</div>
+                    </div>
+                    
+                    <!-- 컨설턴트 정보 -->
+                    <div style="padding: 30px 0;">
+                        <h2 style="color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 25px; font-size: 24px;">👨‍💼 담당 컨설턴트</h2>
+                        <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 25px; border-radius: 8px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                                <tr style="border-bottom: 1px solid #bfdbfe;"><td style="padding: 12px; font-weight: bold; width: 30%;">이름</td><td style="padding: 12px;">${consultant.name} ${title}</td></tr>
+                                <tr style="border-bottom: 1px solid #bfdbfe;"><td style="padding: 12px; font-weight: bold;">소속</td><td style="padding: 12px;">${consultant.organization || '-'}</td></tr>
+                                <tr style="border-bottom: 1px solid #bfdbfe;"><td style="padding: 12px; font-weight: bold;">연락처</td><td style="padding: 12px;">${consultant.phone || '-'}</td></tr>
+                                <tr><td style="padding: 12px; font-weight: bold;">이메일</td><td style="padding: 12px;">${consultant.email || '-'}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 임시 div에 HTML 추가
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            document.body.appendChild(tempDiv);
+            
+            const contentDiv = document.getElementById('pdf-content');
+            contentDiv.style.display = 'block';
+            
+            // html2canvas로 캡처 후 PDF 생성
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
-            let currentPage = 1;
-
-            // 페이지 추가 헬퍼
-            const addNewPage = () => {
-                pdf.addPage();
-                currentPage++;
-            };
-
-            // 1. 표지
-            pdf.setFillColor(37, 99, 235);
-            pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFontSize(40);
-            pdf.text('FMA', pageWidth / 2, 70, { align: 'center' });
-            pdf.setFontSize(28);
-            pdf.text('Financial Master Analysis', pageWidth / 2, 95, { align: 'center' });
-            pdf.setFontSize(22);
-            pdf.text('보험 보장 분석 리포트', pageWidth / 2, 120, { align: 'center' });
             
-            if (customer.name) {
-                pdf.setFontSize(24);
-                pdf.text(`${customer.name} 고객님`, pageWidth / 2, 150, { align: 'center' });
+            const canvas = await html2canvas(contentDiv, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                windowWidth: 794
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pageWidth;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            let heightLeft = imgHeight;
+            let position = 0;
+            
+            // 첫 페이지
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            
+            // 추가 페이지
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
             }
             
-            pdf.setFontSize(14);
-            const today = new Date().toLocaleDateString('ko-KR');
-            pdf.text(today, pageWidth / 2, pageHeight - 30, { align: 'center' });
-
-            // 2. 목차
-            addNewPage();
-            pdf.setTextColor(0, 0, 0);
-            pdf.setFontSize(24);
-            pdf.text('목차', 20, 30);
+            // 임시 div 제거
+            document.body.removeChild(tempDiv);
             
-            pdf.setFontSize(12);
-            const contents = [
-                '1. 고객 프로필',
-                '2. 보험 가입 현황',
-                '3. 보장 분석 요약',
-                '4. 항목별 상세 분석',
-                '5. 종합 총평',
-                '6. 컨설턴트 정보'
-            ];
-            contents.forEach((item, idx) => {
-                pdf.text(item, 30, 50 + (idx * 10));
-            });
-
-            // 3. 고객 프로필
-            addNewPage();
-            pdf.setFontSize(20);
-            pdf.text('고객 프로필', 20, 30);
-            
-            pdf.setFontSize(12);
-            let y = 50;
-            pdf.text(`이름: ${customer.name}`, 30, y);
-            pdf.text(`나이: ${customer.age}세`, 30, y + 10);
-            pdf.text(`성별: ${customer.gender}`, 30, y + 20);
-            pdf.text(`직업: ${customer.occupation || '-'}`, 30, y + 30);
-            pdf.text(`연소득: ${formatAmountKorean(customer.annualIncome)}`, 30, y + 40);
-            pdf.text(`배우자: ${customer.hasSpouse ? '있음' : '없음'}`, 30, y + 50);
-            pdf.text(`자녀: ${customer.numberOfChildren}명`, 30, y + 60);
-
-            // 4. 보험 가입 현황
-            addNewPage();
-            pdf.setFontSize(20);
-            pdf.text('보험 가입 현황', 20, 30);
-            
-            y = 50;
-            insurances.forEach((insurance, idx) => {
-                if (y > pageHeight - 40) {
-                    addNewPage();
-                    y = 30;
-                }
-                
-                pdf.setFontSize(14);
-                pdf.text(`${idx + 1}. ${insurance.company} - ${insurance.productName}`, 30, y);
-                pdf.setFontSize(11);
-                pdf.text(`월 보험료: ${formatAmountKorean(insurance.monthlyPremium)}`, 35, y + 8);
-                if (insurance.startDate) {
-                    pdf.text(`가입일: ${insurance.startDate}`, 35, y + 15);
-                }
-                
-                y += 30;
-            });
-
-            // 5-6. 보장 분석 요약
-            addNewPage();
-            pdf.setFontSize(20);
-            pdf.text('보장 분석 요약', 20, 30);
-            
-            const adequate = analysisResults.filter(r => r.status === 'adequate').length;
-            const recommend = analysisResults.filter(r => r.status === 'recommend').length;
-            const insufficient = analysisResults.filter(r => r.status === 'insufficient').length;
-            const none = analysisResults.filter(r => r.status === 'none').length;
-            
-            pdf.setFontSize(12);
-            y = 50;
-            pdf.text(`✅ 적정: ${adequate}건`, 30, y);
-            pdf.text(`🟡 보완권장: ${recommend}건`, 30, y + 10);
-            pdf.text(`⚠️ 부족: ${insufficient}건`, 30, y + 20);
-            pdf.text(`❌ 없음: ${none}건`, 30, y + 30);
-
-            // 7-15. 항목별 상세 분석 (주요 10개만)
-            const topResults = analysisResults
-                .filter(r => r.status !== 'adequate')
-                .slice(0, 10);
-            
-            topResults.forEach((result, idx) => {
-                addNewPage();
-                pdf.setFontSize(18);
-                pdf.text(`${idx + 1}. ${result.coverageItem}`, 20, 30);
-                
-                pdf.setFontSize(12);
-                y = 50;
-                pdf.text(`현재 보장: ${formatAmountKorean(result.currentAmount)}`, 30, y);
-                pdf.text(`권장 보장: ${formatAmountKorean(result.recommendedAmount)}`, 30, y + 10);
-                pdf.text(`보장률: ${Math.round(result.coverageRate)}%`, 30, y + 20);
-                pdf.text(`진단: ${getStatusText(result.status)}`, 30, y + 30);
-                
-                // 의견
-                const opinion = opinions[result.coverageItem] || result.opinion;
-                const lines = pdf.splitTextToSize(opinion, pageWidth - 60);
-                pdf.text(lines, 30, y + 50);
-            });
-
-            // 16. 종합 총평
-            addNewPage();
-            pdf.setFontSize(20);
-            pdf.text('종합 총평', 20, 30);
-            
-            pdf.setFontSize(11);
-            const summaryLines = pdf.splitTextToSize(summary, pageWidth - 50);
-            pdf.text(summaryLines, 25, 50);
-
-            // 17. 컨설턴트 프로필
-            addNewPage();
-            pdf.setFontSize(20);
-            pdf.text('담당 컨설턴트', 20, 30);
-            
-            pdf.setFontSize(12);
-            y = 50;
-            const title = consultant.jobTitle === '직접입력' ? consultant.customJobTitle : consultant.jobTitle;
-            pdf.text(`이름: ${consultant.name} ${title}`, 30, y);
-            pdf.text(`소속: ${consultant.organization || '-'}`, 30, y + 10);
-            pdf.text(`연락처: ${consultant.phone || '-'}`, 30, y + 20);
-            pdf.text(`이메일: ${consultant.email || '-'}`, 30, y + 30);
-
             return pdf;
         };
 
@@ -2118,8 +2226,8 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                     <div className="customer-card-info">
                                         <div>{session.customer.gender || '-'} · {session.customer.occupation || '-'}</div>
                                         <div>연소득: {session.customer.annualIncome ? formatAmountKorean(session.customer.annualIncome) : '-'}</div>
-                                        <div>보험: {session.isPreview ? '클릭하여 확인' : `${session.insurances.length}건`}</div>
-                                        <div className="hint">수정일: {session.modifiedTime}</div>
+                                        <div>보험: {session.insurances?.length || 0}건</div>
+                                        <div className="hint">저장일: {new Date(session.savedAt).toLocaleString('ko-KR')}</div>
                                     </div>
                                 </div>
                             ))}
@@ -2409,16 +2517,25 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                             savedAt: new Date().toISOString()
                         };
 
-                        const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.enc`;
-                        const encryptedData = encryptData(session);
+                        // 기존 세션 목록 불러오기
+                        const sessions = await loadFromDrive();
                         
-                        await uploadToDrive(fileName, encryptedData);
+                        // 현재 세션 추가 또는 업데이트
+                        const existingIndex = sessions.findIndex(s => s.sessionId === currentSessionId);
+                        if (existingIndex >= 0) {
+                            sessions[existingIndex] = session;
+                        } else {
+                            sessions.push(session);
+                        }
+                        
+                        // 전체 세션 목록 저장
+                        await saveToDrive(sessions);
                         
                         setIsSavedToDrive(true);
                         setLastSavedTime(new Date());
                         setSyncStatus('저장 완료');
                         
-                        console.log('✅ Google Drive 자동 저장 완료:', fileName);
+                        console.log('✅ Google Drive 자동 저장 완료 (세션:', sessions.length, '개)');
                     } catch (error) {
                         console.error('❌ Google Drive 자동 저장 실패:', error);
                     }
@@ -2429,66 +2546,32 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
 
             const loadSavedSessions = async () => {
                 try {
-                    const files = await listDriveFiles();
-                    const sessions = [];
+                    console.log('📥 저장된 세션 불러오는 중...');
+                    const sessions = await loadFromDrive();
                     
-                    // 성능 최적화: 파일명에서 정보 추출 (다운로드 없이)
-                    for (const file of files.slice(0, 20)) { // 최대 20개만
-                        // 파일명 패턴: FMA_김철수_2025-10-27.enc
-                        const match = file.name.match(/FMA_(.+)_(\d{4}-\d{2}-\d{2})\.(enc|json)/);
-                        
-                        if (match) {
-                            sessions.push({
-                                fileId: file.id,
-                                fileName: file.name,
-                                customer: {
-                                    name: match[1],  // 파일명에서 추출한 이름
-                                    age: '',
-                                    gender: '',
-                                    occupation: '',
-                                    annualIncome: ''
-                                },
-                                insurances: [],  // 빈 배열 (목록 표시용)
-                                modifiedTime: new Date(file.modifiedTime).toLocaleString('ko-KR'),
-                                isPreview: true  // 프리뷰 모드 표시 (실제 데이터 아님)
-                            });
-                        }
-                    }
+                    // 최신순 정렬
+                    sessions.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
                     
                     setSavedSessions(sessions);
+                    console.log('✅ 세션 목록 로드 완료:', sessions.length, '개');
                 } catch (error) {
-                    console.error('세션 목록 로드 실패:', error);
+                    console.error('❌ 세션 목록 로드 실패:', error);
+                    setSavedSessions([]);
                 }
             };
 
             const loadSession = async (session) => {
                 try {
-                    // 프리뷰 모드면 실제 파일 다운로드
-                    if (session.isPreview && session.fileId) {
-                        setLoading(true);
-                        console.log('📥 파일 다운로드 중:', session.fileName);
-                        
-                        const encryptedData = await downloadFromDrive(session.fileId);
-                        const fullSession = decryptData(encryptedData);
-                        
-                        setCustomer(fullSession.customer);
-                        setConsultant(fullSession.consultant);
-                        setInsurances(fullSession.insurances);
-                        setAnalysisResults(fullSession.analysisResults || []);
-                        setSummary(fullSession.summary || '');
-                        setOpinions(fullSession.opinions || {});
-                        
-                        console.log('✅ 데이터 복원 완료:', fullSession.customer.name);
-                        setLoading(false);
-                    } else {
-                        // 이미 로드된 세션 (하위 호환성)
-                        setCustomer(session.customer);
-                        setConsultant(session.consultant);
-                        setInsurances(session.insurances);
-                        setAnalysisResults(session.analysisResults || []);
-                        setSummary(session.summary || '');
-                        setOpinions(session.opinions || {});
-                    }
+                    // 단일 파일 방식에서는 이미 전체 데이터가 있음
+                    setCustomer(session.customer);
+                    setConsultant(session.consultant);
+                    setInsurances(session.insurances);
+                    setAnalysisResults(session.analysisResults || []);
+                    setSummary(session.summary || '');
+                    setOpinions(session.opinions || {});
+                    setCurrentSessionId(session.sessionId);
+                    
+                    console.log('✅ 세션 로드 완료:', session.customer.name);
                     
                     setCurrentScreen('analysis');
                     setCurrentTab('input');
@@ -2936,10 +3019,19 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                         savedAt: new Date().toISOString()
                     };
 
-                    const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.enc`;
-                    const encryptedData = encryptData(session);
+                    // 기존 세션 목록 불러오기
+                    const sessions = await loadFromDrive();
                     
-                    await uploadToDrive(fileName, encryptedData);
+                    // 현재 세션 추가 또는 업데이트
+                    const existingIndex = sessions.findIndex(s => s.sessionId === currentSessionId);
+                    if (existingIndex >= 0) {
+                        sessions[existingIndex] = session;
+                    } else {
+                        sessions.push(session);
+                    }
+                    
+                    // 전체 세션 목록 저장
+                    await saveToDrive(sessions);
                     
                     setIsSavedToDrive(true);
                     setLastSavedTime(new Date());
@@ -2949,7 +3041,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                         alert('✅ Google Drive에 저장되었습니다!');
                     }
                     
-                    console.log('✅ Google Drive 저장 완료:', fileName);
+                    console.log('✅ Google Drive 저장 완료 (세션:', sessions.length, '개)');
                     
                     // 목록 갱신
                     await loadSavedSessions();
