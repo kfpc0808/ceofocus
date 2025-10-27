@@ -2367,6 +2367,9 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             const isTypingRef = useRef(false);
             const typingTimeoutRef = useRef(null);
             
+            // Firebase 데이터 로드 완료 플래그 (초기 덮어쓰기 방지)
+            const isDataLoadedRef = useRef(false);
+            
             // Google Drive 저장 상태 추적
             const [isSavedToDrive, setIsSavedToDrive] = useState(false);
             const [lastSavedTime, setLastSavedTime] = useState(null);
@@ -2451,6 +2454,12 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                             return;
                         }
                         
+                        // 데이터 로드 완료 표시 (처음 로드 시)
+                        if (!isDataLoadedRef.current) {
+                            console.log('✅ Firebase 데이터 로드 완료 - 이제부터 쓰기 가능');
+                            isDataLoadedRef.current = true;
+                        }
+                        
                         setSyncStatus('동기화됨');
                         
                         // 값이 변경된 경우에만 업데이트 (불필요한 재렌더링 방지)
@@ -2487,6 +2496,10 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                 setAnalysisResults(resultsArray);
                             }
                         }
+                    } else {
+                        // Firebase에 데이터가 없는 경우 (새 세션)
+                        console.log('🆕 새로운 세션 - 데이터 쓰기 가능');
+                        isDataLoadedRef.current = true;
                     }
                 });
 
@@ -2498,6 +2511,12 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             // 데이터 변경 시 Firebase 업데이트 (디바운싱 적용)
             useEffect(() => {
                 if (!database || !currentSessionId) return;
+                
+                // 🔒 데이터가 로드되기 전에는 쓰기 금지 (초기 빈 데이터로 덮어쓰기 방지)
+                if (!isDataLoadedRef.current) {
+                    console.log('⏳ Firebase 데이터 로드 대기 중 - 쓰기 보류');
+                    return;
+                }
 
                 // 타이핑 시작 표시
                 isTypingRef.current = true;
