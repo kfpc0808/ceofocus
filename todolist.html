@@ -1844,10 +1844,23 @@ Backspace      빈 줄에서 누르면 삭제</pre>
             
             // 자동으로 데이터 불러오기
             const savedData = await loadFromNewDrive();
-            if (savedData) {
+            if (savedData && savedData.items && savedData.items.length > 0) {
                 data = savedData;
                 render();
                 showToast('✅ 저장된 데이터를 불러왔습니다');
+            } else {
+                // 저장된 데이터가 없거나 비어있으면 기본 항목 1개 추가
+                if (!data.items || data.items.length === 0) {
+                    data.items = [{
+                        id: Date.now(),
+                        text: '',
+                        done: false,
+                        level: 0,
+                        collapsed: false
+                    }];
+                }
+                render();
+                console.log('ℹ️ 첫 방문: 기본 항목 생성');
             }
             
             // 자동 저장 시작 (5분마다)
@@ -2324,6 +2337,7 @@ Backspace      빈 줄에서 누르면 삭제</pre>
                         setTimeout(() => {
                             document.getElementById('statusText').textContent = '연결됨';
                         }, 2000);
+                        showToast('ℹ️ 저장된 데이터가 없습니다');
                         return;
                     }
                 } catch (error) {
