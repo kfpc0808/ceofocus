@@ -1576,12 +1576,13 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 
                 const metadata = {
                     name: fileName,
-                    mimeType: 'application/octet-stream'
+                    mimeType: 'text/plain',  // 암호화된 텍스트로 저장 (더 호환성 좋음)
+                    description: 'Encrypted FMA session data (AES-256)'
                 };
 
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([content], { type: 'application/octet-stream' }));
+                form.append('file', new Blob([content], { type: 'text/plain' }));
 
                 const response = await fetch(
                     'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
@@ -1607,7 +1608,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 const response = await gapi.client.drive.files.list({
                     pageSize: 100,
                     fields: 'files(id, name, modifiedTime)',
-                    q: "name contains 'FMA_' and name contains '.enc'"
+                    q: "name contains 'FMA_' and (name contains '.enc' or name contains '.json')"
                 });
                 
                 return response.result.files || [];
@@ -2108,14 +2109,16 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                 <div key={idx} className="customer-card" onClick={() => onSelect(session)}>
                                     <div className="customer-card-header">
                                         <div className="customer-card-name">{session.customer.name}</div>
-                                        <div className="status-badge" style={{backgroundColor: 'var(--primary-color)'}}>
-                                            {session.customer.age}세
-                                        </div>
+                                        {session.customer.age && (
+                                            <div className="status-badge" style={{backgroundColor: 'var(--primary-color)'}}>
+                                                {session.customer.age}세
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="customer-card-info">
-                                        <div>{session.customer.gender} · {session.customer.occupation || '-'}</div>
-                                        <div>연소득: {formatAmountKorean(session.customer.annualIncome)}</div>
-                                        <div>보험: {session.insurances.length}건</div>
+                                        <div>{session.customer.gender || '-'} · {session.customer.occupation || '-'}</div>
+                                        <div>연소득: {session.customer.annualIncome ? formatAmountKorean(session.customer.annualIncome) : '-'}</div>
+                                        <div>보험: {session.isPreview ? '클릭하여 확인' : `${session.insurances.length}건`}</div>
                                         <div className="hint">수정일: {session.modifiedTime}</div>
                                     </div>
                                 </div>
@@ -2254,32 +2257,54 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
 
                 const sessionRef = database.ref(`sessions/${currentSessionId}`);
                 
+                // 값 비교 헬퍼 함수 (deep equality)
+                const isEqual = (a, b) => {
+                    return JSON.stringify(a) === JSON.stringify(b);
+                };
+                
                 // 실시간 리스너 설정
                 const listener = sessionRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
+                        // 타이핑 중일 때는 업데이트 완전 차단
+                        if (isTypingRef.current) {
+                            console.log('타이핑 중 - Firebase 업데이트 무시');
+                            return;
+                        }
+                        
                         setSyncStatus('동기화됨');
                         
-                        // 입력 중이 아닐 때만 업데이트 받기 (타이핑 방해 방지)
-                        if (!isTypingRef.current) {
-                            // 모든 데이터 동기화 (컨설턴트, 고객 모두)
-                            if (data.customer) setCustomer(data.customer);
-                            if (data.consultant) setConsultant(data.consultant);
-                            if (data.summary) setSummary(data.summary);
-                            if (data.opinions) setOpinions(data.opinions);
+                        // 값이 변경된 경우에만 업데이트 (불필요한 재렌더링 방지)
+                        if (data.customer && !isEqual(data.customer, customer)) {
+                            setCustomer(data.customer);
+                        }
+                        if (data.consultant && !isEqual(data.consultant, consultant)) {
+                            setConsultant(data.consultant);
+                        }
+                        if (data.summary && !isEqual(data.summary, summary)) {
+                            setSummary(data.summary);
+                        }
+                        if (data.opinions && !isEqual(data.opinions, opinions)) {
+                            setOpinions(data.opinions);
+                        }
+                        
+                        // insurances와 analysisResults 동기화 (값 비교 후)
+                        if (data.insurances) {
+                            const insurancesArray = Array.isArray(data.insurances) 
+                                ? data.insurances 
+                                : Object.values(data.insurances).filter(v => v && typeof v === 'object');
                             
-                            // insurances와 analysisResults 동기화
-                            if (data.insurances) {
-                                const insurancesArray = Array.isArray(data.insurances) 
-                                    ? data.insurances 
-                                    : Object.values(data.insurances).filter(v => v && typeof v === 'object');
+                            if (!isEqual(insurancesArray, insurances)) {
                                 setInsurances(insurancesArray);
                             }
+                        }
+                        
+                        if (data.analysisResults) {
+                            const resultsArray = Array.isArray(data.analysisResults)
+                                ? data.analysisResults
+                                : Object.values(data.analysisResults).filter(v => v && typeof v === 'object');
                             
-                            if (data.analysisResults) {
-                                const resultsArray = Array.isArray(data.analysisResults)
-                                    ? data.analysisResults
-                                    : Object.values(data.analysisResults).filter(v => v && typeof v === 'object');
+                            if (!isEqual(resultsArray, analysisResults)) {
                                 setAnalysisResults(resultsArray);
                             }
                         }
@@ -2297,8 +2322,10 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
 
                 // 타이핑 시작 표시
                 isTypingRef.current = true;
+                setSyncStatus('입력 중...');
                 
                 const timeoutId = setTimeout(() => {
+                    // Firebase에 저장하기 직전에도 타이핑 플래그 유지
                     const updateData = {
                         customer,
                         insurances,
@@ -2309,57 +2336,55 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                         updatedAt: Date.now()
                     };
 
-                    database.ref(`sessions/${currentSessionId}`).set(updateData).catch(err => {
-                        console.error('Firebase 저장 실패:', err);
-                        setSyncStatus('저장 실패');
-                    });
-                    
-                    setSyncStatus('동기화됨');
-                    
-                    // 타이핑 종료 표시 (500ms 후)
-                    isTypingRef.current = false;
-                }, 500); // 500ms 디바운싱 (안정적인 실시간 동기화)
+                    database.ref(`sessions/${currentSessionId}`).set(updateData)
+                        .then(() => {
+                            setSyncStatus('동기화됨');
+                            // 저장 완료 후 2초 뒤에 타이핑 플래그 해제 (안전성 확보)
+                            setTimeout(() => {
+                                isTypingRef.current = false;
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Firebase 저장 실패:', err);
+                            setSyncStatus('저장 실패');
+                            isTypingRef.current = false;
+                        });
+                }, 1500); // 1500ms 디바운싱 (타이핑 안정성 최우선)
 
                 return () => {
                     clearTimeout(timeoutId);
-                    // cleanup 시에도 타이핑 플래그 해제
-                    if (typingTimeoutRef.current) {
-                        clearTimeout(typingTimeoutRef.current);
-                    }
-                    typingTimeoutRef.current = setTimeout(() => {
-                        isTypingRef.current = false;
-                    }, 100);
+                    // cleanup 시에는 타이핑 플래그를 즉시 해제하지 않음 (다음 입력 대기)
                 };
             }, [customer, insurances, consultant, analysisResults, summary, opinions, currentSessionId]);
             
-            // 즉시 Firebase 업데이트 (중요한 변경사항용)
-            const immediateFirebaseUpdate = () => {
-                if (!database || !currentSessionId) return;
-                
-                // 짧게 타이핑 플래그 설정
-                isTypingRef.current = true;
-                
-                const updateData = {
-                    customer,
-                    insurances,
-                    consultant,
-                    analysisResults,
-                    summary,
-                    opinions,
-                    updatedAt: Date.now()
-                };
-
-                database.ref(`sessions/${currentSessionId}`).set(updateData).catch(err => {
-                    console.error('Firebase 즉시 저장 실패:', err);
-                });
-                
-                setSyncStatus('동기화됨 ✓');
-                
-                // 200ms 후 타이핑 플래그 해제
-                setTimeout(() => {
-                    isTypingRef.current = false;
-                }, 200);
-            };
+            // [사용 안 함] 즉시 Firebase 업데이트 - 디바운싱으로 통합됨
+            // const immediateFirebaseUpdate = () => {
+            //     if (!database || !currentSessionId) return;
+            //     
+            //     // 짧게 타이핑 플래그 설정
+            //     isTypingRef.current = true;
+            //     
+            //     const updateData = {
+            //         customer,
+            //         insurances,
+            //         consultant,
+            //         analysisResults,
+            //         summary,
+            //         opinions,
+            //         updatedAt: Date.now()
+            //     };
+            //
+            //     database.ref(`sessions/${currentSessionId}`).set(updateData).catch(err => {
+            //         console.error('Firebase 즉시 저장 실패:', err);
+            //     });
+            //     
+            //     setSyncStatus('동기화됨 ✓');
+            //     
+            //     // 200ms 후 타이핑 플래그 해제
+            //     setTimeout(() => {
+            //         isTypingRef.current = false;
+            //     }, 200);
+            // };
             
             // 분석 완료 시 자동 Google Drive 저장 (컨설턴트만)
             useEffect(() => {
@@ -2384,7 +2409,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                             savedAt: new Date().toISOString()
                         };
 
-                        const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.json`;
+                        const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.enc`;
                         const encryptedData = encryptData(session);
                         
                         await uploadToDrive(fileName, encryptedData);
@@ -2407,15 +2432,26 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     const files = await listDriveFiles();
                     const sessions = [];
                     
+                    // 성능 최적화: 파일명에서 정보 추출 (다운로드 없이)
                     for (const file of files.slice(0, 20)) { // 최대 20개만
-                        try {
-                            const encryptedData = await downloadFromDrive(file.id);
-                            const session = decryptData(encryptedData);
-                            session.fileId = file.id;
-                            session.modifiedTime = new Date(file.modifiedTime).toLocaleString('ko-KR');
-                            sessions.push(session);
-                        } catch (err) {
-                            console.error('파일 로드 실패:', file.name, err);
+                        // 파일명 패턴: FMA_김철수_2025-10-27.enc
+                        const match = file.name.match(/FMA_(.+)_(\d{4}-\d{2}-\d{2})\.(enc|json)/);
+                        
+                        if (match) {
+                            sessions.push({
+                                fileId: file.id,
+                                fileName: file.name,
+                                customer: {
+                                    name: match[1],  // 파일명에서 추출한 이름
+                                    age: '',
+                                    gender: '',
+                                    occupation: '',
+                                    annualIncome: ''
+                                },
+                                insurances: [],  // 빈 배열 (목록 표시용)
+                                modifiedTime: new Date(file.modifiedTime).toLocaleString('ko-KR'),
+                                isPreview: true  // 프리뷰 모드 표시 (실제 데이터 아님)
+                            });
                         }
                     }
                     
@@ -2425,15 +2461,42 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 }
             };
 
-            const loadSession = (session) => {
-                setCustomer(session.customer);
-                setConsultant(session.consultant);
-                setInsurances(session.insurances);
-                setAnalysisResults(session.analysisResults || []);
-                setSummary(session.summary || '');
-                setOpinions(session.opinions || {});
-                setCurrentScreen('analysis');
-                setCurrentTab('input');
+            const loadSession = async (session) => {
+                try {
+                    // 프리뷰 모드면 실제 파일 다운로드
+                    if (session.isPreview && session.fileId) {
+                        setLoading(true);
+                        console.log('📥 파일 다운로드 중:', session.fileName);
+                        
+                        const encryptedData = await downloadFromDrive(session.fileId);
+                        const fullSession = decryptData(encryptedData);
+                        
+                        setCustomer(fullSession.customer);
+                        setConsultant(fullSession.consultant);
+                        setInsurances(fullSession.insurances);
+                        setAnalysisResults(fullSession.analysisResults || []);
+                        setSummary(fullSession.summary || '');
+                        setOpinions(fullSession.opinions || {});
+                        
+                        console.log('✅ 데이터 복원 완료:', fullSession.customer.name);
+                        setLoading(false);
+                    } else {
+                        // 이미 로드된 세션 (하위 호환성)
+                        setCustomer(session.customer);
+                        setConsultant(session.consultant);
+                        setInsurances(session.insurances);
+                        setAnalysisResults(session.analysisResults || []);
+                        setSummary(session.summary || '');
+                        setOpinions(session.opinions || {});
+                    }
+                    
+                    setCurrentScreen('analysis');
+                    setCurrentTab('input');
+                } catch (error) {
+                    console.error('세션 로드 실패:', error);
+                    alert('파일을 불러오는데 실패했습니다: ' + error.message);
+                    setLoading(false);
+                }
             };
 
             const startNewAnalysis = () => {
@@ -2511,28 +2574,8 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 };
                 const updatedInsurances = [...insurances, newInsurance];
                 setInsurances(updatedInsurances);
-                
-                // 즉시 Firebase 업데이트
-                if (database && currentSessionId) {
-                    // 짧게 타이핑 플래그 설정
-                    isTypingRef.current = true;
-                    
-                    database.ref(`sessions/${currentSessionId}`).update({
-                        customer,
-                        insurances: updatedInsurances,
-                        consultant,
-                        analysisResults,
-                        summary,
-                        opinions,
-                        updatedAt: Date.now()
-                    });
-                    setSyncStatus('보험 추가됨 ✓');
-                    
-                    // 200ms 후 타이핑 플래그 해제
-                    setTimeout(() => {
-                        isTypingRef.current = false;
-                    }, 200);
-                }
+                setSyncStatus('보험 추가 중...');
+                // 디바운싱에 의해 자동으로 Firebase 업데이트됨 (1500ms 후)
             };
 
             const updateInsurance = (id, field, value) => {
@@ -2545,28 +2588,8 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                 if (confirm('이 보험을 삭제하시겠습니까?')) {
                     const updatedInsurances = insurances.filter(ins => ins.id !== id);
                     setInsurances(updatedInsurances);
-                    
-                    // 즉시 Firebase 업데이트
-                    if (database && currentSessionId) {
-                        // 짧게 타이핑 플래그 설정
-                        isTypingRef.current = true;
-                        
-                        database.ref(`sessions/${currentSessionId}`).update({
-                            customer,
-                            insurances: updatedInsurances,
-                            consultant,
-                            analysisResults,
-                            summary,
-                            opinions,
-                            updatedAt: Date.now()
-                        });
-                        setSyncStatus('보험 삭제됨 ✓');
-                        
-                        // 200ms 후 타이핑 플래그 해제
-                        setTimeout(() => {
-                            isTypingRef.current = false;
-                        }, 200);
-                    }
+                    setSyncStatus('보험 삭제 중...');
+                    // 디바운싱에 의해 자동으로 Firebase 업데이트됨 (1500ms 후)
                 }
             };
 
@@ -2913,7 +2936,7 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                         savedAt: new Date().toISOString()
                     };
 
-                    const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.json`;
+                    const fileName = `FMA_${customer.name || '고객'}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.enc`;
                     const encryptedData = encryptData(session);
                     
                     await uploadToDrive(fileName, encryptedData);
@@ -3088,9 +3111,6 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                             )}
                             {!isCustomerMode && (
                                 <>
-                                    <button className="btn btn-secondary btn-sm" onClick={() => setCurrentScreen('customerList')}>
-                                        📂 불러오기
-                                    </button>
                                     {currentSessionId && (
                                         <button className="btn btn-danger btn-sm" onClick={endSession}>
                                             🚪 세션 종료
@@ -3266,28 +3286,8 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                                             ]
                                                         };
                                                         setCustomer(updatedCustomer);
-                                                        
-                                                        // 즉시 Firebase 업데이트
-                                                        if (database && currentSessionId) {
-                                                            // 짧게 타이핑 플래그 설정 (즉시 업데이트 방해 방지)
-                                                            isTypingRef.current = true;
-                                                            
-                                                            database.ref(`sessions/${currentSessionId}`).update({
-                                                                customer: updatedCustomer,
-                                                                insurances,
-                                                                consultant,
-                                                                analysisResults,
-                                                                summary,
-                                                                opinions,
-                                                                updatedAt: Date.now()
-                                                            });
-                                                            setSyncStatus('동기화됨 ✓');
-                                                            
-                                                            // 200ms 후 타이핑 플래그 해제
-                                                            setTimeout(() => {
-                                                                isTypingRef.current = false;
-                                                            }, 200);
-                                                        }
+                                                        setSyncStatus('입력 중...');
+                                                        // 디바운싱에 의해 자동으로 Firebase 업데이트됨 (1500ms 후)
                                                     }}
                                                     style={{marginRight: '0.5rem', flexShrink: 0}}
                                                 />
