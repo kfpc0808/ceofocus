@@ -2159,6 +2159,27 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
             const [showConsultantModal, setShowConsultantModal] = useState(false);
             
             const [insurances, setInsurances] = useState([]);
+            
+            // localStorage에서 로그인한 사용자 정보 자동 로드
+            useEffect(() => {
+                const userName = localStorage.getItem('userName');
+                const userPhone = localStorage.getItem('userPhone');
+                const userCompany = localStorage.getItem('userCompany') || localStorage.getItem('userOrganization');
+                const userEmail = localStorage.getItem('userEmail');
+                const userJobTitle = localStorage.getItem('userJobTitle');
+                
+                // 로그인 정보가 있으면 자동으로 컨설턴트 설정
+                if (userName) {
+                    setConsultant({
+                        name: userName || '컨설턴트',
+                        company: userCompany || '보험설계사',
+                        jobTitle: userJobTitle || '컨설턴트',
+                        customJobTitle: '',
+                        phone: userPhone || '',
+                        email: userEmail || ''
+                    });
+                }
+            }, []);
             const [analysisResults, setAnalysisResults] = useState([]);
             const [summary, setSummary] = useState('');
             const [opinions, setOpinions] = useState({});
@@ -2551,9 +2572,17 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                     alert('최소 하나의 보험을 추가해주세요.');
                     return;
                 }
+                
+                // consultant가 없으면 기본값 설정 (로그인 정보 없는 경우)
                 if (!consultant) {
-                    setShowConsultantModal(true);
-                    return;
+                    setConsultant({
+                        name: '컨설턴트',
+                        company: '보험설계사',
+                        jobTitle: '컨설턴트',
+                        customJobTitle: '',
+                        phone: '',
+                        email: ''
+                    });
                 }
 
                 // 분석 수행
@@ -2940,8 +2969,12 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                         {consultant.name} {consultant.jobTitle === '직접입력' ? consultant.customJobTitle : consultant.jobTitle}
                                     </span>
                                 )}
-                                <button className="btn btn-secondary btn-sm" onClick={() => setShowConsultantModal(true)}>
-                                    ⚙️ 프로필 설정
+                                <button 
+                                    className="btn btn-secondary btn-sm" 
+                                    onClick={() => window.location.href = 'index.html'}
+                                    style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}
+                                >
+                                    ← Main
                                 </button>
                             </div>
                         </div>
@@ -3019,6 +3052,13 @@ ${customer.age}세 연령대에서 특히 중요한 암, 뇌혈관, 심장질환
                                     )}
                                     <button className="btn btn-secondary btn-sm" onClick={() => setCurrentScreen('customerList')}>
                                         ← 고객 목록
+                                    </button>
+                                    <button 
+                                        className="btn btn-secondary btn-sm" 
+                                        onClick={() => window.location.href = 'index.html'}
+                                        style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}
+                                    >
+                                        ← Main
                                     </button>
                                 </>
                             )}
