@@ -14,7 +14,45 @@
   html,body{margin:0;padding:0;background:#f3f5f9;color:#0b1f3a;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   *,*:before,*:after{box-sizing:border-box}
   .wrapper{max-width:1100px;margin:22px auto;padding:0 16px}
-  .title-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .title-row{display:flex;gap:12px;align-items:center;margin-bottom:12px;position:relative}
+  
+  /* 닫기 버튼 */
+  .close-btn{
+    position:absolute;
+    top:0;
+    right:0;
+    width:44px;
+    height:44px;
+    border:none;
+    background:#f3f5f9;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    color:#6b7a90;
+    transition:all 0.2s;
+    z-index:100;
+  }
+  .close-btn:hover{
+    background:#e8ecf3;
+    color:#0b1f3a;
+    transform:scale(1.05);
+  }
+  .close-btn:active{
+    transform:scale(0.95);
+  }
+  @media (max-width: 480px){
+    .close-btn{
+      width:40px;
+      height:40px;
+      font-size:22px;
+      top:-5px;
+      right:-5px;
+    }
+  }
+  
   /* KFPC 텍스트 로고 */
   .logo{
     display:flex;align-items:center;justify-content:center;
@@ -100,6 +138,7 @@
       <h1 style="margin:0;">연금 계산기 + 그래프</h1>
       <p class="subtitle">FV = PV(1+r)<sup>n</sup> + 적립식(연/월) 합산 · 월별 잔액/누계 차트</p>
     </div>
+    <button class="close-btn" onclick="window.location.href='index.html'" aria-label="닫기" title="닫기">✕</button>
   </div>
 
   <div class="grid">
