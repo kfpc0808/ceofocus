@@ -155,6 +155,17 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* 로그인 유지 안내 */
+        .persistence-info {
+            background: #d1f2eb;
+            border: 1px solid #27ae60;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #0c2c54;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -192,6 +203,10 @@
             <a href="find-id.html">ID 찾기</a>
         </div>
         
+        <div class="persistence-info">
+            ✅ 로그인 상태가 자동으로 유지됩니다
+        </div>
+        
         <div class="test-account-notice">
             💡 테스트 계정은 생성 후 1일간 유효합니다
         </div>
@@ -222,6 +237,15 @@
             const auth = firebase.auth();
             const db = firebase.firestore();
             
+            // ✅ LOCAL persistence 설정 - 브라우저를 닫아도 로그인 상태 유지
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => {
+                    console.log('✅ 로그인 지속성 설정 완료: LOCAL (브라우저 종료 후에도 유지)');
+                })
+                .catch((error) => {
+                    console.error('Persistence 설정 오류:', error);
+                });
+            
             const form = document.getElementById('loginForm');
             const messageDiv = document.getElementById('message');
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -229,6 +253,9 @@
             // 페이지 로드 시 이미 로그인되어 있는지 체크
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
+                    console.log('✅ 로그인 상태 유지됨:', user.email);
+                    showLoading();
+                    
                     // 이미 로그인되어 있으면 자동 이동
                     try {
                         const doc = await db.collection('users').doc(user.uid).get();
@@ -247,6 +274,8 @@
                     
                     // 일반 사용자는 index.html로
                     window.location.href = 'index.html';
+                } else {
+                    console.log('로그인 필요');
                 }
             });
             
@@ -272,75 +301,78 @@
                 
                 showLoading();
                 
-                // 관리자 계정 체크
-                if (userId === 'admin') {
-                    try {
-                        const email = 'admin@system.local';
-                        
-                        // 1. 먼저 기본 비밀번호로 시도
+                try {
+                    // LOCAL persistence 재확인 (로그인 시에도 확실히 적용)
+                    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                    
+                    // 관리자 계정 체크
+                    if (userId === 'admin') {
                         try {
-                            await auth.signInWithEmailAndPassword(email, '01091198211');
-                            showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
-                            setTimeout(() => {
-                                window.location.href = 'admin-dashboard.html';
-                            }, 1000);
-                            return;
-                        } catch (error1) {
-                            console.log('기본 비밀번호 실패, 입력한 비밀번호로 시도:', error1.code);
-                        }
-                        
-                        // 2. 입력한 비밀번호로 시도
-                        try {
-                            await auth.signInWithEmailAndPassword(email, phone);
-                            showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
-                            setTimeout(() => {
-                                window.location.href = 'admin-dashboard.html';
-                            }, 1000);
-                            return;
-                        } catch (error2) {
-                            console.log('입력한 비밀번호 실패, 관리자 계정 생성 시도:', error2.code);
-                        }
-                        
-                        // 3. 관리자 계정이 없으면 생성
-                        try {
-                            const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
-                            const user = userCredential.user;
+                            const email = 'admin@system.local';
                             
-                            await db.collection('users').doc(user.uid).set({
-                                userId: 'admin',
-                                name: '관리자',
-                                phone: phone,
-                                role: 'admin',
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
+                            // 1. 먼저 기본 비밀번호로 시도
+                            try {
+                                await auth.signInWithEmailAndPassword(email, '01091198211');
+                                showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                                setTimeout(() => {
+                                    window.location.href = 'admin-dashboard.html';
+                                }, 1000);
+                                return;
+                            } catch (error1) {
+                                console.log('기본 비밀번호 실패, 입력한 비밀번호로 시도:', error1.code);
+                            }
                             
-                            showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
-                            setTimeout(() => {
-                                window.location.href = 'admin-dashboard.html';
-                            }, 1000);
-                            return;
-                        } catch (error3) {
-                            console.error('관리자 계정 생성 실패:', error3);
+                            // 2. 입력한 비밀번호로 시도
+                            try {
+                                await auth.signInWithEmailAndPassword(email, phone);
+                                showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                                setTimeout(() => {
+                                    window.location.href = 'admin-dashboard.html';
+                                }, 1000);
+                                return;
+                            } catch (error2) {
+                                console.log('입력한 비밀번호 실패, 관리자 계정 생성 시도:', error2.code);
+                            }
+                            
+                            // 3. 관리자 계정이 없으면 생성
+                            try {
+                                const userCredential = await auth.createUserWithEmailAndPassword(email, phone);
+                                const user = userCredential.user;
+                                
+                                await db.collection('users').doc(user.uid).set({
+                                    userId: 'admin',
+                                    name: '관리자',
+                                    phone: phone,
+                                    role: 'admin',
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                                
+                                showMessage('관리자 로그인 성공! 대시보드로 이동합니다...', 'success');
+                                setTimeout(() => {
+                                    window.location.href = 'admin-dashboard.html';
+                                }, 1000);
+                                return;
+                            } catch (error3) {
+                                console.error('관리자 계정 생성 실패:', error3);
+                                hideLoading();
+                                showMessage('관리자 로그인에 실패했습니다.\n비밀번호를 확인하세요.', 'error');
+                                return;
+                            }
+                        } catch (error) {
+                            console.error('관리자 로그인 오류:', error);
                             hideLoading();
-                            showMessage('관리자 로그인에 실패했습니다.\n비밀번호를 확인하세요.', 'error');
+                            showMessage('로그인에 실패했습니다.', 'error');
                             return;
                         }
-                    } catch (error) {
-                        console.error('관리자 로그인 오류:', error);
+                    }
+                    
+                    // 전화번호 형식 검증
+                    if (!/^\d{10,11}$/.test(phone)) {
                         hideLoading();
-                        showMessage('로그인에 실패했습니다.', 'error');
+                        showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
                         return;
                     }
-                }
-                
-                // 전화번호 형식 검증
-                if (!/^\d{10,11}$/.test(phone)) {
-                    hideLoading();
-                    showMessage('올바른 전화번호 형식이 아닙니다.\n10~11자리 숫자를 입력하세요.', 'error');
-                    return;
-                }
-                
-                try {
+                    
                     // Firestore에서 사용자 찾기
                     const usersSnapshot = await db.collection('users')
                         .where('userId', '==', userId)
@@ -386,7 +418,7 @@
                     const email = `${userId}@system.local`;
                     await auth.signInWithEmailAndPassword(email, phone);
                     
-                    showMessage('로그인 성공! 메인 페이지로 이동합니다...', 'success');
+                    showMessage('✅ 로그인 성공! 메인 페이지로 이동합니다...', 'success');
                     setTimeout(() => {
                         window.location.href = 'index.html';
                     }, 1000);
