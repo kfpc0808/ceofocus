@@ -35,6 +35,36 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 1rem;
             letter-spacing: 2px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            background: rgba(21, 101, 192, 0.1);
+            border: 2px solid rgba(21, 101, 192, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #1565c0;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .close-btn:hover {
+            background: rgba(21, 101, 192, 0.2);
+            transform: rotate(90deg);
+            border-color: #1565c0;
+        }
+
+        .close-btn:active {
+            transform: rotate(90deg) scale(0.95);
         }
 
         .header {
@@ -517,6 +547,14 @@
             .action-buttons {
                 flex-direction: column;
             }
+
+            .close-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 20px;
+                top: 0;
+                right: 0;
+            }
         }
     </style>
 </head>
@@ -570,7 +608,7 @@
 
     <div class="container">
         <!-- 로고 -->
-        <div class="logo">KFPC</div>
+        <div class="logo">KFPC<div class="close-btn" onclick="closeAndGoHome()" title="닫기">✕</div></div>
 
         <!-- 헤더 -->
         <div class="header">
@@ -1109,6 +1147,11 @@
     <script>
         let deductionChart = null;
 
+
+        // 닫기 버튼 - index로 이동
+        function closeAndGoHome() {
+            window.location.href = 'index.html';
+        }
         window.onload = function() {
             // 모든 숫자 입력 필드에 이벤트 리스너 추가
             setupNumericInputs();
@@ -1260,6 +1303,28 @@
         function calculate() {
             try {
                 // 1. 입력값 수집
+                // 날짜 검증
+                const inheritanceDateInput = document.getElementById('inheritanceDate').value;
+                if (!inheritanceDateInput) {
+                    alert('⚠️ 상속개시일을 입력해주세요.');
+                    return;
+                }
+                const inheritanceDate = new Date(inheritanceDateInput);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                inheritanceDate.setHours(0, 0, 0, 0);
+                
+                if (inheritanceDate > today) {
+                    alert('⚠️ 상속개시일은 미래일 수 없습니다.');
+                    return;
+                }
+                
+                const minDate = new Date('1900-01-01');
+                if (inheritanceDate < minDate) {
+                    alert('⚠️ 상속개시일이 너무 과거입니다. 1900년 이후 날짜를 입력해주세요.');
+                    return;
+                }
+
                 const realEstate = parseValue(document.getElementById('realEstate').value);
                 const financialAssets = parseValue(document.getElementById('financialAssets').value);
                 const otherAssets = parseValue(document.getElementById('otherAssets').value);
