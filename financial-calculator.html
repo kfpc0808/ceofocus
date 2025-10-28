@@ -41,6 +41,34 @@
             position: relative;
         }
 
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .close-btn:active {
+            transform: rotate(90deg) scale(0.95);
+        }
+
         .header-logo {
             font-size: 32px;
             font-weight: 900;
@@ -666,6 +694,7 @@
                 <h1>💰 재무계산기</h1>
                 <p>간단하고 쉬운 저축 & 투자 계산</p>
             </div>
+            <div class="close-btn" onclick="closeAndGoHome()" title="닫기">✕</div>
         </div>
 
         <div class="main-content">
@@ -857,6 +886,11 @@
 
         function closeModal() {
             document.getElementById('instructionModal').style.display = 'none';
+        }
+
+        // 닫기 버튼 - index로 이동
+        function closeAndGoHome() {
+            window.location.href = 'index.html';
         }
 
         function formatNumber(num) {
