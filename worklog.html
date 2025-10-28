@@ -7,7 +7,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
-    <title>📘 업무일지 Pro - Worklog Management System</title>
+    <title>📘 업무일지 Work log - Worklog Management System</title>
     <!-- External Libraries for Google Drive -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
@@ -88,14 +88,17 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex: 1 1 100%;
         }
 
         .drive-status {
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: flex-end;
+            gap: 6px;
             font-size: 14px;
             flex-wrap: wrap;
+            flex: 1 1 100%;
         }
 
         .status-indicator {
@@ -112,7 +115,7 @@
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 6px 12px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -122,11 +125,12 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            min-height: 44px;
+            gap: 4px;
+            min-height: 36px;
             touch-action: manipulation;
             -webkit-user-select: none;
             user-select: none;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -1072,6 +1076,61 @@
             input, select, textarea {
                 font-size: 16px !important;
             }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+            
+            .drive-status {
+                gap: 4px;
+                font-size: 12px;
+            }
+            
+            .drive-status .status-indicator {
+                width: 8px;
+                height: 8px;
+            }
+            
+            .drive-status #driveStatusText {
+                display: none;
+            }
+            
+            .btn {
+                padding: 5px 10px;
+                font-size: 13px;
+                min-height: 32px;
+                gap: 3px;
+            }
+            
+            .tab-nav {
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* 더 작은 모바일 화면 최적화 */
+        @media screen and (max-width: 480px) {
+            .header {
+                padding: 15px 10px;
+            }
+            
+            .header h1 {
+                font-size: 16px;
+            }
+            
+            .drive-status {
+                gap: 3px;
+            }
+            
+            .btn {
+                padding: 4px 8px;
+                font-size: 12px;
+                min-height: 30px;
+            }
         }
     </style>
 </head>
@@ -1079,25 +1138,27 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>📘 업무일지 Pro</h1>
+            <h1>📘 업무일지 Work log</h1>
             <div class="drive-status">
                 <div class="status-indicator"></div>
                 <span id="driveStatusText">Google Drive 연결 대기 중</span>
                 <button class="btn btn-primary" onclick="connectToWorklogDrive()" id="driveConnectBtn">
-                    🔗 Google Drive 연결
+                    Google Drive 연결
                 </button>
                 <button class="btn btn-success" onclick="manualSaveToWorklogDrive()" id="driveSaveBtn" style="display:none;">
-                    💾 수동 저장
+                    수동 저장
                 </button>
                 <button class="btn btn-primary" onclick="manualLoadFromWorklogDrive()" id="driveLoadBtn" style="display:none;">
-                    📥 불러오기
-                </button></div>
-                
-                <button class="btn btn-success" onclick="manualSave()" title="수동 저장" style="min-width: 100px;">
-                    💾 저장
+                    불러오기
                 </button>
-                <button class="btn btn-primary" onclick="manualLoad()" title="최신 데이터 불러오기" style="min-width: 100px;">
-                    🔄 불러오기
+                <button class="btn btn-success" onclick="manualSave()" title="수동 저장">
+                    저장
+                </button>
+                <button class="btn btn-primary" onclick="manualLoad()" title="최신 데이터 불러오기">
+                    불러오기
+                </button>
+                <button class="btn btn-outline" onclick="location.href='index.html'" title="메인으로 돌아가기">
+                    Main
                 </button>
             </div>
         </div>
@@ -1150,6 +1211,9 @@
                 <button class="tab-btn" onclick="switchTab('settings')">
                     ⚙️ 설정
                 </button>
+                <button class="btn btn-success" onclick="openAddModal()" style="margin-left: auto;">
+                    신규입력
+                </button>
             </div>
 
             <!-- Search & Filter Bar -->
@@ -1185,9 +1249,6 @@
                         <option value="low">낮음</option>
                     </select>
                 </div>
-                <button class="btn btn-outline" onclick="openAddModal()">
-                    ➕ 등록
-                </button>
             </div>
 
             <!-- Stats Row -->
@@ -1995,11 +2056,24 @@
                 console.log('ℹ️ Google Drive 연결 필요');
                 // 기존 OAuth 토큰도 체크
                 checkGoogleDriveConnection();
+                
+                // Google Drive 연결이 안 되어 있으면 로컬스토리지에서 백업 로드
+                const backup = localStorage.getItem('worklog_backup');
+                if (backup) {
+                    try {
+                        tasks = JSON.parse(backup);
+                        console.log('로컬 백업에서 데이터 로드됨:', tasks.length, '개');
+                    } catch (error) {
+                        console.error('백업 데이터 로드 실패:', error);
+                    }
+                }
             }
             
             // UI 초기화
             document.getElementById('taskDate').valueAsDate = new Date();
             loadClientsFromClientManagement();
+            renderTasks();
+            updateStats();
             renderCalendar();
             loadNotificationSettings();
             checkDeadlines();
@@ -2413,16 +2487,15 @@
                 if (status === '저장됨' || status === '로컬 저장됨') {
                     setTimeout(() => {
                         if (accessToken) {
-                            btn.textContent = '✓ 연결됨';
+                            btn.textContent = '연결됨';
                         } else {
-                            btn.textContent = '🔗 Drive 연결';
+                            btn.textContent = 'Google Drive 연결';
                         }
                     }, 2000);
                 }
             }
         }
 
-        }
 
         // Client Management Integration
         function loadClientsFromClientManagement() {
