@@ -346,7 +346,7 @@
         /* Search & Filter Bar */
         .search-filter-bar {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
             margin-bottom: 20px;
             padding: 15px;
@@ -356,6 +356,7 @@
 
         .search-box {
             position: relative;
+            grid-column: 1 / -1;
         }
 
         .search-box input {
@@ -412,17 +413,21 @@
         /* Stats Cards */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-bottom: 20px;
         }
 
         .stat-card {
             background: white;
-            padding: 20px;
+            padding: 12px 15px;
             border-radius: 10px;
             border: 2px solid var(--light-bg);
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
 
         .stat-card:active {
@@ -436,15 +441,15 @@
         .stat-card.danger { border-left: 4px solid var(--danger-color); }
 
         .stat-number {
-            font-size: clamp(24px, 6vw, 32px);
+            font-size: 24px;
             font-weight: 700;
             color: var(--dark-text);
-            margin-bottom: 5px;
         }
 
         .stat-label {
             font-size: 14px;
             color: var(--gray-text);
+            flex: 1;
         }
 
         /* Task List */
@@ -776,7 +781,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
 
@@ -784,6 +789,10 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
         }
 
         .form-label {
@@ -996,12 +1005,20 @@
             }
 
             .search-filter-bar {
-                grid-template-columns: 2fr 1fr 1fr 1fr auto;
+                grid-template-columns: 2fr 1fr 1fr 1fr;
                 align-items: end;
+            }
+            
+            .search-box {
+                grid-column: 1 / 2;
             }
 
             .form-grid {
                 grid-template-columns: 1fr 1fr;
+            }
+            
+            .stats-row {
+                grid-template-columns: repeat(4, 1fr);
             }
 
             .calendar-grid {
@@ -1072,6 +1089,22 @@
 
         /* Prevent iOS zoom on input focus */
         @media screen and (max-width: 767px) {
+            body {
+                padding: 8px;
+                padding-top: calc(8px + var(--safe-area-inset-top));
+                padding-bottom: calc(8px + var(--safe-area-inset-bottom));
+                padding-left: calc(8px + var(--safe-area-inset-left));
+                padding-right: calc(8px + var(--safe-area-inset-right));
+            }
+            
+            .container {
+                border-radius: 10px;
+            }
+            
+            .main-content {
+                padding: 12px;
+            }
+            
             input, select, textarea {
                 font-size: 16px !important;
             }
@@ -1107,6 +1140,11 @@
             }
             
             /* 탭 네비게이션 모바일 최적화 */
+            .quick-add {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
             .tab-nav {
                 gap: 4px;
                 justify-content: space-between;
@@ -1132,16 +1170,125 @@
                 flex: 1 1 auto;
                 min-width: 0;
             }
+            
+            /* 검색 필터 바 모바일 최적화 */
+            .search-filter-bar {
+                gap: 6px;
+                padding: 12px;
+            }
+            
+            .filter-label {
+                display: none;
+            }
+            
+            .filter-group {
+                margin: 0;
+            }
+            
+            .filter-group select {
+                font-size: 13px;
+                padding: 8px 30px 8px 10px;
+                min-height: 36px;
+            }
+            
+            /* 통계 카드 모바일 최적화 */
+            .stats-row {
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+            
+            .stat-card {
+                padding: 10px 12px;
+            }
+            
+            .stat-number {
+                font-size: 20px;
+            }
+            
+            .stat-label {
+                font-size: 13px;
+            }
+            
+            /* 폼 입력창 모바일 최적화 */
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            
+            .form-group.full-width {
+                grid-column: 1 / -1;
+            }
+            
+            .form-input,
+            .form-select,
+            .form-textarea {
+                padding: 8px 10px;
+                min-height: 40px;
+                font-size: 16px;
+                width: 100%;
+            }
+            
+            .form-select {
+                padding-right: 28px;
+                background-position: right 6px center;
+            }
+            
+            .form-label {
+                font-size: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .modal-content {
+                width: 98%;
+                margin: 10px auto;
+            }
+            
+            .modal-body {
+                padding: 15px 12px;
+                max-height: 70vh;
+            }
+            
+            .modal-header {
+                padding: 15px 12px;
+            }
+            
+            .modal-footer {
+                padding: 12px;
+                gap: 8px;
+            }
         }
         
         /* 더 작은 모바일 화면 최적화 */
         @media screen and (max-width: 480px) {
+            body {
+                padding: 5px;
+                padding-top: calc(5px + var(--safe-area-inset-top));
+                padding-bottom: calc(5px + var(--safe-area-inset-bottom));
+                padding-left: calc(5px + var(--safe-area-inset-left));
+                padding-right: calc(5px + var(--safe-area-inset-right));
+            }
+            
+            .container {
+                border-radius: 8px;
+            }
+            
+            .main-content {
+                padding: 10px;
+            }
+            
             .header {
                 padding: 15px 10px;
             }
             
             .header h1 {
                 font-size: 16px;
+            }
+            
+            .quick-add {
+                padding: 12px;
+                margin-bottom: 12px;
             }
             
             .drive-status {
@@ -1158,6 +1305,79 @@
                 padding: 6px 8px;
                 font-size: 12px;
                 min-height: 36px;
+            }
+            
+            /* 통계 카드 더 작게 */
+            .stats-row {
+                gap: 6px;
+            }
+            
+            .stat-card {
+                padding: 8px 10px;
+            }
+            
+            .stat-number {
+                font-size: 18px;
+            }
+            
+            .stat-label {
+                font-size: 12px;
+            }
+            
+            /* 검색 필터 바 더 작게 */
+            .search-filter-bar {
+                gap: 5px;
+                padding: 10px;
+            }
+            
+            .filter-group select {
+                font-size: 12px;
+                padding: 6px 28px 6px 8px;
+                min-height: 34px;
+            }
+            
+            .form-input,
+            .form-select,
+            .form-textarea {
+                padding: 6px 8px;
+                min-height: 38px;
+                font-size: 16px;
+            }
+            
+            .form-select {
+                padding-right: 24px;
+                background-position: right 4px center;
+            }
+            
+            .form-label {
+                font-size: 11px;
+            }
+            
+            .form-grid {
+                gap: 8px;
+            }
+            
+            .modal-content {
+                width: 99%;
+                margin: 5px auto;
+            }
+            
+            .modal-body {
+                padding: 12px 8px;
+            }
+            
+            .modal-header {
+                padding: 12px 8px;
+            }
+            
+            .modal-footer {
+                padding: 10px 8px;
+                gap: 6px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 13px;
             }
         }
     </style>
@@ -1218,7 +1438,7 @@
                         <option value="personal">🙋‍♂️ 개인고객</option>
                         <option value="corporate">🏢 법인고객</option>
                     </select>
-                    <button type="submit" class="btn btn-success">✚ 추가</button>
+                    <button type="submit" class="btn btn-success">추가</button>
                 </form>
             </div>
 
@@ -1253,6 +1473,7 @@
                 <div class="filter-group">
                     <label class="filter-label">정렬</label>
                     <select id="sortBy" onchange="filterTasks()">
+                        <option value="">정렬</option>
                         <option value="date-desc">최신순</option>
                         <option value="date-asc">오래된순</option>
                         <option value="name-asc">성명순</option>
@@ -1262,7 +1483,7 @@
                 <div class="filter-group">
                     <label class="filter-label">상태</label>
                     <select id="filterStatus" onchange="filterTasks()">
-                        <option value="all">전체</option>
+                        <option value="all">상태</option>
                         <option value="progress">진행중</option>
                         <option value="complete">완료</option>
                         <option value="hold">보류</option>
@@ -1271,7 +1492,7 @@
                 <div class="filter-group">
                     <label class="filter-label">우선순위</label>
                     <select id="filterPriority" onchange="filterTasks()">
-                        <option value="all">전체</option>
+                        <option value="all">순위</option>
                         <option value="high">높음</option>
                         <option value="normal">보통</option>
                         <option value="low">낮음</option>
@@ -1282,20 +1503,20 @@
             <!-- Stats Row -->
             <div class="stats-row" id="statsRow">
                 <div class="stat-card primary">
-                    <div class="stat-number" id="statTotal">0</div>
                     <div class="stat-label">전체 업무</div>
+                    <div class="stat-number" id="statTotal">0</div>
                 </div>
                 <div class="stat-card warning">
-                    <div class="stat-number" id="statProgress">0</div>
                     <div class="stat-label">진행중</div>
+                    <div class="stat-number" id="statProgress">0</div>
                 </div>
                 <div class="stat-card success">
-                    <div class="stat-number" id="statComplete">0</div>
                     <div class="stat-label">완료</div>
+                    <div class="stat-number" id="statComplete">0</div>
                 </div>
                 <div class="stat-card danger">
-                    <div class="stat-number" id="statHold">0</div>
                     <div class="stat-label">보류</div>
+                    <div class="stat-number" id="statHold">0</div>
                 </div>
             </div>
 
@@ -1367,7 +1588,7 @@
                     </div>
 
                     <button class="btn btn-primary" onclick="requestNotificationPermission()">
-                        🔔 알림 권한 요청
+                        알림 권한 요청
                     </button>
                 </div>
 
@@ -1375,7 +1596,7 @@
                     <div class="settings-title">📊 데이터 관리</div>
                     <div class="settings-group">
                         <button class="btn btn-success" onclick="saveToDrive()">
-                            💾 수동 저장
+                            수동 저장
                         </button>
                         <p style="font-size: 13px; color: var(--gray-text); margin-top: 8px;">
                             ℹ️ 데이터는 자동으로 저장되지만 수동 저장도 가능합니다
@@ -1407,6 +1628,7 @@
             <div class="modal-body">
                 <form id="taskForm" onsubmit="saveTask(event)">
                     <div class="form-grid">
+                        <!-- Row 1: 고객 유형, 날짜 -->
                         <div class="form-group">
                             <label class="form-label required">고객 유형</label>
                             <select class="form-select" id="taskType" required>
@@ -1419,6 +1641,8 @@
                             <label class="form-label required">날짜</label>
                             <input type="date" class="form-input" id="taskDate" required>
                         </div>
+                        
+                        <!-- Row 2: 고객명, 직함 -->
                         <div class="form-group">
                             <label class="form-label required">고객명</label>
                             <div style="position: relative;">
@@ -1430,6 +1654,8 @@
                             <label class="form-label">직함</label>
                             <input type="text" class="form-input" id="taskPosition" placeholder="예: 과장">
                         </div>
+                        
+                        <!-- Row 3: 호칭, 연락처 -->
                         <div class="form-group">
                             <label class="form-label">호칭</label>
                             <input type="text" class="form-input" id="taskSuffix" value="님">
@@ -1438,10 +1664,14 @@
                             <label class="form-label">연락처</label>
                             <input type="tel" class="form-input" id="taskContact" placeholder="010-0000-0000">
                         </div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
+                        
+                        <!-- Row 4: 제목 (전체 폭) -->
+                        <div class="form-group full-width">
                             <label class="form-label required">제목</label>
                             <input type="text" class="form-input" id="taskTitle" required placeholder="업무 제목">
                         </div>
+                        
+                        <!-- Row 5: 카테고리, 소요 시간 -->
                         <div class="form-group">
                             <label class="form-label">카테고리</label>
                             <select class="form-select" id="taskCategory" onchange="handleCategoryChange()">
@@ -1458,18 +1688,24 @@
                                 <option value="직접입력">직접입력</option>
                             </select>
                         </div>
-                        <div class="form-group" id="customCategoryGroup" style="display: none;">
-                            <label class="form-label">카테고리 입력</label>
-                            <input type="text" class="form-input" id="customCategory" placeholder="카테고리를 입력하세요">
-                        </div>
                         <div class="form-group">
                             <label class="form-label">소요 시간</label>
                             <input type="text" class="form-input" id="taskDuration" placeholder="예: 2.5h">
                         </div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
+                        
+                        <!-- 직접입력 카테고리 (전체 폭, 조건부 표시) -->
+                        <div class="form-group full-width" id="customCategoryGroup" style="display: none;">
+                            <label class="form-label">카테고리 입력</label>
+                            <input type="text" class="form-input" id="customCategory" placeholder="카테고리를 입력하세요">
+                        </div>
+                        
+                        <!-- Row 6: 업무 내용 (전체 폭) -->
+                        <div class="form-group full-width">
                             <label class="form-label">업무 내용</label>
                             <textarea class="form-textarea" id="taskContent" placeholder="상담 내용"></textarea>
                         </div>
+                        
+                        <!-- Row 7: 상태, 우선순위 -->
                         <div class="form-group">
                             <label class="form-label">상태</label>
                             <select class="form-select" id="taskStatus">
@@ -1486,6 +1722,8 @@
                                 <option value="low">낮음</option>
                             </select>
                         </div>
+                        
+                        <!-- Row 8: 마감일, 태그 -->
                         <div class="form-group">
                             <label class="form-label">마감일</label>
                             <input type="date" class="form-input" id="taskDeadline">
@@ -1500,13 +1738,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger" id="deleteBtn" onclick="deleteTask()" style="display: none;">
-                    🗑️ 삭제
+                    삭제
                 </button>
                 <button type="button" class="btn btn-outline" onclick="closeModal()">
                     취소
                 </button>
                 <button type="submit" form="taskForm" class="btn btn-success">
-                    💾 저장
+                    저장
                 </button>
             </div>
         </div>
@@ -2867,7 +3105,7 @@
                 filtered = filtered.filter(t => t.priority === priority);
             }
 
-            const sortBy = document.getElementById('sortBy').value;
+            const sortBy = document.getElementById('sortBy').value || 'date-desc';
             switch (sortBy) {
                 case 'date-desc':
                     filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
