@@ -306,12 +306,11 @@
         /* Tab Navigation */
         .tab-nav {
             display: flex;
+            flex-wrap: wrap;
             gap: 5px;
             margin-bottom: 20px;
             border-bottom: 2px solid var(--light-bg);
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+            padding-bottom: 10px;
         }
 
         .tab-nav::-webkit-scrollbar {
@@ -1107,8 +1106,31 @@
                 gap: 3px;
             }
             
+            /* 탭 네비게이션 모바일 최적화 */
             .tab-nav {
-                flex-wrap: wrap;
+                gap: 4px;
+                justify-content: space-between;
+            }
+            
+            .tab-btn {
+                padding: 8px 10px;
+                font-size: 13px;
+                flex: 1 1 auto;
+                min-width: 0;
+                justify-content: center;
+                gap: 3px;
+                min-height: 38px;
+            }
+            
+            /* 탭 버튼 아이콘 제거 (이모지 숨김) */
+            .tab-btn::before {
+                content: none;
+            }
+            
+            /* 신규입력 버튼 모바일 스타일 */
+            .tab-nav .btn-success {
+                flex: 1 1 auto;
+                min-width: 0;
             }
         }
         
@@ -1130,6 +1152,12 @@
                 padding: 4px 8px;
                 font-size: 12px;
                 min-height: 30px;
+            }
+            
+            .tab-btn {
+                padding: 6px 8px;
+                font-size: 12px;
+                min-height: 36px;
             }
         }
     </style>
@@ -1197,19 +1225,19 @@
             <!-- Tab Navigation -->
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('all')">
-                    📋 전체 <span id="countAll">0</span>
+                    전체 <span id="countAll">0</span>
                 </button>
                 <button class="tab-btn" onclick="switchTab('personal')">
-                    🙋‍♂️ 개인 <span id="countPersonal">0</span>
+                    개인 <span id="countPersonal">0</span>
                 </button>
                 <button class="tab-btn" onclick="switchTab('corporate')">
-                    🏢 법인 <span id="countCorporate">0</span>
+                    법인 <span id="countCorporate">0</span>
                 </button>
                 <button class="tab-btn" onclick="switchTab('calendar')">
-                    📅 캘린더
+                    캘린더
                 </button>
                 <button class="tab-btn" onclick="switchTab('settings')">
-                    ⚙️ 설정
+                    설정
                 </button>
                 <button class="btn btn-success" onclick="openAddModal()" style="margin-left: auto;">
                     신규입력
@@ -2584,7 +2612,16 @@
             };
 
             tasks.unshift(task);
+            
+            // 로컬스토리지에 즉시 백업
+            localStorage.setItem('worklog_backup', JSON.stringify(tasks));
+            
+            // 기존 OAuth 시스템 저장
             scheduleAutoSave();
+            
+            // 신규 GIS 시스템 저장
+            triggerAutoSave();
+            
             renderTasks();
             updateStats();
             renderCalendar();
@@ -2705,7 +2742,15 @@
                 tasks.unshift(taskData);
             }
 
+            // 로컬스토리지에 즉시 백업
+            localStorage.setItem('worklog_backup', JSON.stringify(tasks));
+            
+            // 기존 OAuth 시스템 저장
             scheduleAutoSave();
+            
+            // 신규 GIS 시스템 저장
+            triggerAutoSave();
+            
             renderTasks();
             updateStats();
             renderCalendar();
@@ -2720,7 +2765,16 @@
             if (!confirm('정말 이 업무를 삭제하시겠습니까?')) return;
 
             tasks = tasks.filter(t => t.id !== editingTaskId);
+            
+            // 로컬스토리지에 즉시 백업
+            localStorage.setItem('worklog_backup', JSON.stringify(tasks));
+            
+            // 기존 OAuth 시스템 저장
             scheduleAutoSave();
+            
+            // 신규 GIS 시스템 저장
+            triggerAutoSave();
+            
             renderTasks();
             updateStats();
             renderCalendar();
