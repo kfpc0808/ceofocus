@@ -8,6 +8,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     <title>📘 업무일지 Pro - Worklog Management System</title>
+    <!-- External Libraries for Google Drive -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -1072,11 +1081,18 @@
         <div class="header">
             <h1>📘 업무일지 Pro</h1>
             <div class="drive-status">
-                <span id="userName">로그인 필요</span>
-                <div class="status-indicator" id="statusIndicator" style="background: #e74c3c;"></div>
-                <button class="btn btn-primary" id="driveConnectBtn" onclick="handleGoogleDriveConnect()">
-                    🔗 Drive 연결
+                <div class="status-indicator"></div>
+                <span id="driveStatusText">Google Drive 연결 대기 중</span>
+                <button class="btn btn-primary" onclick="connectToWorklogDrive()" id="driveConnectBtn">
+                    🔗 Google Drive 연결
                 </button>
+                <button class="btn btn-success" onclick="manualSaveToWorklogDrive()" id="driveSaveBtn" style="display:none;">
+                    💾 수동 저장
+                </button>
+                <button class="btn btn-primary" onclick="manualLoadFromWorklogDrive()" id="driveLoadBtn" style="display:none;">
+                    📥 불러오기
+                </button></div>
+                
                 <button class="btn btn-success" onclick="manualSave()" title="수동 저장" style="min-width: 100px;">
                     💾 저장
                 </button>
@@ -1410,6 +1426,540 @@
     <script>
         // Global Variables
         let tasks = [];
+
+        // ========================================
+        // Google Drive 연동 변수 (추가)
+        // ========================================
+        let newAccessToken = null;
+        let tokenClient = null;
+        let gisInited = false;
+        let isConnected = false;
+        let autoSaveInterval = null;
+        let autoSaveDebounceTimer = null;
+        let syncCheckInterval = null;
+        let lastModifiedTime = null;
+        let isEditing = false;
+        let editTimeout = null;
+        let driveFileId = null;
+        
+        const GOOGLE_CLIENT_ID = "288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com";
+        const WORKLOG_FILE_NAME = 'worklog.wld';
+        const DRIVE_ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
+        
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+            authDomain: "kfpc-company-support-project.firebaseapp.com",
+            databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "kfpc-company-support-project",
+            storageBucket: "kfpc-company-support-project.firebasestorage.app",
+            messagingSenderId: "101260933373",
+            appId: "1:101260933373:web:3436176f9ca2560056d914"
+        };
+        
+        // Firebase 초기화
+        let firebaseAuth = null;
+        let currentUser = null;
+        try {
+            if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                firebaseAuth = firebase.auth();
+            }
+        } catch (error) {
+            console.warn('Firebase 초기화 실패:', error);
+        }
+        
+        // ========================================
+        // 암호화 함수들
+        // ========================================
+        const encryptWorklogData = (data) => {
+            return CryptoJS.AES.encrypt(JSON.stringify(data), DRIVE_ENCRYPTION_KEY).toString();
+        };
+        
+        const decryptWorklogData = (encryptedData) => {
+            const bytes = CryptoJS.AES.decrypt(encryptedData, DRIVE_ENCRYPTION_KEY);
+            return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        };
+        
+        // ========================================
+        // Google Drive 로그인 상태 관리
+        // ========================================
+        const saveLoginState = () => {
+            if (newAccessToken) {
+                localStorage.setItem('worklogGoogleAccessToken', newAccessToken);
+                localStorage.setItem('worklogTokenExpiry', Date.now() + 3600000);
+            }
+        };
+        
+        const restoreLoginState = () => {
+            const token = localStorage.getItem('worklogGoogleAccessToken');
+            const expiry = localStorage.getItem('worklogTokenExpiry');
+            
+            if (token && expiry && Date.now() < parseInt(expiry)) {
+                newAccessToken = token;
+                return true;
+            }
+            
+            localStorage.removeItem('worklogGoogleAccessToken');
+            localStorage.removeItem('worklogTokenExpiry');
+            return false;
+        };
+        
+        // ========================================
+        // Google Identity Services 초기화
+        // ========================================
+        const initGoogleDrive = async () => {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50;
+                
+                const checkGIS = setInterval(() => {
+                    attempts++;
+                    if (window.google && window.google.accounts) {
+                        clearInterval(checkGIS);
+                        
+                        tokenClient = google.accounts.oauth2.initTokenClient({
+                            client_id: GOOGLE_CLIENT_ID,
+                            scope: 'https://www.googleapis.com/auth/drive.file',
+                            callback: (response) => {
+                                if (response.error) {
+                                    console.error('❌ 인증 오류:', response.error);
+                                    showToast('Google 로그인에 실패했습니다: ' + response.error, 'error');
+                                } else {
+                                    newAccessToken = response.access_token;
+                                    saveLoginState();
+                                    gisInited = true;
+                                    console.log('✅ Google Drive 인증 완료');
+                                    onDriveConnected();
+                                }
+                            },
+                        });
+                        
+                        gisInited = true;
+                        resolve();
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkGIS);
+                        console.error('❌ Google Identity Services 로드 실패');
+                        resolve();
+                    }
+                }, 100);
+            });
+        };
+        
+        // ========================================
+        // Drive 접근 권한 요청
+        // ========================================
+        const requestDriveAccess = async () => {
+            if (newAccessToken) {
+                const expiry = localStorage.getItem('worklogTokenExpiry');
+                if (expiry && Date.now() < parseInt(expiry)) {
+                    return true;
+                }
+            }
+            
+            return new Promise((resolve) => {
+                if (!tokenClient) {
+                    resolve(false);
+                    return;
+                }
+                
+                tokenClient.callback = (response) => {
+                    if (response.error) {
+                        console.error('❌ 토큰 획득 실패:', response.error);
+                        resolve(false);
+                    } else {
+                        newAccessToken = response.access_token;
+                        saveLoginState();
+                        resolve(true);
+                    }
+                };
+                
+                tokenClient.requestAccessToken();
+            });
+        };
+        
+        // ========================================
+        // Google Drive 파일 찾기
+        // ========================================
+        const findWorklogFile = async (fileName) => {
+            if (!newAccessToken) return null;
+            
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and trashed=false&fields=files(id,name,modifiedTime)`,
+                    {
+                        headers: { 'Authorization': `Bearer ${newAccessToken}` }
+                    }
+                );
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        newAccessToken = null;
+                        localStorage.removeItem('worklogGoogleAccessToken');
+                    }
+                    return null;
+                }
+                
+                const data = await response.json();
+                return data.files && data.files.length > 0 ? data.files[0] : null;
+            } catch (error) {
+                console.error('파일 찾기 실패:', error);
+                return null;
+            }
+        };
+        
+        // ========================================
+        // Google Drive에 저장
+        // ========================================
+        const saveToGoogleDrive = async (tasksData) => {
+            if (!newAccessToken) {
+                console.error('Access token이 없습니다');
+                return false;
+            }
+            
+            try {
+                const encryptedData = encryptWorklogData(tasksData);
+                const file = await findWorklogFile(WORKLOG_FILE_NAME);
+                
+                const metadata = {
+                    name: WORKLOG_FILE_NAME,
+                    mimeType: 'application/octet-stream'
+                };
+                
+                const formData = new FormData();
+                formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                formData.append('file', new Blob([encryptedData], { type: 'application/octet-stream' }));
+                
+                let response;
+                if (file && file.id) {
+                    // 파일 업데이트
+                    response = await fetch(
+                        `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart`,
+                        {
+                            method: 'PATCH',
+                            headers: { 'Authorization': `Bearer ${newAccessToken}` },
+                            body: formData
+                        }
+                    );
+                } else {
+                    // 새 파일 생성
+                    response = await fetch(
+                        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                        {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${newAccessToken}` },
+                            body: formData
+                        }
+                    );
+                }
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        newAccessToken = null;
+                        localStorage.removeItem('worklogGoogleAccessToken');
+                        showToast('로그인이 만료되었습니다. 다시 연결해주세요.', 'error');
+                    }
+                    return false;
+                }
+                
+                const result = await response.json();
+                driveFileId = result.id;
+                
+                // localStorage에도 백업
+                localStorage.setItem('worklog_backup', JSON.stringify(tasksData));
+                
+                return true;
+            } catch (error) {
+                console.error('저장 실패:', error);
+                return false;
+            }
+        };
+        
+        // ========================================
+        // Google Drive에서 불러오기
+        // ========================================
+        const loadFromGoogleDrive = async () => {
+            if (!newAccessToken) {
+                console.error('Access token이 없습니다');
+                return null;
+            }
+            
+            try {
+                const file = await findWorklogFile(WORKLOG_FILE_NAME);
+                
+                if (!file || !file.id) {
+                    console.log('파일이 없습니다');
+                    return null;
+                }
+                
+                driveFileId = file.id;
+                lastModifiedTime = new Date(file.modifiedTime).getTime();
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+                    {
+                        headers: { 'Authorization': `Bearer ${newAccessToken}` }
+                    }
+                );
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        newAccessToken = null;
+                        localStorage.removeItem('worklogGoogleAccessToken');
+                    }
+                    return null;
+                }
+                
+                const encryptedData = await response.text();
+                const decryptedData = decryptWorklogData(encryptedData);
+                
+                return decryptedData;
+            } catch (error) {
+                console.error('불러오기 실패:', error);
+                return null;
+            }
+        };
+        
+        // ========================================
+        // 연결 완료 후 처리
+        // ========================================
+        const onDriveConnected = async () => {
+            
+            // UI 버튼 상태 업데이트
+            const connectBtn = document.getElementById('driveConnectBtn');
+            const saveBtn = document.getElementById('driveSaveBtn');
+            const loadBtn = document.getElementById('driveLoadBtn');
+            const statusText = document.getElementById('driveStatusText');
+            
+            if (connectBtn) connectBtn.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'inline-flex';
+            if (loadBtn) loadBtn.style.display = 'inline-flex';
+            if (statusText) statusText.textContent = '✅ Google Drive 연결됨';
+
+            isConnected = true;
+            console.log('✅ Google Drive 연결됨');
+            showToast('✅ Google Drive 연결 완료!', 'success');
+            
+            // 상태 업데이트
+            const statusDot = document.querySelector('.status-indicator');
+            if (statusDot) {
+                statusDot.style.background = '#27ae60';
+            }
+            
+            // 자동 저장 시작 (30초마다)
+            if (autoSaveInterval) clearInterval(autoSaveInterval);
+            autoSaveInterval = setInterval(autoSaveToWorklogDrive, 30000);
+            
+            // 실시간 동기화 체크 시작 (3초마다)
+            if (syncCheckInterval) clearInterval(syncCheckInterval);
+            syncCheckInterval = setInterval(checkForWorklogUpdates, 3000);
+            
+            // 즉시 한 번 불러오기
+            try {
+                const loadedTasks = await loadFromGoogleDrive();
+                if (loadedTasks && Array.isArray(loadedTasks)) {
+                    tasks = loadedTasks;
+                    renderTasks();
+                    updateStats();
+                    showToast('📥 데이터를 불러왔습니다', 'success');
+                }
+            } catch (error) {
+                console.error('초기 로드 실패:', error);
+            }
+        };
+        
+        // ========================================
+        // 자동 저장
+        // ========================================
+        const autoSaveToWorklogDrive = async () => {
+            if (!isConnected || !newAccessToken || isEditing) return;
+            
+            try {
+                const success = await saveToGoogleDrive(tasks);
+                if (success) {
+                    console.log('🔄 자동 저장 완료');
+                    const file = await findWorklogFile(WORKLOG_FILE_NAME);
+                    if (file) {
+                        lastModifiedTime = new Date(file.modifiedTime).getTime();
+                    }
+                }
+            } catch (error) {
+                console.error('자동 저장 실패:', error);
+            }
+        };
+        
+        // ========================================
+        // 실시간 동기화 체크
+        // ========================================
+        const checkForWorklogUpdates = async () => {
+            if (!isConnected || !driveFileId || isEditing) return;
+            
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=modifiedTime`,
+                    {
+                        headers: { 'Authorization': `Bearer ${newAccessToken}` }
+                    }
+                );
+                
+                if (response.ok) {
+                    const fileMetadata = await response.json();
+                    const cloudModifiedTime = new Date(fileMetadata.modifiedTime).getTime();
+                    
+                    if (lastModifiedTime && cloudModifiedTime > lastModifiedTime) {
+                        console.log('🔄 새 버전 감지, 자동 업데이트 중...');
+                        const loadedTasks = await loadFromGoogleDrive();
+                        if (loadedTasks && Array.isArray(loadedTasks)) {
+                            tasks = loadedTasks;
+                            renderTasks();
+                            updateStats();
+                            showToast('🔄 최신 버전으로 업데이트되었습니다!', 'info');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('동기화 체크 실패:', error);
+            }
+        };
+        
+        // ========================================
+        // 수동 저장 (기존 함수와 연동)
+        // ========================================
+        const manualSaveToWorklogDrive = async () => {
+            if (!isConnected || !newAccessToken) {
+                showToast('❌ Google Drive에 연결되지 않았습니다', 'error');
+                return;
+            }
+            
+            try {
+                showToast('💾 저장 중...', 'info');
+                const success = await saveToGoogleDrive(tasks);
+                
+                if (success) {
+                    const file = await findWorklogFile(WORKLOG_FILE_NAME);
+                    if (file) {
+                        lastModifiedTime = new Date(file.modifiedTime).getTime();
+                    }
+                    showToast('💾 저장 완료!', 'success');
+                    hasUnsavedChanges = false;
+                } else {
+                    showToast('❌ 저장 실패', 'error');
+                }
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showToast('❌ 저장 중 오류 발생', 'error');
+            }
+        };
+        
+        // ========================================
+        // 수동 불러오기 (기존 함수와 연동)
+        // ========================================
+        const manualLoadFromWorklogDrive = async () => {
+            if (!isConnected || !newAccessToken) {
+                showToast('❌ Google Drive에 연결되지 않았습니다', 'error');
+                return;
+            }
+            
+            try {
+                showToast('📥 불러오는 중...', 'info');
+                const loadedTasks = await loadFromGoogleDrive();
+                
+                if (loadedTasks && Array.isArray(loadedTasks)) {
+                    tasks = loadedTasks;
+                    renderTasks();
+                    updateStats();
+                    showToast('📥 불러오기 완료!', 'success');
+                } else {
+                    showToast('⚠️ 불러올 데이터가 없습니다', 'warning');
+                }
+            } catch (error) {
+                console.error('불러오기 오류:', error);
+                showToast('❌ 불러오기 중 오류 발생', 'error');
+            }
+        };
+        
+        // ========================================
+        // Google Drive 연결 함수
+        // ========================================
+        async function connectToWorklogDrive() {
+            if (!gisInited) {
+                showToast('⚠️ Google Drive 초기화 중입니다. 잠시 후 다시 시도하세요.', 'warning');
+                return;
+            }
+            
+            try {
+                const success = await requestDriveAccess();
+                if (success) {
+                    await onDriveConnected();
+                } else {
+                    showToast('❌ Google Drive 연결 실패', 'error');
+                }
+            } catch (error) {
+                console.error('연결 오류:', error);
+                showToast('❌ 연결 중 오류 발생', 'error');
+            }
+        }
+        
+        // ========================================
+        // 페이지 로드 시 초기화
+        // ========================================
+        
+        
+        // ========================================
+        // 데이터 변경 감지 및 디바운스 저장
+        // ========================================
+        const triggerAutoSave = () => {
+            if (!isConnected || !newAccessToken) return;
+            
+            hasUnsavedChanges = true;
+            
+            // 3초 디바운스
+            if (autoSaveDebounceTimer) {
+                clearTimeout(autoSaveDebounceTimer);
+            }
+            
+            autoSaveDebounceTimer = setTimeout(async () => {
+                const success = await saveToGoogleDrive(tasks);
+                if (success) {
+                    hasUnsavedChanges = false;
+                    console.log('🔄 디바운스 자동 저장 완료');
+                    const file = await findWorklogFile(WORKLOG_FILE_NAME);
+                    if (file) {
+                        lastModifiedTime = new Date(file.modifiedTime).getTime();
+                    }
+                }
+            }, 3000);
+        };
+        
+        // 편집 시작/종료 감지
+        const startEditing = () => {
+            isEditing = true;
+            if (editTimeout) clearTimeout(editTimeout);
+        };
+        
+        const endEditing = () => {
+            if (editTimeout) clearTimeout(editTimeout);
+            editTimeout = setTimeout(() => {
+                isEditing = false;
+                triggerAutoSave();
+            }, 1000);
+        };
+
+        window.addEventListener('load', async () => {
+            // Google Drive 초기화
+            await initGoogleDrive();
+            
+            // 이전 로그인 상태 복원
+            if (restoreLoginState()) {
+                console.log('✅ 이전 로그인 상태 복원됨');
+                await onDriveConnected();
+            } else {
+                console.log('ℹ️ Google Drive 연결 필요');
+            }
+        });
+
         let clients = [];
         let currentTab = 'all';
         let accessToken = null;
