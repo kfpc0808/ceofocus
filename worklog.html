@@ -1752,9 +1752,9 @@
             if (autoSaveInterval) clearInterval(autoSaveInterval);
             autoSaveInterval = setInterval(autoSaveToWorklogDrive, 30000);
             
-            // 실시간 동기화 체크 시작 (3초마다)
+            // 실시간 동기화 체크 시작 (10초마다)
             if (syncCheckInterval) clearInterval(syncCheckInterval);
-            syncCheckInterval = setInterval(checkForWorklogUpdates, 3000);
+            syncCheckInterval = setInterval(checkForWorklogUpdates, 10000);
             
             // 즉시 한 번 불러오기
             try {
@@ -1947,19 +1947,6 @@
             }, 1000);
         };
 
-        window.addEventListener('load', async () => {
-            // Google Drive 초기화
-            await initGoogleDrive();
-            
-            // 이전 로그인 상태 복원
-            if (restoreLoginState()) {
-                console.log('✅ 이전 로그인 상태 복원됨');
-                await onDriveConnected();
-            } else {
-                console.log('ℹ️ Google Drive 연결 필요');
-            }
-        });
-
         let clients = [];
         let currentTab = 'all';
         let accessToken = null;
@@ -1995,14 +1982,38 @@
             }
         });
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize - 통합된 초기화 로직
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Google Drive 초기화 (신규 시스템)
+            await initGoogleDrive();
+            
+            // 이전 로그인 상태 복원 시도
+            if (restoreLoginState()) {
+                console.log('✅ 이전 로그인 상태 복원됨');
+                await onDriveConnected();
+            } else {
+                console.log('ℹ️ Google Drive 연결 필요');
+                // 기존 OAuth 토큰도 체크
+                checkGoogleDriveConnection();
+            }
+            
+            // UI 초기화
             document.getElementById('taskDate').valueAsDate = new Date();
-            checkGoogleDriveConnection();
             loadClientsFromClientManagement();
             renderCalendar();
             loadNotificationSettings();
             checkDeadlines();
+        });
+
+        // ========================================
+        // Visibility API - 백그라운드 복귀 시 즉시 동기화
+        // ========================================
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && isConnected && newAccessToken) {
+                // 포그라운드로 돌아올 때 즉시 동기화 체크
+                console.log('📱 포그라운드 복귀 - 즉시 동기화 체크');
+                checkForWorklogUpdates();
+            }
         });
 
         // Notification Functions
@@ -2334,7 +2345,7 @@
                 result += String.fromCharCode(decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
             }
             return result;
-
+        }
 
         // Manual save function
         async function manualSave() {
@@ -2526,6 +2537,7 @@
             document.getElementById('customCategory').value = '';
             document.getElementById('taskModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
+            startEditing(); // 편집 시작 감지
         }
 
         function openEditModal(taskId) {
@@ -2573,6 +2585,7 @@
             document.getElementById('deleteBtn').style.display = 'inline-flex';
             document.getElementById('taskModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
+            startEditing(); // 편집 시작 감지
         }
 
         function closeModal() {
@@ -2582,6 +2595,7 @@
             // Reset category fields
             document.getElementById('customCategoryGroup').style.display = 'none';
             document.getElementById('customCategory').value = '';
+            endEditing(); // 편집 종료 감지
         }
 
         function saveTask(event) {
@@ -2624,6 +2638,7 @@
             renderCalendar();
             checkDeadlines();
             closeModal();
+            endEditing(); // 편집 종료 감지
             showToast(editingTaskId ? '업무가 수정되었습니다' : '업무가 추가되었습니다', 'success');
         }
 
