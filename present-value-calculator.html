@@ -17,10 +17,11 @@
         }
 
         /* ===== Header with KFPC logo ===== */
-        .header{
+        .header{ position: relative;
             background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
             color:#fff; padding:16px 24px;
             display:flex; align-items:center; justify-content:space-between; gap:16px;
+            position: relative;
         }
         .brand{
             display:flex; align-items:center; gap:10px; user-select:none; cursor:pointer;
@@ -39,6 +40,34 @@
         }
         .headings h1{ font-size:1.8em; margin-bottom:4px; }
         .headings p{ font-size:.95em; opacity:.9; }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .close-btn:active {
+            transform: rotate(90deg) scale(0.95);
+        }
 
         .usage-guide{ background:#f8f9fa; padding:15px 30px; border-bottom:2px solid #667eea; }
         .usage-guide h2{ color:#667eea; margin-bottom:10px; font-size:1.2em; }
@@ -146,6 +175,7 @@
             .result-explanation{ padding:10px; }
             .result-explanation h4{ font-size:.85em; }
             .result-explanation p, .result-explanation ul, .highlight-box{ font-size:.7em; }
+            .close-btn { width: 36px; height: 36px; font-size: 20px; top: 12px; right: 16px; }
         }
 
         .hidden{ display:none; }
@@ -235,6 +265,7 @@
                 <p>미래의 돈이 지금 얼마인지, 한눈에 계산하세요</p>
             </div>
             <div style="width:64px;"></div>
+            <div class="close-btn" onclick="closeAndGoHome()" title="닫기">✕</div>
         </div>
 
         <div class="usage-guide">
@@ -442,6 +473,11 @@
     </div>
 
     <script>
+        // 닫기 버튼 - index로 이동
+        function closeAndGoHome() {
+            window.location.href = 'index.html';
+        }
+
         // 탭 전환
         function switchTab(index){
             const tabs=document.querySelectorAll('.tab-button');
