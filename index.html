@@ -51,7 +51,7 @@
     
     .btn{
       border:none; 
-      padding:.8rem 1.4rem; 
+      padding:.4rem .7rem; 
       border-radius:10px;
       font-weight:700; 
       cursor:pointer; 
@@ -500,11 +500,14 @@
     
     @media (max-width: 480px) {
       .ai-buttons {
-        gap: 0.4rem;
+        gap: 0.3rem;
+        flex-wrap: nowrap;
       }
       .ai-btn {
-        padding: 0.35rem 0.65rem;
-        font-size: 0.7rem;
+        padding: 0.3rem 0.4rem;
+        font-size: 0.65rem;
+        flex: 1;
+        min-width: 0;
       }
     }
   </style>
@@ -658,19 +661,15 @@
       <div class="ai-buttons-label">🤖 AI 생성형 도구</div>
       <div class="ai-buttons">
         <a href="https://chat.openai.com" target="_blank" class="ai-btn">
-          <span class="ai-icon">🟢</span>
           <span>ChatGPT</span>
         </a>
         <a href="https://gemini.google.com" target="_blank" class="ai-btn">
-          <span class="ai-icon">💎</span>
           <span>Gemini</span>
         </a>
         <a href="https://claude.ai" target="_blank" class="ai-btn">
-          <span class="ai-icon">🟠</span>
           <span>Claude</span>
         </a>
         <a href="https://www.perplexity.ai" target="_blank" class="ai-btn">
-          <span class="ai-icon">🔵</span>
           <span>Perplexity</span>
         </a>
       </div>
