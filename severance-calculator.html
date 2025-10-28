@@ -43,6 +43,44 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             padding: 2rem;
             margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        /* 닫기 버튼 */
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #6b7a90;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+        .close-btn:hover {
+            background: #e8ecf3;
+            color: #1a1a1a;
+            transform: scale(1.05);
+        }
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+        @media (max-width: 480px) {
+            .close-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+                top: 0.5rem;
+                right: 0.5rem;
+            }
         }
 
         .page-title {
@@ -568,6 +606,7 @@
             <div class="law-reference">
                 📜 법적 근거: 근로자퇴직급여 보장법 제8조, 소득세법 제22조·제48조, 조세특례제한법 제88조의4
             </div>
+            <button class="close-btn" onclick="window.location.href='index.html'" aria-label="닫기" title="닫기">✕</button>
         </div>
 
         <!-- 기본 정보 -->
