@@ -35,36 +35,6 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 1rem;
             letter-spacing: 2px;
-            position: relative;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 40px;
-            height: 40px;
-            background: rgba(21, 101, 192, 0.1);
-            border: 2px solid rgba(21, 101, 192, 0.3);
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: #1565c0;
-            transition: all 0.3s;
-            z-index: 100;
-        }
-
-        .close-btn:hover {
-            background: rgba(21, 101, 192, 0.2);
-            transform: rotate(90deg);
-            border-color: #1565c0;
-        }
-
-        .close-btn:active {
-            transform: rotate(90deg) scale(0.95);
         }
 
         .header {
@@ -73,6 +43,44 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             padding: 2rem;
             margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        /* 닫기 버튼 */
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #6b7a90;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+        .close-btn:hover {
+            background: #e8ecf3;
+            color: #1a1a1a;
+            transform: scale(1.05);
+        }
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+        @media (max-width: 480px) {
+            .close-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+                top: 0.5rem;
+                right: 0.5rem;
+            }
         }
 
         .page-title {
@@ -613,6 +621,7 @@
             <div class="info-box">
                 <p>✅ 2025년 현행 세법 100% 반영 | 모든 증여 유형 포함 | 세법 기준 정확한 계산</p>
             </div>
+            <button class="close-btn" onclick="window.location.href='index.html'" aria-label="닫기" title="닫기">✕</button>
         </div>
 
         <div class="form-table">
