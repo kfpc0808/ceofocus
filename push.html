@@ -191,26 +191,6 @@
             box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
         }
         
-        .logout-btn {
-            min-height: 36px;
-            padding: 4px 12px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            transition: all 0.3s;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        
-        .logout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
-        }
-        
         /* 헤더 */
         h1 {
             text-align: center;
@@ -1106,7 +1086,6 @@
         .back-btn,
         .btn-nav,
         .drive-btn,
-        .logout-btn,
         .push-permission-btn {
             -webkit-tap-highlight-color: rgba(255, 255, 255, 0.15);
             touch-action: manipulation;
@@ -1901,7 +1880,6 @@
             <button class="btn-nav" onclick="loadAllData()">불러오기</button>
             <button class="btn-nav" onclick="saveAllData()">저장하기</button>
             <button class="btn-nav" onclick="openGuideModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">📖 가이드</button>
-            <button class="logout-btn" onclick="logout()">로그아웃</button>
         </div>
 
         <!-- 헤더 -->
@@ -2043,9 +2021,16 @@
                 <h2>👥 고객 관리</h2>
                 
                 <div class="form-actions" style="margin-bottom: 20px;">
-                    <button class="btn btn-success" onclick="openCustomerModal()">+ 고객 추가</button>
-                    <button class="btn btn-secondary" onclick="importCustomers()">📥 가져오기</button>
-                    <button class="btn btn-secondary" onclick="exportInviteCustomers()">📤 내보내기</button>
+                    <button class="btn btn-success" onclick="openCustomerModal()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px;">+ 고객 추가</button>
+                    <button class="btn btn-secondary" onclick="importCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px; min-width: 110px;">
+                        <span>📥</span><span>가져오기</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px; min-width: 140px;">
+                        <span>📤</span><span>CSV 내보내기</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportToVCard()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px; min-width: 160px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <span>📱</span><span>연락처 내보내기</span>
+                    </button>
                 </div>
                 
                 <div class="customer-search">
@@ -2327,10 +2312,21 @@ KFPC {컨설턴트}입니다.
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <input type="text" id="inviteSearchInput" placeholder="🔍 검색..." onkeyup="renderInviteCustomers()" style="padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
                         <span id="inviteSelectionInfo" style="color: #FFD700; font-weight: bold; font-size: 13px;">0명 선택됨</span>
-                        <button onclick="sendSelectedToPhone()" style="padding: 8px 16px; background: linear-gradient(135deg, #FEE500 0%, #FFD700 100%); border: none; border-radius: 8px; color: #3C1E1E; font-size: 13px; cursor: pointer; font-weight: bold;">📱 선택 전송</button>
-                        <button onclick="sendAllToPhone()" style="padding: 8px 16px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">📲 전체 전송</button>
-                        <button onclick="exportInviteCustomers()" style="padding: 8px 16px; background: rgba(100, 181, 246, 0.8); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">📥 CSV 백업</button>
-                        <button onclick="clearAllInviteCustomers()" style="padding: 8px 16px; background: rgba(244, 67, 54, 0.8); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">🗑️ 전체 삭제</button>
+                        <button onclick="sendSelectedToPhone()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #FEE500 0%, #FFD700 100%); border: none; border-radius: 8px; color: #3C1E1E; font-size: 13px; cursor: pointer; font-weight: bold;">
+                            <span>📱</span><span>선택 전송</span>
+                        </button>
+                        <button onclick="sendAllToPhone()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
+                            <span>📲</span><span>전체 전송</span>
+                        </button>
+                        <button onclick="exportInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: rgba(100, 181, 246, 0.8); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
+                            <span>📥</span><span>CSV 백업</span>
+                        </button>
+                        <button onclick="exportToVCard()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
+                            <span>📱</span><span>연락처 내보내기</span>
+                        </button>
+                        <button onclick="clearAllInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: rgba(244, 67, 54, 0.8); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
+                            <span>🗑️</span><span>전체 삭제</span>
+                        </button>
                     </div>
                 </div>
                 
@@ -2777,11 +2773,6 @@ KFPC {컨설턴트}입니다.
                         <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #f093fb;">
                             <div style="font-weight: bold; color: #FFD700; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">📖 가이드 버튼</div>
                             <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">현재 보고 계신 이 사용 가이드를 표시합니다.</div>
-                        </div>
-                        
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #ff6b6b;">
-                            <div style="font-weight: bold; color: #FFD700; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">🚪 로그아웃 버튼</div>
-                            <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">현재 세션에서 로그아웃하고 로그인 화면으로 돌아갑니다.</div>
                         </div>
                     </div>
                 </div>
@@ -3410,7 +3401,10 @@ KFPC {컨설턴트}입니다.
                     if (searchResponse.status === 401) {
                         // 토큰 만료
                         showAlert('인증이 만료되었습니다. 다시 연동해주세요.', 'error');
-                        logout();
+                        localStorage.removeItem('googleAccessToken');
+                        accessToken = null;
+                        isDriveConnected = false;
+                        updateDriveStatus(false);
                         return null;
                     }
                     throw new Error('파일 검색 실패');
@@ -4732,16 +4726,29 @@ KFPC {컨설턴트}입니다.
             
             const tabMap = {
                 'send': 'sendTab',
+                'scheduled': 'scheduledTab',
                 'customers': 'customersTab',
                 'anniversary': 'anniversaryTab',
                 'log': 'logTab',
                 'template': 'templateTab',
-                'settings': 'settingsTab'
+                'settings': 'settingsTab',
+                'import': 'importTab'
             };
             
             const targetTab = document.getElementById(tabMap[tab]);
             if (targetTab) {
                 targetTab.classList.remove('hidden');
+                
+                // 탭 전환 시 해당 탭의 렌더링 함수 호출
+                if (tab === 'scheduled') {
+                    renderScheduledMessages();
+                } else if (tab === 'customers') {
+                    renderCustomers();
+                } else if (tab === 'log') {
+                    renderMessages();
+                } else if (tab === 'anniversary') {
+                    renderAnniversaries();
+                }
             }
         }
 
@@ -4867,13 +4874,6 @@ KFPC {컨설턴트}입니다.
         function goBack() {
             if (confirm('메인으로 돌아가시겠습니까?')) {
                 window.location.href = 'index.html';
-            }
-        }
-
-        function logout() {
-            if (confirm('로그아웃 하시겠습니까?')) {
-                localStorage.removeItem('googleAccessToken');
-                window.location.href = 'login.html';
             }
         }
 
@@ -5517,6 +5517,69 @@ KFPC {컨설턴트}입니다.
             URL.revokeObjectURL(url);
             
             showAlert('✅ 고객 목록이 다운로드되었습니다!');
+        }
+        
+        // ===== vCard 내보내기 (휴대폰 연락처 저장용) =====
+        function exportToVCard() {
+            if (customers.length === 0 && inviteCustomers.length === 0) {
+                showAlert('❌ 내보낼 고객이 없습니다.', 'error');
+                return;
+            }
+            
+            // 모든 고객 합치기
+            const allCustomers = [...customers, ...inviteCustomers];
+            
+            if (allCustomers.length === 0) {
+                showAlert('❌ 내보낼 고객이 없습니다.', 'error');
+                return;
+            }
+            
+            // vCard 형식으로 변환
+            let vcfContent = '';
+            
+            allCustomers.forEach(customer => {
+                if (!customer.name || !customer.phone) return;
+                
+                vcfContent += 'BEGIN:VCARD\r\n';
+                vcfContent += 'VERSION:3.0\r\n';
+                vcfContent += `FN:${customer.name}\r\n`;
+                vcfContent += `N:${customer.name};;;;\r\n`;
+                
+                // 전화번호
+                const phone = customer.phone.replace(/[^0-9]/g, '');
+                vcfContent += `TEL;TYPE=CELL:${phone}\r\n`;
+                
+                // 이메일
+                if (customer.email) {
+                    vcfContent += `EMAIL;TYPE=INTERNET:${customer.email}\r\n`;
+                }
+                
+                // 회사
+                if (customer.company) {
+                    vcfContent += `ORG:${customer.company}\r\n`;
+                }
+                
+                // 직함
+                if (customer.position) {
+                    vcfContent += `TITLE:${customer.position}\r\n`;
+                }
+                
+                // 메모 (KFPC 고객임을 표시)
+                vcfContent += 'NOTE:KFPC 고객\r\n';
+                
+                vcfContent += 'END:VCARD\r\n';
+            });
+            
+            // 파일 다운로드
+            const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `KFPC_고객연락처_${new Date().toISOString().slice(0,10)}.vcf`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showAlert(`✅ ${allCustomers.length}명의 연락처가 vCard 형식으로 다운로드되었습니다!\n\n📱 휴대폰에서 파일을 열면 연락처 앱에 자동으로 추가됩니다.`, 'success');
         }
         
         // ===== 전체 삭제 =====
