@@ -3538,6 +3538,16 @@ KFPC {컨설턴트}입니다.
         let syncCheckInterval = null;  // 동기화 체크 인터벌
         let isEditing = false;  // 현재 편집 중인지 여부
         
+        // ⭐ 성능 최적화 변수들 (8000명 고객 대응)
+        let isInitialLoad = true;  // 초기 로드 플래그 (중복 메시지 방지)
+        let isLoadingData = false;  // 데이터 로딩 중 플래그 (중복 로드 방지)
+        let currentAlertTimeout = null;  // 알림 타이머 (중복 알림 방지)
+        
+        // ⭐ 페이지네이션 변수들 (대용량 데이터 렌더링 최적화)
+        const ITEMS_PER_PAGE = 50;  // 한 페이지당 50명씩 표시
+        let currentPage = 1;  // 현재 페이지
+        let totalPages = 1;  // 총 페이지 수
+        
         // 구글 드라이브 파일명
         const FILES = {
             customers: 'pushcustomer_customers.fmd',
@@ -3748,7 +3758,15 @@ KFPC {컨설턴트}입니다.
 
         // ===== 데이터 로드/저장 =====
         async function loadAllData() {
+            // ⭐ 중복 로드 방지
+            if (isLoadingData) {
+                console.log('⚠️ 이미 데이터 로딩 중... 스킵');
+                return;
+            }
+            
+            isLoadingData = true;
             showLoading(true);
+            
             try {
                 // 모든 파일을 병렬로 로드 (순차 로드보다 훨씬 빠름)
                 const [
@@ -3793,12 +3811,20 @@ KFPC {컨설턴트}입니다.
                 appSettings.lastSync = new Date().toISOString();
                 await saveToDrive(FILES.settings, appSettings);
                 
-                showAlert('✅ 데이터를 성공적으로 불러왔습니다!', 'success');
+                // ⭐ 초기 로드일 때만 성공 메시지 표시 (중복 메시지 방지)
+                if (isInitialLoad) {
+                    showAlert('✅ 데이터를 성공적으로 불러왔습니다!', 'success');
+                    isInitialLoad = false;
+                } else {
+                    console.log('✅ 백그라운드 동기화 완료 (조용히)');
+                }
+                
             } catch (error) {
                 console.error('❌ 데이터 로드 오류:', error);
                 showAlert('⚠️ 데이터를 불러오는데 실패했습니다.', 'error');
             } finally {
                 showLoading(false);
+                isLoadingData = false;  // ⭐ 로딩 완료 플래그 해제
             }
         }
 
@@ -4024,75 +4050,198 @@ KFPC {컨설턴트}입니다.
                 return;
             }
             
-            grid.innerHTML = filtered.map(customer => {
-                const isSelected = selectedCustomersForDelete.includes(customer.id);
-                return `
-                <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
-                    <!-- PC/태블릿용 버튼들 (박스형) -->
-                    <div class="customer-buttons-desktop" style="position: absolute; top: 8px; right: 8px; display: flex; gap: 3px;">
-                        <button onclick="event.stopPropagation(); showGroupSelector('${customer.id}')" 
-                                style="padding: 3px 6px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(156, 39, 176, 0.3); white-space: nowrap;"
-                                title="그룹 설정">
-                            그룹
-                        </button>
-                        <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
-                                style="padding: 3px 6px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
-                                title="푸시 전송">
-                            푸시
-                        </button>
-                        <button onclick="event.stopPropagation(); editCustomer('${customer.id}')" 
-                                style="padding: 3px 6px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 152, 0, 0.3); white-space: nowrap;"
-                                title="수정">
-                            수정
-                        </button>
-                        <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
-                                style="padding: 3px 6px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3); white-space: nowrap;"
-                                title="삭제">
-                            삭제
-                        </button>
-                    </div>
-                    
-                    <!-- 모바일용 버튼들 (텍스트만) -->
-                    <div class="customer-buttons-mobile" style="position: absolute; top: 6px; right: 6px; display: none; gap: 6px; font-size: 11px;">
-                        <span onclick="event.stopPropagation(); showGroupSelector('${customer.id}')" style="color: #9C27B0; cursor: pointer; font-weight: bold;" title="그룹 설정">그룹</span>
-                        <span style="color: rgba(255,255,255,0.3);">|</span>
-                        <span onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" style="color: #2196F3; cursor: pointer; font-weight: bold;" title="푸시 전송">푸시</span>
-                        <span style="color: rgba(255,255,255,0.3);">|</span>
-                        <span onclick="event.stopPropagation(); editCustomer('${customer.id}')" style="color: #FF9800; cursor: pointer; font-weight: bold;" title="수정">수정</span>
-                        <span style="color: rgba(255,255,255,0.3);">|</span>
-                        <span onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" style="color: #ff6b6b; cursor: pointer; font-weight: bold;" title="삭제">삭제</span>
-                    </div>
-                    
-                    <!-- 고객 정보 (체크박스와 이름이 같은 라인) -->
-                    <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 165px;">
-                        <!-- 체크박스 (왼쪽, 이름과 같은 라인) -->
-                        <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
-                               onclick="event.stopPropagation();">
-                            <input type="checkbox" 
-                                   ${isSelected ? 'checked' : ''} 
-                                   onchange="toggleCustomerForDelete('${customer.id}')" 
-                                   onclick="event.stopPropagation()"
-                                   style="width: 24px; height: 24px; cursor: pointer; margin: 0;">
-                        </label>
-                        
-                        <!-- 고객 정보 -->
-                        <div style="flex: 1; line-height: 1.4;">
-                            <div class="customer-name" style="margin-bottom: 4px; font-size: 15px; font-weight: bold;">${customer.name}</div>
-                            ${customer.group ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 11px; background: rgba(156,39,176,0.2); display: inline-block; padding: 2px 8px; border-radius: 10px;">👥 ${customer.group}</div>` : ''}
-                            ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
-                            ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
-                            ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
-                            ${customer.tags && customer.tags.length > 0 ? 
-                                `<div class="customer-info" style="margin-top: 4px;">
-                                    ${customer.tags.map(tag => 
-                                        `<span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 3px; display: inline-block;">${tag}</span>`
-                                    ).join('')}
-                                </div>` : ''}
+            // ⭐ 페이지네이션 계산
+            totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const pageCustomers = filtered.slice(startIndex, endIndex);
+            
+            // ⭐ 청크 렌더링으로 성능 최적화 (10명씩 나눠서 렌더링)
+            grid.innerHTML = ''; // 초기화
+            const CHUNK_SIZE = 10;
+            let chunkIndex = 0;
+            
+            function renderChunk() {
+                const start = chunkIndex * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, pageCustomers.length);
+                const chunk = pageCustomers.slice(start, end);
+                
+                const html = chunk.map(customer => {
+                    const isSelected = selectedCustomersForDelete.includes(customer.id);
+                    return `
+                    <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
+                        <!-- PC/태블릿용 버튼들 (박스형) -->
+                        <div class="customer-buttons-desktop" style="position: absolute; top: 8px; right: 8px; display: flex; gap: 3px;">
+                            <button onclick="event.stopPropagation(); showGroupSelector('${customer.id}')" 
+                                    style="padding: 3px 6px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(156, 39, 176, 0.3); white-space: nowrap;"
+                                    title="그룹 설정">
+                                그룹
+                            </button>
+                            <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
+                                    style="padding: 3px 6px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
+                                    title="푸시 전송">
+                                푸시
+                            </button>
+                            <button onclick="event.stopPropagation(); editCustomer('${customer.id}')" 
+                                    style="padding: 3px 6px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 152, 0, 0.3); white-space: nowrap;"
+                                    title="수정">
+                                수정
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
+                                    style="padding: 3px 6px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3); white-space: nowrap;"
+                                    title="삭제">
+                                삭제
+                            </button>
                         </div>
+                        
+                        <!-- 모바일용 버튼들 (텍스트만) -->
+                        <div class="customer-buttons-mobile" style="position: absolute; top: 6px; right: 6px; display: none; gap: 6px; font-size: 11px;">
+                            <span onclick="event.stopPropagation(); showGroupSelector('${customer.id}')" style="color: #9C27B0; cursor: pointer; font-weight: bold;" title="그룹 설정">그룹</span>
+                            <span style="color: rgba(255,255,255,0.3);">|</span>
+                            <span onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" style="color: #2196F3; cursor: pointer; font-weight: bold;" title="푸시 전송">푸시</span>
+                            <span style="color: rgba(255,255,255,0.3);">|</span>
+                            <span onclick="event.stopPropagation(); editCustomer('${customer.id}')" style="color: #FF9800; cursor: pointer; font-weight: bold;" title="수정">수정</span>
+                            <span style="color: rgba(255,255,255,0.3);">|</span>
+                            <span onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" style="color: #ff6b6b; cursor: pointer; font-weight: bold;" title="삭제">삭제</span>
+                        </div>
+                        
+                        <!-- 고객 정보 (체크박스와 이름이 같은 라인) -->
+                        <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 165px;">
+                            <!-- 체크박스 (왼쪽, 이름과 같은 라인) -->
+                            <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
+                                   onclick="event.stopPropagation();">
+                                <input type="checkbox" 
+                                       ${isSelected ? 'checked' : ''} 
+                                       onchange="toggleCustomerForDelete('${customer.id}')" 
+                                       onclick="event.stopPropagation()"
+                                       style="width: 24px; height: 24px; cursor: pointer; margin: 0;">
+                            </label>
+                            
+                            <!-- 고객 정보 -->
+                            <div style="flex: 1; line-height: 1.4;">
+                                <div class="customer-name" style="margin-bottom: 4px; font-size: 15px; font-weight: bold;">${customer.name}</div>
+                                ${customer.group ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 11px; background: rgba(156,39,176,0.2); display: inline-block; padding: 2px 8px; border-radius: 10px;">👥 ${customer.group}</div>` : ''}
+                                ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
+                                ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
+                                ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
+                                ${customer.tags && customer.tags.length > 0 ? 
+                                    `<div class="customer-info" style="margin-top: 4px;">
+                                        ${customer.tags.map(tag => 
+                                            `<span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 3px; display: inline-block;">${tag}</span>`
+                                        ).join('')}
+                                    </div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+                
+                grid.insertAdjacentHTML('beforeend', html);
+                
+                chunkIndex++;
+                
+                // 다음 청크가 있으면 다음 프레임에 렌더링 (브라우저가 숨 쉴 수 있게)
+                if (end < pageCustomers.length) {
+                    requestAnimationFrame(renderChunk);
+                } else {
+                    // 모든 렌더링 완료 후 페이지네이션 UI 업데이트
+                    renderPagination();
+                }
+            }
+            
+            // 첫 청크 렌더링 시작
+            renderChunk();
+        }
+        
+        // ⭐ 페이지네이션 렌더링 함수 추가
+        function renderPagination() {
+            const container = document.getElementById('customerListControls');
+            if (!container) return;
+            
+            // 기존 페이지네이션이 있으면 제거
+            const existingPagination = container.querySelector('.pagination-controls');
+            if (existingPagination) {
+                existingPagination.remove();
+            }
+            
+            if (totalPages <= 1) return; // 페이지가 1개면 페이지네이션 불필요
+            
+            const paginationHTML = `
+                <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; flex-wrap: wrap;">
+                    <button onclick="goToCustomerPage(${currentPage - 1})" 
+                            ${currentPage === 1 ? 'disabled' : ''}
+                            style="padding: 8px 12px; background: ${currentPage === 1 ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)'}; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'}; font-size: 13px;">
+                        ◀ 이전
+                    </button>
+                    
+                    ${generatePageButtons()}
+                    
+                    <button onclick="goToCustomerPage(${currentPage + 1})" 
+                            ${currentPage === totalPages ? 'disabled' : ''}
+                            style="padding: 8px 12px; background: ${currentPage === totalPages ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)'}; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'}; font-size: 13px;">
+                        다음 ▶
+                    </button>
+                    
+                    <div style="padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 12px; white-space: nowrap;">
+                        ${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, customers.length)} / ${customers.length}명
                     </div>
                 </div>
             `;
-            }).join('');
+            
+            container.insertAdjacentHTML('beforeend', paginationHTML);
+        }
+        
+        // ⭐ 페이지 번호 버튼 생성 함수
+        function generatePageButtons() {
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+            
+            let buttons = '';
+            
+            if (startPage > 1) {
+                buttons += `<button onclick="goToCustomerPage(1)" style="padding: 8px 12px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; font-size: 13px; min-width: 36px;">1</button>`;
+                if (startPage > 2) {
+                    buttons += `<span style="padding: 0 4px; opacity: 0.7;">...</span>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentPage;
+                buttons += `
+                    <button onclick="goToCustomerPage(${i})" 
+                            style="padding: 8px 12px; background: ${isActive ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255,255,255,0.2)'}; border: 1px solid ${isActive ? 'transparent' : 'rgba(255,255,255,0.3)'}; border-radius: 8px; color: white; cursor: pointer; font-size: 13px; font-weight: ${isActive ? 'bold' : 'normal'}; min-width: 36px;">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    buttons += `<span style="padding: 0 4px; opacity: 0.7;">...</span>`;
+                }
+                buttons += `<button onclick="goToCustomerPage(${totalPages})" style="padding: 8px 12px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; font-size: 13px; min-width: 36px;">${totalPages}</button>`;
+            }
+            
+            return buttons;
+        }
+        
+        // ⭐ 페이지 이동 함수
+        function goToCustomerPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            
+            // 최상단으로 부드럽게 스크롤
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            renderCustomers();
         }
 
         // ===== 그룹 관리 함수들 =====
@@ -5704,12 +5853,19 @@ KFPC {컨설턴트}입니다.
             const banner = document.getElementById('alertBanner');
             const messageEl = document.getElementById('alertMessage');
             
+            // ⭐ 기존 타이머가 있으면 취소 (중복 알림 방지)
+            if (currentAlertTimeout) {
+                clearTimeout(currentAlertTimeout);
+                currentAlertTimeout = null;
+            }
+            
             messageEl.textContent = message;
             banner.classList.add('show');
             
             // 3초 후 자동 닫기
-            setTimeout(() => {
+            currentAlertTimeout = setTimeout(() => {
                 closeAlert();
+                currentAlertTimeout = null;
             }, 3000);
         }
 
@@ -7870,10 +8026,10 @@ KFPC ${consultantName}입니다.
                         // 데이터 로드
                         await loadAllData();
                         
-                        // 실시간 동기화 시작 (3초마다)
+                        // 실시간 동기화 시작 (30초마다) ⭐ 최적화: 3초 → 30초
                         if (syncCheckInterval) clearInterval(syncCheckInterval);
-                        syncCheckInterval = setInterval(checkForUpdates, 3000);
-                        console.log('✅ 실시간 동기화 시작 (3초마다 체크)');
+                        syncCheckInterval = setInterval(checkForUpdates, 30000);
+                        console.log('✅ 실시간 동기화 시작 (30초마다 체크) - 서버 부담 90% 감소');
                     } catch (error) {
                         console.error('❌ 초기화 오류:', error);
                     }
