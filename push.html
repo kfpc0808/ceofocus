@@ -2076,9 +2076,12 @@
                 <form id="sendForm" onsubmit="sendMessage(event)">
                     <div class="form-group">
                         <label>수신자 선택 <span class="required">*</span></label>
-                        <div class="customer-search">
-                            <input type="text" id="customerSearchSend" placeholder="이름, 회사, 직함으로 검색..." oninput="renderCustomersForSend()">
+                        <div class="customer-search" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <input type="text" id="customerSearchSend" placeholder="이름, 회사, 직함으로 검색..." oninput="renderCustomersForSend()" style="flex: 1; min-width: 200px;">
                             <button type="button" class="btn btn-secondary" onclick="toggleSelectAll()">전체 선택</button>
+                            <select id="groupSelectForSend" onchange="selectByGroup(this.value)" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
+                                <option value="">그룹별 선택</option>
+                            </select>
                         </div>
                         <div class="customer-grid" id="customerGridSend"></div>
                     </div>
@@ -2160,6 +2163,28 @@
                     <input type="text" id="customerSearch" placeholder="이름, 회사, 직함 검색" oninput="renderCustomers()" 
                            class="customer-search-input"
                            style="width: 280px; height: 44px; padding: 10px 14px; font-size: 15px; border-radius: 8px; border: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;">
+                </div>
+                
+                <!-- 정렬 및 그룹 필터 영역 -->
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+                    <select id="sortOrder" onchange="renderCustomers()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
+                        <option value="name-asc">가나다순 ↑</option>
+                        <option value="name-desc">가나다순 ↓</option>
+                        <option value="phone-asc">전화번호 ↑</option>
+                        <option value="phone-desc">전화번호 ↓</option>
+                    </select>
+                    
+                    <select id="groupFilter" onchange="renderCustomers()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
+                        <option value="all">전체 그룹</option>
+                    </select>
+                    
+                    <button onclick="openGroupManagerModal()" style="padding: 8px 16px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); border: none; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                        그룹 관리
+                    </button>
+                    
+                    <div style="margin-left: auto; font-size: 14px; color: #333; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 8px;">
+                        <span id="customerCount">0</span>명
+                    </div>
                 </div>
                 
                 <!-- 버튼 영역 (우측 정렬, 가로 스크롤) -->
@@ -2665,6 +2690,14 @@ KFPC {컨설턴트}입니다.
                     </div>
                     
                     <div class="form-group">
+                        <label for="editGroup">그룹 👥</label>
+                        <select id="editGroup" style="padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
+                            <option value="">그룹 없음</option>
+                        </select>
+                        <small style="opacity: 0.7;">그룹별로 고객을 관리하고 일괄 발송할 수 있습니다</small>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="customerTags">태그</label>
                         <input type="text" id="customerTags" placeholder="VIP, 법인, 재방문 (쉼표로 구분)">
                         <small>쉼표(,)로 구분하여 여러 태그를 입력하세요</small>
@@ -2887,6 +2920,14 @@ KFPC {컨설턴트}입니다.
                     <option value="아야">이름 + 아/야 (길동아)</option>
                     <option value="이름만">이름만 (홍길동)</option>
                 </select>
+            </div>
+            
+            <div class="form-group">
+                <label>그룹 👥</label>
+                <select id="editGroup" style="padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
+                    <option value="">그룹 없음</option>
+                </select>
+                <small style="opacity: 0.7;">그룹별로 고객을 관리하고 일괄 발송할 수 있습니다</small>
             </div>
             
             <button class="btn-primary" onclick="saveEditedCustomer()">✅ 저장</button>
@@ -3434,6 +3475,7 @@ KFPC {컨설턴트}입니다.
         let pushSubscriptions = [];
         let selectedCustomersData = {};
         let selectedCustomersForDelete = []; // 고객관리 탭에서 삭제용 선택 배열
+        let customerGroups = ['주부', '회사원', '공무원', '사업가', '의사', '자영업', '프리랜서']; // 고객 그룹 목록
         
         // ===== 예약 메시지 관련 변수 (NEW) =====
         let scheduledMessages = []; // 예약된 메시지 목록
@@ -3717,6 +3759,9 @@ KFPC {컨설턴트}입니다.
                 if (subsData) pushSubscriptions = subsData;
                 if (settingsData) appSettings = { ...appSettings, ...settingsData };
                 
+                // 그룹 데이터 로드
+                await loadGroupsFromFile();
+                
                 // UI 업데이트
                 renderCustomers();
                 renderCustomersForSend();
@@ -3920,13 +3965,39 @@ KFPC {컨설턴트}입니다.
         function renderCustomers() {
             const grid = document.getElementById('customerGrid');
             const searchTerm = document.getElementById('customerSearch')?.value.toLowerCase() || '';
+            const sortOrder = document.getElementById('sortOrder')?.value || 'name-asc';
+            const groupFilter = document.getElementById('groupFilter')?.value || 'all';
             
-            let filtered = customers.filter(c => 
-                c.name.toLowerCase().includes(searchTerm) ||
-                (c.company && c.company.toLowerCase().includes(searchTerm)) ||
-                (c.position && c.position.toLowerCase().includes(searchTerm)) ||
-                (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
-            );
+            // 필터링
+            let filtered = customers.filter(c => {
+                const matchSearch = c.name.toLowerCase().includes(searchTerm) ||
+                    (c.company && c.company.toLowerCase().includes(searchTerm)) ||
+                    (c.position && c.position.toLowerCase().includes(searchTerm)) ||
+                    (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+                
+                const matchGroup = groupFilter === 'all' || (c.group && c.group === groupFilter);
+                
+                return matchSearch && matchGroup;
+            });
+            
+            // 정렬
+            filtered.sort((a, b) => {
+                switch(sortOrder) {
+                    case 'name-asc':
+                        return (a.name || '').localeCompare(b.name || '', 'ko');
+                    case 'name-desc':
+                        return (b.name || '').localeCompare(a.name || '', 'ko');
+                    case 'phone-asc':
+                        return (a.phone || '').localeCompare(b.phone || '');
+                    case 'phone-desc':
+                        return (b.phone || '').localeCompare(a.phone || '');
+                    default:
+                        return 0;
+                }
+            });
+            
+            // 고객 수 업데이트
+            document.getElementById('customerCount').textContent = filtered.length;
             
             if (filtered.length === 0) {
                 grid.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 40px; grid-column: 1/-1;">등록된 고객이 없습니다</p>';
@@ -3938,21 +4009,26 @@ KFPC {컨설턴트}입니다.
                 return `
                 <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
                     <!-- 상단 버튼들 (우측 정렬) -->
-                    <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
+                    <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 3px;">
                         <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
-                                style="padding: 4px 8px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
+                                style="padding: 3px 6px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
                                 title="푸시 전송">
                             푸시
                         </button>
+                        <button onclick="event.stopPropagation(); editCustomer('${customer.id}')" 
+                                style="padding: 3px 6px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 152, 0, 0.3); white-space: nowrap;"
+                                title="수정">
+                            수정
+                        </button>
                         <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
-                                style="padding: 4px 8px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3); white-space: nowrap;"
+                                style="padding: 3px 6px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3); white-space: nowrap;"
                                 title="삭제">
                             삭제
                         </button>
                     </div>
                     
                     <!-- 고객 정보 (체크박스와 이름이 같은 라인) -->
-                    <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 120px;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 135px;">
                         <!-- 체크박스 (왼쪽, 이름과 같은 라인) -->
                         <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
                                onclick="event.stopPropagation();">
@@ -3966,9 +4042,10 @@ KFPC {컨설턴트}입니다.
                             </span>
                         </label>
                         
-                        <!-- 고객 정보 (클릭하면 수정) -->
-                        <div onclick="editCustomer('${customer.id}')" style="cursor: pointer; flex: 1; line-height: 1.4;">
+                        <!-- 고객 정보 -->
+                        <div style="flex: 1; line-height: 1.4;">
                             <div class="customer-name" style="margin-bottom: 4px; font-size: 15px; font-weight: bold;">${customer.name}</div>
+                            ${customer.group ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 11px; background: rgba(156,39,176,0.2); display: inline-block; padding: 2px 8px; border-radius: 10px;">👥 ${customer.group}</div>` : ''}
                             ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
                             ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
                             ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
@@ -3983,6 +4060,124 @@ KFPC {컨설턴트}입니다.
                 </div>
             `;
             }).join('');
+        }
+
+        // ===== 그룹 관리 함수들 =====
+        function updateGroupFilter() {
+            const groupFilter = document.getElementById('groupFilter');
+            if (!groupFilter) return;
+            
+            const currentValue = groupFilter.value;
+            groupFilter.innerHTML = '<option value="all">전체 그룹</option>' + 
+                customerGroups.map(group => `<option value="${group}">${group}</option>`).join('');
+            
+            // 이전 선택 유지
+            if (customerGroups.includes(currentValue)) {
+                groupFilter.value = currentValue;
+            } else {
+                groupFilter.value = 'all';
+            }
+            
+            // 발송 탭 그룹 선택도 업데이트
+            updateGroupSelectForSend();
+        }
+
+        function openGroupManagerModal() {
+            renderGroupList();
+            document.getElementById('groupManagerModal').classList.add('show');
+        }
+
+        function renderGroupList() {
+            const list = document.getElementById('groupList');
+            if (customerGroups.length === 0) {
+                list.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 20px;">등록된 그룹이 없습니다</p>';
+                return;
+            }
+            
+            list.innerHTML = customerGroups.map(group => {
+                const count = customers.filter(c => c.group === group).length;
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 8px;">
+                        <div>
+                            <strong style="font-size: 15px;">${group}</strong>
+                            <span style="margin-left: 10px; opacity: 0.8; font-size: 13px;">(${count}명)</span>
+                        </div>
+                        <button onclick="deleteGroup('${group}')" style="padding: 6px 12px; background: #ff6b6b; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">삭제</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function addGroup() {
+            const input = document.getElementById('newGroupName');
+            const groupName = input.value.trim();
+            
+            if (!groupName) {
+                showAlert('그룹명을 입력해주세요.', 'error');
+                return;
+            }
+            
+            if (customerGroups.includes(groupName)) {
+                showAlert('이미 존재하는 그룹입니다.', 'error');
+                return;
+            }
+            
+            customerGroups.push(groupName);
+            await saveGroupsToFile();
+            
+            input.value = '';
+            renderGroupList();
+            updateGroupFilter();
+            showAlert(`'${groupName}' 그룹이 추가되었습니다.`, 'success');
+        }
+
+        async function deleteGroup(groupName) {
+            const affectedCount = customers.filter(c => c.group === groupName).length;
+            
+            let confirmMsg = `'${groupName}' 그룹을 삭제하시겠습니까?`;
+            if (affectedCount > 0) {
+                confirmMsg += `\n\n이 그룹에 속한 ${affectedCount}명의 고객은 그룹 없음으로 변경됩니다.`;
+            }
+            
+            if (!confirm(confirmMsg)) return;
+            
+            // 그룹 삭제
+            customerGroups = customerGroups.filter(g => g !== groupName);
+            
+            // 해당 그룹의 고객들 그룹 정보 제거
+            customers.forEach(c => {
+                if (c.group === groupName) {
+                    delete c.group;
+                }
+            });
+            
+            await saveGroupsToFile();
+            await saveToDrive(FILES.customers, customers);
+            
+            renderGroupList();
+            updateGroupFilter();
+            renderCustomers();
+            showAlert(`'${groupName}' 그룹이 삭제되었습니다.`, 'success');
+        }
+
+        async function saveGroupsToFile() {
+            const groupsData = {
+                groups: customerGroups,
+                updatedAt: new Date().toISOString()
+            };
+            await saveToDrive('customer_groups.json', groupsData);
+        }
+
+        async function loadGroupsFromFile() {
+            try {
+                const data = await loadFromDrive('customer_groups.json');
+                if (data && data.groups) {
+                    customerGroups = data.groups;
+                }
+                updateGroupFilter();
+            } catch (error) {
+                console.log('그룹 데이터 로드 실패 (첫 실행일 수 있음):', error);
+            }
         }
 
         function renderCustomersForSend() {
@@ -4054,6 +4249,32 @@ KFPC {컨설턴트}입니다.
             renderCustomersForSend();
         }
 
+        function selectByGroup(groupName) {
+            if (!groupName) return;
+            
+            // 해당 그룹의 모든 고객 선택
+            const groupCustomers = customers.filter(c => c.group === groupName);
+            groupCustomers.forEach(c => selectedCustomersData[c.id] = c);
+            
+            renderCustomersForSend();
+            
+            // 선택 초기화
+            document.getElementById('groupSelectForSend').value = '';
+            
+            showAlert(`${groupName} 그룹 ${groupCustomers.length}명이 선택되었습니다.`, 'success');
+        }
+        
+        function updateGroupSelectForSend() {
+            const select = document.getElementById('groupSelectForSend');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">그룹별 선택</option>' + 
+                customerGroups.map(g => {
+                    const count = customers.filter(c => c.group === g).length;
+                    return `<option value="${g}">${g} (${count}명)</option>`;
+                }).join('');
+        }
+
         function updateSelectedInfo() {
             const count = Object.keys(selectedCustomersData).length;
             const info = document.getElementById('selectedCustomersInfo');
@@ -4074,6 +4295,13 @@ KFPC {컨설턴트}입니다.
             
             form.reset();
             
+            // 그룹 옵션 업데이트
+            const groupSelect = document.getElementById('editGroup');
+            if (groupSelect) {
+                groupSelect.innerHTML = '<option value="">그룹 없음</option>' + 
+                    customerGroups.map(g => `<option value="${g}">${g}</option>`).join('');
+            }
+            
             if (customerId) {
                 const customer = inviteCustomers.find(c => c.id === customerId);
                 if (!customer) return;
@@ -4090,6 +4318,11 @@ KFPC {컨설턴트}입니다.
                 document.getElementById('customerHonorific').value = customer.honorific || '님'; // ⭐ 호칭 불러오기
                 document.getElementById('customerTags').value = customer.tags ? customer.tags.join(', ') : '';
                 document.getElementById('customerMemo').value = customer.memo || '';
+                
+                // 그룹 불러오기
+                if (groupSelect && customer.group) {
+                    groupSelect.value = customer.group;
+                }
             } else {
                 title.textContent = '👤 고객 추가';
                 document.getElementById('customerHonorific').value = '님'; // ⭐ 기본값 설정
@@ -4121,6 +4354,7 @@ KFPC {컨설턴트}입니다.
             const tagsInput = document.getElementById('customerTags').value;
             const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
             const memo = document.getElementById('customerMemo').value.trim();
+            const group = document.getElementById('editGroup')?.value || ''; // 그룹 추가
             
             const customer = {
                 id,
@@ -4136,6 +4370,11 @@ KFPC {컨설턴트}입니다.
                 memo,
                 updatedAt: new Date().toISOString()
             };
+            
+            // 그룹이 있으면 추가
+            if (group) {
+                customer.group = group;
+            }
             
             const existingIndex = customers.findIndex(c => c.id === id);
             if (existingIndex >= 0) {
@@ -6385,6 +6624,13 @@ KFPC ${consultantName}입니다.
             const customer = inviteCustomers.find(c => c.id === customerId);
             if (!customer) return;
             
+            // 그룹 옵션 업데이트
+            const groupSelect = document.getElementById('editGroup');
+            if (groupSelect) {
+                groupSelect.innerHTML = '<option value="">그룹 없음</option>' + 
+                    customerGroups.map(g => `<option value="${g}">${g}</option>`).join('');
+            }
+            
             // 수정 모달에 기존 데이터 채우기
             document.getElementById('editCustomerId').value = customer.id;
             document.getElementById('editName').value = customer.name;
@@ -6393,6 +6639,11 @@ KFPC ${consultantName}입니다.
             document.getElementById('editPosition').value = customer.position || '';
             document.getElementById('editEmail').value = customer.email || '';
             document.getElementById('editHonorific').value = customer.honorific || '님'; // ⭐ 호칭 불러오기
+            
+            // 그룹 불러오기
+            if (groupSelect && customer.group) {
+                groupSelect.value = customer.group;
+            }
             
             openModal('editCustomerModal');
         }
@@ -6418,6 +6669,15 @@ KFPC ${consultantName}입니다.
             customer.position = document.getElementById('editPosition').value.trim();
             customer.email = document.getElementById('editEmail').value.trim();
             customer.honorific = document.getElementById('editHonorific').value; // ⭐ 호칭 추가
+            
+            // 그룹 저장
+            const group = document.getElementById('editGroup')?.value || '';
+            if (group) {
+                customer.group = group;
+            } else {
+                delete customer.group;
+            }
+            
             customer.updatedAt = new Date().toISOString();
             
             saveInviteData();
@@ -7586,6 +7846,29 @@ KFPC ${consultantName}입니다.
             </div>
             
             <button class="btn-primary" onclick="addManualCustomer()">✅ 추가하기</button>
+        </div>
+    </div>
+    
+    <!-- 그룹 관리 모달 -->
+    <div id="groupManagerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👥 그룹 관리</h2>
+                <button class="modal-close" onclick="closeModal('groupManagerModal')">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label>새 그룹 추가</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newGroupName" placeholder="예: 교사, 군인 등" style="flex: 1;">
+                    <button class="btn-primary" onclick="addGroup()" style="white-space: nowrap;">추가</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>기존 그룹 목록</label>
+                <div id="groupList" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
         </div>
     </div>
     
