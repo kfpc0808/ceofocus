@@ -2090,16 +2090,30 @@
             <div class="card">
                 <h2>👥 고객 관리</h2>
                 
-                <div class="form-actions" style="margin-bottom: 20px;">
-                    <button class="btn btn-success" onclick="openCustomerModal()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px;">+ 고객 추가</button>
-                    <button class="btn btn-secondary" onclick="importCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px; min-width: 110px;">
-                        <span>📥</span><span>가져오기</span>
+                <div class="form-actions" style="margin-bottom: 20px; gap: 8px;">
+                    <button class="btn btn-success" onclick="openCustomerModal()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold;">
+                        <span style="font-size: 18px;">➕</span>
+                        <span>고객 추가</span>
                     </button>
-                    <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px; min-width: 140px;">
-                        <span>📤</span><span>CSV 내보내기</span>
+                    <button class="btn btn-secondary" onclick="importCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
+                        <span style="font-size: 18px;">📥</span>
+                        <span>가져오기</span>
                     </button>
-                    <button class="btn btn-secondary" onclick="exportToVCard()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 4px; min-width: 160px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <span>📱</span><span>연락처 내보내기</span>
+                    <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
+                        <span style="font-size: 18px;">📤</span>
+                        <span>CSV 내보내기</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportToVCard()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <span style="font-size: 18px;">📱</span>
+                        <span>연락처 내보내기</span>
+                    </button>
+                    <button onclick="deleteSelectedCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);">
+                        <span style="font-size: 18px;">✅</span>
+                        <span>선택 삭제</span>
+                    </button>
+                    <button onclick="clearAllCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);">
+                        <span style="font-size: 18px;">🗑️</span>
+                        <span>일괄 삭제</span>
                     </button>
                 </div>
                 
@@ -3320,6 +3334,7 @@ KFPC {컨설턴트}입니다.
         let anniversarySchedules = [];
         let pushSubscriptions = [];
         let selectedCustomersData = {};
+        let selectedCustomersForDelete = []; // 고객관리 탭에서 삭제용 선택 배열
         
         // ===== 예약 메시지 관련 변수 (NEW) =====
         let scheduledMessages = []; // 예약된 메시지 목록
@@ -3819,20 +3834,40 @@ KFPC {컨설턴트}입니다.
                 return;
             }
             
-            grid.innerHTML = filtered.map(customer => `
-                <div class="customer-card" onclick="editCustomer('${customer.id}')">
-                    <div class="customer-name">${customer.name}</div>
-                    ${customer.company ? `<div class="customer-info">🏢 ${customer.company}</div>` : ''}
-                    ${customer.position ? `<div class="customer-info">💼 ${customer.position}</div>` : ''}
-                    ${customer.phone ? `<div class="customer-info">📞 ${customer.phone}</div>` : ''}
-                    ${customer.tags && customer.tags.length > 0 ? 
-                        `<div class="customer-info" style="margin-top: 8px;">
-                            ${customer.tags.map(tag => 
-                                `<span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 5px;">${tag}</span>`
-                            ).join('')}
-                        </div>` : ''}
+            grid.innerHTML = filtered.map(customer => {
+                const isSelected = selectedCustomersForDelete.includes(customer.id);
+                return `
+                <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative; padding-top: 45px;">
+                    <!-- 상단 체크박스와 삭제 버튼 -->
+                    <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <input type="checkbox" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange="toggleCustomerForDelete('${customer.id}')" 
+                               onclick="event.stopPropagation()"
+                               style="width: 20px; height: 20px; cursor: pointer;">
+                        <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
+                                style="padding: 6px 12px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; font-weight: bold; box-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);"
+                                title="삭제">
+                            🗑️ 삭제
+                        </button>
+                    </div>
+                    
+                    <!-- 고객 정보 (클릭하면 수정) -->
+                    <div onclick="editCustomer('${customer.id}')" style="cursor: pointer;">
+                        <div class="customer-name">${customer.name}</div>
+                        ${customer.company ? `<div class="customer-info">🏢 ${customer.company}</div>` : ''}
+                        ${customer.position ? `<div class="customer-info">💼 ${customer.position}</div>` : ''}
+                        ${customer.phone ? `<div class="customer-info">📞 ${customer.phone}</div>` : ''}
+                        ${customer.tags && customer.tags.length > 0 ? 
+                            `<div class="customer-info" style="margin-top: 8px;">
+                                ${customer.tags.map(tag => 
+                                    `<span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 5px;">${tag}</span>`
+                                ).join('')}
+                            </div>` : ''}
+                    </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function renderCustomersForSend() {
@@ -4003,6 +4038,95 @@ KFPC {컨설턴트}입니다.
             
             showAlert('고객 정보가 저장되었습니다!', 'success');
         }
+
+        // ===== 고객 삭제 관련 함수들 =====
+        
+        // 체크박스 선택/해제
+        function toggleCustomerForDelete(customerId) {
+            const index = selectedCustomersForDelete.indexOf(customerId);
+            if (index > -1) {
+                selectedCustomersForDelete.splice(index, 1);
+            } else {
+                selectedCustomersForDelete.push(customerId);
+            }
+            renderCustomers();
+        }
+        
+        // 개별 고객 삭제
+        async function deleteCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) return;
+            
+            if (!confirm(`"${customer.name}"님을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+            
+            customers = customers.filter(c => c.id !== customerId);
+            selectedCustomersForDelete = selectedCustomersForDelete.filter(id => id !== customerId);
+            
+            await saveToDrive(FILES.customers, customers);
+            renderCustomers();
+            renderCustomersForSend();
+            updateStats();
+            
+            showAlert(`✅ "${customer.name}"님이 삭제되었습니다.`, 'success');
+        }
+        
+        // 선택 삭제
+        async function deleteSelectedCustomers() {
+            if (selectedCustomersForDelete.length === 0) {
+                showAlert('ℹ️ 삭제할 고객을 선택해주세요.', 'info');
+                return;
+            }
+            
+            const selectedNames = customers
+                .filter(c => selectedCustomersForDelete.includes(c.id))
+                .map(c => c.name)
+                .join(', ');
+            
+            if (!confirm(`⚠️ 선택한 ${selectedCustomersForDelete.length}명의 고객을 삭제하시겠습니까?\n\n${selectedNames}\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+            
+            const count = selectedCustomersForDelete.length;
+            customers = customers.filter(c => !selectedCustomersForDelete.includes(c.id));
+            selectedCustomersForDelete = [];
+            
+            await saveToDrive(FILES.customers, customers);
+            renderCustomers();
+            renderCustomersForSend();
+            updateStats();
+            
+            showAlert(`✅ ${count}명의 고객이 삭제되었습니다.`, 'success');
+        }
+        
+        // 일괄 삭제 (전체 삭제)
+        async function clearAllCustomers() {
+            if (customers.length === 0) {
+                showAlert('ℹ️ 삭제할 고객이 없습니다.', 'info');
+                return;
+            }
+            
+            if (!confirm(`⚠️ 모든 고객 정보(${customers.length}명)를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+            
+            if (!confirm('정말로 모든 고객을 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            const count = customers.length;
+            customers = [];
+            selectedCustomersForDelete = [];
+            
+            await saveToDrive(FILES.customers, customers);
+            renderCustomers();
+            renderCustomersForSend();
+            updateStats();
+            
+            showAlert(`✅ 모든 고객(${count}명)이 삭제되었습니다.`, 'success');
+        }
+
 
         // ================================================================
         // 기념일 자동발송 시스템
