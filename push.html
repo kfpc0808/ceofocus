@@ -732,23 +732,30 @@
         }
         
         .modal-close {
-            background: none;
-            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #e0e0e0;
             color: #333333;
-            font-size: 28px;
+            font-size: 32px;
+            font-weight: bold;
             cursor: pointer;
             padding: 0;
-            width: 30px;
-            height: 30px;
+            width: 42px;
+            height: 42px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0;
         }
         
         .modal-close:hover {
-            background: #f0f0f0;
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff5252;
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
         }
         
         /* 통계 대시보드 - 높이 50% 축소 */
@@ -1257,25 +1264,29 @@
         }
         
         .modal-close {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
             color: white;
-            font-size: 28px;
+            font-size: 32px;
+            font-weight: bold;
             cursor: pointer;
             padding: 0;
-            width: 36px;
-            height: 36px;
+            width: 42px;
+            height: 42px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             transition: all 0.3s;
             flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
         
         .modal-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
+            background: rgba(255, 107, 107, 0.9);
+            border-color: #ff5252;
+            transform: scale(1.15) rotate(90deg);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
         }
         
     
@@ -2394,8 +2405,11 @@ KFPC {컨설턴트}입니다.
                         <button onclick="exportToVCard()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
                             <span>📱</span><span>연락처 내보내기</span>
                         </button>
-                        <button onclick="clearAllInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: rgba(244, 67, 54, 0.8); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
-                            <span>🗑️</span><span>전체 삭제</span>
+                        <button onclick="deleteSelectedInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);">
+                            <span>✅</span><span>선택 삭제</span>
+                        </button>
+                        <button onclick="clearAllInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);">
+                            <span>🗑️</span><span>일괄 삭제</span>
                         </button>
                     </div>
                 </div>
@@ -5273,10 +5287,19 @@ KFPC {컨설턴트}입니다.
             
             const reader = new FileReader();
             reader.onload = function(e) {
-                const text = e.target.result;
-                parseCSV(text);
+                try {
+                    const text = e.target.result;
+                    parseCSV(text);
+                } catch (error) {
+                    console.error('CSV 파싱 오류:', error);
+                    showAlert('❌ CSV 파일을 읽는 중 오류가 발생했습니다.', 'error');
+                }
             };
-            reader.readAsText(file);
+            reader.onerror = function() {
+                showAlert('❌ 파일을 읽을 수 없습니다.', 'error');
+            };
+            // UTF-8로 명시적으로 읽기
+            reader.readAsText(file, 'UTF-8');
         }
         
         // ===== 공통 고객 추가 헬퍼 함수 =====
@@ -5358,47 +5381,171 @@ KFPC {컨설턴트}입니다.
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const vcf = e.target.result;
-                    const imported = parseVCard(vcf);
-                    totalImported += imported;
-                    processed++;
-                    
-                    if (processed === files.length) {
-                        saveInviteData();
-                        saveToDrive(FILES.customers, customers);
-                        renderCustomers();
-                        renderCustomersForSend();
-                        renderInviteCustomers();
-                        showAlert(`✅ ${totalImported}명의 연락처를 가져왔습니다!`);
+                    try {
+                        const vcf = e.target.result;
+                        const imported = parseVCard(vcf);
+                        totalImported += imported;
+                        processed++;
+                        
+                        if (processed === files.length) {
+                            saveInviteData();
+                            saveToDrive(FILES.customers, customers);
+                            renderCustomers();
+                            renderCustomersForSend();
+                            renderInviteCustomers();
+                            
+                            if (totalImported > 0) {
+                                showAlert(`✅ ${totalImported}명의 연락처를 가져왔습니다!`);
+                            } else {
+                                showAlert('⚠️ 가져온 연락처가 없습니다. 파일 형식을 확인해주세요.', 'warning');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('VCF 파싱 오류:', error);
+                        showAlert('❌ 연락처 파일을 읽는 중 오류가 발생했습니다.', 'error');
                     }
                 };
-                reader.readAsText(file);
+                reader.onerror = function() {
+                    showAlert('❌ 파일을 읽을 수 없습니다.', 'error');
+                };
+                // UTF-8로 명시적으로 읽기
+                reader.readAsText(file, 'UTF-8');
             });
         }
         
+        // ===== QUOTED-PRINTABLE 디코딩 함수 =====
+        function decodeQuotedPrintable(str) {
+            if (!str) return '';
+            
+            // =XX 형태의 16진수를 바이트로 변환
+            const bytes = [];
+            let i = 0;
+            
+            while (i < str.length) {
+                if (str[i] === '=' && i + 2 < str.length) {
+                    const hex = str.substring(i + 1, i + 3);
+                    bytes.push(parseInt(hex, 16));
+                    i += 3;
+                } else {
+                    bytes.push(str.charCodeAt(i));
+                    i++;
+                }
+            }
+            
+            // UTF-8 디코딩
+            try {
+                return new TextDecoder('utf-8').decode(new Uint8Array(bytes));
+            } catch (e) {
+                console.error('디코딩 오류:', e);
+                return str;
+            }
+        }
+        
+        // ===== vCard 파싱 개선 =====
         function parseVCard(vcfText) {
             const vcards = vcfText.split('BEGIN:VCARD');
             let imported = 0;
             
             vcards.slice(1).forEach(vcard => {
                 const contact = {};
-                const lines = vcard.split('\n');
+                
+                // 줄 접기(line folding) 처리: 다음 줄이 공백으로 시작하면 이전 줄과 합침
+                const lines = vcard.split(/\r?\n/).reduce((acc, line) => {
+                    if (line.startsWith(' ') || line.startsWith('\t')) {
+                        if (acc.length > 0) {
+                            acc[acc.length - 1] += line.trim();
+                        }
+                    } else {
+                        acc.push(line);
+                    }
+                    return acc;
+                }, []);
                 
                 lines.forEach(line => {
-                    if (line.startsWith('FN:')) {
-                        contact.name = line.substring(3).trim();
-                    } else if (line.startsWith('TEL')) {
-                        contact.phone = line.split(':')[1]?.trim().replace(/[^0-9-]/g, '');
-                    } else if (line.startsWith('EMAIL')) {
-                        contact.email = line.split(':')[1]?.trim();
-                    } else if (line.startsWith('ORG:')) {
-                        const org = line.substring(4).split(';');
-                        contact.company = org[0]?.trim();
-                    } else if (line.startsWith('TITLE:')) {
-                        contact.position = line.substring(6).trim();
+                    line = line.trim();
+                    
+                    // FN (Full Name) - 이름
+                    if (line.startsWith('FN')) {
+                        const value = line.split(':')[1];
+                        if (value) {
+                            // ENCODING=QUOTED-PRINTABLE 체크
+                            if (line.includes('ENCODING=QUOTED-PRINTABLE') || line.includes('ENCODING=quoted-printable')) {
+                                contact.name = decodeQuotedPrintable(value.trim());
+                            } else {
+                                contact.name = value.trim();
+                            }
+                        }
+                    }
+                    
+                    // N (Name) - FN이 없을 경우 대체
+                    else if (line.startsWith('N:') && !contact.name) {
+                        const parts = line.substring(2).split(';');
+                        const lastName = parts[0] || '';
+                        const firstName = parts[1] || '';
+                        contact.name = (lastName + firstName).trim();
+                    }
+                    
+                    // TEL (Telephone) - 전화번호
+                    else if (line.startsWith('TEL')) {
+                        const value = line.split(':')[1];
+                        if (value) {
+                            let phone = value.trim();
+                            // ENCODING=QUOTED-PRINTABLE 체크
+                            if (line.includes('ENCODING=QUOTED-PRINTABLE') || line.includes('ENCODING=quoted-printable')) {
+                                phone = decodeQuotedPrintable(phone);
+                            }
+                            // 숫자와 하이픈만 남기기
+                            phone = phone.replace(/[^0-9-]/g, '');
+                            if (phone && !contact.phone) {
+                                contact.phone = phone;
+                            }
+                        }
+                    }
+                    
+                    // EMAIL - 이메일
+                    else if (line.startsWith('EMAIL')) {
+                        const value = line.split(':')[1];
+                        if (value) {
+                            let email = value.trim();
+                            // ENCODING=QUOTED-PRINTABLE 체크
+                            if (line.includes('ENCODING=QUOTED-PRINTABLE') || line.includes('ENCODING=quoted-printable')) {
+                                email = decodeQuotedPrintable(email);
+                            }
+                            if (email && !contact.email) {
+                                contact.email = email;
+                            }
+                        }
+                    }
+                    
+                    // ORG (Organization) - 회사명
+                    else if (line.startsWith('ORG')) {
+                        const value = line.split(':')[1];
+                        if (value) {
+                            let org = value.trim();
+                            // ENCODING=QUOTED-PRINTABLE 체크
+                            if (line.includes('ENCODING=QUOTED-PRINTABLE') || line.includes('ENCODING=quoted-printable')) {
+                                org = decodeQuotedPrintable(org);
+                            }
+                            const parts = org.split(';');
+                            contact.company = parts[0]?.trim();
+                        }
+                    }
+                    
+                    // TITLE - 직함
+                    else if (line.startsWith('TITLE')) {
+                        const value = line.split(':')[1];
+                        if (value) {
+                            let title = value.trim();
+                            // ENCODING=QUOTED-PRINTABLE 체크
+                            if (line.includes('ENCODING=QUOTED-PRINTABLE') || line.includes('ENCODING=quoted-printable')) {
+                                title = decodeQuotedPrintable(title);
+                            }
+                            contact.position = title;
+                        }
                     }
                 });
                 
+                // 이름과 전화번호가 있을 때만 추가
                 if (contact.name && contact.phone) {
                     addCustomerToBothSystems({
                         id: Date.now() + imported,
@@ -5878,7 +6025,37 @@ KFPC ${consultantName}입니다.
             showAlert(`✅ ${allCustomers.length}명의 연락처가 vCard 형식으로 다운로드되었습니다!\n\n📱 휴대폰에서 파일을 열면 연락처 앱에 자동으로 추가됩니다.`, 'success');
         }
         
-        // ===== 전체 삭제 =====
+        // ===== 선택 삭제 =====
+        function deleteSelectedInviteCustomers() {
+            const selectedIds = selectedInviteCustomers;
+            
+            if (selectedIds.length === 0) {
+                showAlert('ℹ️ 삭제할 고객을 선택해주세요.', 'info');
+                return;
+            }
+            
+            const selectedNames = inviteCustomers
+                .filter(c => selectedIds.includes(c.id))
+                .map(c => c.name)
+                .join(', ');
+            
+            if (!confirm(`⚠️ 선택한 ${selectedIds.length}명의 고객을 삭제하시겠습니까?\n\n${selectedNames}\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+            
+            // 선택된 고객들 삭제
+            inviteCustomers = inviteCustomers.filter(c => !selectedIds.includes(c.id));
+            
+            // 선택 목록 초기화
+            selectedInviteCustomers = [];
+            
+            // 저장 및 화면 갱신
+            saveInviteData();
+            
+            showAlert(`✅ ${selectedIds.length}명의 고객이 삭제되었습니다.`, 'success');
+        }
+        
+        // ===== 전체 삭제 (일괄 삭제) =====
         function clearAllInviteCustomers() {
             if (!confirm('⚠️ 모든 고객 정보를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
                 return;
