@@ -419,6 +419,10 @@
             flex-wrap: wrap;
         }
         
+        .form-actions::-webkit-scrollbar {
+            display: none;
+        }
+        
         .btn {
             padding: 4px 12px;
             min-height: 36px;
@@ -2090,30 +2094,27 @@
             <div class="card">
                 <h2>👥 고객 관리</h2>
                 
-                <div class="form-actions" style="margin-bottom: 20px; gap: 8px;">
-                    <button class="btn btn-success" onclick="openCustomerModal()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold;">
-                        <span style="font-size: 18px;">➕</span>
-                        <span>고객 추가</span>
+                <div class="form-actions" style="margin-bottom: 20px; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
+                    <button class="btn btn-success" onclick="openCustomerModal()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; white-space: nowrap; flex-shrink: 0;">
+                        추가
                     </button>
-                    <button class="btn btn-secondary" onclick="importCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
-                        <span style="font-size: 18px;">📥</span>
-                        <span>가져오기</span>
+                    <button class="btn btn-secondary" onclick="importCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); white-space: nowrap; flex-shrink: 0;">
+                        가져오기
                     </button>
-                    <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
-                        <span style="font-size: 18px;">📤</span>
-                        <span>CSV 내보내기</span>
+                    <button class="btn btn-secondary" onclick="sendPushToSelectedCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); white-space: nowrap; flex-shrink: 0;">
+                        고객푸시
                     </button>
-                    <button class="btn btn-secondary" onclick="exportToVCard()" style="display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <span style="font-size: 18px;">📱</span>
-                        <span>연락처 내보내기</span>
+                    <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); white-space: nowrap; flex-shrink: 0;">
+                        CSV보내기
                     </button>
-                    <button onclick="deleteSelectedCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);">
-                        <span style="font-size: 18px;">✅</span>
-                        <span>선택 삭제</span>
+                    <button class="btn btn-secondary" onclick="exportToVCard()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); white-space: nowrap; flex-shrink: 0;">
+                        연락처보내기
                     </button>
-                    <button onclick="clearAllCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);">
-                        <span style="font-size: 18px;">🗑️</span>
-                        <span>일괄 삭제</span>
+                    <button onclick="deleteSelectedCustomers()" style="display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3); white-space: nowrap; flex-shrink: 0;">
+                        삭제
+                    </button>
+                    <button onclick="clearAllCustomers()" style="display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4); white-space: nowrap; flex-shrink: 0;">
+                        전체삭제
                     </button>
                 </div>
                 
@@ -3838,18 +3839,25 @@ KFPC {컨설턴트}입니다.
                 const isSelected = selectedCustomersForDelete.includes(customer.id);
                 return `
                 <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative; padding-top: 45px;">
-                    <!-- 상단 체크박스와 삭제 버튼 -->
-                    <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <!-- 상단 체크박스와 버튼들 -->
+                    <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; gap: 5px;">
                         <input type="checkbox" 
                                ${isSelected ? 'checked' : ''} 
                                onchange="toggleCustomerForDelete('${customer.id}')" 
                                onclick="event.stopPropagation()"
                                style="width: 20px; height: 20px; cursor: pointer;">
-                        <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
-                                style="padding: 6px 12px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; font-weight: bold; box-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);"
-                                title="삭제">
-                            🗑️ 삭제
-                        </button>
+                        <div style="display: flex; gap: 5px;">
+                            <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
+                                    style="padding: 5px 10px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px; font-weight: bold; box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);"
+                                    title="푸시 전송">
+                                푸시
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
+                                    style="padding: 5px 10px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px; font-weight: bold; box-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);"
+                                    title="삭제">
+                                삭제
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- 고객 정보 (클릭하면 수정) -->
@@ -4126,7 +4134,51 @@ KFPC {컨설턴트}입니다.
             
             showAlert(`✅ 모든 고객(${count}명)이 삭제되었습니다.`, 'success');
         }
-
+        
+        // ===== 고객 가져오기 =====
+        function importCustomers() {
+            // 텍스트 입력 모달 열기
+            openModal('textModal');
+        }
+        
+        // ===== 선택한 고객들에게 푸시 전송 =====
+        function sendPushToSelectedCustomers() {
+            if (selectedCustomersForDelete.length === 0) {
+                showAlert('ℹ️ 푸시를 보낼 고객을 선택해주세요.', 'info');
+                return;
+            }
+            
+            // 선택된 고객들을 발송 탭의 선택 목록에 추가
+            selectedCustomersForDelete.forEach(customerId => {
+                const customer = customers.find(c => c.id === customerId);
+                if (customer) {
+                    selectedCustomersData[customerId] = customer;
+                }
+            });
+            
+            // 발송 탭으로 이동
+            switchTab('send', document.querySelector('[onclick*="send"]'));
+            
+            showAlert(`✅ ${selectedCustomersForDelete.length}명의 고객이 발송 대상으로 선택되었습니다.\n메시지를 작성하고 발송하세요!`, 'success');
+            
+            // 선택 초기화
+            selectedCustomersForDelete = [];
+            renderCustomers();
+        }
+        
+        // ===== 개별 고객에게 푸시 전송 =====
+        function sendPushToCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) return;
+            
+            // 발송 탭의 선택 목록에 추가
+            selectedCustomersData[customerId] = customer;
+            
+            // 발송 탭으로 이동
+            switchTab('send', document.querySelector('[onclick*="send"]'));
+            
+            showAlert(`✅ "${customer.name}"님이 발송 대상으로 선택되었습니다.\n메시지를 작성하고 발송하세요!`, 'success');
+        }
 
         // ================================================================
         // 기념일 자동발송 시스템
