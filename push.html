@@ -522,14 +522,15 @@
         @media (max-width: 768px) {
             .customer-grid {
                 grid-template-columns: 1fr;
-                gap: 6px;
+                gap: 4px;
+                padding: 5px;
             }
         }
         
         .customer-card {
             background: rgba(255, 255, 255, 0.15);
-            padding: 10px;
-            border-radius: 10px;
+            padding: 8px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
             border: 3px solid transparent;
@@ -544,13 +545,14 @@
             border-color: #4CAF50 !important;
             background: rgba(76, 175, 80, 0.3) !important;
             box-shadow: 0 0 20px rgba(76, 175, 80, 0.6) !important;
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
         
         /* 모바일에서 카드 패딩 더 줄이기 */
         @media (max-width: 768px) {
             .customer-card {
-                padding: 8px;
+                padding: 6px;
+                border-radius: 6px;
             }
         }
         
@@ -2108,45 +2110,69 @@
         <!-- 고객 관리 탭 -->
         <div id="customersTab" class="tab-content hidden">
             <div class="card">
-                <h2>👥 고객 관리</h2>
+                <!-- 타이틀과 검색창 (같은 행) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px;">
+                    <h2 style="margin: 0;">👥 고객 관리</h2>
+                    <input type="text" id="customerSearch" placeholder="이름, 회사, 직함 검색" oninput="renderCustomers()" 
+                           class="customer-search-input"
+                           style="width: 280px; height: 44px; padding: 10px 14px; font-size: 15px; border-radius: 8px; border: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;">
+                </div>
                 
-                <!-- 버튼 영역과 검색창을 같은 행에 배치 -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: stretch;">
-                    <!-- 버튼 영역 (가로 스크롤) -->
-                    <div style="flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; display: flex; gap: 8px; align-items: center;">
-                        <button class="btn btn-success" onclick="openCustomerModal()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; white-space: nowrap; flex-shrink: 0; min-width: auto;">
+                <!-- 버튼 영역 (우측 정렬, 가로 스크롤) -->
+                <div class="customer-buttons-wrapper" style="margin-bottom: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <div class="customer-buttons" style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: nowrap; min-width: min-content;">
+                        <button class="btn btn-success" onclick="openCustomerModal()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; white-space: nowrap; flex-shrink: 0;">
                             추가
                         </button>
-                        <button class="btn btn-secondary" onclick="importCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); white-space: nowrap; flex-shrink: 0; min-width: auto;">
+                        <button class="btn btn-secondary" onclick="importCustomers()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); white-space: nowrap; flex-shrink: 0;">
                             가져오기
                         </button>
-                        <button class="btn btn-secondary" onclick="sendPushToSelectedCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); white-space: nowrap; flex-shrink: 0; min-width: auto;">
+                        <button class="btn btn-secondary" onclick="sendPushToSelectedCustomers()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); white-space: nowrap; flex-shrink: 0;">
                             고객푸시
                         </button>
-                        <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); white-space: nowrap; flex-shrink: 0; min-width: auto;">
+                        <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); white-space: nowrap; flex-shrink: 0;">
                             CSV보내기
                         </button>
-                        <button class="btn btn-secondary" onclick="exportToVCard()" style="display: inline-flex !important; align-items: center; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); white-space: nowrap; flex-shrink: 0; min-width: auto;">
+                        <button class="btn btn-secondary" onclick="exportToVCard()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); white-space: nowrap; flex-shrink: 0;">
                             연락처보내기
                         </button>
-                        <button onclick="deleteSelectedCustomers()" style="display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3); white-space: nowrap; flex-shrink: 0; min-width: auto;">
+                        <button onclick="deleteSelectedCustomers()" style="padding: 10px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3); white-space: nowrap; flex-shrink: 0;">
                             삭제
                         </button>
-                        <button onclick="clearAllCustomers()" style="display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4); white-space: nowrap; flex-shrink: 0; min-width: auto;">
+                        <button onclick="clearAllCustomers()" style="padding: 10px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4); white-space: nowrap; flex-shrink: 0;">
                             전체삭제
                         </button>
                     </div>
-                    
-                    <!-- 검색창 (우측 고정) -->
-                    <div style="flex-shrink: 0; width: 240px;">
-                        <input type="text" id="customerSearch" placeholder="이름, 회사, 직함 검색" oninput="renderCustomers()" style="width: 100%; height: 100%; min-height: 44px; padding: 10px 14px; font-size: 15px; border-radius: 8px; border: 1px solid #ddd; background: #f5f5f5;">
-                    </div>
                 </div>
                 
-                <!-- 스크롤바 숨김 스타일 -->
+                <!-- 스크롤바 숨김 -->
                 <style>
-                    #customersTab div[style*="overflow-x: auto"]::-webkit-scrollbar {
+                    .customer-buttons-wrapper {
+                        scrollbar-width: none;
+                        -ms-overflow-style: none;
+                    }
+                    .customer-buttons-wrapper::-webkit-scrollbar {
                         display: none;
+                    }
+                    
+                    /* 모바일 레이아웃 */
+                    @media (max-width: 768px) {
+                        /* 타이틀과 검색창을 세로로 배치 */
+                        #customersTab .card > div:first-child {
+                            flex-direction: column !important;
+                            align-items: stretch !important;
+                            gap: 10px !important;
+                        }
+                        
+                        /* 검색창 전체 너비 */
+                        .customer-search-input {
+                            width: 100% !important;
+                        }
+                        
+                        /* 버튼들 왼쪽 정렬로 변경 (스크롤용) */
+                        .customer-buttons {
+                            justify-content: flex-start !important;
+                        }
                     }
                 </style>
                 
@@ -3866,22 +3892,29 @@ KFPC {컨설턴트}입니다.
             grid.innerHTML = filtered.map(customer => {
                 const isSelected = selectedCustomersForDelete.includes(customer.id);
                 return `
-                <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative; padding-top: 35px;">
+                <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative; padding-top: 32px;">
                     <!-- 상단 체크박스와 버튼들 -->
-                    <div style="position: absolute; top: 6px; left: 8px; right: 8px; display: flex; justify-content: space-between; align-items: center; gap: 4px;">
-                        <input type="checkbox" 
-                               ${isSelected ? 'checked' : ''} 
-                               onchange="toggleCustomerForDelete('${customer.id}')" 
-                               onclick="event.stopPropagation()"
-                               style="width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;">
+                    <div style="position: absolute; top: 5px; left: 6px; right: 6px; display: flex; justify-content: space-between; align-items: center; gap: 4px;">
+                        <!-- 정사각형 체크박스 -->
+                        <label style="display: inline-block; position: relative; cursor: pointer; width: 18px; height: 18px; flex-shrink: 0;">
+                            <input type="checkbox" 
+                                   ${isSelected ? 'checked' : ''} 
+                                   onchange="toggleCustomerForDelete('${customer.id}')" 
+                                   onclick="event.stopPropagation()"
+                                   style="position: absolute; opacity: 0; cursor: pointer; width: 18px; height: 18px;">
+                            <span style="position: absolute; top: 0; left: 0; width: 18px; height: 18px; background: #fff; border: 2px solid #999; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #4CAF50; font-weight: bold;">
+                                ${isSelected ? '✓' : ''}
+                            </span>
+                        </label>
+                        
                         <div style="display: flex; gap: 3px;">
                             <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
-                                    style="padding: 4px 8px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 11px; font-weight: bold; box-shadow: 0 1px 4px rgba(33, 150, 243, 0.3); white-space: nowrap;"
+                                    style="padding: 3px 7px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
                                     title="푸시 전송">
                                 푸시
                             </button>
                             <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
-                                    style="padding: 4px 8px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 11px; font-weight: bold; box-shadow: 0 1px 4px rgba(255, 107, 107, 0.3); white-space: nowrap;"
+                                    style="padding: 3px 7px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3); white-space: nowrap;"
                                     title="삭제">
                                 삭제
                             </button>
@@ -3889,15 +3922,15 @@ KFPC {컨설턴트}입니다.
                     </div>
                     
                     <!-- 고객 정보 (클릭하면 수정) -->
-                    <div onclick="editCustomer('${customer.id}')" style="cursor: pointer;">
-                        <div class="customer-name" style="margin-bottom: 3px;">${customer.name}</div>
-                        ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px;">🏢 ${customer.company}</div>` : ''}
-                        ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px;">💼 ${customer.position}</div>` : ''}
-                        ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px;">📞 ${customer.phone}</div>` : ''}
+                    <div onclick="editCustomer('${customer.id}')" style="cursor: pointer; line-height: 1.3;">
+                        <div class="customer-name" style="margin-bottom: 2px; font-size: 15px;">${customer.name}</div>
+                        ${customer.company ? `<div class="customer-info" style="margin-bottom: 1px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
+                        ${customer.position ? `<div class="customer-info" style="margin-bottom: 1px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
+                        ${customer.phone ? `<div class="customer-info" style="margin-bottom: 1px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
                         ${customer.tags && customer.tags.length > 0 ? 
-                            `<div class="customer-info" style="margin-top: 5px;">
+                            `<div class="customer-info" style="margin-top: 3px;">
                                 ${customer.tags.map(tag => 
-                                    `<span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 8px; font-size: 10px; margin-right: 3px;">${tag}</span>`
+                                    `<span style="background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 6px; font-size: 9px; margin-right: 2px; display: inline-block;">${tag}</span>`
                                 ).join('')}
                             </div>` : ''}
                     </div>
