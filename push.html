@@ -1257,23 +1257,25 @@
         }
         
         .modal-close {
-            background: none;
-            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             color: white;
             font-size: 28px;
             cursor: pointer;
             padding: 0;
-            width: 30px;
-            height: 30px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             transition: all 0.3s;
+            flex-shrink: 0;
         }
         
         .modal-close:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
         }
         
     
@@ -5277,6 +5279,43 @@ KFPC {컨설턴트}입니다.
             reader.readAsText(file);
         }
         
+        // ===== 공통 고객 추가 헬퍼 함수 =====
+        function addCustomerToBothSystems(customerData) {
+            const newCustomer = {
+                id: customerData.id || Date.now(),
+                name: customerData.name,
+                phone: customerData.phone,
+                company: customerData.company || '',
+                position: customerData.position || '',
+                email: customerData.email || '',
+                honorific: customerData.honorific || '님',
+                inviteSent: false,
+                subscribed: false,
+                createdAt: customerData.createdAt || new Date().toISOString()
+            };
+            
+            // 초대 시스템에 추가
+            inviteCustomers.push(newCustomer);
+            
+            // 고객 관리에도 추가
+            customers.push({
+                id: newCustomer.id,
+                name: newCustomer.name,
+                phone: newCustomer.phone,
+                company: newCustomer.company,
+                position: newCustomer.position,
+                email: newCustomer.email,
+                tags: [],
+                birthday: '',
+                memo: '',
+                createdAt: newCustomer.createdAt
+            });
+            
+            return newCustomer;
+        }
+        
+        // ===== CSV/텍스트 파싱 =====
+        // ===== CSV/텍스트 파싱 =====
         function parseCSV(text) {
             const lines = text.split('\n');
             let imported = 0;
@@ -5290,26 +5329,26 @@ KFPC {컨설턴트}입니다.
                 
                 const parts = line.split(',').map(p => p.trim());
                 if (parts.length >= 2) {
-                    inviteCustomers.push({
+                    addCustomerToBothSystems({
                         id: Date.now() + imported,
                         name: parts[0],
                         phone: parts[1],
                         company: parts[2] || '',
                         position: parts[3] || '',
                         email: parts[4] || '',
-                        honorific: '님', // ⭐ 기본 호칭
-                        inviteSent: false,
-                        subscribed: false,
-                        createdAt: new Date().toISOString()
+                        honorific: '님'
                     });
                     imported++;
                 }
             }
             
             saveInviteData();
+            saveToDrive(FILES.customers, customers);
+            renderCustomers();
+            renderCustomersForSend();
+            renderInviteCustomers();
             showAlert(`✅ ${imported}명의 고객을 가져왔습니다!`);
         }
-        
         // ===== vCard 처리 =====
         function handleVCFUpload(event) {
             const files = event.target.files;
@@ -5326,6 +5365,10 @@ KFPC {컨설턴트}입니다.
                     
                     if (processed === files.length) {
                         saveInviteData();
+                        saveToDrive(FILES.customers, customers);
+                        renderCustomers();
+                        renderCustomersForSend();
+                        renderInviteCustomers();
                         showAlert(`✅ ${totalImported}명의 연락처를 가져왔습니다!`);
                     }
                 };
@@ -5357,17 +5400,14 @@ KFPC {컨설턴트}입니다.
                 });
                 
                 if (contact.name && contact.phone) {
-                    inviteCustomers.push({
+                    addCustomerToBothSystems({
                         id: Date.now() + imported,
                         name: contact.name,
                         phone: contact.phone,
                         company: contact.company || '',
                         position: contact.position || '',
                         email: contact.email || '',
-                        honorific: '님', // ⭐ 기본 호칭
-                        inviteSent: false,
-                        subscribed: false,
-                        createdAt: new Date().toISOString()
+                        honorific: '님'
                     });
                     imported++;
                 }
@@ -5408,7 +5448,7 @@ KFPC {컨설턴트}입니다.
                 
                 let imported = 0;
                 
-                // 선택된 연락처들을 inviteCustomers에 추가
+                // 선택된 연락처들을 양쪽 시스템에 추가
                 contacts.forEach(contact => {
                     const name = contact.name && contact.name.length > 0 ? contact.name[0] : '';
                     const tel = contact.tel && contact.tel.length > 0 ? contact.tel[0] : '';
@@ -5418,17 +5458,14 @@ KFPC {컨설턴트}입니다.
                         // 중복 체크 (전화번호 기준)
                         const exists = inviteCustomers.some(c => c.phone === tel);
                         if (!exists) {
-                            inviteCustomers.push({
+                            addCustomerToBothSystems({
                                 id: Date.now() + imported,
                                 name: name,
                                 phone: tel,
                                 company: '',
                                 position: '',
                                 email: email,
-                                honorific: '님',
-                                inviteSent: false,
-                                subscribed: false,
-                                createdAt: new Date().toISOString()
+                                honorific: '님'
                             });
                             imported++;
                         }
@@ -5437,6 +5474,9 @@ KFPC {컨설턴트}입니다.
                 
                 if (imported > 0) {
                     saveInviteData();
+                    saveToDrive(FILES.customers, customers);
+                    renderCustomers();
+                    renderCustomersForSend();
                     renderInviteCustomers();
                     updateInviteStats();
                     showAlert(`✅ ${imported}명의 연락처를 가져왔습니다!`, 'success');
@@ -5487,7 +5527,7 @@ KFPC {컨설턴트}입니다.
                 return;
             }
             
-            inviteCustomers.push({
+            const newCustomer = {
                 id: Date.now(),
                 name: name,
                 phone: phone,
@@ -5498,11 +5538,35 @@ KFPC {컨설턴트}입니다.
                 inviteSent: false,
                 subscribed: false,
                 createdAt: new Date().toISOString()
+            };
+            
+            // 초대 시스템에 추가
+            inviteCustomers.push(newCustomer);
+            
+            // 고객 관리에도 추가 (중요!)
+            customers.push({
+                id: newCustomer.id,
+                name: newCustomer.name,
+                phone: newCustomer.phone,
+                company: newCustomer.company,
+                position: newCustomer.position,
+                email: newCustomer.email,
+                tags: [],
+                birthday: '',
+                memo: '',
+                createdAt: newCustomer.createdAt
             });
             
+            // 저장 및 렌더링
             saveInviteData();
+            saveToDrive(FILES.customers, customers);
             closeModal('manualModal');
             showAlert(`✅ ${name}님이 추가되었습니다!`);
+            
+            // 렌더링 업데이트
+            renderCustomers();
+            renderCustomersForSend();
+            renderInviteCustomers();
             
             // 입력 필드 초기화
             document.getElementById('manualName').value = '';
