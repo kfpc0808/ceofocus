@@ -2098,6 +2098,15 @@
                         <label>수신자 선택 <span class="required">*</span></label>
                         <div class="customer-search" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                             <input type="text" id="customerSearchSend" placeholder="이름, 회사, 직함으로 검색..." oninput="renderCustomersForSend()" style="flex: 1; min-width: 200px;">
+                            <select id="sortOrderSend" onchange="renderCustomersForSend()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
+                                <option value="name-asc">이름 ↑</option>
+                                <option value="name-desc">이름 ↓</option>
+                                <option value="phone-asc">전화번호 ↑</option>
+                                <option value="phone-desc">전화번호 ↓</option>
+                            </select>
+                            <select id="groupFilterSend" onchange="renderCustomersForSend()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
+                                <option value="all">전체 그룹</option>
+                            </select>
                             <button type="button" class="btn btn-secondary" onclick="toggleSelectAll()">전체 선택</button>
                             <select id="groupSelectForSend" onchange="selectByGroup(this.value)" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
                                 <option value="">그룹별 선택</option>
@@ -4427,12 +4436,36 @@ KFPC {컨설턴트}입니다.
         function renderCustomersForSend() {
             const grid = document.getElementById('customerGridSend');
             const searchTerm = document.getElementById('customerSearchSend')?.value.toLowerCase() || '';
+            const sortOrder = document.getElementById('sortOrderSend')?.value || 'name-asc';
+            const groupFilter = document.getElementById('groupFilterSend')?.value || 'all';
             
-            let filtered = customers.filter(c => 
-                c.name.toLowerCase().includes(searchTerm) ||
-                (c.company && c.company.toLowerCase().includes(searchTerm)) ||
-                (c.position && c.position.toLowerCase().includes(searchTerm))
-            );
+            // 필터링
+            let filtered = customers.filter(c => {
+                const matchSearch = c.name.toLowerCase().includes(searchTerm) ||
+                    (c.company && c.company.toLowerCase().includes(searchTerm)) ||
+                    (c.position && c.position.toLowerCase().includes(searchTerm)) ||
+                    (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+                
+                const matchGroup = groupFilter === 'all' || (c.group && c.group === groupFilter);
+                
+                return matchSearch && matchGroup;
+            });
+            
+            // 정렬
+            filtered.sort((a, b) => {
+                switch(sortOrder) {
+                    case 'name-asc':
+                        return (a.name || '').localeCompare(b.name || '', 'ko');
+                    case 'name-desc':
+                        return (b.name || '').localeCompare(a.name || '', 'ko');
+                    case 'phone-asc':
+                        return (a.phone || '').localeCompare(b.phone || '');
+                    case 'phone-desc':
+                        return (b.phone || '').localeCompare(a.phone || '');
+                    default:
+                        return 0;
+                }
+            });
             
             if (filtered.length === 0) {
                 grid.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 20px; grid-column: 1/-1;">등록된 고객이 없습니다</p>';
@@ -4442,11 +4475,28 @@ KFPC {컨설턴트}입니다.
             grid.innerHTML = filtered.map(customer => {
                 const isSelected = selectedCustomersData[customer.id] !== undefined;
                 return `
-                    <div class="customer-card ${isSelected ? 'selected' : ''}" 
-                         onclick="toggleCustomerSelection('${customer.id}')">
-                        <div class="customer-name">${customer.name}</div>
-                        ${customer.company ? `<div class="customer-info">🏢 ${customer.company}</div>` : ''}
-                        ${customer.position ? `<div class="customer-info">💼 ${customer.position}</div>` : ''}
+                    <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
+                        <!-- 체크박스와 고객 정보 -->
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <!-- 체크박스 -->
+                            <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
+                                   onclick="event.stopPropagation();">
+                                <input type="checkbox" 
+                                       ${isSelected ? 'checked' : ''} 
+                                       onchange="toggleCustomerSelectionCheckbox('${customer.id}')" 
+                                       onclick="event.stopPropagation()"
+                                       style="width: 20px; height: 20px; cursor: pointer; margin: 0;">
+                            </label>
+                            
+                            <!-- 고객 정보 -->
+                            <div style="flex: 1; line-height: 1.4;" onclick="toggleCustomerSelection('${customer.id}')">
+                                <div class="customer-name" style="margin-bottom: 4px; font-size: 15px; font-weight: bold;">${customer.name}</div>
+                                ${customer.group ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 11px; background: rgba(156,39,176,0.2); display: inline-block; padding: 2px 8px; border-radius: 10px;">👥 ${customer.group}</div>` : ''}
+                                ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
+                                ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
+                                ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -4455,7 +4505,20 @@ KFPC {컨설턴트}입니다.
         }
 
         function toggleCustomerSelection(customerId) {
-            const customer = inviteCustomers.find(c => c.id === customerId);
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) return;
+            
+            if (selectedCustomersData[customerId]) {
+                delete selectedCustomersData[customerId];
+            } else {
+                selectedCustomersData[customerId] = customer;
+            }
+            
+            renderCustomersForSend();
+        }
+
+        function toggleCustomerSelectionCheckbox(customerId) {
+            const customer = customers.find(c => c.id === customerId);
             if (!customer) return;
             
             if (selectedCustomersData[customerId]) {
@@ -4469,11 +4532,17 @@ KFPC {컨설턴트}입니다.
 
         function toggleSelectAll() {
             const searchTerm = document.getElementById('customerSearchSend')?.value.toLowerCase() || '';
-            const filtered = customers.filter(c => 
-                c.name.toLowerCase().includes(searchTerm) ||
-                (c.company && c.company.toLowerCase().includes(searchTerm)) ||
-                (c.position && c.position.toLowerCase().includes(searchTerm))
-            );
+            const groupFilter = document.getElementById('groupFilterSend')?.value || 'all';
+            
+            const filtered = customers.filter(c => {
+                const matchSearch = c.name.toLowerCase().includes(searchTerm) ||
+                    (c.company && c.company.toLowerCase().includes(searchTerm)) ||
+                    (c.position && c.position.toLowerCase().includes(searchTerm));
+                
+                const matchGroup = groupFilter === 'all' || (c.group && c.group === groupFilter);
+                
+                return matchSearch && matchGroup;
+            });
             
             const allSelected = filtered.every(c => selectedCustomersData[c.id]);
             
@@ -4510,13 +4579,23 @@ KFPC {컨설턴트}입니다.
         
         function updateGroupSelectForSend() {
             const select = document.getElementById('groupSelectForSend');
-            if (!select) return;
+            if (select) {
+                select.innerHTML = '<option value="">그룹별 선택</option>' + 
+                    customerGroups.map(g => {
+                        const count = customers.filter(c => c.group === g).length;
+                        return `<option value="${g}">${g} (${count}명)</option>`;
+                    }).join('');
+            }
             
-            select.innerHTML = '<option value="">그룹별 선택</option>' + 
-                customerGroups.map(g => {
-                    const count = customers.filter(c => c.group === g).length;
-                    return `<option value="${g}">${g} (${count}명)</option>`;
-                }).join('');
+            // 그룹 필터 드롭다운도 업데이트
+            const filterSelect = document.getElementById('groupFilterSend');
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="all">전체 그룹</option>' + 
+                    customerGroups.map(g => {
+                        const count = customers.filter(c => c.group === g).length;
+                        return `<option value="${g}">${g} (${count}명)</option>`;
+                    }).join('');
+            }
         }
 
         function updateSelectedInfo() {
@@ -4547,7 +4626,7 @@ KFPC {컨설턴트}입니다.
             }
             
             if (customerId) {
-                const customer = inviteCustomers.find(c => c.id === customerId);
+                const customer = customers.find(c => c.id === customerId);
                 if (!customer) return;
                 
                 title.textContent = '👤 고객 수정';
