@@ -2155,19 +2155,25 @@
                 <!-- 사용 안내 -->
                 <div class="info-box" style="border-radius: 10px; padding: 15px; margin-bottom: 20px;">
                     <div style="font-size: 14px; line-height: 1.7; color: #1565c0 !important;">
-                        <strong>📱 폰 연락처 가져오기 (아이폰/안드로이드 모두 가능)</strong><br>
+                        <strong>📱 휴대폰에서 직접 연락처 선택 (권장)</strong><br>
                         <div style="margin-top: 8px; padding-left: 10px;">
-                            1️⃣ 폰 연락처 앱에서 <strong>내보내기</strong> 선택<br>
-                            2️⃣ <strong>vCard 파일(.vcf)</strong>로 저장<br>
-                            3️⃣ 파일 업로드하면 자동 불러오기<br>
+                            ✨ <strong>휴대폰에서 이 페이지를 열면</strong> 연락처 앱에서 직접 선택 가능!<br>
+                            ✨ 단체 선택, 개별 선택 모두 가능<br>
+                            ✨ 파일 내보내기 불필요 - 바로 가져오기<br>
                             <div style="margin-top: 5px; font-size: 13px;">
-                                💡 구글드라이브 연결 <strong>불필요</strong> - 파일만 있으면 됩니다!
+                                💡 PC에서는 파일 업로드 방식을 사용하세요
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="import-section" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <!-- 휴대폰 연락처 직접 선택 (모바일 전용) -->
+                    <div class="import-btn" id="contactPickerBtn" onclick="pickContacts()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 2px solid #764ba2; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center; color: white;">
+                        <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📱</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;">연락처 직접선택</div>
+                        <div style="font-size: 12px; opacity: 0.9;">휴대폰 전용 ⭐</div>
+                    </div>
                     <div class="import-btn" onclick="document.getElementById('csvFile').click()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
                         <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📊</div>
                         <div style="font-weight: bold; margin-bottom: 5px; color: #333;">CSV/Excel</div>
@@ -5147,6 +5153,77 @@ KFPC {컨설턴트}입니다.
             return imported;
         }
         
+        // ===== 휴대폰 연락처 직접 선택 (Contact Picker API) =====
+        async function pickContacts() {
+            // Contact Picker API 지원 여부 확인
+            if (!('contacts' in navigator && 'ContactsManager' in window)) {
+                showAlert('❌ 이 기능은 휴대폰 브라우저에서만 사용할 수 있습니다.\n\n💡 PC에서는 파일 업로드 방식을 이용해주세요.', 'error');
+                return;
+            }
+            
+            try {
+                // 가져올 정보 속성 지정
+                const props = ['name', 'tel', 'email'];
+                const opts = { multiple: true }; // 여러 명 선택 가능
+                
+                // 사용자에게 연락처 선택 UI 표시
+                const contacts = await navigator.contacts.select(props, opts);
+                
+                if (!contacts || contacts.length === 0) {
+                    showAlert('ℹ️ 선택된 연락처가 없습니다.', 'info');
+                    return;
+                }
+                
+                let imported = 0;
+                
+                // 선택된 연락처들을 inviteCustomers에 추가
+                contacts.forEach(contact => {
+                    const name = contact.name && contact.name.length > 0 ? contact.name[0] : '';
+                    const tel = contact.tel && contact.tel.length > 0 ? contact.tel[0] : '';
+                    const email = contact.email && contact.email.length > 0 ? contact.email[0] : '';
+                    
+                    if (name && tel) {
+                        // 중복 체크 (전화번호 기준)
+                        const exists = inviteCustomers.some(c => c.phone === tel);
+                        if (!exists) {
+                            inviteCustomers.push({
+                                id: Date.now() + imported,
+                                name: name,
+                                phone: tel,
+                                company: '',
+                                position: '',
+                                email: email,
+                                honorific: '님',
+                                inviteSent: false,
+                                subscribed: false,
+                                createdAt: new Date().toISOString()
+                            });
+                            imported++;
+                        }
+                    }
+                });
+                
+                if (imported > 0) {
+                    saveInviteData();
+                    renderInviteCustomers();
+                    updateInviteStats();
+                    showAlert(`✅ ${imported}명의 연락처를 가져왔습니다!`, 'success');
+                } else {
+                    showAlert('ℹ️ 새로 추가된 연락처가 없습니다. (중복 제외)', 'info');
+                }
+                
+            } catch (error) {
+                console.error('연락처 선택 오류:', error);
+                if (error.name === 'NotSupportedError') {
+                    showAlert('❌ 이 브라우저는 연락처 직접 선택을 지원하지 않습니다.\n\n💡 파일 업로드 방식을 이용해주세요.', 'error');
+                } else if (error.name === 'SecurityError') {
+                    showAlert('❌ 보안 정책으로 인해 연락처 접근이 거부되었습니다.\n\n💡 HTTPS 환경에서만 사용 가능합니다.', 'error');
+                } else {
+                    showAlert('❌ 연락처를 가져오는 중 오류가 발생했습니다.', 'error');
+                }
+            }
+        }
+        
         // ===== 텍스트 입력 =====
         function openTextImport() {
             openModal('textModal');
@@ -6519,6 +6596,21 @@ KFPC {컨설턴트}입니다.
         // ================================================================
         window.addEventListener('load', async () => {
             console.log('✅ 페이지 로드 완료');
+            
+            // Contact Picker API 지원 여부 확인 (휴대폰 연락처 직접 선택 기능)
+            const contactPickerBtn = document.getElementById('contactPickerBtn');
+            if (contactPickerBtn) {
+                if (!('contacts' in navigator && 'ContactsManager' in window)) {
+                    // 지원하지 않는 경우 버튼 비활성화 및 스타일 변경
+                    contactPickerBtn.style.opacity = '0.5';
+                    contactPickerBtn.style.cursor = 'not-allowed';
+                    const lastDiv = contactPickerBtn.querySelector('div:last-child');
+                    if (lastDiv) lastDiv.textContent = 'PC에서는 사용 불가';
+                    console.log('ℹ️ Contact Picker API 미지원 (PC 환경)');
+                } else {
+                    console.log('✅ Contact Picker API 지원 (모바일 환경)');
+                }
+            }
             
             // localStorage에서 토큰 복원 시도
             const savedToken = localStorage.getItem('googleAccessToken');
