@@ -527,7 +527,7 @@
         .customer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 8px;
+            gap: 4px;
             max-height: 500px;
             overflow-y: auto;
             padding: 10px;
@@ -537,31 +537,108 @@
         @media (max-width: 768px) {
             .customer-grid {
                 grid-template-columns: 1fr;
-                gap: 4px;
+                gap: 2px;
                 padding: 5px;
             }
         }
         
         .customer-card {
             background: rgba(255, 255, 255, 0.15);
-            padding: 8px;
+            padding: 6px 10px;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
             border: 3px solid transparent;
         }
         
-        /* 체크박스 관련 스타일 개선 */
-        .customer-card input[type="checkbox"] {
+        /* ========================================== */
+        /* 전역 체크박스 스타일 - 모든 페이지 통일 적용 */
+        /* ========================================== */
+        
+        input[type="checkbox"] {
+            /* 기본 브라우저 스타일 완전 제거 */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            
+            /* 정사각형 강제 (모든 브라우저) */
+            width: 20px !important;
+            height: 20px !important;
+            min-width: 20px !important;
+            min-height: 20px !important;
+            max-width: 20px !important;
+            max-height: 20px !important;
+            
+            /* 검정 테두리 + 흰 배경 */
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #000000;
+            border-radius: 3px;
+            
+            /* 레이아웃 고정 */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            vertical-align: middle;
+            
+            /* 기본 설정 */
             cursor: pointer;
-            width: 24px !important;
-            height: 24px !important;
             margin: 0;
+            padding: 0;
+            position: relative;
+            
+            /* iOS Safari 터치 최적화 */
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            touch-action: manipulation;
+            
+            /* 부드러운 전환 효과 */
+            transition: all 0.2s ease;
+        }
+        
+        /* 체크된 상태 */
+        input[type="checkbox"]:checked {
+            background: #ffffff;
+            border-color: #000000;
+        }
+        
+        /* 검정 체크 표시 (✓) */
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            color: #000000;
+            font-size: 16px;
+            font-weight: bold;
+            display: block;
+            line-height: 1;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* 호버 효과 (PC/태블릿) */
+        @media (hover: hover) {
+            input[type="checkbox"]:hover {
+                background: #ffffff;
+                box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+                transform: scale(1.05);
+            }
+        }
+        
+        /* 포커스 효과 (키보드 접근성) */
+        input[type="checkbox"]:focus {
+            outline: 2px solid #333333;
+            outline-offset: 2px;
+        }
+        
+        /* 비활성화 상태 */
+        input[type="checkbox"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         .customer-card label {
             cursor: pointer !important;
-            -webkit-tap-highlight-color: rgba(76, 175, 80, 0.3);
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
             touch-action: manipulation;
         }
         
@@ -580,7 +657,7 @@
         /* 모바일에서 카드 패딩 더 줄이기 */
         @media (max-width: 768px) {
             .customer-card {
-                padding: 6px;
+                padding: 4px 8px;
                 border-radius: 6px;
             }
             
@@ -2096,22 +2173,49 @@
                 <form id="sendForm" onsubmit="sendMessage(event)">
                     <div class="form-group">
                         <label>수신자 선택 <span class="required">*</span></label>
-                        <div class="customer-search" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                            <input type="text" id="customerSearchSend" placeholder="이름, 회사, 직함으로 검색..." oninput="renderCustomersForSend()" style="flex: 1; min-width: 200px;">
-                            <select id="sortOrderSend" onchange="renderCustomersForSend()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
+                        
+                        <!-- 1행: 검색창 -->
+                        <input type="text" 
+                               id="customerSearchSend" 
+                               placeholder="🔍 이름, 회사, 직함으로 검색..." 
+                               oninput="renderCustomersForSend()" 
+                               style="width: 100%; padding: 12px; margin-bottom: 10px; font-size: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+                        
+                        <!-- 2행: 정렬(좌) + 그룹 선택(우) -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <select id="sortOrderSend" 
+                                    onchange="renderCustomersForSend()" 
+                                    style="padding: 8px 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 14px; cursor: pointer; min-width: 140px;">
                                 <option value="name-asc">이름 ↑</option>
                                 <option value="name-desc">이름 ↓</option>
                                 <option value="phone-asc">전화번호 ↑</option>
                                 <option value="phone-desc">전화번호 ↓</option>
                             </select>
-                            <select id="groupFilterSend" onchange="renderCustomersForSend()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
+                            
+                            <select id="groupFilterSend" 
+                                    onchange="renderCustomersForSend()" 
+                                    style="padding: 8px 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 14px; cursor: pointer; min-width: 140px;">
                                 <option value="all">전체 그룹</option>
                             </select>
-                            <button type="button" class="btn btn-secondary" onclick="toggleSelectAll()">전체 선택</button>
-                            <select id="groupSelectForSend" onchange="selectByGroup(this.value)" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
-                                <option value="">그룹별 선택</option>
-                            </select>
                         </div>
+                        
+                        <!-- 3행: 전체 선택 + 고객명 + 푸시상태 헤더 -->
+                        <div style="display: flex; align-items: center; gap: 15px; padding: 10px 15px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 8px;">
+                            <button type="button" 
+                                    class="btn btn-secondary" 
+                                    onclick="toggleSelectAll()" 
+                                    style="padding: 6px 16px; white-space: nowrap; font-size: 13px; min-width: auto;">
+                                전체 선택
+                            </button>
+                            <span style="flex: 1; font-weight: bold; font-size: 13px; opacity: 0.9; color: white;">
+                                고객명
+                            </span>
+                            <span style="min-width: 80px; text-align: right; font-weight: bold; font-size: 13px; opacity: 0.9; color: white;">
+                                푸시상태
+                            </span>
+                        </div>
+                        
+                        <!-- 4행: 고객 그리드 -->
                         <div class="customer-grid" id="customerGridSend"></div>
                     </div>
                     
@@ -2273,6 +2377,24 @@
                         }
                     }
                 </style>
+                
+                <!-- 타이틀 행: 전체선택 + 고객명 + 푸시상태 -->
+                <div style="display: flex; align-items: center; gap: 15px; padding: 10px 15px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 8px;">
+                    <button type="button" 
+                            class="btn btn-secondary" 
+                            onclick="toggleSelectAll()" 
+                            style="padding: 6px 16px; white-space: nowrap; font-size: 13px; min-width: auto;">
+                        전체 선택
+                    </button>
+                    
+                    <span style="flex: 1; font-weight: bold; font-size: 13px; opacity: 0.9; color: #333;">
+                        고객명
+                    </span>
+                    
+                    <span style="font-weight: bold; font-size: 13px; min-width: 80px; text-align: right; opacity: 0.9; color: #333;">
+                        푸시상태
+                    </span>
+                </div>
                 
                 <div class="customer-grid" id="customerGrid"></div>
             </div>
@@ -2672,7 +2794,7 @@ KFPC {컨설턴트}입니다.
                     
                     <div class="form-group">
                         <label for="customerName">이름 <span class="required">*</span></label>
-                        <input type="text" id="customerName" required maxlength="50">
+                        <input type="text" id="customerName" required maxlength="50" oninput="updateNamePreview()">
                     </div>
                     
                     <div class="form-group">
@@ -2682,7 +2804,52 @@ KFPC {컨설턴트}입니다.
                     
                     <div class="form-group">
                         <label for="customerPosition">직함</label>
-                        <input type="text" id="customerPosition" maxlength="50">
+                        <input type="text" id="customerPosition" maxlength="50" placeholder="예: 과장, 대표, 팀장" oninput="updateNamePreview()">
+                    </div>
+                    
+                    <!-- 호칭 설정 섹션 -->
+                    <div class="form-group" style="background: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(255, 215, 0, 0.3);">
+                        <label style="color: #FFD700; font-weight: bold;">
+                            💬 호칭 설정 
+                            <span style="color: #FFD700; font-size: 12px; font-weight: normal; opacity: 0.9;">⭐ NEW!</span>
+                        </label>
+                        <small style="display: block; margin-bottom: 12px; color: #FFD700; opacity: 0.9;">
+                            💡 메시지 발송 시 {name} 변수에 자동으로 적용됩니다
+                        </small>
+                        
+                        <!-- 직함 포함 설정 -->
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" id="usePosition" style="width: 18px; height: 18px; cursor: pointer;" onchange="updateNamePreview()">
+                                <span>메시지에 직함 포함</span>
+                            </label>
+                            <small style="display: block; margin-left: 26px; opacity: 0.7;">
+                                체크 시: "홍길동 과장" / 미체크 시: "홍길동"
+                            </small>
+                        </div>
+                        
+                        <!-- 호칭 입력 -->
+                        <div style="margin-bottom: 10px;">
+                            <input type="text" 
+                                   id="customerHonorific" 
+                                   placeholder="호칭 입력 (예: 님, 씨, 선생님, 형, 누나)"
+                                   maxlength="10"
+                                   oninput="updateNamePreview()"
+                                   style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; margin-bottom: 8px;">
+                            
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" id="useHonorific" style="width: 18px; height: 18px; cursor: pointer;" onchange="updateNamePreview()">
+                                <span>메시지에 호칭 포함</span>
+                            </label>
+                        </div>
+                        
+                        <!-- 실시간 미리보기 -->
+                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-top: 10px;">
+                            <small style="opacity: 0.7; display: block; margin-bottom: 5px;">📝 발송명 미리보기:</small>
+                            <div id="namePreview" style="font-weight: bold; color: #FFD700; font-size: 15px;">
+                                이름을 입력하세요
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -2703,19 +2870,6 @@ KFPC {컨설턴트}입니다.
                     <div class="form-group">
                         <label for="customerAnniversary">기념일</label>
                         <input type="date" id="customerAnniversary">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerHonorific">호칭 유형 ⭐<span style="color: #FFD700;"> NEW!</span></label>
-                        <select id="customerHonorific" style="padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
-                            <option value="님">이름 + 님 (홍길동님) - 일반</option>
-                            <option value="직함님">직함 + 님 (과장님, 대표님) - 공식</option>
-                            <option value="고객님">이름 + 고객님 (홍길동 고객님) - 정중</option>
-                            <option value="씨">이름 + 씨 (홍길동씨) - 평어</option>
-                            <option value="아야">이름 + 아/야 (길동아, 영희야) - 친구</option>
-                            <option value="이름만">이름만 (홍길동) - 특수</option>
-                        </select>
-                        <small style="color: #FFD700;">💡 메시지에서 {honorific} 변수로 자동 호칭 적용!</small>
                     </div>
                     
                     <div class="form-group">
@@ -3496,6 +3650,8 @@ KFPC {컨설턴트}입니다.
         // ===== 전역 변수 =====
         let accessToken = null;
         let isDriveConnected = false;
+        let tokenExpiresAt = null; // 토큰 만료 시간 추적 (밀리초)
+        let tokenRefreshInterval = null; // 자동 갱신 타이머
         let isPushEnabled = false;
         let customers = [];
         let messages = [];
@@ -3619,9 +3775,20 @@ KFPC {컨설턴트}입니다.
                     callback: async (response) => {
                         if (response.access_token) {
                             accessToken = response.access_token;
+                            
+                            // 토큰 만료 시간 계산 (현재 시간 + 3600초 = 1시간)
+                            const expiresIn = response.expires_in || 3600; // 기본 1시간
+                            tokenExpiresAt = Date.now() + (expiresIn * 1000);
+                            
+                            // localStorage에 저장
                             localStorage.setItem('googleAccessToken', accessToken);
+                            localStorage.setItem('tokenExpiresAt', tokenExpiresAt.toString());
+                            
                             isDriveConnected = true;
                             updateDriveStatus(true);
+                            
+                            // 자동 토큰 갱신 스케줄 설정 (만료 5분 전에 갱신)
+                            setupTokenAutoRefresh();
                             
                             // Firebase 로그인 체크
                             await checkFirebaseLogin();
@@ -3642,6 +3809,98 @@ KFPC {컨설턴트}입니다.
                 console.error('Drive 연동 오류:', error);
                 showAlert('Drive 연동에 실패했습니다. 다시 시도해주세요.', 'error');
             }
+        }
+
+        // ===== 토큰 자동 갱신 스케줄 설정 =====
+        function setupTokenAutoRefresh() {
+            // 기존 타이머 제거
+            if (tokenRefreshInterval) {
+                clearTimeout(tokenRefreshInterval);
+            }
+            
+            // 만료 5분 전에 자동 갱신 (5분 = 300,000 밀리초)
+            const timeUntilRefresh = (tokenExpiresAt - Date.now()) - (5 * 60 * 1000);
+            
+            if (timeUntilRefresh > 0) {
+                tokenRefreshInterval = setTimeout(async () => {
+                    console.log('🔄 토큰 자동 갱신 시작...');
+                    await refreshTokenSilently();
+                }, timeUntilRefresh);
+                
+                const refreshTime = new Date(Date.now() + timeUntilRefresh);
+                console.log(`⏰ 다음 토큰 갱신 예정: ${refreshTime.toLocaleTimeString()}`);
+            } else {
+                // 이미 만료 시간이 지났으면 즉시 갱신
+                console.log('⚠️ 토큰이 만료되었거나 곧 만료됩니다. 즉시 갱신합니다.');
+                refreshTokenSilently();
+            }
+        }
+        
+        // ===== 조용히 토큰 갱신 (사용자 개입 없이) =====
+        async function refreshTokenSilently() {
+            try {
+                console.log('🔄 토큰 갱신 중...');
+                
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    prompt: '', // 빈 문자열로 설정하여 팝업 없이 갱신 시도
+                    callback: async (response) => {
+                        if (response.access_token) {
+                            accessToken = response.access_token;
+                            
+                            // 새로운 만료 시간 계산
+                            const expiresIn = response.expires_in || 3600;
+                            tokenExpiresAt = Date.now() + (expiresIn * 1000);
+                            
+                            // localStorage 업데이트
+                            localStorage.setItem('googleAccessToken', accessToken);
+                            localStorage.setItem('tokenExpiresAt', tokenExpiresAt.toString());
+                            
+                            console.log('✅ 토큰 갱신 성공');
+                            
+                            // 다음 자동 갱신 스케줄
+                            setupTokenAutoRefresh();
+                        } else if (response.error) {
+                            console.error('❌ 토큰 갱신 실패:', response.error);
+                            // 갱신 실패 시 재로그인 필요
+                            handleTokenRefreshFailure();
+                        }
+                    },
+                });
+                
+                // 조용한 갱신 시도
+                tokenClient.requestAccessToken({ prompt: '' });
+                
+            } catch (error) {
+                console.error('❌ 토큰 갱신 오류:', error);
+                handleTokenRefreshFailure();
+            }
+        }
+        
+        // ===== 토큰 갱신 실패 처리 =====
+        function handleTokenRefreshFailure() {
+            console.log('⚠️ 토큰 갱신 실패 - 재로그인 필요');
+            
+            // 저장된 토큰 삭제
+            localStorage.removeItem('googleAccessToken');
+            localStorage.removeItem('tokenExpiresAt');
+            
+            // 상태 초기화
+            accessToken = null;
+            tokenExpiresAt = null;
+            isDriveConnected = false;
+            updateDriveStatus(false);
+            
+            // 사용자에게 알림
+            showAlert('⚠️ Drive 연동이 만료되었습니다. 다시 연동해주세요.', 'warning');
+        }
+        
+        // ===== 토큰 만료 여부 체크 =====
+        function isTokenExpired() {
+            if (!tokenExpiresAt) return true;
+            // 현재 시간이 만료 시간을 넘었는지 확인
+            return Date.now() >= tokenExpiresAt;
         }
 
         function updateDriveStatus(connected) {
@@ -3770,6 +4029,12 @@ KFPC {컨설턴트}입니다.
             // ⭐ 중복 로드 방지
             if (isLoadingData) {
                 console.log('⚠️ 이미 데이터 로딩 중... 스킵');
+                return;
+            }
+            
+            // ⭐ Drive 연동 안되었으면 메시지 없이 종료
+            if (!accessToken || !isDriveConnected) {
+                console.log('ℹ️ Drive 연동 전 - 로드 스킵');
                 return;
             }
             
@@ -4016,6 +4281,53 @@ KFPC {컨설턴트}입니다.
             }
         }
 
+        // ===== 공통 함수 =====
+        // 푸시 구독 상태 표시 함수
+        function getPushStatusDisplay(customerId) {
+            const subscription = pushSubscriptions.find(s => s.customerId === customerId);
+            
+            if (!subscription) {
+                return {
+                    icon: '⚠️',
+                    text: '미구독',
+                    color: '#ff4444'
+                };
+            }
+            
+            if (subscription.status === 'unsubscribed') {
+                return {
+                    icon: '⏰',
+                    text: '해지',
+                    color: '#ff9800'
+                };
+            }
+            
+            return {
+                icon: '🔔',
+                text: '구독',
+                color: '#4CAF50'
+            };
+        }
+
+        // 고객 이름 포맷팅 함수 (호칭 포함)
+        function formatCustomerName(customer) {
+            if (!customer) return '';
+            
+            let name = customer.name;
+            
+            // 직함 추가 (usePosition이 true이고 position이 있으면)
+            if (customer.usePosition && customer.position) {
+                name += ' ' + customer.position;
+            }
+            
+            // 호칭 추가 (useHonorific이 true이고 honorific이 있으면)
+            if (customer.useHonorific && customer.honorific) {
+                name += customer.honorific;
+            }
+            
+            return name;
+        }
+
         // ===== 고객 관리 =====
         function renderCustomers() {
             const grid = document.getElementById('customerGrid');
@@ -4080,6 +4392,9 @@ KFPC {컨설턴트}입니다.
                 
                 const html = chunk.map(customer => {
                     const isSelected = selectedCustomersForDelete.includes(customer.id);
+                    const pushStatus = getPushStatusDisplay(customer.id);
+                    const displayName = formatCustomerName(customer);
+                    
                     return `
                     <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
                         <!-- PC/태블릿용 버튼들 (박스형) -->
@@ -4117,9 +4432,9 @@ KFPC {컨설턴트}입니다.
                             <span onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" style="color: #ff6b6b; cursor: pointer; font-weight: bold;" title="삭제">삭제</span>
                         </div>
                         
-                        <!-- 고객 정보 (체크박스와 이름이 같은 라인) -->
+                        <!-- 고객 정보 (2행 압축 레이아웃) -->
                         <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 165px;">
-                            <!-- 체크박스 (왼쪽, 이름과 같은 라인) -->
+                            <!-- 체크박스 -->
                             <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
                                    onclick="event.stopPropagation();">
                                 <input type="checkbox" 
@@ -4129,19 +4444,37 @@ KFPC {컨설턴트}입니다.
                                        style="width: 24px; height: 24px; cursor: pointer; margin: 0;">
                             </label>
                             
-                            <!-- 고객 정보 -->
-                            <div style="flex: 1; line-height: 1.4;">
-                                <div class="customer-name" style="margin-bottom: 4px; font-size: 15px; font-weight: bold;">${customer.name}</div>
-                                ${customer.group ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 11px; background: rgba(156,39,176,0.2); display: inline-block; padding: 2px 8px; border-radius: 10px;">👥 ${customer.group}</div>` : ''}
-                                ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
-                                ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
-                                ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
-                                ${customer.tags && customer.tags.length > 0 ? 
-                                    `<div class="customer-info" style="margin-top: 4px;">
-                                        ${customer.tags.map(tag => 
-                                            `<span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 3px; display: inline-block;">${tag}</span>`
-                                        ).join('')}
-                                    </div>` : ''}
+                            <!-- 2행 정보 + 푸시상태 -->
+                            <div style="flex: 1; display: flex; gap: 10px; align-items: flex-start;">
+                                <!-- 고객 정보 -->
+                                <div style="flex: 1; line-height: 1.5;">
+                                    <!-- 1행: 이름 | 그룹 | 회사 -->
+                                    <div style="font-size: 13px; margin-bottom: 3px;">
+                                        <span style="font-weight: bold; font-size: 14px;">${displayName}</span>
+                                        ${customer.group ? ` <span style="opacity: 0.6;">|</span> ${customer.group}` : ''}
+                                        ${customer.company ? ` <span style="opacity: 0.6;">|</span> ${customer.company}` : ''}
+                                    </div>
+                                    
+                                    <!-- 2행: 직함 | 전화번호 -->
+                                    <div style="font-size: 12px; opacity: 0.8;">
+                                        ${customer.position ? customer.position : ''}
+                                        ${customer.position && customer.phone ? ' <span style="opacity: 0.6;">|</span> ' : ''}
+                                        ${customer.phone ? customer.phone : ''}
+                                    </div>
+                                    
+                                    <!-- 태그가 있으면 표시 -->
+                                    ${customer.tags && customer.tags.length > 0 ? 
+                                        `<div style="margin-top: 4px;">
+                                            ${customer.tags.map(tag => 
+                                                `<span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 3px; display: inline-block;">${tag}</span>`
+                                            ).join('')}
+                                        </div>` : ''}
+                                </div>
+                                
+                                <!-- 푸시 상태 (우측) -->
+                                <div style="min-width: 80px; text-align: right; font-size: 13px; font-weight: bold; color: ${pushStatus.color}; white-space: nowrap; flex-shrink: 0;">
+                                    ${pushStatus.icon} ${pushStatus.text}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4474,27 +4807,57 @@ KFPC {컨설턴트}입니다.
             
             grid.innerHTML = filtered.map(customer => {
                 const isSelected = selectedCustomersData[customer.id] !== undefined;
+                const pushStatus = getPushStatusDisplay(customer.id);
+                const displayName = formatCustomerName(customer);
+                
+                // 1행: 이름(호칭 포함) | 그룹 | 회사
+                const line1Parts = [
+                    displayName,
+                    customer.group,
+                    customer.company
+                ].filter(Boolean);
+                const line1 = line1Parts.join(' | ');
+                
+                // 2행: 직함 | 전화번호
+                const line2Parts = [
+                    customer.position,
+                    customer.phone
+                ].filter(Boolean);
+                const line2 = line2Parts.length > 0 ? line2Parts.join(' | ') : '';
+                
                 return `
-                    <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
-                        <!-- 체크박스와 고객 정보 -->
+                    <div class="customer-card ${isSelected ? 'selected' : ''}" 
+                         onclick="toggleCustomerSelection('${customer.id}')"
+                         style="cursor: pointer;">
                         <div style="display: flex; align-items: flex-start; gap: 10px;">
                             <!-- 체크박스 -->
-                            <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
-                                   onclick="event.stopPropagation();">
-                                <input type="checkbox" 
-                                       ${isSelected ? 'checked' : ''} 
-                                       onchange="toggleCustomerSelectionCheckbox('${customer.id}')" 
-                                       onclick="event.stopPropagation()"
-                                       style="width: 20px; height: 20px; cursor: pointer; margin: 0;">
-                            </label>
+                            <input type="checkbox" 
+                                   ${isSelected ? 'checked' : ''} 
+                                   onchange="toggleCustomerSelectionCheckbox('${customer.id}')" 
+                                   onclick="event.stopPropagation()"
+                                   style="margin-top: 2px; width: 20px; height: 20px; cursor: pointer;">
                             
-                            <!-- 고객 정보 -->
-                            <div style="flex: 1; line-height: 1.4;" onclick="toggleCustomerSelection('${customer.id}')">
-                                <div class="customer-name" style="margin-bottom: 4px; font-size: 15px; font-weight: bold;">${customer.name}</div>
-                                ${customer.group ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 11px; background: rgba(156,39,176,0.2); display: inline-block; padding: 2px 8px; border-radius: 10px;">👥 ${customer.group}</div>` : ''}
-                                ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
-                                ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
-                                ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
+                            <!-- 고객 정보 + 푸시상태 -->
+                            <div style="flex: 1; display: flex; gap: 10px; align-items: flex-start;">
+                                <!-- 고객 정보 (2행 압축) -->
+                                <div style="flex: 1; line-height: 1.5;">
+                                    <!-- 1행: 이름 | 그룹 | 회사 -->
+                                    <div style="font-size: 13px; margin-bottom: 3px;">
+                                        <span style="font-weight: bold; font-size: 14px;">${line1}</span>
+                                    </div>
+                                    
+                                    <!-- 2행: 직함 | 전화번호 (있을 경우만) -->
+                                    ${line2 ? `
+                                        <div style="font-size: 12px; opacity: 0.8;">
+                                            ${line2}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <!-- 푸시 상태 (우측) -->
+                                <div style="min-width: 80px; text-align: right; font-size: 13px; font-weight: bold; color: ${pushStatus.color}; white-space: nowrap; flex-shrink: 0;">
+                                    ${pushStatus.icon} ${pushStatus.text}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4562,32 +4925,9 @@ KFPC {컨설턴트}입니다.
             renderCustomersForSend();
         }
 
-        function selectByGroup(groupName) {
-            if (!groupName) return;
-            
-            // 해당 그룹의 모든 고객 선택
-            const groupCustomers = customers.filter(c => c.group === groupName);
-            groupCustomers.forEach(c => selectedCustomersData[c.id] = c);
-            
-            renderCustomersForSend();
-            
-            // 선택 초기화
-            document.getElementById('groupSelectForSend').value = '';
-            
-            showAlert(`${groupName} 그룹 ${groupCustomers.length}명이 선택되었습니다.`, 'success');
-        }
         
         function updateGroupSelectForSend() {
-            const select = document.getElementById('groupSelectForSend');
-            if (select) {
-                select.innerHTML = '<option value="">그룹별 선택</option>' + 
-                    customerGroups.map(g => {
-                        const count = customers.filter(c => c.group === g).length;
-                        return `<option value="${g}">${g} (${count}명)</option>`;
-                    }).join('');
-            }
-            
-            // 그룹 필터 드롭다운도 업데이트
+            // 그룹 필터 드롭다운 업데이트
             const filterSelect = document.getElementById('groupFilterSend');
             if (filterSelect) {
                 filterSelect.innerHTML = '<option value="all">전체 그룹</option>' + 
@@ -4608,6 +4948,30 @@ KFPC {컨설턴트}입니다.
                 countEl.textContent = `${count}명`;
             } else {
                 info.style.display = 'none';
+            }
+        }
+
+        // 이름 미리보기 업데이트 함수
+        function updateNamePreview() {
+            const name = document.getElementById('customerName')?.value || '이름';
+            const position = document.getElementById('customerPosition')?.value || '';
+            const honorific = document.getElementById('customerHonorific')?.value || '';
+            const usePosition = document.getElementById('usePosition')?.checked || false;
+            const useHonorific = document.getElementById('useHonorific')?.checked || false;
+            
+            let displayName = name;
+            
+            if (usePosition && position) {
+                displayName += ' ' + position;
+            }
+            
+            if (useHonorific && honorific) {
+                displayName += honorific;
+            }
+            
+            const preview = document.getElementById('namePreview');
+            if (preview) {
+                preview.textContent = displayName || '이름을 입력하세요';
             }
         }
 
@@ -4638,7 +5002,12 @@ KFPC {컨설턴트}입니다.
                 document.getElementById('customerEmail').value = customer.email || '';
                 document.getElementById('customerBirth').value = customer.birth || '';
                 document.getElementById('customerAnniversary').value = customer.anniversary || '';
-                document.getElementById('customerHonorific').value = customer.honorific || '님'; // ⭐ 호칭 불러오기
+                
+                // 호칭 관련 필드 불러오기
+                document.getElementById('customerHonorific').value = customer.honorific || '';
+                document.getElementById('usePosition').checked = customer.usePosition || false;
+                document.getElementById('useHonorific').checked = customer.useHonorific || false;
+                
                 document.getElementById('customerTags').value = customer.tags ? customer.tags.join(', ') : '';
                 document.getElementById('customerMemo').value = customer.memo || '';
                 
@@ -4646,9 +5015,15 @@ KFPC {컨설턴트}입니다.
                 if (groupSelect && customer.group) {
                     groupSelect.value = customer.group;
                 }
+                
+                // 미리보기 업데이트
+                updateNamePreview();
             } else {
                 title.textContent = '👤 고객 추가';
-                document.getElementById('customerHonorific').value = '님'; // ⭐ 기본값 설정
+                // 기본값 설정
+                document.getElementById('usePosition').checked = false;
+                document.getElementById('useHonorific').checked = false;
+                updateNamePreview();
             }
             
             modal.classList.add('active');
@@ -4673,7 +5048,12 @@ KFPC {컨설턴트}입니다.
             const email = document.getElementById('customerEmail').value.trim();
             const birth = document.getElementById('customerBirth').value;
             const anniversary = document.getElementById('customerAnniversary').value;
-            const honorific = document.getElementById('customerHonorific').value; // ⭐ 호칭 추가
+            
+            // 호칭 관련 필드
+            const honorific = document.getElementById('customerHonorific').value.trim();
+            const usePosition = document.getElementById('usePosition').checked;
+            const useHonorific = document.getElementById('useHonorific').checked;
+            
             const tagsInput = document.getElementById('customerTags').value;
             const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
             const memo = document.getElementById('customerMemo').value.trim();
@@ -4688,7 +5068,9 @@ KFPC {컨설턴트}입니다.
                 email,
                 birth,
                 anniversary,
-                honorific, // ⭐ 호칭 저장
+                honorific,
+                usePosition,
+                useHonorific,
                 tags,
                 memo,
                 updatedAt: new Date().toISOString()
@@ -5609,13 +5991,13 @@ KFPC {컨설턴트}입니다.
                 
                 const personalizedBody = body
                     .replace(/{honorific}/g, getHonorific(customer))
-                    .replace(/{name}/g, customer.name || '')
+                    .replace(/{name}/g, formatCustomerName(customer))
                     .replace(/{position}/g, customer.position || '')
                     .replace(/{company}/g, customer.company || '');
                 
                 const personalizedTitle = title
                     .replace(/{honorific}/g, getHonorific(customer))
-                    .replace(/{name}/g, customer.name || '')
+                    .replace(/{name}/g, formatCustomerName(customer))
                     .replace(/{position}/g, customer.position || '')
                     .replace(/{company}/g, customer.company || '');
                 
@@ -8087,32 +8469,48 @@ KFPC ${consultantName}입니다.
                 }
             }
             
-            // localStorage에서 토큰 복원 시도
+            // localStorage에서 토큰 및 만료 시간 복원 시도
             const savedToken = localStorage.getItem('googleAccessToken');
-            if (savedToken) {
+            const savedExpiresAt = localStorage.getItem('tokenExpiresAt');
+            
+            if (savedToken && savedExpiresAt) {
                 accessToken = savedToken;
-                isDriveConnected = true;
-                updateDriveStatus(true);
+                tokenExpiresAt = parseInt(savedExpiresAt);
                 
-                console.log('✅ 저장된 토큰 복원 성공');
-                
-                // 백그라운드에서 비동기 로딩 (페이지 표시를 차단하지 않음)
-                (async () => {
-                    try {
-                        // Firebase 로그인 체크
-                        await checkFirebaseLogin();
-                        
-                        // 데이터 로드
-                        await loadAllData();
-                        
-                        // 실시간 동기화 시작 (30초마다) ⭐ 최적화: 3초 → 30초
-                        if (syncCheckInterval) clearInterval(syncCheckInterval);
-                        syncCheckInterval = setInterval(checkForUpdates, 30000);
-                        console.log('✅ 실시간 동기화 시작 (30초마다 체크) - 서버 부담 90% 감소');
-                    } catch (error) {
-                        console.error('❌ 초기화 오류:', error);
-                    }
-                })();
+                // 토큰 만료 여부 체크
+                if (isTokenExpired()) {
+                    console.log('⚠️ 저장된 토큰이 만료되었습니다. 자동 갱신 시도...');
+                    // 만료된 경우 자동 갱신 시도 (조용히)
+                    refreshTokenSilently();
+                } else {
+                    // 만료되지 않은 경우 정상 복원
+                    isDriveConnected = true;
+                    updateDriveStatus(true);
+                    
+                    // 자동 갱신 스케줄 설정
+                    setupTokenAutoRefresh();
+                    
+                    const remainingMinutes = Math.floor((tokenExpiresAt - Date.now()) / (60 * 1000));
+                    console.log(`✅ 저장된 토큰 복원 성공 (${remainingMinutes}분 후 만료)`);
+                    
+                    // 백그라운드에서 비동기 로딩 (페이지 표시를 차단하지 않음)
+                    (async () => {
+                        try {
+                            // Firebase 로그인 체크
+                            await checkFirebaseLogin();
+                            
+                            // 데이터 로드
+                            await loadAllData();
+                            
+                            // 실시간 동기화 시작 (30초마다) ⭐ 최적화: 3초 → 30초
+                            if (syncCheckInterval) clearInterval(syncCheckInterval);
+                            syncCheckInterval = setInterval(checkForUpdates, 30000);
+                            console.log('✅ 실시간 동기화 시작 (30초마다 체크) - 서버 부담 90% 감소');
+                        } catch (error) {
+                            console.error('❌ 초기화 오류:', error);
+                        }
+                    })();
+                }
             } else {
                 console.log('ℹ️ 저장된 토큰 없음 - Drive 연동 필요');
             }
