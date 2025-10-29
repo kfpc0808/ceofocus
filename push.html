@@ -583,6 +583,26 @@
                 padding: 6px;
                 border-radius: 6px;
             }
+            
+            /* 모바일에서는 텍스트 버튼만 표시 */
+            .customer-buttons-desktop {
+                display: none !important;
+            }
+            
+            .customer-buttons-mobile {
+                display: flex !important;
+            }
+        }
+        
+        /* PC/태블릿에서는 박스 버튼 표시 */
+        @media (min-width: 769px) {
+            .customer-buttons-desktop {
+                display: flex !important;
+            }
+            
+            .customer-buttons-mobile {
+                display: none !important;
+            }
         }
         
         .customer-name {
@@ -4008,8 +4028,13 @@ KFPC {컨설턴트}입니다.
                 const isSelected = selectedCustomersForDelete.includes(customer.id);
                 return `
                 <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
-                    <!-- 상단 버튼들 (우측 정렬) -->
-                    <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 3px;">
+                    <!-- PC/태블릿용 버튼들 (박스형) -->
+                    <div class="customer-buttons-desktop" style="position: absolute; top: 8px; right: 8px; display: flex; gap: 3px;">
+                        <button onclick="event.stopPropagation(); showGroupSelector('${customer.id}')" 
+                                style="padding: 3px 6px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(156, 39, 176, 0.3); white-space: nowrap;"
+                                title="그룹 설정">
+                            그룹
+                        </button>
                         <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
                                 style="padding: 3px 6px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
                                 title="푸시 전송">
@@ -4027,8 +4052,19 @@ KFPC {컨설턴트}입니다.
                         </button>
                     </div>
                     
+                    <!-- 모바일용 버튼들 (텍스트만) -->
+                    <div class="customer-buttons-mobile" style="position: absolute; top: 6px; right: 6px; display: none; gap: 6px; font-size: 11px;">
+                        <span onclick="event.stopPropagation(); showGroupSelector('${customer.id}')" style="color: #9C27B0; cursor: pointer; font-weight: bold;" title="그룹 설정">그룹</span>
+                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                        <span onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" style="color: #2196F3; cursor: pointer; font-weight: bold;" title="푸시 전송">푸시</span>
+                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                        <span onclick="event.stopPropagation(); editCustomer('${customer.id}')" style="color: #FF9800; cursor: pointer; font-weight: bold;" title="수정">수정</span>
+                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                        <span onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" style="color: #ff6b6b; cursor: pointer; font-weight: bold;" title="삭제">삭제</span>
+                    </div>
+                    
                     <!-- 고객 정보 (체크박스와 이름이 같은 라인) -->
-                    <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 135px;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 165px;">
                         <!-- 체크박스 (왼쪽, 이름과 같은 라인) -->
                         <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
                                onclick="event.stopPropagation();">
@@ -4036,10 +4072,7 @@ KFPC {컨설턴트}입니다.
                                    ${isSelected ? 'checked' : ''} 
                                    onchange="toggleCustomerForDelete('${customer.id}')" 
                                    onclick="event.stopPropagation()"
-                                   style="position: absolute; opacity: 0; cursor: pointer; width: 24px; height: 24px; z-index: 10;">
-                            <span style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #fff; border: 2px solid #999; border-radius: 4px; font-size: 16px; color: #4CAF50; font-weight: bold; flex-shrink: 0;">
-                                ${isSelected ? '✓' : ''}
-                            </span>
+                                   style="width: 24px; height: 24px; cursor: pointer; margin: 0;">
                         </label>
                         
                         <!-- 고객 정보 -->
@@ -4085,6 +4118,68 @@ KFPC {컨설턴트}입니다.
         function openGroupManagerModal() {
             renderGroupList();
             document.getElementById('groupManagerModal').classList.add('show');
+        }
+        
+        function closeGroupManagerModal() {
+            document.getElementById('groupManagerModal').classList.remove('show');
+        }
+        
+        async function showGroupSelector(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) return;
+            
+            const groupOptions = ['<option value="">그룹 없음</option>']
+                .concat(customerGroups.map(g => `<option value="${g}" ${customer.group === g ? 'selected' : ''}>${g}</option>`))
+                .join('');
+            
+            const selectedGroup = await new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'modal show';
+                modal.style.zIndex = '10000';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 400px;">
+                        <div class="modal-header">
+                            <h2>👥 그룹 선택</h2>
+                            <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+                        </div>
+                        <div class="form-group">
+                            <label>${customer.name}님의 그룹</label>
+                            <select id="tempGroupSelect" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 14px;">
+                                ${groupOptions}
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">취소</button>
+                            <button class="btn-primary" onclick="
+                                const group = document.getElementById('tempGroupSelect').value;
+                                this.closest('.modal').dataset.result = group;
+                                this.closest('.modal').remove();
+                            ">확인</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                const checkRemoval = setInterval(() => {
+                    if (!document.body.contains(modal)) {
+                        clearInterval(checkRemoval);
+                        resolve(modal.dataset.result || null);
+                    }
+                }, 100);
+            });
+            
+            if (selectedGroup !== null) {
+                if (selectedGroup) {
+                    customer.group = selectedGroup;
+                } else {
+                    delete customer.group;
+                }
+                
+                await saveToDrive(FILES.customers, customers);
+                renderCustomers();
+                showAlert(`${customer.name}님이 ${selectedGroup || '그룹 없음'}으로 변경되었습니다.`, 'success');
+            }
         }
 
         function renderGroupList() {
@@ -7854,14 +7949,14 @@ KFPC ${consultantName}입니다.
         <div class="modal-content">
             <div class="modal-header">
                 <h2>👥 그룹 관리</h2>
-                <button class="modal-close" onclick="closeModal('groupManagerModal')">×</button>
+                <button class="modal-close" onclick="closeGroupManagerModal()">×</button>
             </div>
             
             <div class="form-group">
                 <label>새 그룹 추가</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="newGroupName" placeholder="예: 교사, 군인 등" style="flex: 1;">
-                    <button class="btn-primary" onclick="addGroup()" style="white-space: nowrap;">추가</button>
+                <div style="display: flex; gap: 10px; align-items: stretch;">
+                    <input type="text" id="newGroupName" placeholder="예: 교사, 군인 등" style="flex: 1; height: 44px; padding: 10px 14px; font-size: 15px;">
+                    <button class="btn-primary" onclick="addGroup()" style="white-space: nowrap; min-width: 80px; height: 44px;">추가</button>
                 </div>
             </div>
             
