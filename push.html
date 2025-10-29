@@ -509,6 +509,21 @@
             min-width: 150px;
         }
         
+        /* 검색창 터치 최적화 */
+        .customer-search-input {
+            -webkit-tap-highlight-color: rgba(33, 150, 243, 0.3);
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: text;
+            user-select: text;
+            cursor: text;
+        }
+        
+        .customer-search-input:focus {
+            outline: 2px solid #2196F3;
+            outline-offset: 2px;
+        }
+        
         .customer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -534,6 +549,20 @@
             cursor: pointer;
             transition: all 0.3s;
             border: 3px solid transparent;
+        }
+        
+        /* 체크박스 관련 스타일 개선 */
+        .customer-card input[type="checkbox"] {
+            cursor: pointer;
+            width: 24px !important;
+            height: 24px !important;
+            margin: 0;
+        }
+        
+        .customer-card label {
+            cursor: pointer !important;
+            -webkit-tap-highlight-color: rgba(76, 175, 80, 0.3);
+            touch-action: manipulation;
         }
         
         .customer-card:hover {
@@ -754,30 +783,37 @@
         }
         
         .modal-close {
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #e0e0e0;
+            background: #ffffff;
+            border: 2px solid #333333;
             color: #333333;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             cursor: pointer;
             padding: 0;
-            width: 42px;
-            height: 42px;
-            display: flex;
+            width: 36px;
+            height: 36px;
+            display: flex !important;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
+            border-radius: 6px;
             transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
             flex-shrink: 0;
+            opacity: 1 !important;
+            visibility: visible !important;
+            line-height: 1;
         }
         
         .modal-close:hover {
             background: #ff6b6b;
             color: white;
             border-color: #ff5252;
-            transform: scale(1.1) rotate(90deg);
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
+        }
+        
+        .modal-close:active {
+            transform: scale(0.95);
         }
         
         /* 통계 대시보드 - 높이 50% 축소 */
@@ -1286,29 +1322,37 @@
         }
         
         .modal-close {
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            color: white;
-            font-size: 32px;
+            background: #ffffff;
+            border: 2px solid #333333;
+            color: #333333;
+            font-size: 28px;
             font-weight: bold;
             cursor: pointer;
             padding: 0;
-            width: 42px;
-            height: 42px;
-            display: flex;
+            width: 36px;
+            height: 36px;
+            display: flex !important;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
+            border-radius: 6px;
             transition: all 0.3s;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+            opacity: 1 !important;
+            visibility: visible !important;
+            line-height: 1;
         }
         
         .modal-close:hover {
-            background: rgba(255, 107, 107, 0.9);
+            background: #ff6b6b;
             border-color: #ff5252;
-            transform: scale(1.15) rotate(90deg);
+            color: white;
+            transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
+        }
+        
+        .modal-close:active {
+            transform: scale(0.95);
         }
         
     
@@ -3892,47 +3936,49 @@ KFPC {컨설턴트}입니다.
             grid.innerHTML = filtered.map(customer => {
                 const isSelected = selectedCustomersForDelete.includes(customer.id);
                 return `
-                <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative; padding-top: 32px;">
-                    <!-- 상단 체크박스와 버튼들 -->
-                    <div style="position: absolute; top: 5px; left: 6px; right: 6px; display: flex; justify-content: space-between; align-items: center; gap: 4px;">
-                        <!-- 정사각형 체크박스 -->
-                        <label style="display: inline-block; position: relative; cursor: pointer; width: 18px; height: 18px; flex-shrink: 0;">
+                <div class="customer-card ${isSelected ? 'selected' : ''}" style="position: relative;">
+                    <!-- 상단 버튼들 (우측 정렬) -->
+                    <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
+                        <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
+                                style="padding: 4px 8px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
+                                title="푸시 전송">
+                            푸시
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
+                                style="padding: 4px 8px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3); white-space: nowrap;"
+                                title="삭제">
+                            삭제
+                        </button>
+                    </div>
+                    
+                    <!-- 고객 정보 (체크박스와 이름이 같은 라인) -->
+                    <div style="display: flex; align-items: flex-start; gap: 10px; padding-right: 120px;">
+                        <!-- 체크박스 (왼쪽, 이름과 같은 라인) -->
+                        <label style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; margin-top: 2px;" 
+                               onclick="event.stopPropagation();">
                             <input type="checkbox" 
                                    ${isSelected ? 'checked' : ''} 
                                    onchange="toggleCustomerForDelete('${customer.id}')" 
                                    onclick="event.stopPropagation()"
-                                   style="position: absolute; opacity: 0; cursor: pointer; width: 18px; height: 18px;">
-                            <span style="position: absolute; top: 0; left: 0; width: 18px; height: 18px; background: #fff; border: 2px solid #999; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #4CAF50; font-weight: bold;">
+                                   style="position: absolute; opacity: 0; cursor: pointer; width: 24px; height: 24px; z-index: 10;">
+                            <span style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #fff; border: 2px solid #999; border-radius: 4px; font-size: 16px; color: #4CAF50; font-weight: bold; flex-shrink: 0;">
                                 ${isSelected ? '✓' : ''}
                             </span>
                         </label>
                         
-                        <div style="display: flex; gap: 3px;">
-                            <button onclick="event.stopPropagation(); sendPushToCustomer('${customer.id}')" 
-                                    style="padding: 3px 7px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3); white-space: nowrap;"
-                                    title="푸시 전송">
-                                푸시
-                            </button>
-                            <button onclick="event.stopPropagation(); deleteCustomer('${customer.id}')" 
-                                    style="padding: 3px 7px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3); white-space: nowrap;"
-                                    title="삭제">
-                                삭제
-                            </button>
+                        <!-- 고객 정보 (클릭하면 수정) -->
+                        <div onclick="editCustomer('${customer.id}')" style="cursor: pointer; flex: 1; line-height: 1.4;">
+                            <div class="customer-name" style="margin-bottom: 4px; font-size: 15px; font-weight: bold;">${customer.name}</div>
+                            ${customer.company ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
+                            ${customer.position ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
+                            ${customer.phone ? `<div class="customer-info" style="margin-bottom: 2px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
+                            ${customer.tags && customer.tags.length > 0 ? 
+                                `<div class="customer-info" style="margin-top: 4px;">
+                                    ${customer.tags.map(tag => 
+                                        `<span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 3px; display: inline-block;">${tag}</span>`
+                                    ).join('')}
+                                </div>` : ''}
                         </div>
-                    </div>
-                    
-                    <!-- 고객 정보 (클릭하면 수정) -->
-                    <div onclick="editCustomer('${customer.id}')" style="cursor: pointer; line-height: 1.3;">
-                        <div class="customer-name" style="margin-bottom: 2px; font-size: 15px;">${customer.name}</div>
-                        ${customer.company ? `<div class="customer-info" style="margin-bottom: 1px; font-size: 12px;">🏢 ${customer.company}</div>` : ''}
-                        ${customer.position ? `<div class="customer-info" style="margin-bottom: 1px; font-size: 12px;">💼 ${customer.position}</div>` : ''}
-                        ${customer.phone ? `<div class="customer-info" style="margin-bottom: 1px; font-size: 12px;">📞 ${customer.phone}</div>` : ''}
-                        ${customer.tags && customer.tags.length > 0 ? 
-                            `<div class="customer-info" style="margin-top: 3px;">
-                                ${customer.tags.map(tag => 
-                                    `<span style="background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 6px; font-size: 9px; margin-right: 2px; display: inline-block;">${tag}</span>`
-                                ).join('')}
-                            </div>` : ''}
                     </div>
                 </div>
             `;
