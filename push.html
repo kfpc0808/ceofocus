@@ -2140,13 +2140,20 @@
                 <!-- 사용 안내 -->
                 <div class="info-box" style="border-radius: 10px; padding: 15px; margin-bottom: 20px;">
                     <div style="font-size: 14px; line-height: 1.7; color: #1565c0 !important;">
-                        <strong>📱 휴대폰에서 직접 연락처 선택 (권장)</strong><br>
-                        <div style="margin-top: 8px; padding-left: 10px;">
-                            ✨ <strong>휴대폰에서 이 페이지를 열면</strong> 연락처 앱에서 직접 선택 가능!<br>
-                            ✨ 단체 선택, 개별 선택 모두 가능<br>
-                            ✨ 파일 내보내기 불필요 - 바로 가져오기<br>
-                            <div style="margin-top: 5px; font-size: 13px;">
-                                💡 PC에서는 파일 업로드 방식을 사용하세요
+                        <strong>📱 가장 쉬운 방법 (권장)</strong><br>
+                        <div style="margin-top: 8px; padding-left: 10px; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 8px; color: #333 !important;">
+                            <strong style="color: #1565c0;">1️⃣ 폰 연락처 앱에서 내보내기</strong><br>
+                            <span style="font-size: 13px;">• 연락처 앱 열기 → 메뉴(⋮) → "연락처 내보내기"<br>
+                            • 또는 "공유" → vCard 파일로 저장<br>
+                            • 전체 선택 또는 원하는 연락처만 선택 가능</span><br><br>
+                            
+                            <strong style="color: #1565c0;">2️⃣ 저장한 파일 불러오기</strong><br>
+                            <span style="font-size: 13px;">• 아래 "📇 폰연락처" 버튼 클릭<br>
+                            • 저장한 .vcf 파일 선택<br>
+                            • <strong>여러 파일 한 번에 선택 가능! ✨</strong></span><br><br>
+                            
+                            <div style="background: #FFF3CD; padding: 8px; border-radius: 5px; border-left: 3px solid #FFB300; margin-top: 8px;">
+                                <strong>💡 팁:</strong> Android Chrome에서는 "📱 연락처 직접선택" 버튼을 사용하면 더 편리합니다!
                             </div>
                         </div>
                     </div>
@@ -2157,7 +2164,7 @@
                     <div class="import-btn" id="contactPickerBtn" onclick="pickContacts()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 2px solid #764ba2; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center; color: white;">
                         <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📱</div>
                         <div style="font-weight: bold; margin-bottom: 5px;">연락처 직접선택</div>
-                        <div style="font-size: 12px; opacity: 0.9;">휴대폰 전용 ⭐</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Android Chrome 전용</div>
                     </div>
                     <div class="import-btn" onclick="document.getElementById('csvFile').click()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
                         <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📊</div>
@@ -2168,7 +2175,7 @@
                     <div class="import-btn" onclick="document.getElementById('vcfFile').click()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
                         <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📇</div>
                         <div style="font-weight: bold; margin-bottom: 5px; color: #333;">폰연락처</div>
-                        <div style="font-size: 12px; color: #666;">vCard (vcf)</div>
+                        <div style="font-size: 12px; color: #666;">vCard (다중선택 가능)</div>
                     </div>
                     
                     <div class="import-btn" onclick="openTextImport()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
@@ -2185,7 +2192,7 @@
                 </div>
                 
                 <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleCSVUpload(event)">
-                <input type="file" id="vcfFile" accept=".vcf" style="display: none;" onchange="handleVCFUpload(event)">
+                <input type="file" id="vcfFile" accept=".vcf" multiple style="display: none;" onchange="handleVCFUpload(event)">
             </div>
             
             <div class="card">
@@ -5157,7 +5164,16 @@ KFPC {컨설턴트}입니다.
         async function pickContacts() {
             // Contact Picker API 지원 여부 확인
             if (!('contacts' in navigator && 'ContactsManager' in window)) {
-                showAlert('❌ 이 기능은 휴대폰 브라우저에서만 사용할 수 있습니다.\n\n💡 PC에서는 파일 업로드 방식을 이용해주세요.', 'error');
+                showAlert(`❌ Contact Picker API를 지원하지 않는 브라우저입니다.
+
+📱 Android Chrome 사용 권장!
+
+💡 대신 이렇게 하세요:
+1️⃣ 폰 연락처 앱 열기
+2️⃣ 메뉴 → "연락처 내보내기" 또는 "공유"
+3️⃣ vCard 파일(.vcf)로 저장
+4️⃣ 여기서 "📇 폰연락처" 버튼 클릭
+5️⃣ 저장한 .vcf 파일 선택 (다중 선택 가능)`, 'error');
                 return;
             }
             
