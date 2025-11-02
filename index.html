@@ -1,1807 +1,1436 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>웹푸시 발송시스템</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>프로그램 선택 - Executive Consulting Solution</title>
+  
+  <!-- Firebase SDK를 head에서 먼저 로드 -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;
+      background:linear-gradient(135deg,#0c2c54 0%,#2a5a8a 100%);
+      color:#fff; 
+      padding:2rem 1rem; 
+      min-height:100vh;
+      -webkit-overflow-scrolling: touch;
+      touch-action: manipulation;
+      /* 수직 중앙 정렬 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dashboard-container{ 
+      max-width:1200px; 
+      width: 100%;
+      margin:0 auto; 
+    }
     
-    <!-- Google OAuth -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    .header{
+      margin-bottom:1rem; padding-bottom:1rem;
+      border-bottom:1px solid rgba(255,255,255,.2);
+    }
+    .top-bar{
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center;
+      margin-bottom:1rem;
+    }
+    .welcome-message h1{ font-size:2.2rem; margin:0; }
+    .welcome-message p{ font-size:1.1rem; opacity:.85; margin-top:.25rem; }
+
+    .top-right-buttons{
+      display:flex; 
+      gap:.5rem;
+    }
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    .btn{
+      border:none; 
+      padding:.25rem .5rem; 
+      border-radius:10px;
+      font-weight:700; 
+      cursor:pointer; 
+      transition:.25s;
+      backdrop-filter: blur(10px);
+      font-size:0.85rem;
+      line-height:1.2;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+      user-select: none;
+    }
+    .btn:hover{ transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); opacity:0.9; }
     
-    <!-- External CSS -->
-    <link rel="stylesheet" href="style.css">
+    .btn-mypage{ 
+      background:rgba(255,255,255,.15); 
+      color:#fff; 
+      border:1px solid rgba(255,255,255,.3); 
+    }
+    .btn-mypage:hover{ 
+      background:rgba(255,255,255,.25); 
+    }
+    
+    .btn-logout{ 
+      background:#e74c3c; 
+      color:#fff; 
+    }
+    .btn-logout:hover{ 
+      background:#c0392b; 
+    }
+    
+    .btn-warm{ 
+      background:linear-gradient(135deg,#FF8802 0%,#FF6B00 100%); 
+      color:#fff; 
+      box-shadow:0 4px 12px rgba(255,136,2,.25); 
+    }
+    .btn-warm:hover{ 
+      box-shadow:0 6px 16px rgba(255,136,2,.35); 
+    }
+    
+    .btn-soft{ 
+      background:rgba(255,255,255,.12); 
+      color:#fff; 
+      border:1px solid rgba(255,255,255,.25); 
+    }
+    .btn-soft:hover{ 
+      background:rgba(255,255,255,.22); 
+    }
+
+    .btn-drive{ 
+      background:linear-gradient(135deg,#4CAF50 0%,#45a049 100%); 
+      color:#fff; 
+      box-shadow:0 4px 12px rgba(76,175,80,.25); 
+    }
+    .btn-drive:hover{ 
+      box-shadow:0 6px 16px rgba(76,175,80,.35); 
+    }
+
+    .notice{
+      display:none;
+      margin:1rem 0 1.25rem; 
+      padding:1rem 1.25rem;
+      border-radius:12px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.25);
+      line-height:1.6;
+    }
+    .notice.show{ display:block; }
+    .notice b{ color:#ffd27f; }
+
+    .program-list{
+      display:grid; 
+      gap:1rem; 
+      margin-top:1rem;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .bottom-programs{
+      display:grid; 
+      gap:1rem; 
+      margin-top:1rem;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .program-card{
+      background:rgba(255,255,255,.1);
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:16px; 
+      padding:1.05rem 0.7rem;
+      text-align:center; 
+      cursor:pointer; 
+      transition:.25s;
+      backdrop-filter:blur(8px);
+      min-height:84px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:0.3rem;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+      user-select: none;
+    }
+    .program-card:hover{
+      background:rgba(255,255,255,.2); 
+      transform:translateY(-4px);
+    }
+    .program-card:active{
+      transform:translateY(-2px);
+      background:rgba(255,255,255,.25);
+    }
+    .program-card h2{ 
+      font-size:1.05rem; 
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .program-card p{ 
+      font-size:.8rem; 
+      opacity:.8;
+      line-height:1.3;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      margin:0;
+    }
+
+    .dropdown-wrapper {
+      position: relative;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 320px;
+      max-width: 360px;
+      max-height: 500px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .dropdown-menu.active {
+      display: block;
+      pointer-events: auto;
+    }
+    .dropdown-menu-inner {
+      padding: 1rem;
+      background: rgba(255,255,255,.98);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.3);
+      border: 1px solid rgba(255,255,255,.3);
+      animation: slideDown 0.3s ease;
+      max-height: 500px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar {
+      width: 8px;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar-thumb {
+      background: #FF8802;
+      border-radius: 10px;
+    }
+    .dropdown-menu-inner::-webkit-scrollbar-thumb:hover {
+      background: #FF6B00;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown-header {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0c2c54;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e0e0e0;
+      text-align: center;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: -0.25rem;
+      right: 0;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #6c757d;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .close-btn:hover {
+      background: #f0f0f0;
+      color: #0c2c54;
+    }
+    .close-footer {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e0e0e0;
+    }
+    .close-footer-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      color: #0c2c54;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+    .close-footer-btn:hover {
+      background: #e9ecef;
+      border-color: #adb5bd;
+    }
+    .dropdown-item {
+      padding: 0.85rem 1rem;
+      margin: 0.3rem 0;
+      border-radius: 8px;
+      background: #f8f9fa;
+      color: #0c2c54;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .dropdown-item:hover {
+      background: linear-gradient(135deg,#FF8802 0%,#FF6B00 100%);
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(255,136,2,.3);
+    }
+    .dropdown-item-icon {
+      font-size: 1.3rem;
+      width: 26px;
+      text-align: center;
+    }
+    .category-divider {
+      margin: 0.85rem 0;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 0.5rem;
+    }
+    .category-label {
+      font-size: 0.8rem;
+      color: #6c757d;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      padding-left: 0.5rem;
+    }
+
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg,#0c2c54 0%,#2a5a8a 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      z-index: 9999;
+    }
+    .loading-screen.hide { display: none; }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      color: rgba(255,255,255,.9);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .loading-details {
+      color: rgba(255,255,255,.6);
+      font-size: 0.85rem;
+      text-align: center;
+      max-width: 80%;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .top-bar {
+        flex-direction: column;
+        gap:0.75rem;
+      }
+      .welcome-message {
+        text-align: center;
+        width: 100%;
+      }
+      .welcome-message h1{ font-size:1.5rem; }
+      .top-right-buttons {
+        width: 100%;
+        justify-content: center;
+        gap: 0.4rem;
+      }
+      .top-right-buttons .btn {
+        padding: 0.55rem 0.75rem;
+        font-size: 0.8rem;
+      }
+      
+      /* 태블릿/가로 모바일: 3열 유지 */
+      .program-list{
+        grid-template-columns: repeat(3, 1fr);
+        gap:0.85rem;
+      }
+      
+      .bottom-programs{
+        grid-template-columns: repeat(2, 1fr);
+        gap:0.85rem;
+      }
+      
+      .program-card {
+        padding:0.84rem 0.56rem;
+        min-height:77px;
+      }
+      
+      .program-card h2 {
+        font-size:0.95rem;
+      }
+      .program-card p {
+        font-size:0.75rem;
+      }
+      
+      .dropdown-menu {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) !important;
+        margin-top: 0;
+        padding-top: 0;
+        max-width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .dropdown-menu-inner {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      @keyframes slideDown {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body{ padding:1rem 0.5rem; }
+      .top-right-buttons {
+        gap: 0.3rem;
+      }
+      .top-right-buttons .btn {
+        padding: 0.5rem 0.6rem;
+        font-size: 0.75rem;
+      }
+      
+      /* 모바일 세로: 2열 */
+      .program-list{
+        grid-template-columns: repeat(2, 1fr);
+        gap:0.7rem;
+      }
+      
+      .bottom-programs{
+        grid-template-columns: repeat(2, 1fr);
+        gap:0.7rem;
+      }
+      
+      .program-card {
+        padding:0.7rem 0.42rem;
+        min-height:70px;
+      }
+      .program-card h2 {
+        font-size:0.9rem;
+      }
+      .program-card p {
+        font-size:0.7rem;
+      }
+    }
+
+    /* AI 버튼 스타일 */
+    .ai-buttons-container {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,.15);
+    }
+    .ai-buttons-label {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      text-align: center;
+      margin-bottom: 0.75rem;
+      font-weight: 500;
+    }
+    .ai-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .ai-btn {
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,.3);
+      background: rgba(74, 144, 226, 0.3);
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      -webkit-tap-highlight-color: rgba(255,255,255,0.1);
+      user-select: none;
+      max-width: 120px;
+    }
+    .ai-btn:hover {
+      background: rgba(74, 144, 226, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    }
+    .ai-btn:active {
+      transform: translateY(0);
+    }
+    
+    @media (max-width: 480px) {
+      .ai-buttons {
+        gap: 0.25rem;
+        flex-wrap: nowrap;
+        justify-content: center;
+      }
+      .ai-btn {
+        padding: 0.35rem 0.3rem;
+        font-size: 0.7rem;
+        flex: 1;
+        min-width: 0;
+        max-width: 85px;
+        text-align: center;
+        justify-content: center;
+      }
+    }
+    
+    /* SNS 백업 팝업 스타일 */
+    .sns-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      animation: fadeIn 0.3s;
+      overflow-y: auto;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .sns-modal-content {
+      background: linear-gradient(135deg, #1a4d7a 0%, #2a5a8a 100%);
+      margin: 3% auto;
+      padding: 0;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 550px;
+      max-height: 90vh;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideIn 0.3s;
+      color: white;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    @keyframes slideIn {
+      from { 
+        transform: translateY(-30px);
+        opacity: 0;
+      }
+      to { 
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .sns-modal-header {
+      padding: 20px 25px 15px 25px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    .sns-modal-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #fff;
+    }
+    
+    .sns-modal-body {
+      padding: 20px 25px;
+      line-height: 1.6;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .sns-channels {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+    
+    .sns-icon {
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px 15px;
+      border-radius: 10px;
+      display: inline-block;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .sns-question {
+      text-align: center;
+      font-size: 1rem;
+      margin: 15px 0;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      line-height: 1.5;
+    }
+    
+    .sns-warning {
+      background: rgba(255, 100, 100, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+      border: 2px solid rgba(255, 100, 100, 0.4);
+    }
+    
+    .sns-warning h3 {
+      margin: 0 0 12px 0;
+      font-size: 1.15rem;
+    }
+    
+    .sns-danger-list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0;
+    }
+    
+    .sns-danger-list li {
+      padding: 6px 0;
+      font-size: 0.95rem;
+    }
+    
+    .danger-note {
+      color: #ffaaaa;
+      font-size: 0.85rem;
+      margin-left: 5px;
+    }
+    
+    .sns-result {
+      margin-top: 12px;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #ffcccc;
+      text-align: center;
+    }
+    
+    .sns-solution {
+      background: rgba(100, 255, 150, 0.15);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+      border: 2px solid rgba(100, 255, 150, 0.3);
+    }
+    
+    .sns-solution h3 {
+      margin: 0 0 12px 0;
+      font-size: 1.15rem;
+    }
+    
+    .sns-feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0;
+    }
+    
+    .sns-feature-list li {
+      padding: 6px 0;
+      font-size: 0.95rem;
+    }
+    
+    .sns-modal-footer {
+      padding: 15px 25px 20px 25px;
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .sns-btn-start {
+      background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+      color: white;
+      padding: 15px 25px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+    }
+    
+    .sns-btn-start:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+    }
+    
+    .sns-btn-start:active {
+      transform: translateY(0);
+    }
+    
+    .sns-btn-close {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 10px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .sns-btn-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+      .sns-modal-content {
+        width: 95%;
+        margin: 2% auto;
+        max-height: 95vh;
+      }
+      
+      .sns-modal-header {
+        padding: 18px 20px 12px 20px;
+      }
+      
+      .sns-modal-header h2 {
+        font-size: 1.3rem;
+      }
+      
+      .sns-modal-body {
+        padding: 18px 20px;
+      }
+      
+      .sns-channels {
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 15px;
+      }
+      
+      .sns-icon {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+      }
+      
+      .sns-question {
+        font-size: 0.95rem;
+        padding: 12px;
+        margin: 12px 0;
+      }
+      
+      .sns-warning {
+        padding: 12px;
+        margin: 12px 0;
+      }
+      
+      .sns-solution {
+        padding: 12px;
+        margin: 12px 0;
+      }
+      
+      .sns-warning h3,
+      .sns-solution h3 {
+        font-size: 1.05rem;
+        margin-bottom: 10px;
+      }
+      
+      .sns-danger-list li,
+      .sns-feature-list li {
+        font-size: 0.9rem;
+        padding: 5px 0;
+      }
+      
+      .sns-result {
+        font-size: 0.95rem;
+        margin-top: 10px;
+      }
+      
+      .sns-modal-footer {
+        padding: 12px 20px 18px 20px;
+        gap: 10px;
+      }
+      
+      .sns-btn-start {
+        font-size: 1.05rem;
+        padding: 14px 20px;
+      }
+      
+      .sns-btn-close {
+        font-size: 0.9rem;
+        padding: 10px 18px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .sns-modal-header h2 {
+        font-size: 1.2rem;
+      }
+      
+      .sns-modal-body {
+        padding: 15px 18px;
+      }
+      
+      .sns-question {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+      
+      .sns-warning h3,
+      .sns-solution h3 {
+        font-size: 1rem;
+      }
+      
+      .sns-danger-list li,
+      .sns-feature-list li {
+        font-size: 0.85rem;
+      }
+      
+      .danger-note {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 상단 네비게이션 - 한 줄 가로 스크롤 -->
-        <div class="top-nav">
-            <button class="back-btn" onclick="location.href='index.html'">Main</button>
-            
-            <div class="status-indicator">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusText">준비중</span>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">앱 시작 중...</div>
+    <div class="loading-details" id="loadingDetails"></div>
+  </div>
+
+  <div class="dashboard-container" style="display:none;" id="mainContent">
+    <div class="header">
+      <div class="top-bar">
+        <div class="welcome-message">
+          <h1 id="welcomeTitle">환영합니다</h1>
+          <p>사용하실 프로그램을 선택해주세요.</p>
+        </div>
+        <div class="top-right-buttons">
+          <button class="btn btn-mypage" onclick="goToMyPage()">My page</button>
+          <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="driveNotice" class="notice">
+      모든 고객정보는 사용자의 <b>구글드라이브</b>에 안전하게 보관됩니다. 공급자는 사용자의 고객정보를 보관하지 않습니다.<br/>
+      간단하게 본인의 <b>'드라이브 연동'</b>을 먼저 하신 후 이용바랍니다.
+    </div>
+
+    <div class="program-list">
+      <div class="program-card" onclick="go('ceofocus.html')">
+        <h2>CEO Focus</h2>
+        <p>실시간 법인컨설팅 시뮬레이션</p>
+      </div>
+      <div class="program-card" onclick="go('factfinding.html')">
+        <h2>FF Simulation</h2>
+        <p>프리미엄 재무 Fact Finding</p>
+      </div>
+      <div class="program-card" onclick="go('fma.html')">
+        <h2>FMA</h2>
+        <p>보장분석 시스템</p>
+      </div>
+      
+      <div class="dropdown-wrapper">
+        <div class="program-card" onclick="toggleDropdown(event)">
+          <h2>재무계산기</h2>
+          <p>복리·은퇴·연금·세금 등</p>
+        </div>
+        <div class="dropdown-menu" id="calculatorDropdown">
+          <div class="dropdown-menu-inner">
+            <div class="dropdown-header">
+              📊 재무계산기 선택
+              <button class="close-btn" onclick="event.stopPropagation(); closeDropdown()">×</button>
             </div>
             
-            <button class="push-permission-btn" id="pushPermissionBtn" onclick="requestPushPermission()">
-                🔔 알림
-            </button>
-            <button class="drive-btn" id="driveBtn" onclick="connectDrive()">
-                📁 Drive
-            </button>
-            <button class="btn-nav" onclick="loadAllData()">불러오기</button>
-            <button class="btn-nav" onclick="saveAllData()">저장하기</button>
-            <button class="btn-nav" onclick="openGuideModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">📖 가이드</button>
+            <div class="category-label">💰 투자 & 수익</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('investment-return-calculator.html')">
+              <span class="dropdown-item-icon">📈</span>
+              <span>투자수익계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('compound-interest-calculator.html')">
+              <span class="dropdown-item-icon">🔄</span>
+              <span>복리계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('roi-calculator.html')">
+              <span class="dropdown-item-icon">📊</span>
+              <span>수익률계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('future-value-calculator.html')">
+              <span class="dropdown-item-icon">🔮</span>
+              <span>미래가치계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('present-value-calculator.html')">
+              <span class="dropdown-item-icon">💰</span>
+              <span>현재가치계산기</span>
+            </div>
+            
+            <div class="category-divider"></div>
+            <div class="category-label">🖐️ 은퇴 & 연금</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('retirement-calculator.html')">
+              <span class="dropdown-item-icon">🖐️</span>
+              <span>은퇴계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('pension-calculator.html')">
+              <span class="dropdown-item-icon">📅</span>
+              <span>연금계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('severance-calculator.html')">
+              <span class="dropdown-item-icon">💼</span>
+              <span>퇴직금계산기</span>
+            </div>
+            
+            <div class="category-divider"></div>
+            <div class="category-label">📋 세금 계산</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('gift-tax-calculator.html')">
+              <span class="dropdown-item-icon">🎁</span>
+              <span>증여세계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('inheritance-tax-calculator.html')">
+              <span class="dropdown-item-icon">👨‍👩‍👧‍👦</span>
+              <span>상속세계산기</span>
+            </div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('capital-gains-tax-calculator.html')">
+              <span class="dropdown-item-icon">🏠</span>
+              <span>양도세계산기</span>
+            </div>
+            
+            <div class="category-divider"></div>
+            <div class="category-label">🧮 종합 도구</div>
+            <div class="dropdown-item" onclick="event.stopPropagation(); go('financial-calculator.html')">
+              <span class="dropdown-item-icon">🧮</span>
+              <span>재무계산기 (종합)</span>
+            </div>
+            
+            <div class="close-footer">
+              <button class="close-footer-btn" onclick="event.stopPropagation(); closeDropdown()">닫기</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <!-- 헤더 -->
-        <h1>웹푸시 발송시스템</h1>
+<div class="program-card" onclick="go('todolist.html')">
+        <h2>To Do List</h2>
+        <p>업무 할 일 관리</p>
+      </div>
+
+<div class="program-card" onclick="go('worklog.html')">
+        <h2>업무일지</h2>
+        <p>고객상담내역 및 To-do list</p>
+      </div>
+    </div>
+
+    <div class="bottom-programs">
+      <div class="program-card" onclick="go('calendar.html')">
+        <h2>일정관리</h2>
+        <p>생일·기념일·만기일</p>
+      </div>
+      <div class="program-card" onclick="go('push.html')">
+        <h2>발송관리</h2>
+        <p>웹푸시 발송시스템</p>
+      </div>
+      <div class="program-card" onclick="go('client.html')">
+        <h2>회원관리</h2>
+        <p>고객 Database</p>
+      </div>
+      <div class="program-card" onclick="showSNSBackupPopup()">
+        <h2>📦 SNS백업</h2>
+        <p>소셜미디어 콘텐츠 보관</p>
+      </div>
+    </div>
+
+    <!-- AI 생성형 도구 -->
+    <div class="ai-buttons-container">
+      <div class="ai-buttons-label">🤖 AI 생성형 도구</div>
+      <div class="ai-buttons">
+        <a href="https://chat.openai.com" target="_blank" class="ai-btn">
+          <span>ChatGPT</span>
+        </a>
+        <a href="https://gemini.google.com" target="_blank" class="ai-btn">
+          <span>Gemini</span>
+        </a>
+        <a href="https://claude.ai" target="_blank" class="ai-btn">
+          <span>Claude</span>
+        </a>
+        <a href="https://www.perplexity.ai" target="_blank" class="ai-btn">
+          <span>Perplexity</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SNS 백업 안내 팝업 -->
+  <div id="snsBackupModal" class="sns-modal">
+    <div class="sns-modal-content">
+      <div class="sns-modal-header">
+        <h2>⚠️ SNS 계정, 안전하신가요?</h2>
+      </div>
+      <div class="sns-modal-body">
+        <div class="sns-channels">
+          <span class="sns-icon">📸 Instagram</span>
+          <span class="sns-icon">📘 Facebook</span>
+          <span class="sns-icon">🎬 YouTube</span>
+        </div>
         
-
-        <!-- 알림 배너 -->
-        <div class="alert-banner" id="alertBanner">
-            <span class="icon">⚠️</span>
-            <div class="message" id="alertMessage"></div>
-            <button class="close-btn" onclick="closeAlert()">×</button>
-        </div>
-
-        <!-- 통계 대시보드 -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="statCustomers">0</div>
-                <div class="stat-label">등록 고객</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="statMessages">0</div>
-                <div class="stat-label">총 발송</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="statScheduled">0</div>
-                <div class="stat-label">예약 대기</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="statSubscribers">0</div>
-                <div class="stat-label">구독자</div>
-            </div>
-        </div>
-
-        <!-- 탭 메뉴 - 한 줄 가로 스크롤, 왼쪽 정렬 -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('send', this)">📤 발송</button>
-            <button class="tab-btn" onclick="switchTab('scheduled', this)">⏰ 예약 <span id="pendingBadge" class="pending-badge" style="display:none;">0</span></button>
-            <button class="tab-btn" onclick="switchTab('customers', this)">👥 고객관리</button>
-            <button class="tab-btn" onclick="switchTab('anniversary', this)">🎂 기념일</button>
-            <button class="tab-btn" onclick="switchTab('log', this)">📋 로그</button>
-            <button class="tab-btn" onclick="switchTab('template', this)">📝 템플릿</button>
-            <button class="tab-btn" onclick="switchTab('import', this)">📥 가져오기</button>
-            <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ 설정</button>
-        </div>
-
-        <!-- 메시지 발송 탭 -->
-        <div id="sendTab" class="tab-content">
-            <div class="card">
-                <h2>📤 메시지 발송</h2>
-                
-                <div class="selected-customers-info" id="selectedCustomersInfo" style="display: none;">
-                    <div>
-                        <span class="selected-count" id="selectedCount">0명</span> 선택됨
-                    </div>
-                    <button class="btn btn-secondary" onclick="clearSelection()">선택 해제</button>
-                </div>
-                
-                <form id="sendForm" onsubmit="sendMessage(event)">
-                    <div class="form-group">
-                        <label>수신자 선택 <span class="required">*</span></label>
-                        
-                        <!-- 1행: 검색창 -->
-                        <input type="text" 
-                               id="customerSearchSend" 
-                               placeholder="🔍 이름, 회사, 직함으로 검색..." 
-                               oninput="renderCustomersForSend()" 
-                               style="width: 100%; padding: 12px; margin-bottom: 10px; font-size: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
-                        
-                        <!-- 2행: 정렬(좌) + 그룹 선택(우) -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <select id="sortOrderSend" 
-                                    onchange="renderCustomersForSend()" 
-                                    style="padding: 8px 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 14px; cursor: pointer; min-width: 140px;">
-                                <option value="name-asc">이름 ↑</option>
-                                <option value="name-desc">이름 ↓</option>
-                                <option value="phone-asc">전화번호 ↑</option>
-                                <option value="phone-desc">전화번호 ↓</option>
-                            </select>
-                            
-                            <select id="groupFilterSend" 
-                                    onchange="renderCustomersForSend()" 
-                                    style="padding: 8px 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 14px; cursor: pointer; min-width: 140px;">
-                                <option value="all">전체 그룹</option>
-                            </select>
-                        </div>
-                        
-                        <!-- 고객 테이블 -->
-                        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                            <div id="customerGridSend"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="messageTitle">제목 <span class="required">*</span></label>
-                        <input type="text" id="messageTitle" required maxlength="100" placeholder="예: {honorific}, 신제품 안내드립니다">
-                        <small>최대 100자 | 제목에도 {honorific}, {name} 등 변수 사용 가능!</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="messageBody">내용 <span class="required">*</span></label>
-                        <textarea id="messageBody" required maxlength="500" placeholder="메시지 내용을 입력하세요...
-
-사용 가능한 변수:
-{honorific} - 스마트 호칭 (홍길동님, 과장님, 길동아 등) ⭐ NEW!
-{name} - 고객 이름
-{position} - 직함
-{company} - 회사명"></textarea>
-                        <small style="color: #FFD700;">💡 {honorific} 변수로 고객별 맞춤 호칭 자동 적용!</small>
-                        <small>최대 500자 | 변수: {honorific}, {name}, {position}, {company}</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="messageLink">🔗 링크 URL (선택)</label>
-                        <input type="url" id="messageLink" placeholder="https://example.com" maxlength="500">
-                        <small>알림 클릭 시 이동할 페이지 주소 (비워두면 링크 없음)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="messageImage">
-                            🖼️ 이미지 URL (선택)
-                            <button type="button" onclick="openImageGuideModal()" style="margin-left: 8px; padding: 4px 12px; background: rgba(255,152,0,0.8); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 12px; font-weight: 500;">
-                                📖 이미지URL만들기
-                            </button>
-                        </label>
-                        <input type="url" id="messageImage" placeholder="https://example.com/image.jpg" maxlength="500">
-                        <small>알림에 표시할 이미지 주소 (PNG, JPG 권장, 비워두면 이미지 없음)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="sendType">발송 방식 <span class="required">*</span></label>
-                        <select id="sendType" onchange="toggleSchedule()">
-                            <option value="immediate">즉시 발송</option>
-                            <option value="scheduled">예약 발송</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group hidden" id="scheduleGroup">
-                        <label for="scheduleTime">예약 시각 (KST) <span class="required">*</span></label>
-                        <input type="datetime-local" id="scheduleTime">
-                        <small>최소 현재 시각으로부터 1분 이후로 설정해주세요</small>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="resetSendForm()">초기화</button>
-                        <button type="submit" class="btn btn-primary">발송하기</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- 예약 관리 탭 (NEW) -->
-        <!-- ========================================== -->
-        <div id="scheduledTab" class="tab-content hidden">
-            <div class="card">
-                <h2>⏰ 예약 메시지 관리</h2>
-                <p style="opacity: 0.8; margin-bottom: 20px;">
-                    📌 예약된 메시지는 발송 <strong>전일 오전 10시</strong>에 자동으로 확인 알림이 발송됩니다.<br>
-                    사전 확인 후 승인하시면 예정된 시간에 자동 발송됩니다.
-                </p>
-                
-                <!-- 필터 -->
-                <div class="log-filters" style="margin-bottom: 20px;">
-                    <select id="scheduledFilter" onchange="renderScheduledMessages()">
-                        <option value="all">전체 보기</option>
-                        <option value="pending-approval">승인 대기</option>
-                        <option value="approved">승인 완료</option>
-                        <option value="draft">임시 저장</option>
-                    </select>
-                    <button class="btn btn-secondary" onclick="checkPendingApprovals()">🔔 사전 확인 시뮬레이션</button>
-                </div>
-                
-                <!-- 예약 메시지 리스트 -->
-                <div id="scheduledMessagesList"></div>
-            </div>
-        </div>
-
-        <!-- 고객 관리 탭 -->
-        <div id="customersTab" class="tab-content hidden">
-            <div class="card">
-                <!-- 타이틀과 검색창 (같은 행) -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px;">
-                    <h2 style="margin: 0;">👥 고객 관리</h2>
-                    <input type="text" id="customerSearch" placeholder="이름, 회사, 직함 검색" oninput="renderCustomers()" 
-                           class="customer-search-input"
-                           style="width: 280px; height: 44px; padding: 10px 14px; font-size: 15px; border-radius: 8px; border: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;">
-                </div>
-                
-                <!-- 정렬 및 그룹 필터 영역 -->
-                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
-                    <select id="sortOrder" onchange="renderCustomers()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
-                        <option value="newest">최신순 (추가순)</option>
-                        <option value="oldest">오래된순</option>
-                        <option value="name-asc">가나다순 ↑</option>
-                        <option value="name-desc">가나다순 ↓</option>
-                        <option value="phone-asc">전화번호 ↑</option>
-                        <option value="phone-desc">전화번호 ↓</option>
-                    </select>
-                    
-                    <select id="groupFilter" onchange="renderCustomers()" style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; cursor: pointer;">
-                        <option value="all">전체 그룹</option>
-                    </select>
-                    
-                    <button onclick="openGroupManagerModal()" style="padding: 8px 16px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); border: none; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">
-                        그룹 관리
-                    </button>
-                    
-                    <div style="margin-left: auto; font-size: 14px; color: #333; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 8px;">
-                        <span id="customerCount">0</span>명
-                    </div>
-                </div>
-                
-                <!-- 버튼 영역 (우측 정렬, 가로 스크롤) -->
-                <div class="customer-buttons-wrapper" style="margin-bottom: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <div class="customer-buttons" style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: nowrap; min-width: min-content;">
-                        <button class="btn btn-success" onclick="openCustomerModal()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; white-space: nowrap; flex-shrink: 0;">
-                            추가
-                        </button>
-                        <button class="btn btn-secondary" onclick="importCustomers()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); white-space: nowrap; flex-shrink: 0;">
-                            가져오기
-                        </button>
-                        <button class="btn btn-secondary" onclick="sendPushToSelectedCustomers()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); white-space: nowrap; flex-shrink: 0;">
-                            고객푸시
-                        </button>
-                        <button class="btn btn-secondary" onclick="exportInviteCustomers()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); white-space: nowrap; flex-shrink: 0;">
-                            CSV보내기
-                        </button>
-                        <button class="btn btn-secondary" onclick="exportToVCard()" style="padding: 10px 16px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); white-space: nowrap; flex-shrink: 0;">
-                            연락처보내기
-                        </button>
-                        <button onclick="deleteSelectedCustomers()" style="padding: 10px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3); white-space: nowrap; flex-shrink: 0;">
-                            삭제
-                        </button>
-                        <button onclick="clearAllCustomers()" style="padding: 10px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4); white-space: nowrap; flex-shrink: 0;">
-                            전체삭제
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 스크롤바 숨김 -->
-                <style>
-                    .customer-buttons-wrapper {
-                        scrollbar-width: none;
-                        -ms-overflow-style: none;
-                    }
-                    .customer-buttons-wrapper::-webkit-scrollbar {
-                        display: none;
-                    }
-                    
-                    /* 모바일 레이아웃 */
-                    @media (max-width: 768px) {
-                        /* 타이틀과 검색창을 세로로 배치 */
-                        #customersTab .card > div:first-child {
-                            flex-direction: column !important;
-                            align-items: stretch !important;
-                            gap: 10px !important;
-                        }
-                        
-                        /* 검색창 전체 너비 */
-                        .customer-search-input {
-                            width: 100% !important;
-                        }
-                        
-                        /* 버튼들 왼쪽 정렬로 변경 (스크롤용) */
-                        .customer-buttons {
-                            justify-content: flex-start !important;
-                        }
-                    }
-                </style>
-                
-                <!-- ⭐ 고객 관리 테이블 (새로운 디자인) -->
-                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <table class="customers-table">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllCustomers()" title="전체 선택">
-                                </th>
-                                <th>No</th>
-                                <th>성명</th>
-                                <th>직함</th>
-                                <th>호칭</th>
-                                <th>회사명</th>
-                                <th>휴대폰</th>
-                                <th>생일</th>
-                                <th>구독상태</th>
-                                <th>그룹</th>
-                                <th>작업</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customersTableBody">
-                            <!-- 고객 데이터가 여기에 렌더링됩니다 -->
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- 페이지네이션 -->
-                <div id="customerListControls"></div>
-            </div>
-        </div>
-
-        <!-- 기념일 자동발송 탭 -->
-        <div id="anniversaryTab" class="tab-content hidden">
-            <!-- 안내 카드 -->
-            <div class="card">
-                <h2>🎂 기념일 자동발송 시스템</h2>
-                <p style="color: #666; margin-bottom: 15px; line-height: 1.6;">
-                    고객의 생일, 기념일, 명절, 24절기 등에 자동으로 메시지를 발송합니다.<br>
-                    📌 <strong style="color: #333;">발송 전날</strong> 자동 알림을 받고, 확인 후 발송됩니다.
-                </p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
-                    <div style="background: #fff3e0; padding: 15px; border-radius: 10px; border-left: 4px solid #FFC107;">
-                        <div style="font-size: 24px; font-weight: bold; color: #e65100;" id="anniversaryTotalCount">0</div>
-                        <div style="font-size: 13px; color: #e65100;">총 등록 기념일</div>
-                    </div>
-                    <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 4px solid #4CAF50;">
-                        <div style="font-size: 24px; font-weight: bold; color: #2e7d32;" id="anniversaryActiveCount">0</div>
-                        <div style="font-size: 13px; color: #2e7d32;">활성 자동발송</div>
-                    </div>
-                    <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; border-left: 4px solid #2196F3;">
-                        <div style="font-size: 24px; font-weight: bold; color: #1565c0;" id="anniversaryUpcomingCount">0</div>
-                        <div style="font-size: 13px; color: #1565c0;">이번 달 예정</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 기념일 등록 카드 -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="margin: 0;">📅 기념일 관리</h2>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="showAnniversaryTemplates()" style="background: rgba(33, 150, 243, 0.8);">📋 템플릿 미리보기</button>
-                        <button class="btn btn-success" onclick="openAnniversaryModal()">+ 기념일 추가</button>
-                    </div>
-                </div>
-                
-                <!-- 필터 -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                    <select id="anniversaryFilter" onchange="renderAnniversaries()" style="padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                        <option value="all">전체 보기</option>
-                        <option value="active">활성 상태</option>
-                        <option value="inactive">비활성 상태</option>
-                        <option value="personal">개인 기념일</option>
-                        <option value="holiday">명절/24절기</option>
-                        <option value="upcoming">다가오는 기념일</option>
-                    </select>
-                    
-                    <input type="text" id="anniversarySearch" placeholder="🔍 검색..." onkeyup="renderAnniversaries()" style="flex: 1; min-width: 200px; padding: 8px 15px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                </div>
-                
-                <!-- 기념일 목록 -->
-                <div id="anniversaryList" style="overflow-x: auto;"></div>
-            </div>
-        </div>
-
-        <!-- 발송 로그 탭 -->
-        <div id="logTab" class="tab-content hidden">
-            <div class="card">
-                <h2>📋 발송 로그</h2>
-                
-                <div class="log-filters">
-                    <select id="logFilter" onchange="renderMessages()">
-                        <option value="all">전체 보기</option>
-                        <option value="success">발송 완료</option>
-                        <option value="scheduled">예약 대기</option>
-                        <option value="failed">발송 실패</option>
-                    </select>
-                    <select id="logSort" onchange="renderMessages()">
-                        <option value="newest">최신순</option>
-                        <option value="oldest">오래된순</option>
-                    </select>
-                </div>
-                
-                <div class="log-table-container" id="logContainer"></div>
-            </div>
-        </div>
-
-        <!-- 템플릿 탭 -->
-        <div id="templateTab" class="tab-content hidden">
-            <div class="card">
-                <h2>📝 템플릿 관리</h2>
-                
-                <div class="form-actions" style="margin-bottom: 20px;">
-                    <button class="btn btn-success" onclick="openTemplateModal()">+ 템플릿 추가</button>
-                </div>
-                
-                <div class="template-grid" id="templateList"></div>
-            </div>
-        </div>
-
-        <!-- 설정 탭 -->
-        <!-- 고객 가져오기 탭 -->
-        <div id="importTab" class="tab-content hidden">
-            <div class="card">
-                <h2>📥 고객 정보 가져오기</h2>
-                
-                <!-- 사용 안내 -->
-                <div class="info-box" style="border-radius: 10px; padding: 15px; margin-bottom: 20px;">
-                    <div style="font-size: 14px; line-height: 1.7; color: #1565c0 !important;">
-                        <strong>📱 가장 쉬운 방법 (권장)</strong><br>
-                        <div style="margin-top: 8px; padding-left: 10px; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 8px; color: #333 !important;">
-                            <strong style="color: #1565c0;">1️⃣ 폰 연락처 앱에서 내보내기</strong><br>
-                            <span style="font-size: 13px;">• 연락처 앱 열기 → 메뉴(⋮) → "연락처 내보내기"<br>
-                            • 또는 "공유" → vCard 파일로 저장<br>
-                            • 전체 선택 또는 원하는 연락처만 선택 가능</span><br><br>
-                            
-                            <strong style="color: #1565c0;">2️⃣ 저장한 파일 불러오기</strong><br>
-                            <span style="font-size: 13px;">• 아래 "📇 폰연락처" 버튼 클릭<br>
-                            • 저장한 .vcf 파일 선택<br>
-                            • <strong>여러 파일 한 번에 선택 가능! ✨</strong></span><br><br>
-                            
-                            <div style="background: #FFF3CD; padding: 8px; border-radius: 5px; border-left: 3px solid #FFB300; margin-top: 8px;">
-                                <strong>💡 팁:</strong> Android Chrome에서는 "📱 연락처 직접선택" 버튼을 사용하면 더 편리합니다!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="import-section" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                    <!-- 휴대폰 연락처 직접 선택 (모바일 전용) -->
-                    <div class="import-btn" id="contactPickerBtn" onclick="pickContacts()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 2px solid #764ba2; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center; color: white;">
-                        <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📱</div>
-                        <div style="font-weight: bold; margin-bottom: 5px;">연락처 직접선택</div>
-                        <div style="font-size: 12px; opacity: 0.9;">Android Chrome 전용</div>
-                    </div>
-                    <div class="import-btn" onclick="document.getElementById('csvFile').click()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
-                        <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📊</div>
-                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">CSV/Excel</div>
-                        <div style="font-size: 12px; color: #666;">파일 업로드</div>
-                    </div>
-                    
-                    <div class="import-btn" onclick="document.getElementById('vcfFile').click()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
-                        <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📇</div>
-                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">폰연락처</div>
-                        <div style="font-size: 12px; color: #666;">vCard (다중선택 가능)</div>
-                    </div>
-                    
-                    <div class="import-btn" onclick="openTextImport()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
-                        <div class="icon" style="font-size: 32px; margin-bottom: 10px;">📝</div>
-                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">텍스트 입력</div>
-                        <div style="font-size: 12px; color: #666;">복사 & 붙여넣기</div>
-                    </div>
-                    
-                    <div class="import-btn" onclick="openManualAdd()" style="background: #f5f5f5; border: 2px solid #ddd; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center;">
-                        <div class="icon" style="font-size: 32px; margin-bottom: 10px;">➕</div>
-                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">직접 추가</div>
-                        <div style="font-size: 12px; color: #666;">한 명씩 입력</div>
-                    </div>
-                </div>
-                
-                <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleCSVUpload(event)">
-                <input type="file" id="vcfFile" accept=".vcf" multiple style="display: none;" onchange="handleVCFUpload(event)">
-            </div>
-            
-            <div class="card">
-                <h2>💬 초대 메시지 설정</h2>
-                <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
-                    공통 URL은 SNS/강의/단체문자에 활용하세요. 개별 URL은 각 고객에게 맞춤 발송할 때 사용합니다.
-                </p>
-                
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">컨설턴트 이름</label>
-                    <input type="text" id="consultantName" placeholder="홍길동" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: #f5f5f5; color: #333; font-size: 14px;">
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">초대 메시지 템플릿</label>
-                    <textarea id="messageTemplate" rows="8" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: #f5f5f5; color: #333; font-size: 14px; font-family: inherit;" placeholder="초대 메시지를 입력하세요">안녕하세요, {이름}님! 👋
-
-KFPC {컨설턴트}입니다.
-
-실시간 재무 정보와 세무 뉴스를 받아보세요!
-
-👉 아래 링크를 클릭하여 구독하세요:
-{초대링크}
-
-언제든지 문의 주세요! 😊</textarea>
-                    <div style="font-size: 12px; color: #666; margin-top: 5px;">사용 가능한 변수: {이름}, {컨설턴트}, {초대링크}</div>
-                </div>
-                
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button onclick="saveMessageTemplate()" style="flex: 1; min-width: 150px; padding: 12px 24px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); border: none; border-radius: 8px; color: white; font-size: 14px; font-weight: bold; cursor: pointer;">💾 설정 저장</button>
-                    <button onclick="copyCommonUrl()" style="flex: 1; min-width: 150px; padding: 12px 24px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 8px; color: white; font-size: 14px; font-weight: bold; cursor: pointer;">📋 공통 URL 복사 (SNS/강의용)</button>
-                    <button onclick="copyCommonMessage()" style="flex: 1; min-width: 150px; padding: 12px 24px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); border: none; border-radius: 8px; color: white; font-size: 14px; font-weight: bold; cursor: pointer;">💬 공통 메시지 복사</button>
-                </div>
-            </div>
-        </div>
-
-
+        <p class="sns-question">
+          고객 소통, 콘텐츠, 후기...<br>
+          모두 이 세 채널에 있지 않나요?
+        </p>
         
-        <div id="settingsTab" class="tab-content hidden">
-            <!-- 컨설턴트 정보 설정 -->
-            <div class="card">
-                <h2>👤 컨설턴트 정보 설정</h2>
-                <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
-                    메시지 템플릿의 <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px; color: #d63384;">{consultant}</code> 변수에 사용될 정보를 설정합니다.
-                </p>
-                
-                <div class="form-group">
-                    <label for="consultantCompany">회사명 (선택)</label>
-                    <input type="text" id="consultantCompany" placeholder="예: KFPC 재무컨설팅" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px;">
-                    <small style="opacity: 0.7;">비워두면 표시되지 않습니다</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="consultantNameSet">성명 <span class="required">*</span></label>
-                    <input type="text" id="consultantNameSet" placeholder="예: 김재무" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px;">
-                </div>
-                
-                <div class="form-group">
-                    <label for="consultantPosition">직함 (선택)</label>
-                    <input type="text" id="consultantPosition" placeholder="예: 대표 컨설턴트" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px;">
-                    <small style="opacity: 0.7;">비워두면 표시되지 않습니다</small>
-                </div>
-                
-                <div class="form-group">
-                    <label>미리보기</label>
-                    <div id="consultantPreview" style="padding: 15px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; line-height: 1.6;">
-                        <strong style="color: #333;">메시지 서명:</strong><br>
-                        <span id="previewText" style="color: #666;">- KFPC 컨설턴트 드림</span>
-                    </div>
-                </div>
-                
-                <button class="btn btn-primary" onclick="saveConsultantInfo()">💾 저장</button>
-            </div>
-
-            <div class="card">
-                <h2>⚙️ 시스템 설정</h2>
-                
-                <div class="form-group">
-                    <label>푸시 알림 상태</label>
-                    <div id="pushStatus" style="padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                        확인 중...
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>데이터 동기화</label>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" onclick="syncAllData()">전체 동기화</button>
-                        <button class="btn btn-secondary" onclick="backupData()">백업 생성</button>
-                    </div>
-                    <small>마지막 동기화: <span id="lastSync">-</span></small>
-                </div>
-                
-                <div class="form-group">
-                    <label>조용한 시간 설정</label>
-                    <small>설정한 시간대에는 예약 발송이 자동으로 지연됩니다</small>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                        <div>
-                            <label style="font-size: 12px;">시작 시각</label>
-                            <input type="time" id="quietHoursStart" value="21:00">
-                        </div>
-                        <div>
-                            <label style="font-size: 12px;">종료 시각</label>
-                            <input type="time" id="quietHoursEnd" value="08:00">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>데이터 관리</label>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-secondary" onclick="clearCache()">캐시 삭제</button>
-                        <button class="btn btn-danger" onclick="resetAllData()">전체 초기화</button>
-                    </div>
-                </div>
-            </div>
-
-            
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="margin: 0;">👥 초대 고객 목록</h2>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                        <input type="text" id="inviteSearchInput" placeholder="🔍 검색..." onkeyup="renderInviteCustomers()" style="padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
-                        <span id="inviteSelectionInfo" style="color: #FFD700; font-weight: bold; font-size: 13px;">0명 선택됨</span>
-                        <button onclick="copySelectedURLs()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
-                            <span>📋</span><span>선택 URL 복사</span>
-                        </button>
-                        <button onclick="copySelectedMessages()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
-                            <span>💬</span><span>선택 메시지 복사</span>
-                        </button>
-                        <button onclick="sendSelectedToPhone()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #FEE500 0%, #FFD700 100%); border: none; border-radius: 8px; color: #3C1E1E; font-size: 13px; cursor: pointer; font-weight: bold;">
-                            <span>📱</span><span>선택 전송</span>
-                        </button>
-                        <button onclick="sendAllToPhone()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
-                            <span>📲</span><span>전체 전송</span>
-                        </button>
-                        <button onclick="exportInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: rgba(100, 181, 246, 0.8); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
-                            <span>📥</span><span>CSV 백업</span>
-                        </button>
-                        <button onclick="exportToVCard()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border: none; border-radius: 8px; color: white; font-size: 13px; cursor: pointer; font-weight: bold;">
-                            <span>📱</span><span>연락처 내보내기</span>
-                        </button>
-                        <button onclick="deleteSelectedInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%); border: none; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);">
-                            <span>✅</span><span>선택 삭제</span>
-                        </button>
-                        <button onclick="clearAllInviteCustomers()" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 16px; background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%); border: none; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);">
-                            <span>🗑️</span><span>일괄 삭제</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: rgba(255, 255, 255, 0.1); border-bottom: 2px solid rgba(255, 255, 255, 0.2);">
-                                <th style="padding: 12px; text-align: center; font-size: 13px; width: 40px;">
-                                    <input type="checkbox" id="inviteSelectAll" onclick="toggleInviteSelectAll()" style="cursor: pointer;">
-                                </th>
-                                <th style="padding: 12px; text-align: left; font-size: 13px;">이름</th>
-                                <th style="padding: 12px; text-align: left; font-size: 13px;">전화번호</th>
-                                <th style="padding: 12px; text-align: left; font-size: 13px;">회사</th>
-                                <th style="padding: 12px; text-align: left; font-size: 13px;">직함</th>
-                                <th style="padding: 12px; text-align: center; font-size: 13px;">상태</th>
-                                <th style="padding: 12px; text-align: center; font-size: 13px;">초대</th>
-                                <th style="padding: 12px; text-align: center; font-size: 13px;">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inviteCustomerTableBody" style="font-size: 14px;">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px; opacity: 0.7;">
-                                    아직 등록된 고객이 없습니다.<br>위에서 고객을 불러오세요.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div style="font-size: 14px; opacity: 0.9;">
-                        <span style="display: inline-block; margin-right: 15px;">
-                            <span style="font-weight: bold; color: #FFD700;">전체:</span> 
-                            <span id="inviteTotalCustomers" style="font-size: 18px; font-weight: bold;">0</span>명
-                        </span>
-                        <span style="display: inline-block; margin-right: 15px;">
-                            <span style="font-weight: bold; color: #64B5F6;">발송:</span> 
-                            <span id="inviteSentCount" style="font-size: 18px; font-weight: bold;">0</span>명
-                        </span>
-                        <span style="display: inline-block;">
-                            <span style="font-weight: bold; color: #81C784;">구독:</span> 
-                            <span id="inviteSubscribedCount" style="font-size: 18px; font-weight: bold;">0</span>명
-                        </span>
-                    </div>
-                </div>
-            </div>
-
+        <div class="sns-warning">
+          <h3>😱 이런 일은 예고 없이 찾아옵니다</h3>
+          <ul class="sns-danger-list">
+            <li>• 계정 해킹 <span class="danger-note">(매일 발생)</span></li>
+            <li>• 정책 위반 정지 <span class="danger-note">(예고 없음)</span></li>
+            <li>• 실수로 삭제 <span class="danger-note">(복구 불가)</span></li>
+          </ul>
+          <p class="sns-result">→ 수년간 쌓은 자산이 한순간에 증발!</p>
         </div>
-
-        <!-- 템플릿 모달 -->
-        <div id="templateModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>📝 템플릿 추가</h2>
-                    <button class="modal-close" onclick="closeTemplateModal()">×</button>
-                </div>
-                
-                <form id="templateForm" onsubmit="saveTemplate(event)">
-                    <div class="form-group">
-                        <label for="templateName">템플릿 이름 <span class="required">*</span></label>
-                        <input type="text" id="templateName" required maxlength="50" placeholder="예: 신제품 안내">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="templateTitle">제목 <span class="required">*</span></label>
-                        <input type="text" id="templateTitle" required maxlength="100">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="templateBody">내용 <span class="required">*</span></label>
-                        <textarea id="templateBody" required maxlength="500"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="templateLink">🔗 링크 URL (선택)</label>
-                        <input type="url" id="templateLink" placeholder="https://example.com" maxlength="500">
-                        <small>알림 클릭 시 이동할 페이지</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="templateImage">
-                            🖼️ 이미지 URL (선택)
-                            <button type="button" onclick="openImageGuideModal()" style="margin-left: 8px; padding: 4px 12px; background: rgba(255,152,0,0.8); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 12px; font-weight: 500;">
-                                📖 이미지URL만들기
-                            </button>
-                        </label>
-                        <input type="url" id="templateImage" placeholder="https://example.com/image.jpg" maxlength="500">
-                        <small>알림에 표시할 이미지</small>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeTemplateModal()">취소</button>
-                        <button type="submit" class="btn btn-primary">저장</button>
-                    </div>
-                </form>
-            </div>
+        
+        <div class="sns-solution">
+          <h3>✅ 5분 백업으로 평생 안심</h3>
+          <ul class="sns-feature-list">
+            <li>🔹 3개 채널 자동 백업</li>
+            <li>🔹 Google Drive 안전 보관</li>
+            <li>🔹 무료 (15GB 제공)</li>
+          </ul>
         </div>
+      </div>
+      <div class="sns-modal-footer">
+        <button class="sns-btn-start" onclick="startSNSBackup()">지금 바로 백업하세요! 🚀</button>
+        <button class="sns-btn-close" onclick="closeSNSBackupPopup()">닫기</button>
+      </div>
+    </div>
+  </div>
 
-        <!-- 고객 추가/수정 모달 -->
-        <div id="customerModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="customerModalTitle">👤 고객 추가</h2>
-                    <button class="modal-close" onclick="closeCustomerModal()">×</button>
-                </div>
-                
-                <form id="customerForm" onsubmit="saveCustomer(event)">
-                    <input type="hidden" id="customerId">
-                    
-                    <div class="form-group">
-                        <label for="customerName">이름 <span class="required">*</span></label>
-                        <input type="text" id="customerName" required maxlength="50" oninput="updateNamePreview()">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerCompany">회사</label>
-                        <input type="text" id="customerCompany" maxlength="100">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerPosition">직함</label>
-                        <input type="text" id="customerPosition" maxlength="50" placeholder="예: 과장, 대표, 팀장" oninput="updateNamePreview()">
-                    </div>
-                    
-                    <!-- 호칭 설정 섹션 -->
-                    <div class="form-group" style="background: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(255, 215, 0, 0.3);">
-                        <label style="color: #FFD700; font-weight: bold;">
-                            💬 호칭 설정 
-                            <span style="color: #FFD700; font-size: 12px; font-weight: normal; opacity: 0.9;">⭐ NEW!</span>
-                        </label>
-                        <small style="display: block; margin-bottom: 12px; color: #FFD700; opacity: 0.9;">
-                            💡 메시지 발송 시 {name} 변수에 자동으로 적용됩니다
-                        </small>
-                        
-                        <!-- 직함 포함 설정 -->
-                        <div style="margin-bottom: 10px;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
-                                <input type="checkbox" id="usePosition" style="width: 18px; height: 18px; cursor: pointer;" onchange="updateNamePreview()">
-                                <span>메시지에 직함 포함</span>
-                            </label>
-                            <small style="display: block; margin-left: 26px; opacity: 0.7;">
-                                체크 시: "홍길동 과장" / 미체크 시: "홍길동"
-                            </small>
-                        </div>
-                        
-                        <!-- 호칭 입력 -->
-                        <div style="margin-bottom: 10px;">
-                            <input type="text" 
-                                   id="customerHonorific" 
-                                   placeholder="호칭 입력 (예: 님, 씨, 선생님, 형, 누나)"
-                                   maxlength="10"
-                                   oninput="updateNamePreview()"
-                                   style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; margin-bottom: 8px;">
-                            
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
-                                <input type="checkbox" id="useHonorific" style="width: 18px; height: 18px; cursor: pointer;" onchange="updateNamePreview()">
-                                <span>메시지에 호칭 포함</span>
-                            </label>
-                        </div>
-                        
-                        <!-- 실시간 미리보기 -->
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-top: 10px;">
-                            <small style="opacity: 0.7; display: block; margin-bottom: 5px;">📝 발송명 미리보기:</small>
-                            <div id="namePreview" style="font-weight: bold; color: #FFD700; font-size: 15px;">
-                                이름을 입력하세요
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerPhone">연락처</label>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="text" value="010" readonly style="width: 60px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); color: white; font-size: 14px; text-align: center;">
-                            <span style="color: white;">-</span>
-                            <input type="tel" id="customerPhone1" maxlength="4" placeholder="1234" style="width: 80px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; text-align: center;" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length === 4) document.getElementById('customerPhone2').focus();">
-                            <span style="color: white;">-</span>
-                            <input type="tel" id="customerPhone2" maxlength="4" placeholder="5678" style="width: 80px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; text-align: center;" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
-                        </div>
-                        <input type="hidden" id="customerPhone">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerEmail">이메일</label>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="text" id="customerEmailId" placeholder="이메일 ID" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px;">
-                            <span style="color: white;">@</span>
-                            <select id="customerEmailDomain" onchange="toggleCustomEmailDomain()" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px;">
-                                <option value="">선택</option>
-                                <option value="gmail.com">gmail.com</option>
-                                <option value="naver.com">naver.com</option>
-                                <option value="daum.net">daum.net</option>
-                                <option value="hanmail.net">hanmail.net</option>
-                                <option value="kakao.com">kakao.com</option>
-                                <option value="nate.com">nate.com</option>
-                                <option value="__custom__">직접 입력</option>
-                            </select>
-                        </div>
-                        <input type="text" id="customEmailDomain" placeholder="도메인을 입력하세요 (예: company.com)" style="display: none; margin-top: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
-                        <input type="hidden" id="customerEmail">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerBirth">생일</label>
-                        <input type="date" id="customerBirth">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerAnniversary">기념일</label>
-                        <input type="date" id="customerAnniversary">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editGroup">그룹 👥</label>
-                        <select id="editGroup" onchange="toggleCustomGroupInput()" style="padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
-                            <option value="">그룹 없음</option>
-                            <option value="__custom__">➕ 직접 입력</option>
-                        </select>
-                        <input type="text" id="customGroupInput" placeholder="새 그룹명을 입력하세요" style="display: none; margin-top: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
-                        <small style="opacity: 0.7;">그룹별로 고객을 관리하고 일괄 발송할 수 있습니다</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerTags">태그</label>
-                        <input type="text" id="customerTags" placeholder="VIP, 법인, 재방문 (쉼표로 구분)">
-                        <small>쉼표(,)로 구분하여 여러 태그를 입력하세요</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customerMemo">메모</label>
-                        <textarea id="customerMemo" maxlength="500" style="min-height: 80px;"></textarea>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeCustomerModal()">취소</button>
-                        <button type="submit" class="btn btn-primary">저장</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 로딩 인디케이터 -->
-        <div class="loading" id="loadingIndicator">
-            <div class="spinner"></div>
-            <div>처리 중...</div>
-        </div>
+  <script>
+    // 전역 변수
+    const elLoading = document.getElementById('loadingScreen');
+    const elLoadingText = document.getElementById('loadingText');
+    const elLoadingDetails = document.getElementById('loadingDetails');
+    const elMainContent = document.getElementById('mainContent');
+    const elNotice = document.getElementById('driveNotice');
+    const elWelcome = document.getElementById('welcomeTitle');
     
-
-    <!-- 기념일 추가/수정 모달 -->
-    <div id="anniversaryModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2 id="anniversaryModalTitle">📅 기념일 추가</h2>
-                <button class="modal-close" onclick="closeAnniversaryModal()">×</button>
-            </div>
-            
-            <form id="anniversaryForm" onsubmit="saveAnniversary(event)">
-                <input type="hidden" id="anniversaryId">
-                
-                <!-- 고객 선택 -->
-                <div class="form-group">
-                    <label for="anniversaryCustomer">고객 선택 <span class="required">*</span></label>
-                    <select id="anniversaryCustomer" required style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                        <option value="">선택하세요</option>
-                    </select>
-                </div>
-                
-                <!-- 기념일 유형 -->
-                <div class="form-group">
-                    <label for="anniversaryType">기념일 유형 <span class="required">*</span></label>
-                    <select id="anniversaryType" required onchange="updateAnniversaryForm()" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                        <optgroup label="개인 기념일">
-                            <option value="birthday">🎂 생일</option>
-                            <option value="wedding">💒 결혼기념일</option>
-                            <option value="company">🏢 회사 창립일</option>
-                            <option value="custom">📅 기타 기념일</option>
-                        </optgroup>
-                        <optgroup label="일회성 이벤트">
-                            <option value="promotion">🎉 승진</option>
-                            <option value="admission">🎓 입학</option>
-                            <option value="pass">✅ 합격</option>
-                            <option value="moving">🏠 이사</option>
-                            <option value="opening">🎊 개업</option>
-                        </optgroup>
-                        <optgroup label="명절 (음력 자동변환)">
-                            <option value="lunar-new-year">🧧 설날 (구정)</option>
-                            <option value="chuseok">🌕 추석</option>
-                        </optgroup>
-                        <optgroup label="기타 명절">
-                            <option value="christmas">🎄 크리스마스</option>
-                            <option value="new-year">🎆 신정 (양력설)</option>
-                        </optgroup>
-                        <optgroup label="24절기 (자동계산)">
-                            <option value="solar-ipchun">🌱 입춘</option>
-                            <option value="solar-chunbun">🌸 춘분</option>
-                            <option value="solar-ipha">☀️ 입하</option>
-                            <option value="solar-haaji">🌞 하지</option>
-                            <option value="solar-ipchu">🍂 입추</option>
-                            <option value="solar-chubun">🍁 추분</option>
-                            <option value="solar-ipdong">❄️ 입동</option>
-                            <option value="solar-dongji">⛄ 동지</option>
-                        </optgroup>
-                    </select>
-                </div>
-                
-                <!-- 날짜 입력 (개인 기념일용) -->
-                <div class="form-group" id="anniversaryDateGroup">
-                    <label for="anniversaryDate">날짜 <span class="required">*</span></label>
-                    <input type="date" id="anniversaryDate" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                    <small id="anniversaryDateHint">개인 기념일의 경우 날짜를 선택하세요</small>
-                </div>
-                
-                <!-- 발송 설정 -->
-                <div class="form-group">
-                    <label>발송 타이밍 <span class="required">*</span></label>
-                    <div style="display: flex; gap: 20px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="radio" name="anniversaryTiming" value="before" checked>
-                            <span>전날 발송 (D-1)</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="radio" name="anniversaryTiming" value="same">
-                            <span>당일 발송 (D-day)</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- 발송 시간 -->
-                <div class="form-group">
-                    <label for="anniversarySendTime">발송 시간 <span class="required">*</span></label>
-                    <input type="time" id="anniversarySendTime" value="09:00" required style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                    <small>기념일 메시지를 발송할 시간을 설정하세요</small>
-                </div>
-                
-                <!-- 반복 설정 -->
-                <div class="form-group" id="anniversaryRepeatGroup">
-                    <label>반복 설정 <span class="required">*</span></label>
-                    <div style="display: flex; gap: 20px; margin-bottom: 10px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="radio" name="anniversaryRepeat" value="once" checked onchange="toggleRepeatEnd()">
-                            <span>1회만 발송</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="radio" name="anniversaryRepeat" value="yearly" onchange="toggleRepeatEnd()">
-                            <span>매년 반복</span>
-                        </label>
-                    </div>
-                    
-                    <!-- 반복 종료일 -->
-                    <div id="repeatEndGroup" style="display: none; margin-top: 10px;">
-                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                            <input type="checkbox" id="repeatUnlimited" onchange="toggleRepeatEndDate()">
-                            <span>무제한 반복</span>
-                        </label>
-                        <div id="repeatEndDateGroup">
-                            <label style="font-size: 13px; margin-bottom: 5px; display: block;">반복 종료일</label>
-                            <input type="date" id="repeatEndDate" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                            <small>이 날짜 이후에는 자동 발송되지 않습니다</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 메시지 템플릿 선택 -->
-                <div class="form-group">
-                    <label for="anniversaryTemplate">메시지 템플릿 <span class="required">*</span></label>
-                    <select id="anniversaryTemplate" required onchange="loadAnniversaryTemplate()" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                        <option value="">템플릿을 선택하세요</option>
-                    </select>
-                </div>
-                
-                <!-- 제목 -->
-                <div class="form-group">
-                    <label for="anniversaryTitle">제목 <span class="required">*</span></label>
-                    <input type="text" id="anniversaryTitle" required maxlength="100" placeholder="{honorific}, 생일을 축하드립니다!" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                </div>
-                
-                <!-- 내용 -->
-                <div class="form-group">
-                    <label for="anniversaryContent">내용 <span class="required">*</span></label>
-                    <textarea id="anniversaryContent" required maxlength="500" rows="6" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); font-family: inherit;"></textarea>
-                    <small>변수: {honorific}, {name}, {company}, {position}</small>
-                </div>
-                
-                <!-- 링크 URL -->
-                <div class="form-group">
-                    <label for="anniversaryLink">🔗 링크 URL (선택)</label>
-                    <input type="url" id="anniversaryLink" placeholder="https://example.com" maxlength="500" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                    <small>알림 클릭 시 이동할 페이지</small>
-                </div>
-                
-                <!-- 이미지 URL -->
-                <div class="form-group">
-                    <label for="anniversaryImage">
-                        🖼️ 이미지 URL (선택)
-                        <button type="button" onclick="openImageGuideModal()" style="margin-left: 8px; padding: 4px 12px; background: rgba(255,152,0,0.8); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 12px; font-weight: 500;">
-                            📖 이미지URL만들기
-                        </button>
-                    </label>
-                    <input type="url" id="anniversaryImage" placeholder="https://example.com/image.jpg" maxlength="500" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                    <small>알림에 표시할 이미지</small>
-                </div>
-                
-                <!-- 활성화 상태 -->
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="anniversaryActive" checked>
-                        <span>자동 발송 활성화</span>
-                    </label>
-                    <small>비활성화하면 발송되지 않습니다</small>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeAnniversaryModal()">취소</button>
-                    <button type="submit" class="btn btn-primary">저장</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 고객 수정 모달 -->
-    <div id="editCustomerModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>✏️ 고객 정보 수정</h2>
-                <button class="modal-close" onclick="closeModal('editCustomerModal')">×</button>
-            </div>
-            
-            <input type="hidden" id="editCustomerId">
-            
-            <div class="form-group">
-                <label>이름 *</label>
-                <input type="text" id="editName" required>
-            </div>
-            
-            <div class="form-group">
-                <label>전화번호 *</label>
-                <input type="text" id="editPhone" required>
-            </div>
-            
-            <div class="form-group">
-                <label>회사</label>
-                <input type="text" id="editCompany">
-            </div>
-            
-            <div class="form-group">
-                <label>직함</label>
-                <input type="text" id="editPosition">
-            </div>
-            
-            <div class="form-group">
-                <label>이메일</label>
-                <input type="email" id="editEmail">
-            </div>
-            
-            <div class="form-group">
-                <label>호칭 유형 ⭐</label>
-                <select id="editHonorific" style="padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
-                    <option value="님">이름 + 님 (홍길동님)</option>
-                    <option value="직함님">직함 + 님 (과장님)</option>
-                    <option value="고객님">이름 + 고객님 (홍길동 고객님)</option>
-                    <option value="씨">이름 + 씨 (홍길동씨)</option>
-                    <option value="아야">이름 + 아/야 (길동아)</option>
-                    <option value="이름만">이름만 (홍길동)</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>그룹 👥</label>
-                <select id="editGroup" style="padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 14px; width: 100%;">
-                    <option value="">그룹 없음</option>
-                </select>
-                <small style="opacity: 0.7;">그룹별로 고객을 관리하고 일괄 발송할 수 있습니다</small>
-            </div>
-            
-            <button class="btn-primary" onclick="saveEditedCustomer()">✅ 저장</button>
-        </div>
-    </div>
-</div>
-
-    <!-- 기념일 템플릿 미리보기 모달 -->
-    <div id="anniversaryTemplatesModal" class="modal">
-        <div class="modal-content" style="max-width: 900px; max-height: 80vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2 style="font-size: clamp(1rem, 4vw, 1.5rem); white-space: nowrap;">📋 기념일 메시지 템플릿</h2>
-                <button class="modal-close" onclick="closeAnniversaryTemplatesModal()">×</button>
-            </div>
-            
-            <div class="warning-box" style="border-radius: 10px; padding: 15px; margin-bottom: 20px;">
-                <div style="font-size: 14px; line-height: 1.6; color: #e65100 !important;">
-                    💡 <strong>사용 가능한 변수:</strong><br>
-                    • <code>{honorific}</code> - 호칭 (홍길동님, 과장님 등)<br>
-                    • <code>{name}</code> - 이름<br>
-                    • <code>{position}</code> - 직함<br>
-                    • <code>{company}</code> - 회사명<br>
-                    • <code>{consultant}</code> - 컨설턴트 서명
-                </div>
-            </div>
-            
-            <div id="templatePreviewList" style="display: grid; gap: 15px;">
-                <!-- 템플릿 목록이 여기에 표시됩니다 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 사용 가이드 모달 -->
-    <div id="guideModal" class="modal">
-        <div class="modal-content" style="max-width: min(95vw, 900px); max-height: 85vh; overflow-y: auto; width: 95%; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) rgba(0,0,0,0.2);">
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); margin: -20px -20px 20px -20px; padding: 20px; border-radius: 15px 15px 0 0;">
-                <h2 style="font-size: clamp(1.1rem, 5vw, 1.8rem); line-height: 1.3; color: #FFFFFF; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">📖 웹푸시 발송시스템 사용 가이드</h2>
-                <button class="modal-close" onclick="closeGuideModal()" style="position: absolute; right: 15px; top: 15px; width: 36px; height: 36px; font-size: 28px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.3);">×</button>
-            </div>
-            
-            <div class="guide-content" style="padding: 5px 10px;">
-                <!-- 최상단 버튼 안내 -->
-                <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%); border-radius: 12px; padding: 12px 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: #FFF59D; margin-bottom: 12px; font-size: clamp(1rem, 4vw, 1.3rem);">🔝 최상단 버튼 안내</h3>
-                    
-                    <div style="display: grid; gap: 10px;">
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #4CAF50;">
-                            <div style="font-weight: bold; color: #FFF59D; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">🏠 Main 버튼</div>
-                            <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">메인 페이지(index.html)로 돌아갑니다.</div>
-                        </div>
-                        
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #667eea;">
-                            <div style="font-weight: bold; color: #FFF59D; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">🔔 알림 버튼</div>
-                            <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                브라우저의 <strong>웹푸시 알림 권한</strong>을 요청합니다.<br>
-                                • 클릭하면 브라우저에서 알림 허용 팝업이 나타납니다<br>
-                                • 반드시 "허용"을 선택해야 웹푸시를 받을 수 있습니다<br>
-                                • 허용 후 버튼이 "✅ 알림 활성화됨"으로 변경됩니다
-                            </div>
-                        </div>
-                        
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #4CAF50;">
-                            <div style="font-weight: bold; color: #FFF59D; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">📁 Drive 버튼</div>
-                            <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                Google Drive에 연결하여 데이터를 클라우드에 저장합니다.<br>
-                                • 초기 1회 Google 로그인이 필요합니다<br>
-                                • 연결 후 자동으로 데이터가 동기화됩니다
-                            </div>
-                        </div>
-                        
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #FFA500;">
-                            <div style="font-weight: bold; color: #FFF59D; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">📥 불러오기 버튼</div>
-                            <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">Drive에 저장된 모든 데이터를 불러옵니다.</div>
-                        </div>
-                        
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #FFA500;">
-                            <div style="font-weight: bold; color: #FFF59D; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">💾 저장하기 버튼</div>
-                            <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">현재 작업 중인 모든 데이터를 Drive에 저장합니다.</div>
-                        </div>
-                        
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #f093fb;">
-                            <div style="font-weight: bold; color: #FFF59D; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.1rem);">📖 가이드 버튼</div>
-                            <div style="line-height: 1.5; font-size: clamp(0.85rem, 3vw, 1rem);">현재 보고 계신 이 사용 가이드를 표시합니다.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 기본 사용 흐름 -->
-                <div style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(69, 160, 73, 0.2) 100%); border-radius: 12px; padding: 12px 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: #FFF59D; margin-bottom: 12px; font-size: clamp(1rem, 4vw, 1.3rem);">🚀 기본 사용 흐름</h3>
-                    
-                    <div style="background: rgba(0,0,0,0.3); padding: 12px 15px; border-radius: 8px;">
-                        <div style="display: flex; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
-                            <div style="background: #4CAF50; min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">1</div>
-                            <div style="flex: 1; font-size: clamp(0.85rem, 3vw, 1rem); line-height: 1.5;">
-                                <strong style="color: #FFF59D;">초기 설정</strong><br>
-                                • 🔔 알림 버튼 클릭 → 알림 권한 허용<br>
-                                • 📁 Drive 버튼 클릭 → Google 계정 연결
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
-                            <div style="background: #4CAF50; min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">2</div>
-                            <div style="flex: 1; font-size: clamp(0.85rem, 3vw, 1rem); line-height: 1.5;">
-                                <strong style="color: #FFF59D;">고객 관리</strong><br>
-                                • 📇 고객 관리 탭에서 고객 추가<br>
-                                • 고객 정보 입력 (이름, 연락처, 회사, 직함 등)
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
-                            <div style="background: #4CAF50; min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">3</div>
-                            <div style="flex: 1; font-size: clamp(0.85rem, 3vw, 1rem); line-height: 1.5;">
-                                <strong style="color: #FFF59D;">메시지 발송</strong><br>
-                                • 💌 메시지 발송 탭 선택<br>
-                                • 수신자 선택 → 제목/내용 작성 → 발송
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
-                            <div style="background: #4CAF50; min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">4</div>
-                            <div style="flex: 1; font-size: clamp(0.85rem, 3vw, 1rem); line-height: 1.5;">
-                                <strong style="color: #FFF59D;">기념일 설정</strong><br>
-                                • 🎂 기념일 관리 탭에서 고객별 기념일 등록<br>
-                                • 생일, 결혼기념일, 명절 등 자동 발송 설정
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: flex-start; gap: 8px;">
-                            <div style="background: #4CAF50; min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">5</div>
-                            <div style="flex: 1; font-size: clamp(0.85rem, 3vw, 1rem); line-height: 1.5;">
-                                <strong style="color: #FFF59D;">예약 관리</strong><br>
-                                • 📅 예약 관리 탭에서 예약 메시지 확인<br>
-                                • 사전 승인 후 자동 발송
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 주요 기능 설명 -->
-                <div style="background: linear-gradient(135deg, rgba(255, 165, 0, 0.2) 0%, rgba(255, 140, 0, 0.2) 100%); border-radius: 12px; padding: 12px 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: #FFF59D; margin-bottom: 12px; font-size: clamp(1rem, 4vw, 1.3rem);">⭐ 주요 기능 설명</h3>
-                    
-                    <div style="display: grid; gap: 10px;">
-                        <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer;">
-                            <summary style="font-weight: bold; color: #FFF59D; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">📇 고객 관리</summary>
-                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.6; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                • <strong>고객 추가:</strong> 직접 입력, 텍스트 가져오기, 연락처 파일(VCF) 가져오기<br>
-                                • <strong>고객 정보:</strong> 이름, 전화번호, 회사, 직함, 이메일, 태그, 메모<br>
-                                • <strong>호칭 설정:</strong> 님, 직함님, 고객님, 씨, 아/야, 이름만 중 선택<br>
-                                • <strong>검색 기능:</strong> 이름, 회사, 직함, 태그로 빠른 검색<br>
-                                • <strong>고객 수정/삭제:</strong> 카드 클릭 후 편집 가능
-                            </div>
-                        </details>
-                        
-                        <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer;">
-                            <summary style="font-weight: bold; color: #FFF59D; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">💌 메시지 발송</summary>
-                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.6; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                • <strong>즉시 발송:</strong> 선택한 고객에게 바로 메시지 발송<br>
-                                • <strong>예약 발송:</strong> 날짜와 시간을 지정하여 예약<br>
-                                • <strong>수신자 선택:</strong> 체크박스로 다중 선택 가능<br>
-                                • <strong>개인화:</strong> {honorific}, {name}, {company} 등 변수 사용<br>
-                                • <strong>템플릿:</strong> 자주 쓰는 메시지를 템플릿으로 저장
-                            </div>
-                        </details>
-                        
-                        <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer;">
-                            <summary style="font-weight: bold; color: #FFF59D; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">🎂 기념일 관리</summary>
-                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.6; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                • <strong>자동 발송:</strong> 기념일에 자동으로 축하 메시지 발송<br>
-                                • <strong>기념일 종류:</strong> 생일, 결혼기념일, 입사기념일, 명절, 24절기 등<br>
-                                • <strong>전일 알림:</strong> 기념일 하루 전에 미리 알림<br>
-                                • <strong>템플릿:</strong> 각 기념일별 기본 메시지 템플릿 제공<br>
-                                • <strong>개인화:</strong> 고객 정보로 자동 치환
-                            </div>
-                        </details>
-                        
-                        <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer;">
-                            <summary style="font-weight: bold; color: #FFF59D; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">📅 예약 관리</summary>
-                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.6; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                • <strong>사전 확인:</strong> 발송 전 메시지 내용 확인<br>
-                                • <strong>승인 시스템:</strong> 관리자 승인 후 자동 발송<br>
-                                • <strong>상태 관리:</strong> 대기/승인/발송/취소 상태 표시<br>
-                                • <strong>수정 가능:</strong> 발송 전까지 내용 수정 가능<br>
-                                • <strong>취소 기능:</strong> 필요시 예약 취소
-                            </div>
-                        </details>
-                        
-                        <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer;">
-                            <summary style="font-weight: bold; color: #FFF59D; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">📊 발송 기록</summary>
-                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.6; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                • <strong>전체 기록:</strong> 발송한 모든 메시지 이력 확인<br>
-                                • <strong>상세 정보:</strong> 수신자, 제목, 내용, 발송 시간<br>
-                                • <strong>검색 기능:</strong> 고객명으로 기록 검색<br>
-                                • <strong>통계:</strong> 총 발송 건수 실시간 확인
-                            </div>
-                        </details>
-                        
-                        <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer;">
-                            <summary style="font-weight: bold; color: #FFF59D; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">👥 고객 초대</summary>
-                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.6; font-size: clamp(0.85rem, 3vw, 1rem);">
-                                • <strong>공통 초대 URL:</strong> SNS/강의/단체문자용 공통 구독 링크<br>
-                                • <strong>개별 초대 링크:</strong> 각 고객별 맞춤 구독 링크<br>
-                                • <strong>초대 메시지:</strong> URL 포함된 완성 메시지 복사<br>
-                                • <strong>구독 관리:</strong> 구독 상태 실시간 확인
-                            </div>
-                        </details>
-                    </div>
-                </div>
-
-                <!-- 팁 & 주의사항 -->
-                <div style="background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(238, 90, 82, 0.2) 100%); border-radius: 12px; padding: 12px 15px; border: 1px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: #FFF59D; margin-bottom: 12px; font-size: clamp(1rem, 4vw, 1.3rem);">💡 실전 활용 꿀팁 모음</h3>
-                    
-                    <!-- 고객 초대 완전 가이드 -->
-                    <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;" open>
-                        <summary style="font-weight: bold; color: #4CAF50; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">👥 고객 초대 시스템 200% 활용하기</summary>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.7; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            <strong style="color: #FFF59D;">📢 공통 URL (SNS/강의/단체문자용)</strong><br>
-                            • 사용 시기: 세미나, SNS 게시물, 단체문자 발송 시<br>
-                            • 특징: 간단한 URL, 컨설턴트명만 포함<br>
-                            • 복사 방법: "💬 초대 메시지 설정" → "📋 공통 URL 복사"<br>
-                            • 예시: https://도메인/subscribe.html?c=홍길동<br>
-                            <br>
-                            <strong style="color: #FFF59D;">👤 개별 URL (1:1 맞춤 발송용)</strong><br>
-                            • 사용 시기: 고객별 개인화 발송 (카톡, 문자, 이메일)<br>
-                            • 특징: 고객 이름과 ID 포함, 구독 후 자동 체크<br>
-                            • 복사 방법: 고객 테이블 → "📋 URL" 또는 "💬 메시지" 버튼<br>
-                            • 장점: 누가 구독했는지 자동 추적 가능<br>
-                            <br>
-                            <strong style="color: #FF6B6B;">💡 Pro 팁</strong><br>
-                            • 고객 관리 탭에서 엑셀/연락처 일괄 불러오기 후<br>
-                            • 체크박스로 여러 명 선택 → "선택 복사" 버튼으로<br>
-                            • 모든 고객의 메시지를 한 번에 복사하세요!<br>
-                            • 그 후 카톡/문자로 한 명씩 발송하면 효율적입니다
-                        </div>
-                    </details>
-                    
-                    <!-- 메시지 변수 마스터 -->
-                    <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
-                        <summary style="font-weight: bold; color: #4CAF50; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">✏️ 메시지 변수로 전문가처럼 개인화하기</summary>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.7; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            <strong style="color: #FFF59D;">필수 변수 활용법</strong><br>
-                            • <strong>{honorific}</strong> - 자동 호칭 (김대표님, 이부장님, 박사장님)<br>
-                            • <strong>{name}</strong> - 고객 이름만 (홍길동)<br>
-                            • <strong>{position}</strong> - 직함 (대표이사, 부장, 과장)<br>
-                            • <strong>{company}</strong> - 회사명 (ABC기업)<br>
-                            • <strong>{consultant}</strong> - 컨설턴트 이름<br>
-                            <br>
-                            <strong style="color: #FFF59D;">호칭 설정 6가지 옵션</strong><br>
-                            • <strong>님</strong> - 홍길동님 (가장 무난)<br>
-                            • <strong>직함님</strong> - 대표님, 부장님 (비즈니스 격식)<br>
-                            • <strong>고객님</strong> - 홍길동 고객님 (서비스업)<br>
-                            • <strong>씨</strong> - 홍길동씨 (동년배 친근함)<br>
-                            • <strong>아/야</strong> - 길동아 (친구같은 관계)<br>
-                            • <strong>이름만</strong> - 홍길동 (매우 친밀)<br>
-                            <br>
-                            <strong style="color: #FF6B6B;">💡 Pro 팁</strong><br>
-                            • 고객별로 호칭을 다르게 설정하세요!<br>
-                            • CEO는 "직함님", 지인은 "씨" 이런 식으로<br>
-                            • {honorific} 하나로 모든 상황 대응 가능합니다
-                        </div>
-                    </details>
-                    
-                    <!-- 기념일 자동화 전략 -->
-                    <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
-                        <summary style="font-weight: bold; color: #4CAF50; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">🎂 기념일 자동화로 고객 감동시키기</summary>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.7; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            <strong style="color: #FFF59D;">추천 기념일 세팅 루틴</strong><br>
-                            <strong>1단계:</strong> 고객 추가할 때 생일은 꼭 입력<br>
-                            <strong>2단계:</strong> 🎂 기념일 관리에서 자동 발송 ON<br>
-                            <strong>3단계:</strong> 발송 시각을 오전 9시로 설정 (출근 시간)<br>
-                            <strong>4단계:</strong> 전일 알림 ON으로 하루 전 확인<br>
-                            <br>
-                            <strong style="color: #FFF59D;">기념일별 추천 메시지 전략</strong><br>
-                            • <strong>생일</strong>: 따뜻한 축하 + 감사 인사<br>
-                            • <strong>회사 창립일</strong>: 축하 + 성장 기원<br>
-                            • <strong>결혼기념일</strong>: 부부 축복 메시지<br>
-                            • <strong>명절</strong>: 가족 안부 + 건강 기원<br>
-                            <br>
-                            <strong style="color: #FF6B6B;">💡 Pro 팁</strong><br>
-                            • 기념일 템플릿 미리 만들어두기<br>
-                            • 전일 알림으로 메시지 최종 검토 후 승인<br>
-                            • 특별한 고객은 추가 선물/통화 메모 남기기
-                        </div>
-                    </details>
-                    
-                    <!-- 효과적인 메시지 작성법 -->
-                    <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
-                        <summary style="font-weight: bold; color: #4CAF50; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">📝 읽히는 메시지 작성 공식</summary>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.7; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            <strong style="color: #FFF59D;">메시지 작성 3단계 공식</strong><br>
-                            <strong>1. 친근한 인사</strong> - "안녕하세요, {honorific}!" 👋<br>
-                            <strong>2. 핵심 내용</strong> - 한 문단으로 간결하게<br>
-                            <strong>3. 행동 유도</strong> - "아래 링크를 클릭해주세요"<br>
-                            <br>
-                            <strong style="color: #FFF59D;">시간대별 발송 전략</strong><br>
-                            • <strong>오전 9시</strong>: 출근 시간, 생일/기념일 메시지<br>
-                            • <strong>점심 12시</strong>: 점심 시간, 가벼운 정보성 메시지<br>
-                            • <strong>오후 3시</strong>: 업무 중간, 세미나/행사 안내<br>
-                            • <strong>저녁 7시</strong>: 퇴근 시간, 긴급하지 않은 안내<br>
-                            ❌ 피해야 할 시간: 너무 이른 아침, 늦은 밤<br>
-                            <br>
-                            <strong style="color: #FF6B6B;">💡 Pro 팁</strong><br>
-                            • 제목은 짧고 명확하게 (15자 이내)<br>
-                            • 이모지 1-2개로 눈길 끌기 (과하면 역효과)<br>
-                            • 본문은 3-5줄 이내로 간결하게<br>
-                            • 중요한 내용은 굵게 표시
-                        </div>
-                    </details>
-                    
-                    <!-- 데이터 관리 꿀팁 -->
-                    <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
-                        <summary style="font-weight: bold; color: #4CAF50; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">💾 데이터 안전하게 관리하기</summary>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.7; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            <strong style="color: #FFF59D;">자동 저장 시스템 이해하기</strong><br>
-                            • 메시지 발송/고객 추가/기념일 등록 시 자동 저장<br>
-                            • Drive 연결 상태 확인: 상단 초록불 확인<br>
-                            • 수동 저장: 중요한 작업 후 "💾 저장하기" 클릭<br>
-                            <br>
-                            <strong style="color: #FFF59D;">백업 루틴 추천</strong><br>
-                            • <strong>매일 아침</strong>: "📥 불러오기"로 최신 데이터 확인<br>
-                            • <strong>작업 후</strong>: "💾 저장하기"로 즉시 백업<br>
-                            • <strong>중요 작업 전</strong>: 불러오기로 싱크 맞추기<br>
-                            <br>
-                            <strong style="color: #FF6B6B;">💡 Pro 팁</strong><br>
-                            • 여러 기기 사용 시: 작업 전 반드시 불러오기<br>
-                            • Drive 용량 부족 시: Google Drive 확인<br>
-                            • 중요 데이터는 엑셀로도 백업 추천
-                        </div>
-                    </details>
-                    
-                    <!-- 모바일 최적화 사용법 -->
-                    <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
-                        <summary style="font-weight: bold; color: #4CAF50; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">📱 모바일에서 효율적으로 사용하기</summary>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.7; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            <strong style="color: #FFF59D;">모바일 필수 기능</strong><br>
-                            • <strong>연락처 직접 선택</strong>: "📱 휴대폰 연락처" 버튼<br>
-                            • <strong>빠른 복사</strong>: URL/메시지 복사 → 카톡/문자 발송<br>
-                            • <strong>간편 메시지 발송</strong>: 고객 선택 → 즉시 발송<br>
-                            • <strong>실시간 확인</strong>: 발송 내역 즉시 확인<br>
-                            <br>
-                            <strong style="color: #FFF59D;">외부 활동 시 활용법</strong><br>
-                            • 세미나 현장: 명함 받고 즉시 고객 등록<br>
-                            • 상담 후: 바로 기념일 등록 및 초대 발송<br>
-                            • 이동 중: 예약 메시지 승인/수정<br>
-                            <br>
-                            <strong style="color: #FF6B6B;">💡 Pro 팁</strong><br>
-                            • 홈화면에 추가하면 앱처럼 사용 가능<br>
-                            • 테이블은 가로 스크롤로 전체 내용 확인<br>
-                            • 세로/가로 모드 모두 최적화되어 있음
-                        </div>
-                    </details>
-                    
-                    <!-- 통계 활용 전략 -->
-                    <details style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
-                        <summary style="font-weight: bold; color: #4CAF50; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1.05rem); cursor: pointer;">📊 통계로 성과 측정하기</summary>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); line-height: 1.7; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            <strong style="color: #FFF59D;">대시보드 활용법</strong><br>
-                            • <strong>총 고객 수</strong>: 고객 증가 추이 파악<br>
-                            • <strong>총 발송 수</strong>: 메시지 활동 지표<br>
-                            • <strong>이번 달 발송</strong>: 월별 활동량 체크<br>
-                            • <strong>예약 메시지</strong>: 향후 일정 확인<br>
-                            <br>
-                            <strong style="color: #FFF59D;">성과 개선 방법</strong><br>
-                            • 월별 발송 수 목표 설정 (예: 월 50건)<br>
-                            • 구독 완료 비율 체크 (초대 vs 구독)<br>
-                            • 기념일 발송 비율 높이기<br>
-                            <br>
-                            <strong style="color: #FF6B6B;">💡 Pro 팁</strong><br>
-                            • 매월 초 지난달 통계 정리<br>
-                            • 반응 좋은 메시지 유형 분석<br>
-                            • 미구독 고객 재초대 전략 수립
-                        </div>
-                    </details>
-                    
-                    <!-- 주의사항 -->
-                    <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; margin-top: 10px;">
-                        <div style="font-weight: bold; color: #ff6b6b; margin-bottom: 6px; font-size: clamp(0.9rem, 3.5vw, 1rem);">⚠️ 반드시 지켜야 할 주의사항</div>
-                        <div style="line-height: 1.6; font-size: clamp(0.85rem, 3vw, 1rem);">
-                            • <strong>알림 권한</strong>: 반드시 "허용"으로 설정 (안 하면 푸시 수신 불가)<br>
-                            • <strong>Drive 연결</strong>: 초록불 확인, 빨간불이면 재연결 필요<br>
-                            • <strong>예약 메시지</strong>: 전일 알림으로 승인해야 발송됨 (자동 발송 아님)<br>
-                            • <strong>개인정보</strong>: 고객 정보 절대 외부 유출 금지<br>
-                            • <strong>발송 전 확인</strong>: 특히 일괄 발송 시 내용 재확인<br>
-                            • <strong>스팸 주의</strong>: 너무 자주 보내면 역효과 (주 1-2회 권장)
-                        </div>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
-                    <div style="font-size: clamp(1rem, 4vw, 1.2rem); margin-bottom: 8px;">🎉 이제 웹푸시 발송시스템을 사용할 준비가 되었습니다!</div>
-                    <div style="opacity: 0.8; font-size: clamp(0.85rem, 3vw, 1rem);">궁금한 점이 있으면 언제든지 이 가이드를 다시 확인하세요.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 전일 알림 모달 -->
-    <div id="dayBeforeModal" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <div class="modal-header">
-                <h2>🔔 내일 발송 예정 알림</h2>
-                <button class="modal-close" onclick="closeDayBeforeModal()">×</button>
-            </div>
-            
-            <div class="warning-box" style="border-radius: 10px; padding: 20px; margin-bottom: 20px;">
-                <div style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #e65100 !important;">
-                    📅 발송 예정일: <span id="dbSendDate" style="color: #f57c00 !important;"></span>
-                </div>
-                <div style="font-size: 14px; color: #e65100 !important;">
-                    📱 수신자: <span id="dbCustomerName" style="font-weight: bold; color: #e65100 !important;"></span>
-                </div>
-                <div style="font-size: 14px; color: #e65100 !important;">
-                    🎂 유형: <span id="dbAnniversaryType" style="color: #e65100 !important;"></span>
-                </div>
-                <div style="font-size: 14px; color: #e65100 !important;">
-                    ⏰ 발송 시각: <span id="dbSendTime" style="color: #e65100 !important;"></span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label style="font-weight: bold; font-size: 15px; color: #333333 !important;">메시지 미리보기</label>
-                
-                <div style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 15px;">
-                    <div style="font-weight: bold; font-size: 16px; margin-bottom: 15px; color: #1a237e !important;">
-                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">제목:</div>
-                        <div id="dbPreviewTitle" style="color: #333 !important;"></div>
-                    </div>
-                    <div style="font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: #333 !important;" id="dbPreviewContent"></div>
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <button class="btn btn-secondary" onclick="cancelDayBeforeNotification()" style="background: rgba(244, 67, 54, 0.8);">
-                    ❌ 발송 취소
-                </button>
-                <button class="btn btn-primary" onclick="editDayBeforeMessage()" style="background: rgba(33, 150, 243, 0.8);">
-                    ✏️ 수정하기
-                </button>
-                <button class="btn btn-primary" onclick="approveDayBeforeNotification()" style="background: rgba(76, 175, 80, 0.8);">
-                    ✅ 발송 승인
-                </button>
-            </div>
-            
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 13px; opacity: 0.8; text-align: center;">
-                💡 <strong>발송 승인</strong>을 하시면 내일 설정된 시각에 자동으로 발송됩니다.<br>
-                <strong>수정하기</strong>를 클릭하면 메시지를 수정할 수 있습니다.
-            </div>
-            
-            <input type="hidden" id="dbAnniversaryId">
-            <input type="hidden" id="dbCustomerId">
-        </div>
-    </div>
-
-
+    let auth = null;
+    let db = null;
+    let loadingTimeout = null;
     
-    <!-- ========================================== -->
-    <!-- 고객 초대 시스템 모달 -->
-    <!-- ========================================== -->
+    console.log('🚀 === 페이지 시작 ===');
+    console.log('📱 화면:', window.innerWidth, 'x', window.innerHeight);
+    console.log('📱 모바일:', window.innerWidth <= 768);
+    console.log('🌐 User Agent:', navigator.userAgent);
+    console.log('🔗 프로토콜:', window.location.protocol);
+    console.log('🔗 전체 URL:', window.location.href);
     
-        <div id="textModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📝 텍스트로 고객 추가</h2>
-                <button class="modal-close" onclick="closeModal('textModal')">×</button>
-            </div>
-            
-            <div class="form-group">
-                <label>CSV 형식으로 입력 (이름, 전화번호, 회사, 직함, 이메일)</label>
-                <textarea id="textInput" placeholder="홍길동, 010-1234-5678, ABC기업, 대표이사, hong@abc.com
-김영희, 010-9876-5432, XYZ회사, 부장, kim@xyz.com"></textarea>
-            </div>
-            
-            <button class="btn-primary" onclick="importFromText()">✅ 추가하기</button>
-        </div>
-    </div>
+    // ⚠️ 로컬 파일 경고 (차단하지 않음)
+    if (window.location.protocol === 'file:') {
+      console.warn('⚠️ 로컬 파일에서 실행 중 - Firebase 로딩이 느릴 수 있습니다');
+      updateLoadingText('로컬 파일 모드', '로딩 시간이 길어질 수 있습니다');
+    }
     
-    <!-- 직접 추가 모달 -->
-    <div id="manualModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>➕ 고객 직접 추가</h2>
-                <button class="modal-close" onclick="closeModal('manualModal')">×</button>
-            </div>
-            
-            <div class="form-group">
-                <label>이름 *</label>
-                <input type="text" id="manualName" placeholder="홍길동" required>
-            </div>
-            
-            <div class="form-group">
-                <label>전화번호 *</label>
-                <input type="text" id="manualPhone" placeholder="010-1234-5678" required>
-            </div>
-            
-            <div class="form-group">
-                <label>회사</label>
-                <input type="text" id="manualCompany" placeholder="ABC기업">
-            </div>
-            
-            <div class="form-group">
-                <label>직함</label>
-                <input type="text" id="manualPosition" placeholder="대표이사">
-            </div>
-            
-            <div class="form-group">
-                <label>이메일</label>
-                <input type="email" id="manualEmail" placeholder="hong@abc.com">
-            </div>
-            
-            <button class="btn-primary" onclick="addManualCustomer()">✅ 추가하기</button>
-        </div>
-    </div>
+    // 로딩 텍스트 업데이트 함수
+    function updateLoadingText(text, details = '') {
+      if (elLoadingText) elLoadingText.textContent = text;
+      if (elLoadingDetails) elLoadingDetails.textContent = details;
+      console.log('💬', text, details ? '(' + details + ')' : '');
+    }
     
-    <!-- 그룹 관리 모달 -->
-    <div id="groupManagerModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>👥 그룹 관리</h2>
-                <button class="modal-close" onclick="closeGroupManagerModal()">×</button>
-            </div>
-            
-            <div class="form-group">
-                <label>새 그룹 추가</label>
-                <div style="display: flex; gap: 10px; align-items: stretch;">
-                    <input type="text" id="newGroupName" placeholder="예: 교사, 군인 등" style="flex: 1; height: 44px; padding: 10px 14px; font-size: 15px;">
-                    <button class="btn-primary" onclick="addGroup()" style="white-space: nowrap; min-width: 80px; height: 44px;">추가</button>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>기존 그룹 목록</label>
-                <div id="groupList" style="max-height: 400px; overflow-y: auto;"></div>
-            </div>
-        </div>
-    </div>
+    // 에러 표시 및 리다이렉트
+    function showErrorAndRedirect(message, details = '') {
+      console.error('❌', message, details);
+      updateLoadingText(message, details);
+      
+      setTimeout(() => {
+        if (elLoading) elLoading.classList.add('hide');
+        alert(message + (details ? '\n\n' + details : ''));
+        window.location.href = 'login.html';
+      }, 2000);
+    }
     
-    <!-- 이미지 URL 만들기 가이드 모달 -->
-    <div id="imageGuideModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2>🖼️ 이미지 URL 만드는 방법</h2>
-                <button class="modal-close" onclick="closeImageGuideModal()">×</button>
-            </div>
-            
-            <div style="padding: 20px; line-height: 1.8; font-size: 14px;">
-                <div style="background: rgba(255,193,7,0.2); border-left: 4px solid #FFC107; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <strong>💡 이미지를 푸시 알림에 넣으려면 이미지 URL이 필요합니다!</strong><br>
-                    아래 3가지 방법 중 하나를 선택하세요.
-                </div>
-
-                <!-- 방법 1 -->
-                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <h3 style="color: #FFC107; margin-bottom: 10px; font-size: 16px;">
-                        【방법 1】 무료 이미지 호스팅 ⭐ 가장 간단!
-                    </h3>
-                    
-                    <div style="margin-bottom: 12px;">
-                        <strong>▶ ImgBB 사용법 (회원가입 불필요)</strong>
-                    </div>
-                    
-                    <div style="padding-left: 15px; margin-bottom: 10px;">
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #4CAF50;">1단계:</strong> 
-                            <a href="https://imgbb.com" target="_blank" style="color: #64B5F6; text-decoration: underline;">
-                                https://imgbb.com
-                            </a> 접속
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #4CAF50;">2단계:</strong> "Start uploading" 클릭 → 이미지 업로드
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #4CAF50;">3단계:</strong> "Direct link" 복사 → 붙여넣기
-                        </div>
-                        <div style="color: #4CAF50; font-weight: bold;">✅ 완성! 30초면 끝!</div>
-                    </div>
-                    
-                    <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
-                        <div style="font-size: 13px; opacity: 0.9;"><strong>▶ 기타 추천 사이트</strong></div>
-                        <div style="font-size: 13px; margin-top: 5px;">
-                            • <a href="https://imgur.com" target="_blank" style="color: #64B5F6;">Imgur.com</a> (가장 유명)<br>
-                            • <a href="https://postimages.org" target="_blank" style="color: #64B5F6;">PostImages.org</a><br>
-                            • <a href="https://imageshack.com" target="_blank" style="color: #64B5F6;">ImageShack.com</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 방법 2 -->
-                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <h3 style="color: #4CAF50; margin-bottom: 10px; font-size: 16px;">
-                        【방법 2】 Google Drive 업무용 추천!
-                    </h3>
-                    
-                    <div style="padding-left: 15px; margin-bottom: 10px;">
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #2196F3;">1단계:</strong> 구글 드라이브에 이미지 업로드
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #2196F3;">2단계:</strong> 이미지 우클릭 → "공유" 클릭
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #2196F3;">3단계:</strong> "링크가 있는 모든 사용자" 선택
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #2196F3;">4단계:</strong> "링크 복사" 클릭
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #2196F3;">5단계:</strong> URL 변환하기
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 6px; font-size: 12px; font-family: monospace;">
-                        <div style="margin-bottom: 8px;">복사된 주소:</div>
-                        <div style="color: #FF9800; word-break: break-all; margin-bottom: 10px;">
-                            https://drive.google.com/file/d/<strong style="background: rgba(255,152,0,0.3);">[아이디]</strong>/view
-                        </div>
-                        <div style="margin-bottom: 8px;">↓ 아래처럼 변경:</div>
-                        <div style="color: #4CAF50; word-break: break-all;">
-                            https://drive.google.com/uc?export=view&id=<strong style="background: rgba(76,175,80,0.3);">[아이디]</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 10px; color: #FFC107; font-size: 13px;">
-                        💡 [아이디] 부분만 복사해서 넣으면 됩니다!
-                    </div>
-                </div>
-
-                <!-- 방법 3 -->
-                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <h3 style="color: #9C27B0; margin-bottom: 10px; font-size: 16px;">
-                        【방법 3】 웹에 있는 이미지 사용
-                    </h3>
-                    
-                    <div style="padding-left: 15px; margin-bottom: 10px;">
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #9C27B0;">1단계:</strong> 구글 이미지 검색으로 원하는 이미지 찾기
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #9C27B0;">2단계:</strong> 이미지 우클릭 → "이미지 주소 복사"
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #9C27B0;">3단계:</strong> 복사한 주소 붙여넣기
-                        </div>
-                    </div>
-                    
-                    <div style="background: rgba(244,67,54,0.2); border-left: 3px solid #F44336; padding: 10px; border-radius: 4px; font-size: 13px;">
-                        ⚠️ <strong>주의:</strong> 저작권 문제가 있을 수 있습니다!
-                    </div>
-                </div>
-
-                <!-- 테스트용 URL -->
-                <div style="background: rgba(33,150,243,0.2); border: 1px solid rgba(33,150,243,0.5); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <h3 style="color: #2196F3; margin-bottom: 10px; font-size: 15px;">
-                        🧪 테스트용 이미지 URL (지금 바로 써보세요!)
-                    </h3>
-                    <div style="font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 8px; word-break: break-all;">
-                        https://picsum.photos/800/400
-                    </div>
-                    <div style="font-size: 13px; opacity: 0.9;">→ 랜덤 샘플 이미지</div>
-                </div>
-
-                <!-- URL 확인 방법 -->
-                <div style="background: rgba(76,175,80,0.2); border: 1px solid rgba(76,175,80,0.5); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <h3 style="color: #4CAF50; margin-bottom: 10px; font-size: 15px;">
-                        ✅ URL이 올바른지 확인하는 방법
-                    </h3>
-                    <div style="padding-left: 15px;">
-                        <div>1. URL 복사</div>
-                        <div>2. 새 브라우저 창 열기</div>
-                        <div>3. 주소창에 붙여넣기</div>
-                        <div style="color: #4CAF50; font-weight: bold;">4. 이미지가 바로 보이면 성공! ✅</div>
-                    </div>
-                </div>
-
-                <!-- 권장 사항 -->
-                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; font-size: 13px;">
-                    <strong>📌 권장 이미지 규격</strong>
-                    <div style="margin-top: 8px; padding-left: 10px;">
-                        • 파일 크기: 500KB 이하<br>
-                        • 가로 크기: 1200px 이하<br>
-                        • 형식: PNG, JPG 권장
-                    </div>
-                </div>
-            </div>
-            
-            <div style="padding: 20px; padding-top: 0;">
-                <button class="btn btn-primary" onclick="closeImageGuideModal()" style="width: 100%;">
-                    닫기
-                </button>
-            </div>
-        </div>
-    </div>
+    // Firebase 대기 함수 (개선된 버전)
+    function waitForFirebase() {
+      return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        
+        // 즉시 확인
+        if (typeof firebase !== 'undefined') {
+          updateLoadingText('Firebase 준비 완료', '즉시 로드됨');
+          resolve(true);
+          return;
+        }
+        
+        updateLoadingText('Firebase 로딩 중...', '라이브러리 다운로드 중');
+        
+        let attempts = 0;
+        const maxAttempts = 50; // 50번 × 200ms = 10초
+        const checkInterval = 200;
+        
+        const checkFirebase = setInterval(() => {
+          attempts++;
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+          
+          if (typeof firebase !== 'undefined') {
+            clearInterval(checkFirebase);
+            updateLoadingText('Firebase 로드 완료', `${elapsed}초 소요`);
+            console.log('✅ Firebase 로드 성공 (시도:', attempts, ', 시간:', elapsed + 's)');
+            resolve(true);
+          } else if (attempts >= maxAttempts) {
+            clearInterval(checkFirebase);
+            console.error('❌ Firebase 로드 실패: 타임아웃 (10초)');
+            reject(new Error('Firebase 라이브러리를 로드할 수 없습니다'));
+          } else if (attempts % 5 === 0) {
+            // 5회마다 진행 상황 업데이트
+            updateLoadingText('Firebase 로딩 중...', `${elapsed}초 경과 (${attempts}/${maxAttempts})`);
+          }
+        }, checkInterval);
+      });
+    }
     
-    <!-- External JavaScript -->
-    <script src="app.js"></script>
+    // Firebase 초기화
+    async function initializeFirebase() {
+      try {
+        updateLoadingText('시스템 초기화 중...', 'Firebase 확인');
+        
+        // Firebase 라이브러리 로드 대기
+        await waitForFirebase();
+        
+        updateLoadingText('Firebase 설정 중...', '서버 연결');
+        
+        // Firebase 설정
+        const firebaseConfig = {
+          apiKey:"AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+          authDomain:"kfpc-company-support-project.firebaseapp.com",
+          databaseURL:"https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId:"kfpc-company-support-project",
+          storageBucket:"kfpc-company-support-project.appspot.com",
+          messagingSenderId:"101260933373",
+          appId:"1:101260933373:web:3436176f9ca2560056d914"
+        };
+        
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        
+        console.log('✅ Firebase 초기화 완료');
+        
+        // 인증 지속성 설정
+        try {
+          await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+          console.log('✅ 인증 지속성 설정 완료 (LOCAL)');
+        } catch (e) {
+          console.warn('⚠️ 인증 지속성 설정 실패 (계속 진행):', e.message);
+        }
+        
+        updateLoadingText('로그인 확인 중...', '사용자 인증');
+        
+        // 인증 상태 확인
+        await setupAuthStateListener();
+        
+      } catch (error) {
+        showErrorAndRedirect(
+          '앱 초기화 실패',
+          error.message || '네트워크 연결을 확인하고 다시 시도해주세요'
+        );
+      }
+    }
+    
+    // 인증 상태 리스너 설정
+    function setupAuthStateListener() {
+      return new Promise((resolve, reject) => {
+        if (!auth) {
+          reject(new Error('Auth 객체가 없습니다'));
+          return;
+        }
+        
+        console.log('👀 인증 상태 감시 시작...');
+        
+        // 타임아웃 설정 (10초)
+        const authTimeout = setTimeout(() => {
+          console.warn('⚠️ 인증 확인 타임아웃');
+          reject(new Error('인증 확인 시간 초과'));
+        }, 10000);
+        
+        // 즉시 현재 사용자 확인
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          clearTimeout(authTimeout);
+          console.log('✅ 즉시 확인: 이미 로그인됨', currentUser.uid);
+          loadUserData(currentUser);
+          resolve();
+          return;
+        }
+        
+        // onAuthStateChanged 이벤트 리스너
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+          clearTimeout(authTimeout);
+          console.log('🔄 인증 상태 변경:', user ? '로그인됨' : '로그아웃됨');
+          
+          if (user) {
+            console.log('✅ 사용자 로그인 확인:', user.uid);
+            await loadUserData(user);
+            resolve();
+          } else {
+            console.log('❌ 로그인되지 않음 - 로그인 페이지로 이동');
+            updateLoadingText('로그인 필요', '로그인 페이지로 이동 중...');
+            setTimeout(() => {
+              window.location.href = 'login.html';
+            }, 1000);
+          }
+        }, (error) => {
+          clearTimeout(authTimeout);
+          console.error('❌ 인증 오류:', error);
+          reject(error);
+        });
+      });
+    }
+    
+    // 사용자 데이터 로드
+    async function loadUserData(user) {
+      console.log('📥 사용자 데이터 로드 중...');
+      updateLoadingText('사용자 정보 로드 중...');
+      
+      // UI 먼저 표시
+      const displayName = user.displayName || user.email || '사용자';
+      setLoggedInUI(displayName);
+      
+      // Firestore에서 추가 정보 로드 (백그라운드)
+      try {
+        if (db) {
+          const doc = await db.collection('users').doc(user.uid).get();
+          if (doc.exists && doc.data().name) {
+            const name = doc.data().name;
+            if (elWelcome) {
+              elWelcome.textContent = '안녕하세요, ' + name + '님';
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ 사용자 정보 로드 실패 (기본값 사용):', e.message);
+      }
+      
+      // 드라이브 설정 확인
+      refreshDriveNotice(user);
+    }
+    
+    // UI 업데이트 및 표시
+    function setLoggedInUI(name) {
+      console.log('🎨 UI 업데이트:', name);
+      
+      if (elWelcome && name) {
+        elWelcome.textContent = '안녕하세요, ' + name + '님';
+      }
+      
+      // 로딩 화면 숨기고 메인 컨텐츠 표시
+      setTimeout(() => {
+        if (elLoading) elLoading.classList.add('hide');
+        if (elMainContent) elMainContent.style.display = 'block';
+        console.log('✅ 페이지 로드 완료');
+      }, 300);
+    }
+    
+    // 드라이브 설정 확인
+    async function refreshDriveNotice(user) {
+      if (!user) {
+        elNotice.classList.remove('show');
+        return;
+      }
+      
+      let enabled = localStorage.getItem('driveEnabled') === 'true';
+      
+      try {
+        if (db) {
+          const snap = await db.collection('users').doc(user.uid).get();
+          if (snap.exists && typeof snap.data().driveEnabled === 'boolean') {
+            enabled = snap.data().driveEnabled;
+            localStorage.setItem('driveEnabled', String(enabled));
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ 드라이브 설정 확인 실패:', e.message);
+      }
+      
+      if (enabled) {
+        elNotice.classList.remove('show');
+      } else {
+        elNotice.classList.add('show');
+      }
+    }
+    
+    // 페이지 이동
+    function go(path) {
+      console.log('🔗 페이지 이동:', path);
+      const user = auth ? auth.currentUser : null;
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        window.location.href = 'login.html';
+        return;
+      }
+      window.location.href = path;
+    }
+    
+    // SNS 백업 팝업 표시
+    function showSNSBackupPopup() {
+      console.log('📦 SNS 백업 팝업 표시');
+      const modal = document.getElementById('snsBackupModal');
+      modal.style.display = 'block';
+      // 배경 스크롤 방지하되, 팝업 내부는 스크롤 가능
+      document.body.style.overflow = 'hidden';
+    }
+    
+    // SNS 백업 팝업 닫기
+    function closeSNSBackupPopup() {
+      console.log('❌ SNS 백업 팝업 닫기');
+      document.getElementById('snsBackupModal').style.display = 'none';
+      document.body.style.overflow = 'auto'; // 스크롤 복원
+    }
+    
+    // SNS 백업 시작 (팝업 닫고 snsbackup.html로 이동)
+    function startSNSBackup() {
+      console.log('🚀 SNS 백업 시작');
+      closeSNSBackupPopup();
+      window.location.href = 'snsbackup.html';
+    }
+    
+    // 팝업 외부 클릭 시 닫기
+    window.onclick = function(event) {
+      const modal = document.getElementById('snsBackupModal');
+      if (event.target === modal) {
+        closeSNSBackupPopup();
+      }
+    }
+    
+    // My Page 이동
+    function goToMyPage() {
+      console.log('🔗 My page 이동');
+      const user = auth ? auth.currentUser : null;
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        window.location.href = 'login.html';
+        return;
+      }
+      window.location.href = 'mypage.html';
+    }
+    
+    // 로그아웃
+    function logout() {
+      if (!auth) return;
+      if (confirm('로그아웃 하시겠습니까?')) {
+        auth.signOut().then(() => {
+          window.location.href = 'login.html';
+        });
+      }
+    }
+    
+    // 드라이브 연동
+    async function enableDrive() {
+      const user = auth ? auth.currentUser : null;
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+      
+      console.log('🔗 드라이브 연동 시작...');
+      
+      try {
+        localStorage.setItem('driveEnabled', 'true');
+        
+        if (db) {
+          await db.collection('users').doc(user.uid).set({
+            driveEnabled: true,
+            driveSetupDate: new Date().toISOString()
+          }, { merge: true });
+        }
+        
+        console.log('✅ 드라이브 연동 완료');
+        
+        alert('구글 드라이브 연동이 완료되었습니다!\n\nCEO Focus와 Financial Master에서\n고객 데이터를 구글 시트에 저장할 수 있습니다.');
+        
+        refreshDriveNotice(user);
+        
+      } catch (error) {
+        console.error('❌ 드라이브 설정 오류:', error);
+        alert('드라이브 연동 설정에 실패했습니다.\n\n' + error.message);
+      }
+    }
+    
+    // 드롭다운 제어
+    function openDropdownHover() {
+      const dropdown = document.getElementById('calculatorDropdown');
+      if (dropdown) dropdown.classList.add('active');
+    }
+    
+    function toggleDropdown(event) {
+      event.stopPropagation();
+      const dropdown = document.getElementById('calculatorDropdown');
+      if (dropdown) dropdown.classList.toggle('active');
+    }
+    
+    function closeDropdown() {
+      const dropdown = document.getElementById('calculatorDropdown');
+      if (dropdown) dropdown.classList.remove('active');
+    }
+    
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('calculatorDropdown');
+      const wrapper = dropdown?.closest('.dropdown-wrapper');
+      if (dropdown && !wrapper?.contains(event.target)) {
+        dropdown.classList.remove('active');
+      }
+    });
+    
+    // 페이지 로드 시 초기화 시작
+    console.log('🚀 앱 초기화 시작');
+    initializeFirebase().catch(error => {
+      console.error('💥 치명적 오류:', error);
+      showErrorAndRedirect('앱 시작 실패', error.message);
+    });
+    
+    // 디버깅용 이벤트
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('📄 DOM 로드 완료');
+    });
+    
+    window.addEventListener('load', function() {
+      console.log('🎉 페이지 완전 로드');
+      console.log('⏱️ 로드 시간:', performance.now().toFixed(0), 'ms');
+    });
+  </script>
 </body>
 </html>
