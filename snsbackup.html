@@ -14,13 +14,49 @@
     
     <!-- JSZip for local backup download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        .main-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .main-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-2px);
+        }
+        .main-btn:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            .main-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <!-- 헤더 -->
         <header class="header">
-            <h1>📦 SNS 올백업</h1>
-            <p class="subtitle">소셜미디어 콘텐츠를 안전하게 보관하세요</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>📦 SNS 올백업</h1>
+                    <p class="subtitle">소셜미디어 콘텐츠를 안전하게 보관하세요</p>
+                </div>
+                <button onclick="location.href='index_portal.html'" class="main-btn">
+                    🏠 Main
+                </button>
+            </div>
         </header>
 
         <!-- 메인 탭 네비게이션 -->
