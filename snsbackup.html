@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNS 올백업 시스템</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- CryptoJS for encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    
+    <!-- JSZip for local backup download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <header class="header">
+            <h1>📦 SNS 올백업</h1>
+            <p class="subtitle">소셜미디어 콘텐츠를 안전하게 보관하세요</p>
+        </header>
+
+        <!-- 메인 탭 네비게이션 -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">📊 대시보드</button>
+            <button class="tab-btn" data-tab="backup">🔄 백업</button>
+            <button class="tab-btn" data-tab="schedule">⏰ 예약</button>
+            <button class="tab-btn" data-tab="stats">📈 통계</button>
+            <button class="tab-btn" data-tab="settings">⚙️ 설정</button>
+        </nav>
+
+        <!-- 대시보드 탭 -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <!-- 계정 연결 상태 -->
+                <div class="card">
+                    <h2>🔐 계정 연결</h2>
+                    <div class="account-list">
+                        <div class="account-item" id="instagram-status">
+                            <span class="account-icon">📷</span>
+                            <span class="account-name">Instagram</span>
+                            <span class="status-badge disconnected">미연결</span>
+                            <button class="btn-small btn-connect" data-platform="instagram">연결</button>
+                        </div>
+                        <div class="account-item" id="facebook-status">
+                            <span class="account-icon">📘</span>
+                            <span class="account-name">Facebook</span>
+                            <span class="status-badge disconnected">미연결</span>
+                            <button class="btn-small btn-connect" data-platform="facebook">연결</button>
+                        </div>
+                        <div class="account-item" id="youtube-status">
+                            <span class="account-icon">🎬</span>
+                            <span class="account-name">YouTube</span>
+                            <span class="status-badge disconnected">미연결</span>
+                            <button class="btn-small btn-connect" data-platform="youtube">연결</button>
+                        </div>
+                        <div class="account-item" id="drive-status">
+                            <span class="account-icon">💾</span>
+                            <span class="account-name">Google Drive</span>
+                            <span class="status-badge disconnected" id="drive-status-text">미연결</span>
+                            <button class="btn-small btn-connect" id="drive-connect-btn" data-platform="drive">연결</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 백업 현황 -->
+                <div class="card">
+                    <h2>📊 백업 현황</h2>
+                    <div class="backup-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Instagram</span>
+                            <span class="stat-value" id="instagram-count">0개</span>
+                            <span class="stat-size" id="instagram-size">0MB</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Facebook</span>
+                            <span class="stat-value" id="facebook-count">0개</span>
+                            <span class="stat-size" id="facebook-size">0MB</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">YouTube</span>
+                            <span class="stat-value" id="youtube-count">0개</span>
+                            <span class="stat-size" id="youtube-size">0MB</span>
+                        </div>
+                        <div class="stat-total">
+                            <span class="stat-label">총 저장 용량</span>
+                            <span class="stat-value" id="total-size">0GB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 최근 활동 -->
+                <div class="card full-width">
+                    <h2>🕐 최근 활동</h2>
+                    <div class="activity-list" id="activity-list">
+                        <p class="empty-state">아직 백업 기록이 없습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 백업 탭 -->
+        <div id="backup" class="tab-content">
+            <div class="card">
+                <h2>🔄 백업 실행</h2>
+                
+                <!-- 백업 대상 선택 -->
+                <div class="backup-options">
+                    <h3>백업할 플랫폼 선택</h3>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="backup-instagram" checked>
+                            <span>📷 Instagram</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="backup-facebook" checked>
+                            <span>📘 Facebook</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="backup-youtube" checked>
+                            <span>🎬 YouTube</span>
+                        </label>
+                    </div>
+
+                    <h3>백업 모드</h3>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="backup-mode" value="incremental" id="backup-mode-incremental" checked>
+                            <span>⚡ 증분 백업 (빠름 - 새 항목만)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="backup-mode" value="full" id="backup-mode-full">
+                            <span>📦 전체 백업 (느림 - 모든 항목)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="backup-mode" value="date-range" id="backup-mode-date">
+                            <span>📅 날짜 선택 백업</span>
+                        </label>
+                    </div>
+
+                    <!-- 마지막 백업 정보 -->
+                    <div id="last-backup-info" class="last-backup-info" style="margin-top: 12px; padding: 12px; background: var(--bg-color); border-radius: 8px;">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                            📅 <span id="last-backup-text">마지막 백업: 없음</span>
+                        </p>
+                    </div>
+
+                    <!-- 날짜 선택 옵션 -->
+                    <div id="date-range-options" class="date-range-options" style="display: none; margin-top: 16px;">
+                        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: 500;">시작 날짜</label>
+                                <input type="date" id="backup-start-date" class="input-field" style="width: 100%;">
+                            </div>
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: 500;">종료 날짜</label>
+                                <input type="date" id="backup-end-date" class="input-field" style="width: 100%;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>저장 위치</h3>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="save-to-drive" checked>
+                            <span>☁️ Google Drive에 저장</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="save-to-local" checked>
+                            <span>💾 로컬에 ZIP으로 다운로드</span>
+                        </label>
+                    </div>
+
+                    <h3>백업 옵션</h3>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-photos" checked>
+                            <span>사진 원본 포함</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-videos" checked>
+                            <span>동영상 원본 포함</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-comments" checked>
+                            <span>댓글 포함</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-metadata" checked>
+                            <span>메타데이터 포함</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable-encryption" checked>
+                            <span>🔒 암호화 백업 (권장)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 백업 진행 상황 -->
+                <div class="backup-progress" id="backup-progress" style="display: none;">
+                    <h3>백업 진행 중...</h3>
+                    <div class="progress-item">
+                        <span class="progress-label">Instagram</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="instagram-progress"></div>
+                        </div>
+                        <span class="progress-text" id="instagram-progress-text">0%</span>
+                    </div>
+                    <div class="progress-item">
+                        <span class="progress-label">Facebook</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="facebook-progress"></div>
+                        </div>
+                        <span class="progress-text" id="facebook-progress-text">0%</span>
+                    </div>
+                    <div class="progress-item">
+                        <span class="progress-label">YouTube</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="youtube-progress"></div>
+                        </div>
+                        <span class="progress-text" id="youtube-progress-text">0%</span>
+                    </div>
+                    <div class="progress-status">
+                        <p id="current-status">준비 중...</p>
+                        <p id="estimated-time">예상 시간: 계산 중...</p>
+                    </div>
+                </div>
+
+                <!-- 백업 시작 버튼 -->
+                <div class="button-group">
+                    <button class="btn-primary btn-large" id="start-backup-btn">
+                        🚀 백업 시작
+                    </button>
+                    <button class="btn-secondary btn-large" id="stop-backup-btn" style="display: none;">
+                        ⏸️ 백업 중지
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 예약 탭 -->
+        <div id="schedule" class="tab-content">
+            <!-- 현재 예약백업 현황 -->
+            <div class="card">
+                <h2>⏰ 현재 예약백업 현황</h2>
+                <div id="schedule-status-list" class="schedule-status-list">
+                    <p class="empty-state">설정된 예약 백업이 없습니다.</p>
+                </div>
+            </div>
+
+            <!-- Instagram 예약 설정 -->
+            <div class="card">
+                <h2>📷 Instagram 예약 백업</h2>
+                
+                <div class="schedule-options">
+                    <label class="checkbox-label large">
+                        <input type="checkbox" id="enable-schedule-instagram">
+                        <span>Instagram 자동 예약 백업 활성화</span>
+                    </label>
+
+                    <div class="schedule-config" id="schedule-config-instagram" style="display: none;">
+                        <h3>백업 주기</h3>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-instagram" value="daily" checked>
+                                <span>매일</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-instagram" value="weekly">
+                                <span>매주</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-instagram" value="monthly">
+                                <span>매월</span>
+                            </label>
+                        </div>
+
+                        <h3>백업 시간</h3>
+                        <input type="time" id="schedule-time-instagram" class="input-field" value="02:00">
+
+                        <div class="schedule-info">
+                            <p>📅 다음 예약 백업: <span id="next-backup-time-instagram">설정되지 않음</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="save-schedule-instagram-btn">
+                        💾 Instagram 예약 저장
+                    </button>
+                </div>
+            </div>
+
+            <!-- Facebook 예약 설정 -->
+            <div class="card">
+                <h2>📘 Facebook 예약 백업</h2>
+                
+                <div class="schedule-options">
+                    <label class="checkbox-label large">
+                        <input type="checkbox" id="enable-schedule-facebook">
+                        <span>Facebook 자동 예약 백업 활성화</span>
+                    </label>
+
+                    <div class="schedule-config" id="schedule-config-facebook" style="display: none;">
+                        <h3>백업 주기</h3>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-facebook" value="daily" checked>
+                                <span>매일</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-facebook" value="weekly">
+                                <span>매주</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-facebook" value="monthly">
+                                <span>매월</span>
+                            </label>
+                        </div>
+
+                        <h3>백업 시간</h3>
+                        <input type="time" id="schedule-time-facebook" class="input-field" value="02:00">
+
+                        <div class="schedule-info">
+                            <p>📅 다음 예약 백업: <span id="next-backup-time-facebook">설정되지 않음</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="save-schedule-facebook-btn">
+                        💾 Facebook 예약 저장
+                    </button>
+                </div>
+            </div>
+
+            <!-- YouTube 예약 설정 -->
+            <div class="card">
+                <h2>🎬 YouTube 예약 백업</h2>
+                
+                <div class="schedule-options">
+                    <label class="checkbox-label large">
+                        <input type="checkbox" id="enable-schedule-youtube">
+                        <span>YouTube 자동 예약 백업 활성화</span>
+                    </label>
+
+                    <div class="schedule-config" id="schedule-config-youtube" style="display: none;">
+                        <h3>백업 주기</h3>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-youtube" value="daily" checked>
+                                <span>매일</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-youtube" value="weekly">
+                                <span>매주</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="schedule-frequency-youtube" value="monthly">
+                                <span>매월</span>
+                            </label>
+                        </div>
+
+                        <h3>백업 시간</h3>
+                        <input type="time" id="schedule-time-youtube" class="input-field" value="02:00">
+
+                        <div class="schedule-info">
+                            <p>📅 다음 예약 백업: <span id="next-backup-time-youtube">설정되지 않음</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="save-schedule-youtube-btn">
+                        💾 YouTube 예약 저장
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 통계 탭 -->
+        <div id="stats" class="tab-content">
+            <div class="stats-grid">
+                <div class="card">
+                    <h2>📈 백업 추이</h2>
+                    <div class="chart-container" id="backup-trend-chart">
+                        <p class="empty-state">백업 데이터가 축적되면 차트가 표시됩니다.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 플랫폼별 현황</h2>
+                    <div class="platform-stats">
+                        <div class="stat-bar">
+                            <div class="stat-bar-header">
+                                <span>Instagram</span>
+                                <span id="instagram-percent">0%</span>
+                            </div>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar-fill instagram" id="instagram-bar"></div>
+                            </div>
+                            <div class="stat-bar-info" id="instagram-info">0개 (0MB)</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-header">
+                                <span>Facebook</span>
+                                <span id="facebook-percent">0%</span>
+                            </div>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar-fill facebook" id="facebook-bar"></div>
+                            </div>
+                            <div class="stat-bar-info" id="facebook-info">0개 (0MB)</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-header">
+                                <span>YouTube</span>
+                                <span id="youtube-percent">0%</span>
+                            </div>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar-fill youtube" id="youtube-bar"></div>
+                            </div>
+                            <div class="stat-bar-info" id="youtube-info">0개 (0MB)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <h2>📋 백업 이력</h2>
+                    <div class="backup-history" id="backup-history">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>날짜</th>
+                                    <th>플랫폼</th>
+                                    <th>항목 수</th>
+                                    <th>용량</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <tr>
+                                    <td colspan="5" class="empty-state">백업 이력이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 설정 탭 -->
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <h2>⚙️ 일반 설정</h2>
+                
+                <div class="setting-group">
+                    <h3>알림 설정</h3>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="notify-completion" checked>
+                        <span>백업 완료 시 알림</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="notify-error" checked>
+                        <span>오류 발생 시 알림</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="notify-storage" checked>
+                        <span>저장 공간 부족 시 알림</span>
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <h3>저장 옵션</h3>
+                    <label class="setting-item">
+                        <span>폴더 구조</span>
+                        <select id="folder-structure" class="input-field">
+                            <option value="date">연도/월별</option>
+                            <option value="platform">플랫폼별</option>
+                            <option value="type">콘텐츠 타입별</option>
+                        </select>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="create-thumbnails" checked>
+                        <span>썸네일 자동 생성</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="compress-videos">
+                        <span>동영상 압축 (용량 절약)</span>
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Google Drive 설정</h3>
+                    <div class="drive-info">
+                        <p>사용 중: <span id="drive-used">0GB</span> / <span id="drive-total">15GB</span></p>
+                        <div class="drive-progress-bar">
+                            <div class="drive-progress-fill" id="drive-progress-fill"></div>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" id="open-drive-btn">
+                        📁 Google Drive 열기
+                    </button>
+                    <button class="btn-secondary" id="test-save-btn">
+                        💾 테스트 저장
+                    </button>
+                    <button class="btn-secondary" id="test-load-btn">
+                        📥 테스트 불러오기
+                    </button>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="save-settings-btn">
+                        💾 설정 저장
+                    </button>
+                </div>
+            </div>
+
+            <!-- 백업 불러오기 및 다운로드 -->
+            <div class="card">
+                <h2>📥 백업 불러오기 및 다운로드</h2>
+                
+                <div class="setting-group">
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                        Google Drive에 저장된 백업을 불러와서 확인하거나 로컬 ZIP으로 다운로드할 수 있습니다.
+                    </p>
+                    
+                    <button class="btn-primary btn-large" id="list-backups-btn" style="width: 100%; margin-bottom: 20px;">
+                        📂 Drive에서 백업 목록 불러오기
+                    </button>
+                    
+                    <!-- 백업 목록 -->
+                    <div id="backup-list-container" style="display: none;">
+                        <h3>💾 저장된 백업 목록</h3>
+                        <div id="backup-list" class="backup-list">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>ℹ️ 정보</h2>
+                <div class="info-content">
+                    <p><strong>버전:</strong> 2.0.0</p>
+                    <p><strong>개발:</strong> KFPC</p>
+                    <p><strong>지원:</strong> support@kfpc.com</p>
+                    <p><strong>기능:</strong> Google Drive 암호화 백업</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 알림 메시지 -->
+        <div class="notification" id="notification">
+            <span id="notification-text"></span>
+        </div>
+    </div>
+
+    <!-- 탭 전환 스크립트 (즉시 작동) -->
+    <script>
+        // 탭 전환 기능 - 페이지 로드 즉시 실행
+        (function() {
+            console.log('✅ 탭 전환 초기화 시작...');
+            
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            console.log('탭 버튼 개수:', tabs.length);
+            console.log('탭 콘텐츠 개수:', tabContents.length);
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    console.log('🖱️ 탭 클릭:', tabName);
+                    
+                    // 모든 탭 비활성화
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // 클릭한 탭 활성화
+                    this.classList.add('active');
+                    const content = document.getElementById(tabName);
+                    if (content) {
+                        content.classList.add('active');
+                        console.log('✅ 탭 전환 완료:', tabName);
+                    } else {
+                        console.error('❌ 탭 콘텐츠를 찾을 수 없음:', tabName);
+                    }
+                });
+            });
+            
+            console.log('✅ 탭 전환 초기화 완료!');
+        })();
+        
+        // 연결 버튼 기능 - 즉시 실행
+        (function() {
+            console.log('✅ 연결 버튼 초기화 시작...');
+            
+            const connectButtons = document.querySelectorAll('.btn-connect');
+            console.log('연결 버튼 개수:', connectButtons.length);
+            
+            connectButtons.forEach((btn, index) => {
+                const platform = btn.dataset.platform;
+                console.log(`버튼 ${index + 1}: ${platform}`);
+                
+                btn.addEventListener('click', function() {
+                    console.log('🖱️ 연결 버튼 클릭:', platform);
+                    
+                    // 버튼 상태 변경
+                    const statusBadge = this.closest('.account-item').querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = '연결됨';
+                        statusBadge.className = 'status-badge connected';
+                    }
+                    
+                    this.textContent = '✓ 연결됨';
+                    this.disabled = true;
+                    
+                    // 알림 표시
+                    alert(`${platform} 연결되었습니다! (시뮬레이션)\n\n실제 사용을 위해서는 API 설정이 필요합니다.`);
+                    
+                    console.log('✅ 연결 완료:', platform);
+                });
+            });
+            
+            console.log('✅ 연결 버튼 초기화 완료!');
+        })();
+        
+        console.log('🚀 즉시 실행 스크립트 완료!');
+    </script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
