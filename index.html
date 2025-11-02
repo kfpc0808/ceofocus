@@ -514,6 +514,244 @@
         justify-content: center;
       }
     }
+    
+    /* SNS 백업 팝업 스타일 */
+    .sns-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .sns-modal-content {
+      background: linear-gradient(135deg, #1a4d7a 0%, #2a5a8a 100%);
+      margin: 5% auto;
+      padding: 0;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideIn 0.3s;
+      color: white;
+    }
+    
+    @keyframes slideIn {
+      from { 
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to { 
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .sns-modal-header {
+      padding: 30px 30px 20px 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+    }
+    
+    .sns-modal-header h2 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #fff;
+    }
+    
+    .sns-modal-body {
+      padding: 30px;
+      line-height: 1.8;
+    }
+    
+    .sns-channels {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 25px;
+      gap: 15px;
+    }
+    
+    .sns-icon {
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12px 20px;
+      border-radius: 10px;
+      display: inline-block;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .sns-question {
+      text-align: center;
+      font-size: 1.1rem;
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      line-height: 1.6;
+    }
+    
+    .sns-warning {
+      background: rgba(255, 100, 100, 0.2);
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      border: 2px solid rgba(255, 100, 100, 0.4);
+    }
+    
+    .sns-warning h3 {
+      margin: 0 0 15px 0;
+      font-size: 1.3rem;
+    }
+    
+    .sns-danger-list {
+      list-style: none;
+      padding: 0;
+      margin: 15px 0;
+    }
+    
+    .sns-danger-list li {
+      padding: 8px 0;
+      font-size: 1.05rem;
+    }
+    
+    .danger-note {
+      color: #ffaaaa;
+      font-size: 0.9rem;
+      margin-left: 5px;
+    }
+    
+    .sns-result {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #ffcccc;
+      text-align: center;
+    }
+    
+    .sns-solution {
+      background: rgba(100, 255, 150, 0.15);
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      border: 2px solid rgba(100, 255, 150, 0.3);
+    }
+    
+    .sns-solution h3 {
+      margin: 0 0 15px 0;
+      font-size: 1.3rem;
+    }
+    
+    .sns-feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 15px 0;
+    }
+    
+    .sns-feature-list li {
+      padding: 8px 0;
+      font-size: 1.05rem;
+    }
+    
+    .sns-modal-footer {
+      padding: 20px 30px 30px 30px;
+      display: flex;
+      gap: 15px;
+      flex-direction: column;
+    }
+    
+    .sns-btn-start {
+      background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+      color: white;
+      padding: 18px 30px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+    }
+    
+    .sns-btn-start:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+    }
+    
+    .sns-btn-start:active {
+      transform: translateY(-1px);
+    }
+    
+    .sns-btn-close {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 12px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .sns-btn-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+      .sns-modal-content {
+        width: 95%;
+        margin: 10% auto;
+      }
+      
+      .sns-modal-header h2 {
+        font-size: 1.5rem;
+      }
+      
+      .sns-modal-body {
+        padding: 20px;
+      }
+      
+      .sns-channels {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .sns-icon {
+        font-size: 1rem;
+        padding: 10px 15px;
+      }
+      
+      .sns-question {
+        font-size: 1rem;
+        padding: 15px;
+      }
+      
+      .sns-warning h3,
+      .sns-solution h3 {
+        font-size: 1.1rem;
+      }
+      
+      .sns-danger-list li,
+      .sns-feature-list li {
+        font-size: 0.95rem;
+      }
+      
+      .sns-btn-start {
+        font-size: 1.1rem;
+        padding: 15px 25px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -658,7 +896,7 @@
         <h2>회원관리</h2>
         <p>고객 Database</p>
       </div>
-      <div class="program-card" onclick="go('snsbackup.html')">
+      <div class="program-card" onclick="showSNSBackupPopup()">
         <h2>📦 SNS백업</h2>
         <p>소셜미디어 콘텐츠 보관</p>
       </div>
@@ -680,6 +918,50 @@
         <a href="https://www.perplexity.ai" target="_blank" class="ai-btn">
           <span>Perplexity</span>
         </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SNS 백업 안내 팝업 -->
+  <div id="snsBackupModal" class="sns-modal">
+    <div class="sns-modal-content">
+      <div class="sns-modal-header">
+        <h2>⚠️ SNS 계정, 안전하신가요?</h2>
+      </div>
+      <div class="sns-modal-body">
+        <div class="sns-channels">
+          <span class="sns-icon">📸 Instagram</span>
+          <span class="sns-icon">📘 Facebook</span>
+          <span class="sns-icon">🎬 YouTube</span>
+        </div>
+        
+        <p class="sns-question">
+          고객 소통, 콘텐츠, 후기...<br>
+          모두 이 세 채널에 있지 않나요?
+        </p>
+        
+        <div class="sns-warning">
+          <h3>😱 이런 일은 예고 없이 찾아옵니다</h3>
+          <ul class="sns-danger-list">
+            <li>• 계정 해킹 <span class="danger-note">(매일 발생)</span></li>
+            <li>• 정책 위반 정지 <span class="danger-note">(예고 없음)</span></li>
+            <li>• 실수로 삭제 <span class="danger-note">(복구 불가)</span></li>
+          </ul>
+          <p class="sns-result">→ 수년간 쌓은 자산이 한순간에 증발!</p>
+        </div>
+        
+        <div class="sns-solution">
+          <h3>✅ 5분 백업으로 평생 안심</h3>
+          <ul class="sns-feature-list">
+            <li>🔹 3개 채널 자동 백업</li>
+            <li>🔹 Google Drive 안전 보관</li>
+            <li>🔹 무료 (15GB 제공)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="sns-modal-footer">
+        <button class="sns-btn-start" onclick="startSNSBackup()">지금 바로 백업하세요! 🚀</button>
+        <button class="sns-btn-close" onclick="closeSNSBackupPopup()">닫기</button>
       </div>
     </div>
   </div>
@@ -949,6 +1231,35 @@
         return;
       }
       window.location.href = path;
+    }
+    
+    // SNS 백업 팝업 표시
+    function showSNSBackupPopup() {
+      console.log('📦 SNS 백업 팝업 표시');
+      document.getElementById('snsBackupModal').style.display = 'block';
+      document.body.style.overflow = 'hidden'; // 스크롤 방지
+    }
+    
+    // SNS 백업 팝업 닫기
+    function closeSNSBackupPopup() {
+      console.log('❌ SNS 백업 팝업 닫기');
+      document.getElementById('snsBackupModal').style.display = 'none';
+      document.body.style.overflow = 'auto'; // 스크롤 복원
+    }
+    
+    // SNS 백업 시작 (팝업 닫고 snsbackup.html로 이동)
+    function startSNSBackup() {
+      console.log('🚀 SNS 백업 시작');
+      closeSNSBackupPopup();
+      window.location.href = 'snsbackup.html';
+    }
+    
+    // 팝업 외부 클릭 시 닫기
+    window.onclick = function(event) {
+      const modal = document.getElementById('snsBackupModal');
+      if (event.target === modal) {
+        closeSNSBackupPopup();
+      }
     }
     
     // My Page 이동
