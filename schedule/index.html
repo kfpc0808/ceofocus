@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>일정관리 - KFPC</title>
     
     <!-- External Libraries -->
@@ -184,7 +184,41 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>제목 *</label>
-                    <input type="text" id="eventTitle" class="form-input" placeholder="일정 제목" required>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button type="button" id="iconPickerBtn" class="icon-picker-btn" title="아이콘 선택">
+                            <span id="selectedIcon">📅</span>
+                        </button>
+                        <input type="text" id="eventTitle" class="form-input" placeholder="일정 제목" required style="flex: 1;">
+                    </div>
+                    <!-- 아이콘 선택기 -->
+                    <div id="iconPicker" class="icon-picker" style="display:none;">
+                        <div class="icon-picker-grid">
+                            <button type="button" class="icon-option" data-icon="📅">📅</button>
+                            <button type="button" class="icon-option" data-icon="🎂">🎂</button>
+                            <button type="button" class="icon-option" data-icon="⭐">⭐</button>
+                            <button type="button" class="icon-option" data-icon="🎁">🎁</button>
+                            <button type="button" class="icon-option" data-icon="💑">💑</button>
+                            <button type="button" class="icon-option" data-icon="🤝">🤝</button>
+                            <button type="button" class="icon-option" data-icon="📞">📞</button>
+                            <button type="button" class="icon-option" data-icon="📌">📌</button>
+                            <button type="button" class="icon-option" data-icon="💼">💼</button>
+                            <button type="button" class="icon-option" data-icon="🏢">🏢</button>
+                            <button type="button" class="icon-option" data-icon="✈️">✈️</button>
+                            <button type="button" class="icon-option" data-icon="🚗">🚗</button>
+                            <button type="button" class="icon-option" data-icon="🏥">🏥</button>
+                            <button type="button" class="icon-option" data-icon="📚">📚</button>
+                            <button type="button" class="icon-option" data-icon="💪">💪</button>
+                            <button type="button" class="icon-option" data-icon="🍽️">🍽️</button>
+                            <button type="button" class="icon-option" data-icon="☕">☕</button>
+                            <button type="button" class="icon-option" data-icon="🎵">🎵</button>
+                            <button type="button" class="icon-option" data-icon="🎬">🎬</button>
+                            <button type="button" class="icon-option" data-icon="⚽">⚽</button>
+                            <button type="button" class="icon-option" data-icon="🎨">🎨</button>
+                            <button type="button" class="icon-option" data-icon="💰">💰</button>
+                            <button type="button" class="icon-option" data-icon="🔔">🔔</button>
+                            <button type="button" class="icon-option" data-icon="❗">❗</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- 중요/완료를 제목 바로 아래에 -->
@@ -253,6 +287,25 @@
                     </div>
                 </div>
                 
+                <!-- 반복 설정 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>반복</label>
+                        <select id="eventRecurrence" class="form-select">
+                            <option value="none">한번만</option>
+                            <option value="daily">매일</option>
+                            <option value="weekly">매주</option>
+                            <option value="monthly">매월</option>
+                            <option value="yearly">매년</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="recurrenceEndGroup" style="display:none;">
+                        <label>반복 종료일</label>
+                        <input type="date" id="eventRecurrenceEnd" class="form-input">
+                    </div>
+                </div>
+                
                 <div class="form-group">
                     <label>장소</label>
                     <input type="text" id="eventLocation" class="form-input" placeholder="장소">
@@ -313,6 +366,7 @@
                 <button id="shareKakaoBtn" class="btn-kakao">💬 카톡공유</button>
                 <button id="editEventBtn" class="btn-primary">✏️ 수정</button>
                 <button id="completeToggleBtn" class="btn-success">✅ 완료</button>
+                <button id="deleteDetailBtn" class="btn-danger">🗑️ 삭제</button>
                 <button id="closeDetailBtn" class="btn-secondary">닫기</button>
             </div>
         </div>
@@ -370,9 +424,19 @@
                         <label>직함 (선택)</label>
                         <input type="text" id="userTitle" class="form-input" placeholder="예: 지점장, 강남지점, 팀장 등" maxlength="20">
                     </div>
+                    <div class="form-group">
+                        <label>하단 메시지 (선택)</label>
+                        <input type="text" id="kakaoMessage" class="form-input" placeholder="예: 자세한 내용은 연락주시기 바랍니다." maxlength="50">
+                        <small style="color:#666;font-size:11px;">※ 빈칸으로 두면 하단 메시지가 표시되지 않습니다.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>링크 URL (선택)</label>
+                        <input type="url" id="kakaoUrl" class="form-input" placeholder="예: https://example.com/info" maxlength="200">
+                        <small style="color:#666;font-size:11px;">※ 상세 정보 페이지 링크를 입력하세요. (http:// 또는 https:// 포함)</small>
+                    </div>
                     <div style="background:#f0f8ff;padding:10px;border-radius:4px;font-size:12px;margin-top:8px;">
                         <strong>미리보기:</strong><br>
-                        <span id="userInfoPreview" style="color:#333;">💼 홍길동 지점장님이 공유한 일정입니다.</span>
+                        <span id="userInfoPreview" style="color:#333;">💼 홍길동 지점장이 공유한 일정입니다.</span>
                     </div>
                 </div>
                 

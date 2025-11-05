@@ -81,7 +81,7 @@ body {
     line-height: 1.4;
     color: var(--text-primary);
     background: var(--bg-secondary);
-    padding-top: calc(52px + var(--safe-area-inset-top));
+    padding-top: calc(110px + var(--safe-area-inset-top)); /* header 전체 높이 */
     padding-bottom: calc(48px + var(--safe-area-inset-bottom));
     overflow-x: hidden;
     min-height: 100vh;
@@ -484,6 +484,8 @@ button {
     border-radius: var(--border-radius);
     padding: 2px;
     box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: visible !important;
 }
 
 /* ========================================
@@ -1027,3 +1029,76 @@ button {
     font-size: var(--font-size-sm);
 }
 
+
+/* ========================================
+   아이콘 선택기
+======================================== */
+.icon-picker-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-main);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.icon-picker-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--color-primary);
+}
+
+.icon-picker {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    padding: 8px;
+    z-index: 1000;
+    max-width: 280px;
+}
+
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+}
+
+.icon-option {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-main);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.icon-option:hover {
+    background: var(--bg-hover);
+    border-color: var(--color-primary);
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+    .icon-picker-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .icon-picker {
+        max-width: 200px;
+    }
+}

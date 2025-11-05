@@ -75,13 +75,22 @@
 }
 
 /* ========================================
-   캘린더 헤더 (요일) - 간소화
+   캘린더 헤더 (요일) - 간소화 & 고정
 ======================================== */
 .fc .fc-col-header {
-    background: var(--bg-secondary);
+    background: var(--bg-secondary) !important;
     position: sticky !important;
     top: 0 !important;
-    z-index: 10 !important;
+    z-index: 100 !important;
+}
+
+/* 스크롤 컨테이너 내부 헤더 */
+.fc .fc-timegrid-axis-frame,
+.fc .fc-timegrid-slots .fc-scrollgrid-section,
+.fc .fc-scrollgrid-section.fc-scrollgrid-section-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 99 !important;
 }
 
 .fc .fc-col-header-cell {
@@ -91,6 +100,7 @@
     color: var(--text-primary);
     border-color: var(--border-color);
     text-align: center;
+    background: var(--bg-secondary) !important;
 }
 
 .fc .fc-col-header-cell-cushion {
@@ -120,11 +130,20 @@
     max-height: 40px !important;
 }
 
-.fc .fc-scrollgrid-section-header {
+/* All-Day 영역 고정 - 더 강력한 설정 */
+.fc .fc-scrollgrid-section-header,
+.fc .fc-timegrid-body .fc-scrollgrid-section-header,
+.fc .fc-daygrid-header {
     position: sticky !important;
-    top: 32px !important; /* 요일 헤더 아래 */
-    z-index: 9 !important;
+    top: 40px !important; /* 요일 헤더 아래 */
+    z-index: 98 !important;
     background: var(--bg-main) !important;
+}
+
+/* 스크롤 영역 설정 */
+.fc .fc-scroller {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
 /* ========================================
@@ -142,20 +161,19 @@
     color: var(--text-primary);
 }
 
-/* 오늘 날짜 강조 */
+/* 오늘 날짜 강조 - 원형 제거, 밑줄만 */
 .fc .fc-day-today {
-    background: rgba(66, 133, 244, 0.05) !important;
+    background: transparent !important;
 }
 
 .fc .fc-day-today .fc-daygrid-day-number {
-    background: var(--color-primary);
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border-radius: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    display: inline !important;
+    font-weight: 600 !important;
 }
 
 /* 토요일 */
@@ -584,29 +602,30 @@
     font-size: var(--font-size-md);
     font-weight: 700;
     color: var(--color-primary);
-    z-index: 1000;
-}
-
+    z-
 /* ========================================
-   Pinch Zoom 지원
+   날짜 헤더 고정 강화 (추가)
 ======================================== */
-#calendar {
-    touch-action: pan-x pan-y pinch-zoom !important;
+.fc .fc-view-harness {
+    position: relative;
+    overflow: visible !important;
 }
 
-.fc-view-harness {
-    touch-action: pan-x pan-y pinch-zoom !important;
+/* 주간/일간 뷰 헤더 고정 */
+.fc-timegrid .fc-col-header,
+.fc-timeGridWeek-view .fc-col-header,
+.fc-timeGridDay-view .fc-col-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background: var(--bg-secondary) !important;
 }
 
-/* 모바일에서 pinch zoom 허용 */
-@media (max-width: 768px) {
-    #calendar,
-    .fc-view-harness,
-    .fc-daygrid,
-    .fc-timegrid {
-        touch-action: pan-x pan-y pinch-zoom !important;
-        -webkit-user-select: none;
-        user-select: none;
-    }
+/* All-Day 행 고정 */
+.fc-timegrid .fc-daygrid-body,
+.fc-timeGridWeek-view .fc-daygrid-body {
+    position: sticky !important;
+    top: 40px !important;
+    z-index: 99 !important;
+    background: var(--bg-main) !important;
 }
-

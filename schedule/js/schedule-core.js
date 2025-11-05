@@ -15,7 +15,7 @@ let calendarData = {
         '보험만기일': '#FF9500',
         '생일': '#9B59B6',
         '결혼기념일': '#FFB6C1',
-        '미팅': '#FFD93D',
+        '미팅': '#FFFFFF',  // 흰색 배경
         '상담': '#6BCF7F',
         '기타': '#95a5a6'
     },
@@ -27,7 +27,9 @@ let calendarData = {
     },
     userInfo: {
         name: '홍길동',           // ⚠️ 여기에 사용자 이름 입력
-        title: '지점장'           // ⚠️ 여기에 직책 입력 (선택)
+        title: '지점장',          // ⚠️ 여기에 직책 입력 (선택)
+        kakaoMessage: '자세한 내용은 연락주시기 바랍니다.',  // 카카오톡 공유 하단 메시지
+        kakaoUrl: ''              // 카카오톡 공유 링크 URL (선택)
     }
 };
 
@@ -709,6 +711,26 @@ const initKakao = () => {
     return true;
 };
 
+// 받침 판단 함수 (이/가 자동 선택)
+const getSubjectParticle = (word) => {
+    if (!word || word.length === 0) return '이';
+    
+    const lastChar = word.charAt(word.length - 1);
+    const lastCharCode = lastChar.charCodeAt(0);
+    
+    // 한글이 아니면 '이' 반환
+    if (lastCharCode < 0xAC00 || lastCharCode > 0xD7A3) {
+        return '이';
+    }
+    
+    // 한글의 받침 유무 판단
+    // 한글 유니코드: 0xAC00(가) ~ 0xD7A3(힣)
+    // (코드 - 0xAC00) % 28 == 0 이면 받침 없음
+    const hasJongseong = (lastCharCode - 0xAC00) % 28 !== 0;
+    
+    return hasJongseong ? '이' : '가';
+};
+
 // 일정을 카카오톡으로 공유
 const shareToKakao = (schedule) => {
     // 카카오 SDK 확인
@@ -754,19 +776,33 @@ const shareToKakao = (schedule) => {
         // 메모 추가
         const memoStr = schedule.description ? `\n📝 ${schedule.description}` : '';
         
-        // 사용자 정보
+        // 사용자 정보 및 조사 처리
         const userName = calendarData.userInfo.name || '담당자';
-        const userTitle = calendarData.userInfo.title ? ` ${calendarData.userInfo.title}` : '';
-        const senderInfo = `💼 ${userName}${userTitle}님이 공유한 일정입니다.\n\n`;
+        const userTitle = calendarData.userInfo.title || '';
+        
+        // 받침에 따라 '이/가' 자동 선택
+        const particle = getSubjectParticle(userTitle || userName);
+        const senderInfo = userTitle 
+            ? `💼 ${userName} ${userTitle}${particle} 공유한 일정입니다.\n\n`
+            : `💼 ${userName}${particle} 공유한 일정입니다.\n\n`;
+        
+        // 하단 메시지 (설정에서 가져오기)
+        const bottomMessage = calendarData.userInfo.kakaoMessage || '';
+        const bottomText = bottomMessage ? `\n\n※ ${bottomMessage}` : '';
+        
+        // URL 링크 (설정에서 가져오기)
+        const kakaoUrl = calendarData.userInfo.kakaoUrl || '';
+        const urlText = kakaoUrl ? `\n🔗 ${kakaoUrl}` : '';
         
         // 카카오톡 메시지 전송
         Kakao.Share.sendDefault({
             objectType: 'text',
-            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}\n\n※ 자세한 내용은 연락주시기 바랍니다.`,
+            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}${bottomText}${urlText}`,
             link: {
                 mobileWebUrl: 'https://ceofocus123.netlify.app',
                 webUrl: 'https://ceofocus123.netlify.app',
             },
+            buttons: []  // 버튼 제거
         });
         
         console.log('✅ 카카오톡 공유 완료:', schedule.title);
@@ -776,7 +812,7 @@ const shareToKakao = (schedule) => {
         console.error('❌ 카카오톡 공유 오류:', error);
         showToast('카카오톡 공유 실패', 'error');
     }
-};
+}
 
 // ========================================
 // 페이지 로드 시 초기화

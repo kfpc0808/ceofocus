@@ -24,8 +24,8 @@ function initializeCalendar() {
         timeZone: 'Asia/Seoul',
         initialView: calendarData.userSettings.defaultView || 'timeGridWeek',
         
-        // 모바일: 기본 5일 표시
-        duration: window.innerWidth <= 768 ? { days: 5 } : { days: 7 },
+        // 모바일: 기본 5일 표시, PC: 7일
+        dayCount: window.innerWidth <= 768 ? 5 : 7,
         
         // 헤더 툴바 - 상단에 연월 표시
         headerToolbar: {
@@ -99,10 +99,22 @@ function initializeCalendar() {
             meridiem: false,     // AM/PM 표시 안함
             hour12: true         // 12시간 형식
         },
+        // 시간 레이블을 숫자만 표시 (오전/오후 제거)
+        slotLabelContent: function(arg) {
+            let hour = arg.date.getHours();
+            // 12시간 형식으로 변환 (1~12)
+            if (hour === 0) hour = 12;
+            else if (hour > 12) hour = hour - 12;
+            return { html: hour };
+        },
         
         // 주 설정
         firstDay: 0, // 일요일부터
         weekends: true,
+        
+        // 날짜 헤더 고정 (스크롤 시)
+        stickyHeaderDates: true,
+        stickyFooterScrollbar: true,
         
         // 높이
         height: 'auto',
@@ -238,16 +250,19 @@ function initPinchZoom() {
             
             // 가로 방향이 세로보다 클 때만 일자 수 조절
             if (horizontalDelta > verticalDelta * 1.5) {
+                // 브라우저 기본 줌 방지
+                e.preventDefault();
+                
                 if (Math.abs(delta) > 50) { // 임계값
                     if (delta > 0) {
-                        // 확대 (줌인) - 일자 수 줄이기
+                        // 벌리기 (줌인) - 일자 수 줄이기 (각 일자가 크게)
                         if (currentDayCount > 3) {
                             currentDayCount = Math.max(3, currentDayCount - 1);
                             updateCalendarDays();
                             touchDistance = newDistance;
                         }
                     } else {
-                        // 축소 (줌아웃) - 일자 수 늘리기
+                        // 모으기 (줌아웃) - 일자 수 늘리기 (더 많은 날)
                         if (currentDayCount < 14) {
                             currentDayCount = Math.min(14, currentDayCount + 1);
                             updateCalendarDays();
@@ -257,14 +272,14 @@ function initPinchZoom() {
                 }
             }
         }
-    }, { passive: true });
+    }, { passive: false }); // passive: false로 변경하여 preventDefault 가능하게
     
     calendarEl.addEventListener('touchend', function() {
         isPinching = false;
         touchDistance = 0;
     }, { passive: true });
     
-    console.log('✅ Pinch zoom 초기화 완료');
+    console.log('✅ Pinch zoom 초기화 완료 (3~14일 조절 가능)');
 }
 
 function updateCalendarDays() {
@@ -274,7 +289,7 @@ function updateCalendarDays() {
     
     // 주간 뷰일 때만 적용
     if (calendar.view.type === 'timeGridWeek' || calendar.view.type.includes('Week')) {
-        calendar.setOption('duration', { days: currentDayCount });
+        calendar.setOption('dayCount', currentDayCount);
         calendar.gotoDate(currentDate);
         
         showToast(`📅 ${currentDayCount}일 보기`);
@@ -294,7 +309,7 @@ function renderCalendar() {
         .filter(schedule => filterSchedule(schedule))
         .map(schedule => ({
             id: schedule.id,
-            title: schedule.title,
+            title: (schedule.icon || '📅') + ' ' + schedule.title,  // 아이콘 추가
             start: schedule.all_day ? schedule.date : `${schedule.date}T${schedule.start_time}`,
             end: schedule.all_day ? schedule.end_date : `${schedule.end_date}T${schedule.end_time}`,
             allDay: schedule.all_day,
@@ -308,7 +323,8 @@ function renderCalendar() {
                 important: schedule.important,
                 completed: schedule.completed,
                 auto_generated: schedule.auto_generated,
-                source: schedule.source
+                source: schedule.source,
+                icon: schedule.icon  // 아이콘 저장
             }
         }));
     
@@ -387,6 +403,7 @@ function openEventModal(mode = 'add', date = new Date(), allDay = false, endDate
         
         // 폼 초기화
         document.getElementById('eventTitle').value = '';
+        document.getElementById('selectedIcon').textContent = '📅';  // 아이콘 초기화
         document.getElementById('eventType').value = '미팅';
         document.getElementById('eventColor').value = calendarData.colorSettings['미팅'];
         document.getElementById('eventAllDay').checked = allDay;
@@ -398,6 +415,9 @@ function openEventModal(mode = 'add', date = new Date(), allDay = false, endDate
         document.getElementById('eventDescription').value = '';
         document.getElementById('eventImportant').checked = false;
         document.getElementById('eventCompleted').checked = false;
+        document.getElementById('eventRecurrence').value = 'none';  // 반복 초기화
+        document.getElementById('eventRecurrenceEnd').value = '';
+        document.getElementById('recurrenceEndGroup').style.display = 'none';
         
         toggleTimeInputs(!allDay);
     }
@@ -416,6 +436,7 @@ function openEditModal(schedule) {
     
     // 폼 채우기
     document.getElementById('eventTitle').value = schedule.title || '';
+    document.getElementById('selectedIcon').textContent = schedule.icon || '📅';  // 아이콘 설정
     document.getElementById('eventType').value = schedule.type || '미팅';
     document.getElementById('eventColor').value = schedule.color || calendarData.colorSettings[schedule.type];
     document.getElementById('eventAllDay').checked = schedule.all_day;
@@ -427,6 +448,10 @@ function openEditModal(schedule) {
     document.getElementById('eventDescription').value = schedule.description || '';
     document.getElementById('eventImportant').checked = schedule.important || false;
     document.getElementById('eventCompleted').checked = schedule.completed || false;
+    document.getElementById('eventRecurrence').value = schedule.recurrence || 'none';  // 반복 설정
+    document.getElementById('eventRecurrenceEnd').value = schedule.recurrence_end || '';
+    document.getElementById('recurrenceEndGroup').style.display = 
+        (schedule.recurrence && schedule.recurrence !== 'none') ? 'block' : 'none';
     
     toggleTimeInputs(!schedule.all_day);
     modal.classList.add('show');
@@ -459,6 +484,7 @@ function toggleTimeInputs(show) {
 function saveEvent() {
     // 폼 데이터 수집
     const title = document.getElementById('eventTitle').value.trim();
+    const icon = document.getElementById('selectedIcon').textContent;  // 아이콘 추가
     const type = document.getElementById('eventType').value;
     const color = document.getElementById('eventColor').value;
     const allDay = document.getElementById('eventAllDay').checked;
@@ -470,6 +496,8 @@ function saveEvent() {
     const description = document.getElementById('eventDescription').value.trim();
     const important = document.getElementById('eventImportant').checked;
     const completed = document.getElementById('eventCompleted').checked;
+    const recurrence = document.getElementById('eventRecurrence').value;  // 반복 추가
+    const recurrenceEnd = document.getElementById('eventRecurrenceEnd').value;
     
     // 유효성 검사
     if (!title) {
@@ -482,9 +510,16 @@ function saveEvent() {
         return;
     }
     
+    // 반복 종료일 검증
+    if (recurrence !== 'none' && !recurrenceEnd) {
+        showToast('반복 종료일을 선택해주세요', 'error');
+        return;
+    }
+    
     // 일정 데이터
     const scheduleData = {
         title,
+        icon,  // 아이콘 저장
         type,
         color,
         all_day: allDay,
@@ -496,6 +531,8 @@ function saveEvent() {
         description,
         important,
         completed,
+        recurrence,  // 반복 저장
+        recurrence_end: recurrence !== 'none' ? recurrenceEnd : null,
         auto_generated: false,
         source: '수동입력'
     };
@@ -506,12 +543,60 @@ function saveEvent() {
         showToast('✏️ 일정 수정 완료');
     } else {
         // 추가
-        addSchedule(scheduleData);
-        showToast('✅ 일정 추가 완료');
+        if (recurrence !== 'none') {
+            // 반복 일정 생성
+            createRecurringEvents(scheduleData);
+            showToast(`✅ 반복 일정 생성 완료`);
+        } else {
+            addSchedule(scheduleData);
+            showToast('✅ 일정 추가 완료');
+        }
     }
     
     renderCalendar();
     closeEventModal();
+}
+
+// 반복 일정 생성 함수
+function createRecurringEvents(scheduleData) {
+    const startDate = new Date(scheduleData.date);
+    const endDate = new Date(scheduleData.recurrence_end);
+    const recurrence = scheduleData.recurrence;
+    
+    let currentDate = new Date(startDate);
+    let count = 0;
+    const MAX_EVENTS = 365; // 최대 365개까지만 생성
+    
+    while (currentDate <= endDate && count < MAX_EVENTS) {
+        const eventData = {
+            ...scheduleData,
+            date: formatDate(currentDate),
+            end_date: scheduleData.end_date ? formatDate(
+                new Date(currentDate.getTime() + 
+                    (new Date(scheduleData.end_date) - new Date(scheduleData.date)))
+            ) : formatDate(currentDate),
+            recurrence: 'none'  // 개별 일정은 반복 없음
+        };
+        
+        addSchedule(eventData);
+        count++;
+        
+        // 다음 날짜 계산
+        switch (recurrence) {
+            case 'daily':
+                currentDate.setDate(currentDate.getDate() + 1);
+                break;
+            case 'weekly':
+                currentDate.setDate(currentDate.getDate() + 7);
+                break;
+            case 'monthly':
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                break;
+            case 'yearly':
+                currentDate.setFullYear(currentDate.getFullYear() + 1);
+                break;
+        }
+    }
 }
 
 // ========================================
@@ -652,7 +737,7 @@ function showEventDetail(event) {
     
     // 상태
     let statusText = '';
-    if (schedule.important) statusText += '⭐ 중요 ';
+    if (schedule.important) statusText += '중요 ';  // 별 제거
     if (schedule.completed) statusText += '✅ 완료 ';
     if (schedule.auto_generated) statusText += '🤖 자동생성 ';
     if (!statusText) statusText = '일반';
@@ -857,6 +942,8 @@ function openSettingsModal() {
     if (calendarData.userInfo) {
         document.getElementById('userName').value = calendarData.userInfo.name || '';
         document.getElementById('userTitle').value = calendarData.userInfo.title || '';
+        document.getElementById('kakaoMessage').value = calendarData.userInfo.kakaoMessage || '';
+        document.getElementById('kakaoUrl').value = calendarData.userInfo.kakaoUrl || '';
         updateUserInfoPreview();
     }
     
@@ -867,16 +954,37 @@ function closeSettingsModal() {
     document.getElementById('settingsModal').classList.remove('show');
 }
 
+// 받침 판단 함수 (이/가 자동 선택)
+function getSubjectParticle(word) {
+    if (!word || word.length === 0) return '이';
+    
+    const lastChar = word.charAt(word.length - 1);
+    const lastCharCode = lastChar.charCodeAt(0);
+    
+    // 한글이 아니면 '이' 반환
+    if (lastCharCode < 0xAC00 || lastCharCode > 0xD7A3) {
+        return '이';
+    }
+    
+    // 한글의 받침 유무 판단
+    const hasJongseong = (lastCharCode - 0xAC00) % 28 !== 0;
+    
+    return hasJongseong ? '이' : '가';
+}
+
 // 사용자 정보 미리보기 업데이트
 function updateUserInfoPreview() {
     const userName = document.getElementById('userName').value || '홍길동';
     const userTitle = document.getElementById('userTitle').value;
     const preview = document.getElementById('userInfoPreview');
     
+    // 받침에 따라 '이/가' 자동 선택
+    const particle = getSubjectParticle(userTitle || userName);
+    
     if (userTitle) {
-        preview.textContent = `💼 ${userName} ${userTitle}님이 공유한 일정입니다.`;
+        preview.textContent = `💼 ${userName} ${userTitle}${particle} 공유한 일정입니다.`;
     } else {
-        preview.textContent = `💼 ${userName}님이 공유한 일정입니다.`;
+        preview.textContent = `💼 ${userName}${particle} 공유한 일정입니다.`;
     }
 }
 
@@ -900,7 +1008,9 @@ function saveSettings() {
     if (userName) {
         calendarData.userInfo = {
             name: userName,
-            title: document.getElementById('userTitle').value.trim()
+            title: document.getElementById('userTitle').value.trim(),
+            kakaoMessage: document.getElementById('kakaoMessage').value.trim(),
+            kakaoUrl: document.getElementById('kakaoUrl').value.trim()
         };
         saveSchedulesToDrive(); // 드라이브에 저장
     } else {
@@ -1028,6 +1138,59 @@ document.addEventListener('DOMContentLoaded', () => {
     // 일정 저장/삭제
     document.getElementById('saveEventBtn')?.addEventListener('click', saveEvent);
     document.getElementById('deleteEventBtn')?.addEventListener('click', deleteEvent);
+    document.getElementById('deleteDetailBtn')?.addEventListener('click', () => {
+        // 상세보기 모달에서 삭제
+        const currentSchedule = calendarData.schedules.find(s => 
+            s.title === document.getElementById('detailTitle').textContent
+        );
+        if (currentSchedule && confirm('이 일정을 삭제하시겠습니까?')) {
+            deleteSchedule(currentSchedule.id);
+            showToast('🗑️ 일정이 삭제되었습니다');
+            closeEventDetailModal();
+            renderCalendar();
+        }
+    });
+    
+    // 아이콘 선택기
+    document.getElementById('iconPickerBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const picker = document.getElementById('iconPicker');
+        picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // 아이콘 선택
+    document.querySelectorAll('.icon-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const icon = e.target.dataset.icon;
+            document.getElementById('selectedIcon').textContent = icon;
+            document.getElementById('iconPicker').style.display = 'none';
+        });
+    });
+    
+    // 아이콘 선택기 외부 클릭 시 닫기
+    document.addEventListener('click', (e) => {
+        const picker = document.getElementById('iconPicker');
+        const btn = document.getElementById('iconPickerBtn');
+        if (picker && !picker.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+            picker.style.display = 'none';
+        }
+    });
+    
+    // 반복 옵션 변경 시 반복 종료일 표시/숨김
+    document.getElementById('eventRecurrence')?.addEventListener('change', (e) => {
+        const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
+        if (e.target.value !== 'none') {
+            recurrenceEndGroup.style.display = 'block';
+            // 기본 종료일 설정 (1년 후)
+            if (!document.getElementById('eventRecurrenceEnd').value) {
+                const oneYearLater = new Date();
+                oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+                document.getElementById('eventRecurrenceEnd').value = formatDate(oneYearLater);
+            }
+        } else {
+            recurrenceEndGroup.style.display = 'none';
+        }
+    });
     
     // 설정 저장
     document.getElementById('saveSettings')?.addEventListener('click', saveSettings);
