@@ -24,6 +24,9 @@ function initializeCalendar() {
         timeZone: 'Asia/Seoul',
         initialView: calendarData.userSettings.defaultView || 'timeGridWeek',
         
+        // 모바일: 기본 5일 표시
+        duration: window.innerWidth <= 768 ? { days: 5 } : { days: 7 },
+        
         // 헤더 툴바 - 상단에 연월 표시
         headerToolbar: {
             left: 'prev,next today',
@@ -47,17 +50,19 @@ function initializeCalendar() {
             return `${year}년 ${month}월`;
         },
         
-        // 요일 헤더 형식 - "일(요일)" 형태로 간소화
-        dayHeaderFormat: function(date) {
-            const day = date.date.day;
-            const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.date.day];
-            return `${day}\n(${weekday})`;
-        },
-        
-        // 주간/일간 뷰 컬럼 헤더 형식 - 가로 한 줄: "5(수)"
+        // 요일 헤더 형식 - 뷰별로 다르게
         dayHeaderContent: function(args) {
             const day = args.date.getDate();
             const weekday = ['일', '월', '화', '수', '목', '금', '토'][args.date.getDay()];
+            
+            // 월간 뷰: 요일만 표시 (월, 화, 수, 목, 금, 토, 일)
+            if (args.view.type === 'dayGridMonth') {
+                return {
+                    html: `<div style="text-align:center;font-size:14px;font-weight:700;">${weekday}</div>`
+                };
+            }
+            
+            // 주간/일간 뷰: 날짜와 요일 표시 (5(수), 6(목))
             return {
                 html: `<div style="text-align:center;font-size:14px;font-weight:700;">${day}<span style="font-size:12px;color:#666;">(${weekday})</span></div>`
             };
@@ -88,10 +93,11 @@ function initializeCalendar() {
         slotDuration: '00:30:00',
         slotLabelInterval: '01:00',
         slotLabelFormat: {
-            hour: 'numeric',
-            minute: '2-digit',
-            meridiem: false,
-            hour12: false
+            hour: 'numeric',     // 숫자만
+            minute: undefined,   // 분 표시 안함
+            omitZeroMinute: true,
+            meridiem: false,     // AM/PM 표시 안함
+            hour12: true         // 12시간 형식
         },
         
         // 주 설정
@@ -121,9 +127,9 @@ function initializeCalendar() {
             calendar.changeView('timeGridDay', date);
         },
         
-        // 선택
-        selectable: true,
-        selectMirror: true,
+        // 선택 - 모바일에서 터치 오작동 방지
+        selectable: false,  // 드래그 선택 비활성화
+        selectMirror: false,
         
         // 현재 시간 표시
         nowIndicator: true,
@@ -159,14 +165,12 @@ function initializeCalendar() {
             }
         },
         
-        // 클릭 이벤트
+        // 클릭 이벤트 (터치도 클릭으로 처리)
         dateClick: function(info) {
             openEventModal('add', info.date, info.allDay);
         },
         
-        select: function(info) {
-            openEventModal('add', info.start, info.allDay, info.end);
-        },
+        // select 제거 - 터치 오작동 방지
         
         eventClick: function(info) {
             showEventDetail(info.event);
@@ -193,6 +197,88 @@ function initializeCalendar() {
     
     calendar.render();
     console.log('✅ 캘린더 초기화 완료');
+    
+    // Pinch zoom 초기화
+    initPinchZoom();
+}
+
+// ========================================
+// Pinch Zoom으로 일자 수 조절
+// ========================================
+let currentDayCount = window.innerWidth <= 768 ? 5 : 7; // 모바일: 5일, 데스크톱: 7일
+let touchDistance = 0;
+let isPinching = false;
+
+function initPinchZoom() {
+    const calendarEl = document.getElementById('calendar');
+    if (!calendarEl) return;
+    
+    calendarEl.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+            isPinching = true;
+            touchDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+        }
+    }, { passive: true });
+    
+    calendarEl.addEventListener('touchmove', function(e) {
+        if (isPinching && e.touches.length === 2) {
+            const newDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            
+            const delta = newDistance - touchDistance;
+            
+            // 가로 방향 확대/축소 감지
+            const horizontalDelta = Math.abs(e.touches[0].pageX - e.touches[1].pageX);
+            const verticalDelta = Math.abs(e.touches[0].pageY - e.touches[1].pageY);
+            
+            // 가로 방향이 세로보다 클 때만 일자 수 조절
+            if (horizontalDelta > verticalDelta * 1.5) {
+                if (Math.abs(delta) > 50) { // 임계값
+                    if (delta > 0) {
+                        // 확대 (줌인) - 일자 수 줄이기
+                        if (currentDayCount > 3) {
+                            currentDayCount = Math.max(3, currentDayCount - 1);
+                            updateCalendarDays();
+                            touchDistance = newDistance;
+                        }
+                    } else {
+                        // 축소 (줌아웃) - 일자 수 늘리기
+                        if (currentDayCount < 14) {
+                            currentDayCount = Math.min(14, currentDayCount + 1);
+                            updateCalendarDays();
+                            touchDistance = newDistance;
+                        }
+                    }
+                }
+            }
+        }
+    }, { passive: true });
+    
+    calendarEl.addEventListener('touchend', function() {
+        isPinching = false;
+        touchDistance = 0;
+    }, { passive: true });
+    
+    console.log('✅ Pinch zoom 초기화 완료');
+}
+
+function updateCalendarDays() {
+    if (!calendar) return;
+    
+    const currentDate = calendar.getDate();
+    
+    // 주간 뷰일 때만 적용
+    if (calendar.view.type === 'timeGridWeek' || calendar.view.type.includes('Week')) {
+        calendar.setOption('duration', { days: currentDayCount });
+        calendar.gotoDate(currentDate);
+        
+        showToast(`📅 ${currentDayCount}일 보기`);
+    }
 }
 
 // ========================================
@@ -767,12 +853,33 @@ function openSettingsModal() {
     document.getElementById('defaultStartTime').value = calendarData.userSettings.startTime;
     document.getElementById('defaultEndTime').value = calendarData.userSettings.endTime;
     
+    // 사용자 정보 로드
+    if (calendarData.userInfo) {
+        document.getElementById('userName').value = calendarData.userInfo.name || '';
+        document.getElementById('userTitle').value = calendarData.userInfo.title || '';
+        updateUserInfoPreview();
+    }
+    
     modal.classList.add('show');
 }
 
 function closeSettingsModal() {
     document.getElementById('settingsModal').classList.remove('show');
 }
+
+// 사용자 정보 미리보기 업데이트
+function updateUserInfoPreview() {
+    const userName = document.getElementById('userName').value || '홍길동';
+    const userTitle = document.getElementById('userTitle').value;
+    const preview = document.getElementById('userInfoPreview');
+    
+    if (userTitle) {
+        preview.textContent = `💼 ${userName} ${userTitle}님이 공유한 일정입니다.`;
+    } else {
+        preview.textContent = `💼 ${userName}님이 공유한 일정입니다.`;
+    }
+}
+
 
 function saveSettings() {
     // 색상 설정 저장
@@ -787,6 +894,19 @@ function saveSettings() {
         startTime: document.getElementById('defaultStartTime').value,
         endTime: document.getElementById('defaultEndTime').value
     });
+    
+    // 사용자 정보 저장
+    const userName = document.getElementById('userName').value.trim();
+    if (userName) {
+        calendarData.userInfo = {
+            name: userName,
+            title: document.getElementById('userTitle').value.trim()
+        };
+        saveSchedulesToDrive(); // 드라이브에 저장
+    } else {
+        showToast('⚠️ 이름을 입력해주세요', 'error');
+        return;
+    }
     
     // 캘린더 재설정
     if (calendar) {
@@ -912,6 +1032,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 설정 저장
     document.getElementById('saveSettings')?.addEventListener('click', saveSettings);
     document.getElementById('resetSettings')?.addEventListener('click', resetSettings);
+    
+    // 사용자 정보 미리보기 업데이트
+    document.getElementById('userName')?.addEventListener('input', updateUserInfoPreview);
+    document.getElementById('userTitle')?.addEventListener('input', updateUserInfoPreview);
     
     // 구글 캘린더 동기화
     document.getElementById('syncGoogleCalendarBtn')?.addEventListener('click', async () => {

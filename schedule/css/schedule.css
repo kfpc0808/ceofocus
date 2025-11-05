@@ -882,3 +882,148 @@ button {
         border: 1px solid var(--border-color);
     }
 }
+
+/* ========================================
+   모바일 UI 개선 - 2025.11.05
+======================================== */
+
+/* 1. 오늘 날짜 파란색 원형 제거 */
+.fc-day-today {
+    background-color: transparent !important;
+}
+
+.fc-day-today .fc-daygrid-day-number,
+.fc-day-today .fc-col-header-cell-cushion {
+    color: var(--text-primary) !important;
+    font-weight: normal !important;
+}
+
+/* 오늘 날짜 표시만 밑줄로 (선택사항) */
+.fc-day-today .fc-daygrid-day-frame {
+    border-bottom: 2px solid var(--color-primary);
+}
+
+/* 2. 모달 하단 버튼 가려짐 방지 */
+.modal-body {
+    max-height: calc(85vh - 120px) !important;
+    overflow-y: auto !important;
+    padding-bottom: var(--spacing-xl) !important;
+}
+
+.modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-main);
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+/* 4. 신규일정 레이아웃 개선 - 한 화면에 */
+.form-row {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.form-row.full-width {
+    grid-template-columns: 1fr;
+}
+
+.form-group-inline {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+/* 중요/완료는 최상단 제목 아래에 */
+.priority-row {
+    display: flex;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* 5. 중요 일정 스타일 - 배경색으로 */
+.fc-event.important {
+    background-color: rgba(234, 67, 53, 0.15) !important;
+    border-color: #ea4335 !important;
+    color: #c5221f !important;
+    font-weight: bold !important;
+}
+
+.fc-event.important .fc-event-time,
+.fc-event.important .fc-event-title {
+    color: #c5221f !important;
+    font-weight: bold !important;
+}
+
+/* 6. 모든 글자 검정색으로 가독성 개선 */
+.fc-event-time,
+.fc-event-title,
+.fc-daygrid-event-dot,
+.fc-list-event-time,
+.fc-list-event-title {
+    color: #202124 !important;
+    font-weight: 500 !important;
+}
+
+.fc-daygrid-day-number,
+.fc-col-header-cell-cushion,
+.fc-timegrid-slot-label-cushion {
+    color: #202124 !important;
+}
+
+/* 완료된 일정만 회색 */
+.fc-event.completed {
+    opacity: 0.6;
+}
+
+.fc-event.completed .fc-event-time,
+.fc-event.completed .fc-event-title {
+    color: #5f6368 !important;
+    text-decoration: line-through;
+}
+
+/* 7. 일정 박스 제거 - 글자만 표시 */
+.fc-event {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 1px 2px !important;
+}
+
+.fc-daygrid-event {
+    border-left: 3px solid currentColor !important;
+    background: transparent !important;
+    padding-left: 4px !important;
+}
+
+/* 타임그리드 (시간대) 뷰 */
+.fc-timegrid-event {
+    border-left: 4px solid currentColor !important;
+    background: transparent !important;
+    padding: 2px 4px !important;
+}
+
+/* 중요 일정만 배경색 표시 */
+.fc-event.important {
+    background-color: rgba(234, 67, 53, 0.15) !important;
+    border-left-color: #ea4335 !important;
+}
+
+/* 일정 호버 효과 */
+.fc-event:hover {
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+/* 일정 텍스트 크기 */
+.fc-event-time {
+    font-size: var(--font-size-xs);
+}
+
+.fc-event-title {
+    font-size: var(--font-size-sm);
+}
+

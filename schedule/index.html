@@ -187,6 +187,19 @@
                     <input type="text" id="eventTitle" class="form-input" placeholder="일정 제목" required>
                 </div>
                 
+                <!-- 중요/완료를 제목 바로 아래에 -->
+                <div class="priority-row">
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" id="eventImportant">
+                        ⭐ 중요
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" id="eventCompleted">
+                        ✅ 완료
+                    </label>
+                </div>
+                
+                <!-- 타입과 색상을 한 행으로 -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>타입 *</label>
@@ -207,13 +220,14 @@
                     </div>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label>
                         <input type="checkbox" id="eventAllDay">
                         종일
                     </label>
                 </div>
                 
+                <!-- 시작 날짜와 시간을 한 행으로 -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>시작 날짜 *</label>
@@ -226,6 +240,7 @@
                     </div>
                 </div>
                 
+                <!-- 종료 날짜와 시간을 한 행으로 -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>종료 날짜 *</label>
@@ -246,20 +261,6 @@
                 <div class="form-group">
                     <label>메모</label>
                     <textarea id="eventDescription" class="form-textarea" rows="3" placeholder="메모"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="eventImportant">
-                        ⭐ 중요 일정
-                    </label>
-                </div>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="eventCompleted">
-                        ✅ 완료
-                    </label>
                 </div>
             </div>
             
@@ -353,6 +354,25 @@
                             <label>상담</label>
                             <input type="color" class="color-picker" data-type="상담" value="#6BCF7F">
                         </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>💬 카카오톡 공유 정보</h3>
+                    <p style="font-size:12px;color:#666;margin-bottom:12px;">
+                        일정을 공유할 때 표시되는 정보입니다.
+                    </p>
+                    <div class="form-group">
+                        <label>이름 *</label>
+                        <input type="text" id="userName" class="form-input" placeholder="예: 홍길동" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label>직함 (선택)</label>
+                        <input type="text" id="userTitle" class="form-input" placeholder="예: 지점장, 강남지점, 팀장 등" maxlength="20">
+                    </div>
+                    <div style="background:#f0f8ff;padding:10px;border-radius:4px;font-size:12px;margin-top:8px;">
+                        <strong>미리보기:</strong><br>
+                        <span id="userInfoPreview" style="color:#333;">💼 홍길동 지점장님이 공유한 일정입니다.</span>
                     </div>
                 </div>
                 

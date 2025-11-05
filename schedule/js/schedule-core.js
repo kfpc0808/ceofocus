@@ -24,6 +24,10 @@ let calendarData = {
         startTime: '09:00',
         endTime: '18:00',
         slotDuration: '00:30:00'
+    },
+    userInfo: {
+        name: '홍길동',           // ⚠️ 여기에 사용자 이름 입력
+        title: '지점장'           // ⚠️ 여기에 직책 입력 (선택)
     }
 };
 
@@ -44,7 +48,7 @@ const ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
 // ========================================
 // Kakao 설정
 // ========================================
-const KAKAO_APP_KEY = "1ada66397913195f6a7512567faa5fac"; // ⚠️ 카카오 개발자에서 발급받은 키를 입력하세요!
+const KAKAO_APP_KEY = "YOUR_JAVASCRIPT_KEY_HERE"; // ⚠️ 카카오 개발자에서 발급받은 키를 입력하세요!
 
 // Firebase 설정
 const firebaseConfig = {
@@ -747,30 +751,22 @@ const shareToKakao = (schedule) => {
         };
         const emoji = emojiMap[schedule.type] || '📅';
         
-        // 일정 상세 URL
-        const detailUrl = `https://ceofocus123.netlify.app/schedule/index.html?id=${schedule.id}`;
+        // 메모 추가
+        const memoStr = schedule.description ? `\n📝 ${schedule.description}` : '';
+        
+        // 사용자 정보
+        const userName = calendarData.userInfo.name || '담당자';
+        const userTitle = calendarData.userInfo.title ? ` ${calendarData.userInfo.title}` : '';
+        const senderInfo = `💼 ${userName}${userTitle}님이 공유한 일정입니다.\n\n`;
         
         // 카카오톡 메시지 전송
         Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-                title: `${emoji} ${schedule.title}`,
-                description: `📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}`,
-                imageUrl: 'https://ceofocus123.netlify.app/images/schedule-icon.png',
-                link: {
-                    mobileWebUrl: detailUrl,
-                    webUrl: detailUrl,
-                },
+            objectType: 'text',
+            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}\n\n※ 자세한 내용은 연락주시기 바랍니다.`,
+            link: {
+                mobileWebUrl: 'https://ceofocus123.netlify.app',
+                webUrl: 'https://ceofocus123.netlify.app',
             },
-            buttons: [
-                {
-                    title: '일정 확인하기',
-                    link: {
-                        mobileWebUrl: detailUrl,
-                        webUrl: detailUrl,
-                    },
-                },
-            ],
         });
         
         console.log('✅ 카카오톡 공유 완료:', schedule.title);
