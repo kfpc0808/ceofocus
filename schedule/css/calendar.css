@@ -173,6 +173,16 @@
     border-color: var(--border-color);
 }
 
+/* all-day 영역 배경색 */
+.fc .fc-timegrid-divider,
+.fc .fc-timegrid-body .fc-scrollgrid-section-header {
+    background: #f5f5f5;
+}
+
+.fc .fc-daygrid-body {
+    background: #f5f5f5;
+}
+
 /* 현재 시간 라인 */
 .fc .fc-timegrid-now-indicator-line {
     border-color: var(--color-danger);

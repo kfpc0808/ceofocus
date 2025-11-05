@@ -31,14 +31,19 @@ function initializeCalendar() {
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
         
-        // 제목 형식 - "YYYY년 MM월" 또는 "YYYY년 MM월 DD일"
+        // 제목 형식 - 요일을 날짜 우측에 배치
         titleFormat: function(date) {
             const year = date.date.year;
             const month = date.date.month + 1;
-            if (date.end) {
-                // 범위가 있는 경우 (주간/일간)
-                return `${year}년 ${month}월`;
+            const dayOfMonth = date.date.date; // 날짜 (1-31)
+            const dayOfWeek = date.date.day; // 요일 (0-6)
+            const weekday = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeek];
+            
+            // 일간 뷰: "MM월 DD일 (요일)"
+            if (dayOfMonth) {
+                return `${month}월 ${dayOfMonth}일 (${weekday})`;
             }
+            // 주간/월간 뷰: "YYYY년 MM월"
             return `${year}년 ${month}월`;
         },
         
@@ -49,13 +54,23 @@ function initializeCalendar() {
             return `${day}\n(${weekday})`;
         },
         
-        // 주간/일간 뷰 컬럼 헤더 형식
+        // 주간/일간 뷰 컬럼 헤더 형식 - 가로 한 줄: "5(수)"
         dayHeaderContent: function(args) {
             const day = args.date.getDate();
             const weekday = ['일', '월', '화', '수', '목', '금', '토'][args.date.getDay()];
             return {
-                html: `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;">${day}</div><div style="font-size:10px;color:#666;">(${weekday})</div></div>`
+                html: `<div style="text-align:center;font-size:14px;font-weight:700;">${day}<span style="font-size:12px;color:#666;">(${weekday})</span></div>`
             };
+        },
+        
+        // 월간뷰 날짜 셀 - 숫자만 표시
+        dayCellContent: function(args) {
+            if (args.view.type === 'dayGridMonth') {
+                return {
+                    html: `<div class="fc-daygrid-day-number">${args.date.getDate()}</div>`
+                };
+            }
+            return args.dayNumberText;
         },
         
         // 버튼 텍스트
@@ -68,8 +83,8 @@ function initializeCalendar() {
         },
         
         // 시간 설정
-        slotMinTime: calendarData.userSettings.startTime || '09:00:00',
-        slotMaxTime: calendarData.userSettings.endTime || '18:00:00',
+        slotMinTime: '00:00:00',
+        slotMaxTime: '24:00:00',
         slotDuration: '00:30:00',
         slotLabelInterval: '01:00',
         slotLabelFormat: {
@@ -89,6 +104,7 @@ function initializeCalendar() {
         
         // 일정 표시
         eventDisplay: 'block',
+        displayEventTime: false,
         eventTimeFormat: {
             hour: '2-digit',
             minute: '2-digit',
@@ -100,6 +116,10 @@ function initializeCalendar() {
         editable: true,
         droppable: true,
         dragScroll: true,
+        navLinks: true,
+        navLinkDayClick: function(date, jsEvent) {
+            calendar.changeView('timeGridDay', date);
+        },
         
         // 선택
         selectable: true,
