@@ -321,6 +321,29 @@ button {
     transform: scale(0.98);
 }
 
+.btn-kakao {
+    background: #FEE500;
+    color: #000000;
+    padding: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    border: none;
+    min-height: 36px;
+    transition: all 0.2s;
+}
+
+.btn-kakao:hover {
+    background: #FFD700;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(254, 229, 0, 0.3);
+}
+
+.btn-kakao:active {
+    background: #FFCC00;
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(254, 229, 0, 0.2);
+}
+
 .btn-icon {
     background: transparent;
     padding: 4px;
