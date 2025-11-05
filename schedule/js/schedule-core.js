@@ -681,6 +681,108 @@ const refreshGoogleCalendar = async () => {
 };
 
 // ========================================
+// 카카오톡 공유 기능
+// ========================================
+
+// 카카오 SDK 초기화
+const initKakao = () => {
+    if (typeof Kakao === 'undefined') {
+        console.warn('⚠️ Kakao SDK가 로드되지 않았습니다');
+        return false;
+    }
+    
+    if (!Kakao.isInitialized()) {
+        try {
+            Kakao.init(KAKAO_APP_KEY);
+            console.log('✅ Kakao SDK 초기화 완료');
+            console.log('Kakao SDK 버전:', Kakao.VERSION);
+            return true;
+        } catch (error) {
+            console.error('❌ Kakao SDK 초기화 실패:', error);
+            return false;
+        }
+    }
+    return true;
+};
+
+// 일정을 카카오톡으로 공유
+const shareToKakao = (schedule) => {
+    // 카카오 SDK 확인
+    if (!initKakao()) {
+        showToast('카카오톡 연동 오류', 'error');
+        return;
+    }
+    
+    // 플레이스홀더 키 체크
+    if (KAKAO_APP_KEY === 'YOUR_JAVASCRIPT_KEY_HERE') {
+        alert('⚠️ 카카오 개발자 설정이 필요합니다\n\nschedule-core.js 파일에서\nKAKAO_APP_KEY를 발급받은 키로 변경해주세요.');
+        return;
+    }
+    
+    try {
+        // 일정 정보 포맷팅
+        const scheduleDate = new Date(schedule.date);
+        const dateStr = scheduleDate.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'short'
+        });
+        
+        const timeStr = schedule.all_day 
+            ? '종일' 
+            : `${schedule.start_time} ~ ${schedule.end_time}`;
+        
+        const locationStr = schedule.location || '장소 미정';
+        
+        // 타입별 이모지
+        const emojiMap = {
+            '상령일': '🎂',
+            '보험만기일': '⭐',
+            '생일': '🎁',
+            '결혼기념일': '💑',
+            '미팅': '🤝',
+            '상담': '📞',
+            '기타': '📋'
+        };
+        const emoji = emojiMap[schedule.type] || '📅';
+        
+        // 일정 상세 URL
+        const detailUrl = `https://ceofocus123.netlify.app/schedule/index.html?id=${schedule.id}`;
+        
+        // 카카오톡 메시지 전송
+        Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+                title: `${emoji} ${schedule.title}`,
+                description: `📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}`,
+                imageUrl: 'https://ceofocus123.netlify.app/images/schedule-icon.png',
+                link: {
+                    mobileWebUrl: detailUrl,
+                    webUrl: detailUrl,
+                },
+            },
+            buttons: [
+                {
+                    title: '일정 확인하기',
+                    link: {
+                        mobileWebUrl: detailUrl,
+                        webUrl: detailUrl,
+                    },
+                },
+            ],
+        });
+        
+        console.log('✅ 카카오톡 공유 완료:', schedule.title);
+        showToast('✅ 카카오톡으로 공유했습니다');
+        
+    } catch (error) {
+        console.error('❌ 카카오톡 공유 오류:', error);
+        showToast('카카오톡 공유 실패', 'error');
+    }
+};
+
+// ========================================
 // 페이지 로드 시 초기화
 // ========================================
 if (document.readyState === 'loading') {

@@ -482,6 +482,7 @@ function showEventDetail(event) {
         document.getElementById('detailStatus').textContent = '구글 캘린더에서 관리';
         
         // 버튼 숨기기 (읽기 전용)
+        document.getElementById('shareKakaoBtn').style.display = 'none';
         document.getElementById('editEventBtn').style.display = 'none';
         document.getElementById('completeToggleBtn').style.display = 'none';
         
@@ -563,6 +564,13 @@ function showEventDetail(event) {
     editBtn.onclick = () => {
         closeEventDetailModal();
         openEditModal(schedule);
+    };
+    
+    // 카카오톡 공유 버튼
+    const shareKakaoBtn = document.getElementById('shareKakaoBtn');
+    shareKakaoBtn.style.display = 'inline-block';
+    shareKakaoBtn.onclick = () => {
+        shareToKakao(schedule);
     };
     
     modal.classList.add('show');
