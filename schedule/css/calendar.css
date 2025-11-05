@@ -1,0 +1,483 @@
+/* ========================================
+   캘린더 전용 스타일
+   - FullCalendar 커스터마이징
+   - 조르테 스타일 반영
+======================================== */
+
+/* ========================================
+   캘린더 툴바
+======================================== */
+.fc .fc-toolbar {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.fc .fc-toolbar-title {
+    font-size: var(--font-size-xxl);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.fc .fc-button {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.fc .fc-button:hover {
+    background: var(--bg-hover);
+    border-color: var(--color-secondary);
+}
+
+.fc .fc-button:active,
+.fc .fc-button-active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.fc .fc-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.fc .fc-button-group {
+    gap: var(--spacing-sm);
+}
+
+/* ========================================
+   캘린더 헤더 (요일)
+======================================== */
+.fc .fc-col-header {
+    background: var(--bg-secondary);
+}
+
+.fc .fc-col-header-cell {
+    padding: var(--spacing-md);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.fc .fc-col-header-cell-cushion {
+    padding: var(--spacing-sm);
+}
+
+/* 토요일 파란색 */
+.fc .fc-day-sat {
+    color: #1976d2;
+}
+
+/* 일요일 빨간색 */
+.fc .fc-day-sun {
+    color: #d32f2f;
+}
+
+/* ========================================
+   캘린더 날짜 셀
+======================================== */
+.fc .fc-daygrid-day,
+.fc .fc-timegrid-slot {
+    border-color: var(--border-color);
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    padding: var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+/* 오늘 날짜 강조 */
+.fc .fc-day-today {
+    background: rgba(66, 133, 244, 0.08) !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 다른 달 날짜 */
+.fc .fc-day-other {
+    background: var(--bg-secondary);
+    opacity: 0.5;
+}
+
+/* ========================================
+   시간 그리드 (주간/일간 뷰)
+======================================== */
+.fc .fc-timegrid-slot {
+    height: 60px;
+    border-color: var(--border-color);
+}
+
+.fc .fc-timegrid-slot-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: var(--spacing-sm);
+    border-color: var(--border-color);
+}
+
+.fc .fc-timegrid-axis {
+    border-color: var(--border-color);
+}
+
+/* 현재 시간 라인 */
+.fc .fc-timegrid-now-indicator-line {
+    border-color: var(--color-danger);
+    border-width: 2px;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+    border-color: var(--color-danger);
+}
+
+/* ========================================
+   일정 (이벤트)
+======================================== */
+.fc-event {
+    border-radius: 6px;
+    padding: var(--spacing-sm);
+    border: none !important;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.fc-event:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+    z-index: 10 !important;
+}
+
+/* 월간 뷰 일정 */
+.fc .fc-daygrid-event {
+    padding: 4px 8px;
+    margin: 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 주간/일간 뷰 일정 */
+.fc .fc-timegrid-event {
+    border-radius: 6px;
+    padding: var(--spacing-sm);
+}
+
+.fc .fc-timegrid-event .fc-event-main {
+    padding: var(--spacing-xs);
+}
+
+/* 일정 제목 */
+.fc-event-title {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+.fc-event-time {
+    font-size: var(--font-size-xs);
+    opacity: 0.9;
+}
+
+/* 중요 일정 (⭐) */
+.fc-event.important {
+    border-left: 4px solid #FFD700 !important;
+    font-weight: 700;
+}
+
+.fc-event.important .fc-event-title::before {
+    content: '⭐ ';
+}
+
+/* 완료된 일정 */
+.fc-event.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.fc-event.completed .fc-event-title::before {
+    content: '✅ ';
+}
+
+/* 종일 일정 */
+.fc .fc-daygrid-event.fc-event-start,
+.fc .fc-daygrid-event.fc-event-end {
+    border-radius: 6px;
+}
+
+/* ========================================
+   일정 타입별 색상
+======================================== */
+.fc-event[data-type="상령일"] {
+    background-color: #FF6B6B;
+    color: white;
+}
+
+.fc-event[data-type="보험만기일"] {
+    background-color: #FF9500;
+    color: white;
+}
+
+.fc-event[data-type="생일"] {
+    background-color: #9B59B6;
+    color: white;
+}
+
+.fc-event[data-type="결혼기념일"] {
+    background-color: #FFB6C1;
+    color: #333;
+}
+
+.fc-event[data-type="미팅"] {
+    background-color: #FFD93D;
+    color: #333;
+}
+
+.fc-event[data-type="상담"] {
+    background-color: #6BCF7F;
+    color: white;
+}
+
+.fc-event[data-type="기타"] {
+    background-color: #95a5a6;
+    color: white;
+}
+
+/* ========================================
+   리스트 뷰
+======================================== */
+.fc .fc-list {
+    border-color: var(--border-color);
+}
+
+.fc .fc-list-day-cushion {
+    background: var(--bg-secondary);
+    padding: var(--spacing-md);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.fc .fc-list-event {
+    border-color: var(--border-color);
+    transition: background 0.2s;
+}
+
+.fc .fc-list-event:hover {
+    background: var(--bg-hover);
+}
+
+.fc .fc-list-event-dot {
+    border-width: 6px;
+}
+
+.fc .fc-list-event-title {
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    padding: var(--spacing-md);
+}
+
+.fc .fc-list-event-time {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* ========================================
+   팝오버 (일정 많을 때)
+======================================== */
+.fc .fc-popover {
+    background: var(--bg-main);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+}
+
+.fc .fc-popover-header {
+    background: var(--bg-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.fc .fc-popover-body {
+    padding: var(--spacing-sm);
+}
+
+.fc .fc-more-link {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-weight: 600;
+    padding: 4px 8px;
+    margin: 2px 0;
+    display: inline-block;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.fc .fc-more-link:hover {
+    background: var(--bg-hover);
+    text-decoration: none;
+}
+
+/* ========================================
+   드래그 앤 드롭
+======================================== */
+.fc-event-dragging {
+    opacity: 0.7;
+    cursor: move;
+}
+
+.fc-event-resizing {
+    opacity: 0.7;
+}
+
+/* 드래그 시 복사 */
+.fc-event.fc-helper {
+    border: 2px dashed var(--color-primary);
+    background: rgba(66, 133, 244, 0.1);
+}
+
+/* ========================================
+   스크롤바 커스터마이징
+======================================== */
+.fc-scroller::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ========================================
+   반응형 (모바일)
+======================================== */
+@media (max-width: 768px) {
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm);
+    }
+    
+    .fc .fc-toolbar-title {
+        font-size: var(--font-size-xl);
+        text-align: center;
+        order: -1;
+    }
+    
+    .fc .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .fc .fc-button {
+        font-size: var(--font-size-sm);
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .fc .fc-timegrid-slot {
+        height: 40px;
+    }
+    
+    .fc .fc-timegrid-slot-label {
+        font-size: 11px;
+    }
+    
+    .fc-event-title {
+        font-size: 12px;
+    }
+    
+    .fc-event-time {
+        font-size: 10px;
+    }
+    
+    /* 모바일에서 리스트 뷰 최적화 */
+    .fc .fc-list-event-title {
+        font-size: var(--font-size-sm);
+    }
+    
+    .fc .fc-list-day-cushion {
+        font-size: var(--font-size-sm);
+        padding: var(--spacing-sm);
+    }
+}
+
+/* ========================================
+   인쇄 스타일
+======================================== */
+@media print {
+    .fc .fc-toolbar {
+        page-break-after: avoid;
+    }
+    
+    .fc-event {
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    
+    .fc .fc-button {
+        display: none;
+    }
+}
+
+/* ========================================
+   로딩 상태
+======================================== */
+.fc-calendar-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.fc-calendar-loading::after {
+    content: '로딩 중...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-main);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-primary);
+    z-index: 1000;
+}

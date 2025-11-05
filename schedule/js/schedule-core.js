@@ -1,0 +1,541 @@
+/* ========================================
+   일정관리 핵심 로직
+   - 구글 드라이브 연동
+   - AES 암호화/복호화
+   - 데이터 관리
+======================================== */
+
+// ========================================
+// 전역 변수
+// ========================================
+let calendarData = {
+    schedules: [],
+    colorSettings: {
+        '상령일': '#FF6B6B',
+        '보험만기일': '#FF9500',
+        '생일': '#9B59B6',
+        '결혼기념일': '#FFB6C1',
+        '미팅': '#FFD93D',
+        '상담': '#6BCF7F',
+        '기타': '#95a5a6'
+    },
+    userSettings: {
+        defaultView: 'timeGridWeek',
+        startTime: '09:00',
+        endTime: '18:00',
+        slotDuration: '00:30:00'
+    }
+};
+
+let accessToken = null;
+let tokenClient = null;
+let gisInited = false;
+let isConnected = false;
+let autoSaveTimer = null;
+let currentEditingEvent = null;
+
+// ========================================
+// Google Drive 설정
+// ========================================
+const GOOGLE_CLIENT_ID = "288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com";
+const ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
+
+// Firebase 설정
+const firebaseConfig = {
+    apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+    authDomain: "kfpc-company-support-project.firebaseapp.com",
+    databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "kfpc-company-support-project",
+    storageBucket: "kfpc-company-support-project.firebasestorage.app",
+    messagingSenderId: "1012609333373",
+    appId: "1:1012609333373:web:ffba9039a7f9568356d914",
+    measurementId: "G-Y757PLYBEE"
+};
+
+// Firebase 초기화
+let firebaseAuth = null;
+try {
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+        firebaseAuth = firebase.auth();
+    }
+} catch (error) {
+    console.warn('Firebase 초기화 실패:', error);
+}
+
+// ========================================
+// 암호화 함수
+// ========================================
+const encryptData = (data) => {
+    return CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
+};
+
+const decryptData = (encryptedData) => {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
+    return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+};
+
+// ========================================
+// 로그인 상태 관리
+// ========================================
+const saveLoginState = () => {
+    if (accessToken) {
+        localStorage.setItem('googleAccessToken', accessToken);
+        localStorage.setItem('tokenExpiry', Date.now() + 3600000);
+    }
+};
+
+const restoreLoginState = () => {
+    const token = localStorage.getItem('googleAccessToken');
+    const expiry = localStorage.getItem('tokenExpiry');
+    
+    if (token && expiry && Date.now() < parseInt(expiry)) {
+        accessToken = token;
+        return true;
+    }
+    
+    localStorage.removeItem('googleAccessToken');
+    localStorage.removeItem('tokenExpiry');
+    return false;
+};
+
+// ========================================
+// Google Identity Services 초기화
+// ========================================
+const initGoogleDrive = async () => {
+    return new Promise((resolve) => {
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        const checkGIS = setInterval(() => {
+            attempts++;
+            if (window.google && window.google.accounts) {
+                clearInterval(checkGIS);
+                
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/drive.file',
+                    callback: (response) => {
+                        if (response.error) {
+                            console.error('❌ 인증 오류:', response.error);
+                            showToast('Google 로그인 실패', 'error');
+                        } else {
+                            accessToken = response.access_token;
+                            saveLoginState();
+                            gisInited = true;
+                            console.log('✅ Google Drive 인증 완료');
+                            onDriveConnected();
+                        }
+                    },
+                });
+                
+                gisInited = true;
+                resolve();
+            }
+            
+            if (attempts >= maxAttempts) {
+                clearInterval(checkGIS);
+                console.error('❌ Google Identity Services 로드 실패');
+                resolve();
+            }
+        }, 100);
+    });
+};
+
+// ========================================
+// Drive 접근 권한 요청
+// ========================================
+const requestDriveAccess = async () => {
+    if (accessToken) {
+        const expiry = localStorage.getItem('tokenExpiry');
+        if (expiry && Date.now() < parseInt(expiry)) {
+            return true;
+        }
+    }
+    
+    if (!gisInited) {
+        await initGoogleDrive();
+    }
+    
+    return new Promise((resolve) => {
+        tokenClient.callback = async (response) => {
+            if (response.error) {
+                console.error('권한 요청 오류:', response.error);
+                resolve(false);
+            } else {
+                accessToken = response.access_token;
+                saveLoginState();
+                resolve(true);
+            }
+        };
+        
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+    });
+};
+
+// ========================================
+// 파일 검색
+// ========================================
+const findFile = async (filename) => {
+    if (!accessToken) return null;
+    
+    try {
+        const response = await fetch(
+            `https://www.googleapis.com/drive/v3/files?q=name='${filename}'&fields=files(id,name,modifiedTime)`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            }
+        );
+        
+        const data = await response.json();
+        return data.files && data.files.length > 0 ? data.files[0] : null;
+    } catch (error) {
+        console.error('파일 검색 오류:', error);
+        return null;
+    }
+};
+
+// ========================================
+// 드라이브에 업로드
+// ========================================
+const uploadToDrive = async (filename, content) => {
+    if (!accessToken) return null;
+    
+    try {
+        const metadata = {
+            name: filename,
+            mimeType: 'text/plain'
+        };
+        
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', new Blob([content], { type: 'text/plain' }));
+        
+        const response = await fetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: form
+            }
+        );
+        
+        return await response.json();
+    } catch (error) {
+        console.error('업로드 오류:', error);
+        return null;
+    }
+};
+
+// ========================================
+// 드라이브에서 다운로드
+// ========================================
+const downloadFromDrive = async (fileId) => {
+    if (!accessToken) return null;
+    
+    try {
+        const response = await fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            }
+        );
+        
+        return await response.text();
+    } catch (error) {
+        console.error('다운로드 오류:', error);
+        return null;
+    }
+};
+
+// ========================================
+// 파일 업데이트
+// ========================================
+const updateFile = async (fileId, content) => {
+    if (!accessToken) return null;
+    
+    try {
+        const response = await fetch(
+            `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'text/plain'
+                },
+                body: content
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error(`Update failed: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('파일 업데이트 오류:', error);
+        return null;
+    }
+};
+
+// ========================================
+// 일정 데이터 저장
+// ========================================
+const saveSchedulesToDrive = async () => {
+    try {
+        const encrypted = encryptData(calendarData);
+        const file = await findFile('schedules.cal');
+        
+        if (file) {
+            await updateFile(file.id, encrypted);
+            console.log('✅ 일정 업데이트 완료');
+        } else {
+            await uploadToDrive('schedules.cal', encrypted);
+            console.log('✅ 일정 저장 완료');
+        }
+        
+        updateStatus('저장 완료', 'connected');
+        setTimeout(() => {
+            updateStatus('연결됨', 'connected');
+        }, 1500);
+        
+        return true;
+    } catch (error) {
+        console.error('❌ 저장 오류:', error);
+        showToast('저장 실패', 'error');
+        return false;
+    }
+};
+
+// ========================================
+// 일정 데이터 로드
+// ========================================
+const loadSchedulesFromDrive = async () => {
+    try {
+        const file = await findFile('schedules.cal');
+        
+        if (file) {
+            const encryptedData = await downloadFromDrive(file.id);
+            if (encryptedData) {
+                calendarData = decryptData(encryptedData);
+                console.log('✅ 일정 로드 완료:', calendarData.schedules.length, '개');
+                return true;
+            }
+        }
+        
+        console.log('ℹ️ 저장된 일정 없음');
+        return false;
+    } catch (error) {
+        console.error('❌ 로드 오류:', error);
+        showToast('로드 실패', 'error');
+        return false;
+    }
+};
+
+// ========================================
+// 자동 저장 스케줄
+// ========================================
+const scheduleAutoSave = () => {
+    if (!accessToken || !isConnected) return;
+    
+    if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+    }
+    
+    autoSaveTimer = setTimeout(async () => {
+        await saveSchedulesToDrive();
+        console.log('🔄 자동 저장 완료');
+    }, 3000);
+};
+
+// ========================================
+// Drive 연결 완료
+// ========================================
+const onDriveConnected = async () => {
+    console.log('✅ Google Drive 연결 완료');
+    
+    isConnected = true;
+    
+    // UI 업데이트
+    document.getElementById('connectBtn').style.display = 'none';
+    document.getElementById('saveBtn').style.display = 'inline-block';
+    updateStatus('연결됨', 'connected');
+    
+    // 데이터 로드
+    const loaded = await loadSchedulesFromDrive();
+    
+    if (loaded && calendarData.schedules.length > 0) {
+        showToast(`✅ ${calendarData.schedules.length}개 일정 로드 완료`);
+        // 캘린더 렌더링 (calendar.js에서 처리)
+        if (typeof renderCalendar === 'function') {
+            renderCalendar();
+        }
+    } else {
+        showToast('✨ 일정관리를 시작하세요!');
+    }
+};
+
+// ========================================
+// 상태 업데이트
+// ========================================
+const updateStatus = (text, status = '') => {
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    
+    if (statusText) statusText.textContent = text;
+    if (statusDot) {
+        statusDot.className = 'status-dot' + (status ? ` ${status}` : '');
+    }
+};
+
+// ========================================
+// 토스트 메시지
+// ========================================
+const showToast = (message, type = 'success') => {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+};
+
+// ========================================
+// 일정 ID 생성
+// ========================================
+const generateId = () => {
+    return 'SCH_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+};
+
+// ========================================
+// 일정 추가
+// ========================================
+const addSchedule = (scheduleData) => {
+    const schedule = {
+        id: generateId(),
+        ...scheduleData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    };
+    
+    calendarData.schedules.push(schedule);
+    scheduleAutoSave();
+    
+    return schedule;
+};
+
+// ========================================
+// 일정 수정
+// ========================================
+const updateSchedule = (scheduleId, updates) => {
+    const index = calendarData.schedules.findIndex(s => s.id === scheduleId);
+    if (index !== -1) {
+        calendarData.schedules[index] = {
+            ...calendarData.schedules[index],
+            ...updates,
+            updated_at: new Date().toISOString()
+        };
+        scheduleAutoSave();
+        return true;
+    }
+    return false;
+};
+
+// ========================================
+// 일정 삭제
+// ========================================
+const deleteSchedule = (scheduleId) => {
+    const index = calendarData.schedules.findIndex(s => s.id === scheduleId);
+    if (index !== -1) {
+        calendarData.schedules.splice(index, 1);
+        scheduleAutoSave();
+        return true;
+    }
+    return false;
+};
+
+// ========================================
+// 일정 검색
+// ========================================
+const searchSchedules = (query) => {
+    if (!query) return calendarData.schedules;
+    
+    const lowerQuery = query.toLowerCase();
+    return calendarData.schedules.filter(schedule => {
+        return schedule.title.toLowerCase().includes(lowerQuery) ||
+               (schedule.customer_name && schedule.customer_name.toLowerCase().includes(lowerQuery)) ||
+               (schedule.description && schedule.description.toLowerCase().includes(lowerQuery)) ||
+               (schedule.location && schedule.location.toLowerCase().includes(lowerQuery));
+    });
+};
+
+// ========================================
+// 색상 설정 업데이트
+// ========================================
+const updateColorSettings = (type, color) => {
+    calendarData.colorSettings[type] = color;
+    scheduleAutoSave();
+};
+
+// ========================================
+// 사용자 설정 업데이트
+// ========================================
+const updateUserSettings = (settings) => {
+    calendarData.userSettings = {
+        ...calendarData.userSettings,
+        ...settings
+    };
+    scheduleAutoSave();
+};
+
+// ========================================
+// 초기화
+// ========================================
+const init = async () => {
+    console.log('🚀 일정관리 시스템 초기화');
+    
+    // Google Drive 초기화
+    await initGoogleDrive();
+    
+    // 로그인 상태 복원
+    if (restoreLoginState()) {
+        console.log('✅ 로그인 상태 복원');
+        onDriveConnected();
+    } else {
+        updateStatus('연결 대기중');
+    }
+    
+    // 연결 버튼
+    document.getElementById('connectBtn')?.addEventListener('click', async () => {
+        const granted = await requestDriveAccess();
+        if (granted) {
+            onDriveConnected();
+        }
+    });
+    
+    // 저장 버튼
+    document.getElementById('saveBtn')?.addEventListener('click', async () => {
+        const success = await saveSchedulesToDrive();
+        if (success) {
+            showToast('💾 저장 완료');
+        }
+    });
+    
+    console.log('✅ 초기화 완료');
+};
+
+// ========================================
+// 페이지 로드 시 초기화
+// ========================================
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}

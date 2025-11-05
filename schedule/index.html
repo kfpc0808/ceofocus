@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일정관리 - KFPC</title>
+    
+    <!-- External Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/ko.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <!-- Local Styles -->
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/calendar.css">
+</head>
+<body>
+    
+    <!-- 상단 헤더 -->
+    <header class="header">
+        <div class="header-left">
+            <h1>📅 일정관리</h1>
+            <div class="status-indicator">
+                <span class="status-dot" id="statusDot"></span>
+                <span class="status-text" id="statusText">연결 대기중</span>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <!-- 검색 -->
+            <div class="search-container">
+                <input type="text" 
+                       id="searchInput" 
+                       class="search-input" 
+                       placeholder="일정 검색...">
+                <button id="searchBtn" class="btn-icon" title="검색">🔍</button>
+                <button id="searchClear" class="btn-icon" style="display:none;" title="지우기">✕</button>
+            </div>
+            
+            <!-- 필터 -->
+            <button id="filterBtn" class="btn-secondary">📋 필터</button>
+            
+            <!-- 인쇄 -->
+            <button id="printBtn" class="btn-secondary">🖨️ 인쇄</button>
+            
+            <!-- 구글 연동 -->
+            <button id="connectBtn" class="btn-primary">구글 드라이브 연결</button>
+            <button id="saveBtn" class="btn-success" style="display:none;">💾 저장</button>
+        </div>
+    </header>
+    
+    <!-- 필터 패널 -->
+    <div id="filterPanel" class="filter-panel">
+        <div class="filter-header">
+            <h3>필터 옵션</h3>
+            <button id="closeFilter" class="btn-close">✕</button>
+        </div>
+        <div class="filter-content">
+            <div class="filter-section">
+                <h4>일정 타입</h4>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="상령일" checked>
+                    <span class="color-badge" style="background:#FF6B6B;"></span>
+                    상령일
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="보험만기일" checked>
+                    <span class="color-badge" style="background:#FF9500;"></span>
+                    보험만기일
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="생일" checked>
+                    <span class="color-badge" style="background:#9B59B6;"></span>
+                    생일
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="결혼기념일" checked>
+                    <span class="color-badge" style="background:#FFB6C1;"></span>
+                    결혼기념일
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="미팅" checked>
+                    <span class="color-badge" style="background:#FFD93D;"></span>
+                    미팅
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="상담" checked>
+                    <span class="color-badge" style="background:#6BCF7F;"></span>
+                    상담
+                </label>
+            </div>
+            
+            <div class="filter-section">
+                <h4>상태</h4>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="pending" checked>
+                    미완료
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="completed" checked>
+                    완료
+                </label>
+            </div>
+            
+            <div class="filter-section">
+                <h4>중요도</h4>
+                <label class="filter-checkbox">
+                    <input type="checkbox" value="important" checked>
+                    ⭐ 중요 일정만
+                </label>
+            </div>
+            
+            <div class="filter-actions">
+                <button id="filterReset" class="btn-secondary">초기화</button>
+                <button id="filterApply" class="btn-primary">적용</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 메인 캘린더 영역 -->
+    <main class="main-content">
+        <div id="calendar"></div>
+    </main>
+    
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <button id="todayBtn" class="nav-btn">
+            <span class="nav-icon">📆</span>
+            <span class="nav-label">오늘</span>
+        </button>
+        <button id="viewBtn" class="nav-btn">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">뷰 변경</span>
+        </button>
+        <button id="addBtn" class="nav-btn nav-btn-primary">
+            <span class="nav-icon">➕</span>
+            <span class="nav-label">추가</span>
+        </button>
+        <button id="filterNavBtn" class="nav-btn">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">필터</span>
+        </button>
+        <button id="settingsBtn" class="nav-btn">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">설정</span>
+        </button>
+    </nav>
+    
+    <!-- 뷰 변경 메뉴 -->
+    <div id="viewMenu" class="popup-menu">
+        <button data-view="timeGridWeek" class="menu-item active">📅 주간 뷰</button>
+        <button data-view="dayGridMonth" class="menu-item">📆 월간 뷰</button>
+        <button data-view="timeGridDay" class="menu-item">📋 일간 뷰</button>
+        <button data-view="listWeek" class="menu-item">📃 리스트 뷰</button>
+    </div>
+    
+    <!-- 일정 추가/수정 팝업 -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">새 일정</h2>
+                <button id="closeModal" class="btn-close">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>제목 *</label>
+                    <input type="text" id="eventTitle" class="form-input" placeholder="일정 제목" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>타입 *</label>
+                        <select id="eventType" class="form-select">
+                            <option value="상령일">🎂 상령일</option>
+                            <option value="보험만기일">⭐ 보험만기일</option>
+                            <option value="생일">🎁 생일</option>
+                            <option value="결혼기념일">💑 결혼기념일</option>
+                            <option value="미팅">🤝 미팅</option>
+                            <option value="상담">📞 상담</option>
+                            <option value="기타">📌 기타</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>색상</label>
+                        <input type="color" id="eventColor" class="form-color" value="#FFD93D">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="eventAllDay">
+                        종일
+                    </label>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>시작 날짜 *</label>
+                        <input type="date" id="eventStartDate" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group" id="startTimeGroup">
+                        <label>시작 시간</label>
+                        <input type="time" id="eventStartTime" class="form-input" value="09:00">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>종료 날짜 *</label>
+                        <input type="date" id="eventEndDate" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group" id="endTimeGroup">
+                        <label>종료 시간</label>
+                        <input type="time" id="eventEndTime" class="form-input" value="10:00">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>장소</label>
+                    <input type="text" id="eventLocation" class="form-input" placeholder="장소">
+                </div>
+                
+                <div class="form-group">
+                    <label>메모</label>
+                    <textarea id="eventDescription" class="form-textarea" rows="3" placeholder="메모"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="eventImportant">
+                        ⭐ 중요 일정
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="eventCompleted">
+                        ✅ 완료
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="deleteEventBtn" class="btn-danger" style="display:none;">🗑️ 삭제</button>
+                <button id="cancelEventBtn" class="btn-secondary">취소</button>
+                <button id="saveEventBtn" class="btn-primary">저장</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 일정 상세보기 팝업 -->
+    <div id="eventDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailTitle"></h2>
+                <button id="closeDetailModal" class="btn-close">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="detail-section">
+                    <div class="detail-row">
+                        <span class="detail-label">타입:</span>
+                        <span id="detailType" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">날짜:</span>
+                        <span id="detailDate" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">시간:</span>
+                        <span id="detailTime" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row" id="detailLocationRow" style="display:none;">
+                        <span class="detail-label">장소:</span>
+                        <span id="detailLocation" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row" id="detailDescriptionRow" style="display:none;">
+                        <span class="detail-label">메모:</span>
+                        <span id="detailDescription" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">상태:</span>
+                        <span id="detailStatus" class="detail-value"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="editEventBtn" class="btn-primary">✏️ 수정</button>
+                <button id="completeToggleBtn" class="btn-success">✅ 완료</button>
+                <button id="closeDetailBtn" class="btn-secondary">닫기</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 설정 팝업 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ 설정</h2>
+                <button id="closeSettingsModal" class="btn-close">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>색상 설정</h3>
+                    <div class="color-settings">
+                        <div class="color-setting-row">
+                            <label>상령일</label>
+                            <input type="color" class="color-picker" data-type="상령일" value="#FF6B6B">
+                        </div>
+                        <div class="color-setting-row">
+                            <label>보험만기일</label>
+                            <input type="color" class="color-picker" data-type="보험만기일" value="#FF9500">
+                        </div>
+                        <div class="color-setting-row">
+                            <label>생일</label>
+                            <input type="color" class="color-picker" data-type="생일" value="#9B59B6">
+                        </div>
+                        <div class="color-setting-row">
+                            <label>결혼기념일</label>
+                            <input type="color" class="color-picker" data-type="결혼기념일" value="#FFB6C1">
+                        </div>
+                        <div class="color-setting-row">
+                            <label>미팅</label>
+                            <input type="color" class="color-picker" data-type="미팅" value="#FFD93D">
+                        </div>
+                        <div class="color-setting-row">
+                            <label>상담</label>
+                            <input type="color" class="color-picker" data-type="상담" value="#6BCF7F">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>기본 설정</h3>
+                    <div class="form-group">
+                        <label>기본 뷰</label>
+                        <select id="defaultView" class="form-select">
+                            <option value="timeGridWeek">주간 뷰</option>
+                            <option value="dayGridMonth">월간 뷰</option>
+                            <option value="timeGridDay">일간 뷰</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>시작 시간</label>
+                        <input type="time" id="defaultStartTime" class="form-input" value="09:00">
+                    </div>
+                    <div class="form-group">
+                        <label>종료 시간</label>
+                        <input type="time" id="defaultEndTime" class="form-input" value="18:00">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="resetSettings" class="btn-danger">초기화</button>
+                <button id="saveSettings" class="btn-primary">저장</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 토스트 메시지 -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- Local Scripts -->
+    <script src="js/schedule-core.js"></script>
+    <script src="js/schedule-calendar.js"></script>
+    
+</body>
+</html>
