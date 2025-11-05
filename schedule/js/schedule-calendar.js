@@ -983,24 +983,6 @@ function closeSettingsModal() {
     document.getElementById('settingsModal').classList.remove('show');
 }
 
-// 받침 판단 함수 (이/가 자동 선택)
-function getSubjectParticle(word) {
-    if (!word || word.length === 0) return '이';
-    
-    const lastChar = word.charAt(word.length - 1);
-    const lastCharCode = lastChar.charCodeAt(0);
-    
-    // 한글이 아니면 '이' 반환
-    if (lastCharCode < 0xAC00 || lastCharCode > 0xD7A3) {
-        return '이';
-    }
-    
-    // 한글의 받침 유무 판단
-    const hasJongseong = (lastCharCode - 0xAC00) % 28 !== 0;
-    
-    return hasJongseong ? '이' : '가';
-}
-
 // 사용자 정보 미리보기 업데이트
 function updateUserInfoPreview() {
     const userName = document.getElementById('userName').value || '홍길동';
