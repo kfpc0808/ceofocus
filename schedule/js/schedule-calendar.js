@@ -159,11 +159,36 @@ function renderCalendar() {
             }
         }));
     
+    // 구글 캘린더 이벤트 추가
+    if (googleCalendarEnabled && googleCalendarEvents) {
+        const googleEvents = googleCalendarEvents.map(event => ({
+            id: 'google_' + event.id,
+            title: '📗 ' + event.summary,
+            start: event.start.dateTime || event.start.date,
+            end: event.end.dateTime || event.end.date,
+            allDay: !event.start.dateTime,
+            backgroundColor: '#E8E8E8',
+            borderColor: '#CCCCCC',
+            textColor: '#666666',
+            editable: false,
+            extendedProps: {
+                type: '구글캘린더',
+                source: 'google',
+                description: event.description,
+                location: event.location,
+                googleEventId: event.id
+            }
+        }));
+        
+        events.push(...googleEvents);
+        console.log(`📗 구글 캘린더 ${googleEvents.length}개 추가`);
+    }
+    
     // 이벤트 소스 교체
     calendar.removeAllEvents();
     calendar.addEventSource(events);
     
-    console.log(`📅 ${events.length}개 일정 표시`);
+    console.log(`📅 총 ${events.length}개 일정 표시`);
 }
 
 // ========================================
@@ -372,6 +397,52 @@ function updateEventDates(event) {
 // 일정 상세보기
 // ========================================
 function showEventDetail(event) {
+    // 구글 캘린더 일정인 경우
+    if (event.extendedProps.source === 'google') {
+        const modal = document.getElementById('eventDetailModal');
+        
+        document.getElementById('detailTitle').textContent = event.title.replace('📗 ', '');
+        document.getElementById('detailType').textContent = '📗 구글 캘린더 (읽기 전용)';
+        
+        const startDateStr = formatDateKor(event.start);
+        const endDateStr = event.end && formatDate(event.end) !== formatDate(event.start) ? 
+            ' ~ ' + formatDateKor(event.end) : '';
+        document.getElementById('detailDate').textContent = startDateStr + endDateStr;
+        
+        if (event.allDay) {
+            document.getElementById('detailTime').textContent = '종일';
+        } else {
+            document.getElementById('detailTime').textContent = 
+                `${formatTime(event.start)} ~ ${formatTime(event.end)}`;
+        }
+        
+        const locationRow = document.getElementById('detailLocationRow');
+        if (event.extendedProps.location) {
+            document.getElementById('detailLocation').textContent = event.extendedProps.location;
+            locationRow.style.display = 'flex';
+        } else {
+            locationRow.style.display = 'none';
+        }
+        
+        const descriptionRow = document.getElementById('detailDescriptionRow');
+        if (event.extendedProps.description) {
+            document.getElementById('detailDescription').textContent = event.extendedProps.description;
+            descriptionRow.style.display = 'flex';
+        } else {
+            descriptionRow.style.display = 'none';
+        }
+        
+        document.getElementById('detailStatus').textContent = '구글 캘린더에서 관리';
+        
+        // 버튼 숨기기 (읽기 전용)
+        document.getElementById('editEventBtn').style.display = 'none';
+        document.getElementById('completeToggleBtn').style.display = 'none';
+        
+        modal.classList.add('show');
+        return;
+    }
+    
+    // 일반 일정 처리
     const schedule = calendarData.schedules.find(s => s.id === event.id);
     if (!schedule) return;
     
@@ -437,9 +508,12 @@ function showEventDetail(event) {
     const completeBtn = document.getElementById('completeToggleBtn');
     completeBtn.textContent = schedule.completed ? '⏮️ 완료 취소' : '✅ 완료';
     completeBtn.onclick = () => toggleComplete(schedule);
+    completeBtn.style.display = 'inline-block';
     
     // 수정 버튼
-    document.getElementById('editEventBtn').onclick = () => {
+    const editBtn = document.getElementById('editEventBtn');
+    editBtn.style.display = 'inline-block';
+    editBtn.onclick = () => {
         closeEventDetailModal();
         openEditModal(schedule);
     };
@@ -763,6 +837,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // 설정 저장
     document.getElementById('saveSettings')?.addEventListener('click', saveSettings);
     document.getElementById('resetSettings')?.addEventListener('click', resetSettings);
+    
+    // 구글 캘린더 동기화
+    document.getElementById('syncGoogleCalendarBtn')?.addEventListener('click', async () => {
+        if (googleCalendarEnabled) {
+            stopGoogleCalendarSync();
+            document.getElementById('syncGoogleCalendarBtn').textContent = '📗 구글 캘린더';
+            document.getElementById('refreshGoogleCalendarBtn').style.display = 'none';
+        } else {
+            const success = await startGoogleCalendarSync();
+            if (success) {
+                document.getElementById('syncGoogleCalendarBtn').textContent = '📕 동기화 중지';
+                document.getElementById('refreshGoogleCalendarBtn').style.display = 'inline-block';
+            }
+        }
+    });
+    
+    document.getElementById('refreshGoogleCalendarBtn')?.addEventListener('click', refreshGoogleCalendar);
     
     // 종일 체크박스
     document.getElementById('eventAllDay')?.addEventListener('change', (e) => {

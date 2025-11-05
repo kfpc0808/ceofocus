@@ -38,6 +38,7 @@ let currentEditingEvent = null;
 // Google Drive 설정
 // ========================================
 const GOOGLE_CLIENT_ID = "288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.googleusercontent.com";
+const GOOGLE_API_KEY = "AIzaSyAVtAzm9UjgGB1pqChvGvGKH7RpH0KCiVM";
 const ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
 
 // Firebase 설정
@@ -114,7 +115,7 @@ const initGoogleDrive = async () => {
                 
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
-                    scope: 'https://www.googleapis.com/auth/drive.file',
+                    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.readonly',
                     callback: (response) => {
                         if (response.error) {
                             console.error('❌ 인증 오류:', response.error);
@@ -365,6 +366,7 @@ const onDriveConnected = async () => {
     // UI 업데이트
     document.getElementById('connectBtn').style.display = 'none';
     document.getElementById('saveBtn').style.display = 'inline-block';
+    document.getElementById('syncGoogleCalendarBtn').style.display = 'inline-block';
     updateStatus('연결됨', 'connected');
     
     // 데이터 로드
@@ -529,6 +531,148 @@ const init = async () => {
     });
     
     console.log('✅ 초기화 완료');
+};
+
+// ========================================
+// 구글 캘린더 연동
+// ========================================
+let googleCalendarEnabled = false;
+let googleCalendarEvents = [];
+let googleCalendarSyncInterval = null;
+
+// 구글 캘린더 API 로드
+const loadGoogleCalendarAPI = async () => {
+    return new Promise((resolve) => {
+        if (window.gapi && window.gapi.client) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.onload = () => {
+            gapi.load('client', resolve);
+        };
+        document.head.appendChild(script);
+    });
+};
+
+// 구글 캘린더 초기화
+const initGoogleCalendar = async () => {
+    try {
+        await loadGoogleCalendarAPI();
+        
+        await gapi.client.init({
+            apiKey: GOOGLE_API_KEY,
+            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+        });
+        
+        // Access Token 설정
+        gapi.client.setToken({ access_token: accessToken });
+        
+        console.log('✅ 구글 캘린더 API 초기화 완료');
+        return true;
+    } catch (error) {
+        console.error('❌ 구글 캘린더 API 초기화 실패:', error);
+        return false;
+    }
+};
+
+// 구글 캘린더 일정 가져오기
+const fetchGoogleCalendarEvents = async () => {
+    if (!googleCalendarEnabled) return [];
+    
+    try {
+        const now = new Date();
+        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const twoMonthsLater = new Date(now.getFullYear(), now.getMonth() + 3, 0);
+        
+        const response = await gapi.client.calendar.events.list({
+            calendarId: 'primary',
+            timeMin: oneMonthAgo.toISOString(),
+            timeMax: twoMonthsLater.toISOString(),
+            maxResults: 100,
+            singleEvents: true,
+            orderBy: 'startTime'
+        });
+        
+        googleCalendarEvents = response.result.items || [];
+        console.log(`✅ 구글 캘린더 일정 ${googleCalendarEvents.length}개 로드`);
+        
+        return googleCalendarEvents;
+    } catch (error) {
+        console.error('❌ 구글 캘린더 일정 로드 실패:', error);
+        return [];
+    }
+};
+
+// 구글 캘린더 동기화 시작
+const startGoogleCalendarSync = async () => {
+    const initialized = await initGoogleCalendar();
+    if (!initialized) {
+        showToast('구글 캘린더 초기화 실패', 'error');
+        return false;
+    }
+    
+    googleCalendarEnabled = true;
+    
+    // 첫 동기화
+    await fetchGoogleCalendarEvents();
+    
+    // 캘린더 렌더링 (calendar.js에서 처리)
+    if (typeof renderCalendar === 'function') {
+        renderCalendar();
+    }
+    
+    // 자동 동기화 (1시간마다)
+    if (googleCalendarSyncInterval) {
+        clearInterval(googleCalendarSyncInterval);
+    }
+    
+    googleCalendarSyncInterval = setInterval(async () => {
+        console.log('🔄 구글 캘린더 자동 동기화...');
+        await fetchGoogleCalendarEvents();
+        if (typeof renderCalendar === 'function') {
+            renderCalendar();
+        }
+    }, 3600000); // 1시간
+    
+    showToast('✅ 구글 캘린더 동기화 시작');
+    return true;
+};
+
+// 구글 캘린더 동기화 중지
+const stopGoogleCalendarSync = () => {
+    googleCalendarEnabled = false;
+    googleCalendarEvents = [];
+    
+    if (googleCalendarSyncInterval) {
+        clearInterval(googleCalendarSyncInterval);
+        googleCalendarSyncInterval = null;
+    }
+    
+    if (typeof renderCalendar === 'function') {
+        renderCalendar();
+    }
+    
+    showToast('구글 캘린더 동기화 중지');
+};
+
+// 수동 새로고침
+const refreshGoogleCalendar = async () => {
+    if (!googleCalendarEnabled) {
+        showToast('구글 캘린더가 연결되지 않았습니다', 'error');
+        return;
+    }
+    
+    showToast('🔄 동기화 중...');
+    await fetchGoogleCalendarEvents();
+    
+    if (typeof renderCalendar === 'function') {
+        renderCalendar();
+    }
+    
+    showToast('✅ 동기화 완료');
 };
 
 // ========================================
