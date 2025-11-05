@@ -690,6 +690,16 @@ button {
     transition: border-color 0.2s;
     -webkit-appearance: none;
     min-height: 36px;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+}
+
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+    background-color: #ffffff !important;
 }
 
 .form-input:focus,
@@ -1152,14 +1162,13 @@ button {
     animation: rotate 1s linear infinite;
 }
 
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyfr
+/* 아이콘이 비어있을 때 placeholder 표시 */
+#selectedIcon:empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.5;
 }
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  50% { opacity: 0.5; }
 }
 
 @media (max-width: 768px) {
@@ -1171,5 +1180,437 @@ button {
     
     #syncText {
         display: none;
+    }
+}
+
+/* ========================================
+   태그/라벨 스타일
+======================================== */
+.popular-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.tag-quick {
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tag-quick:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.event-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.event-tag {
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    font-size: 11px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+/* ========================================
+   검색 결과 모달
+======================================== */
+.search-results {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.search-result-item {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg-main);
+}
+
+.search-result-item:hover {
+    background: var(--bg-secondary);
+    border-color: var(--color-primary);
+}
+
+.search-result-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.search-result-date {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.search-result-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-right: 4px;
+}
+
+.search-result-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.search-no-results {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   할일 목록 스타일
+======================================== */
+.todo-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-main);
+    border-top: 2px solid var(--border-color);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 50;
+    transition: all 0.3s;
+}
+
+.todo-section.minimized .todo-container {
+    display: none;
+}
+
+.todo-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.todo-header h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 16px;
+}
+
+.todo-container {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.todo-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.todo-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+}
+
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-main);
+    transition: all 0.2s;
+}
+
+.todo-item:hover {
+    background: var(--bg-secondary);
+}
+
+.todo-item.completed {
+    opacity: 0.6;
+}
+
+.todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.todo-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.todo-text {
+    flex: 1;
+    font-size: 14px;
+}
+
+.todo-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.todo-delete {
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-danger);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: all 0.2s;
+}
+
+.todo-delete:hover {
+    background: var(--bg-danger);
+}
+
+.todo-stats {
+    margin-top: 12px;
+    text-align: center;
+    color: var(--text-secondary);
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* D-day 표시 */
+.dday-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.dday-urgent {
+    background: #FF6B6B;
+    color: white;
+}
+
+.dday-soon {
+    background: #FFB84D;
+    color: white;
+}
+
+.dday-normal {
+    background: #51CF66;
+    color: white;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+    .todo-container {
+        max-height: 250px;
+    }
+    
+    .popular-tags {
+        font-size: 11px;
+    }
+    
+    .tag-quick {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+}
+
+/* ========================================
+   할일 목록 스타일
+======================================== */
+.todo-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-main);
+    border-top: 2px solid var(--border-color);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 90;
+    max-height: 50vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.todo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-main);
+}
+
+.todo-header h3 {
+    margin: 0;
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+}
+
+.todo-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+}
+
+.todo-input-group {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.todo-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+}
+
+.todo-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+}
+
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 10px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: all 0.2s;
+}
+
+.todo-item:hover {
+    background: rgba(66, 133, 244, 0.05);
+    border-color: var(--color-primary);
+}
+
+.todo-item.completed {
+    opacity: 0.6;
+    background: #f5f5f5;
+}
+
+.todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.todo-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.todo-text {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.todo-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-icon-small {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon-small:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.todo-stats {
+    padding: var(--spacing-xs) 0;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-sm);
+}
+
+.todo-stats small {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.todo-empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+.todo-empty p {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--font-size-md);
+}
+
+.todo-empty small {
+    font-size: var(--font-size-xs);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+    .todo-section {
+        max-height: 40vh;
+    }
+    
+    .todo-header {
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .todo-item {
+        padding: 8px;
     }
 }

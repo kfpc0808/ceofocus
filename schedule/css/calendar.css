@@ -629,3 +629,137 @@
     z-index: 99 !important;
     background: var(--bg-main) !important;
 }
+
+/* ========================================
+   캘린더 제목 클릭 가능하게
+======================================== */
+.fc-toolbar-title {
+    cursor: pointer !important;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.fc-toolbar-title:hover {
+    color: var(--color-primary) !important;
+    transform: scale(1.02);
+}
+
+.fc-toolbar-title:active {
+    transform: scale(0.98);
+}
+
+/* ========================================
+   스크롤 시 날짜 헤더 + 종일 업무 고정
+======================================== */
+
+/* 캘린더 전체 높이 고정 (스크롤 가능하게) */
+.fc {
+    max-height: calc(100vh - 120px) !important;
+    overflow-y: auto !important;
+}
+
+/* 날짜 헤더 고정 */
+.fc .fc-col-header-cell {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background: var(--bg-main) !important;
+    border-bottom: 2px solid var(--border-color) !important;
+}
+
+/* 요일 헤더 고정 */
+.fc-theme-standard .fc-scrollgrid {
+    border-collapse: separate !important;
+}
+
+.fc .fc-daygrid-body {
+    overflow-y: auto !important;
+}
+
+/* 종일 이벤트 영역도 고정 */
+.fc-daygrid-day-top {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 99 !important;
+    background: var(--bg-main) !important;
+}
+
+/* 월간 뷰의 스크롤 영역 */
+.fc-daygrid {
+    position: relative !important;
+}
+
+/* 스크롤바 스타일 */
+.fc-scroller {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* 스크롤 시에도 헤더 고정 */
+.fc-scrollgrid-section-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background: var(--bg-main) !important;
+}
+
+/* iOS Safari 스크롤 최적화 */
+.fc-view-harness {
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.fc-scroller-harness {
+    position: relative !important;
+}
+
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+    .fc {
+        max-height: calc(100vh - 150px) !important;
+    }
+    
+    /* 모바일에서 터치 스크롤 부드럽게 */
+    .fc-scroller {
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* 날짜 숫자와 종일 업무를 함께 고정 */
+.fc-daygrid-day-frame {
+    position: relative !important;
+}
+
+/* 종일 이벤트가 있는 경우에도 날짜 숫자 보이게 */
+.fc-daygrid-day-number {
+    position: relative !important;
+    z-index: 10 !important;
+    background: var(--bg-main) !important;
+    padding: 2px 4px !important;
+}
+
+/* 할일 목록을 위한 캘린더 하단 여백 */
+#calendar {
+    margin-bottom: 280px;
+}
+
+@media (max-width: 768px) {
+    #calendar {
+        margin-bottom: 250px;
+    }
+}
+�스트 강조 */
+.fc-event:has-text("D-Day"),
+.fc-event:has-text("D-0"),
+.fc-event:has-text("D-1"),
+.fc-event:has-text("D-2"),
+.fc-event:has-text("D-3") {
+    font-weight: 700 !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}

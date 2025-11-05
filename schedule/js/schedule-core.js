@@ -10,6 +10,7 @@
 // ========================================
 let calendarData = {
     schedules: [],
+    todos: [],  // 할일 목록
     colorSettings: {
         '상령일': '#FF6B6B',
         '보험만기일': '#FF9500',
@@ -866,6 +867,94 @@ const shareToKakao = (schedule) => {
     }
 }
 
+// ========================================
+// 할일 목록 관리
+// ========================================
+function addTodo(text, priority = 'normal') {
+    if (!text || !text.trim()) return null;
+    
+    const todo = {
+        id: Date.now().toString(),
+        text: text.trim(),
+        completed: false,
+        priority: priority,  // high, normal, low
+        createdAt: new Date().toISOString(),
+        completedAt: null
+    };
+    
+    calendarData.todos.push(todo);
+    saveData();
+    renderTodoList();
+    updateTodoStats();
+    
+    return todo;
+}
+
+function toggleTodo(todoId) {
+    const todo = calendarData.todos.find(t => t.id === todoId);
+    if (todo) {
+        todo.completed = !todo.completed;
+        todo.completedAt = todo.completed ? new Date().toISOString() : null;
+        saveData();
+        renderTodoList();
+        updateTodoStats();
+    }
+}
+
+function deleteTodo(todoId) {
+    calendarData.todos = calendarData.todos.filter(t => t.id !== todoId);
+    saveData();
+    renderTodoList();
+    updateTodoStats();
+}
+
+function updateTodo(todoId, newText) {
+    const todo = calendarData.todos.find(t => t.id === todoId);
+    if (todo && newText && newText.trim()) {
+        todo.text = newText.trim();
+        saveData();
+        renderTodoList();
+    }
+}
+
+function clearCompletedTodos() {
+    calendarData.todos = calendarData.todos.filter(t => !t.completed);
+    saveData();
+    renderTodoList();
+    updateTodoStats();
+}
+
+// ========================================
+// 디데이 (D-Day) 계산
+// ========================================
+function calculateDday(targetDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const target = new Date(targetDate);
+    target.setHours(0, 0, 0, 0);
+    
+    const diffTime = target - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+}
+
+function getDdayText(days) {
+    if (days === 0) return 'D-Day';
+    if (days > 0) return `D-${days}`;
+    if (days < 0) return `D+${Math.abs(days)}`;
+}
+
+function getDdayColor(days) {
+    if (days === 0) return '#ff0000'; // 오늘 - 빨강
+    if (days <= 3) return '#ff6b6b'; // 3일 이내 - 주황
+    if (days <= 7) return '#ffa500'; // 7일 이내 - 주황
+    if (days <= 14) return '#ffd700'; // 14일 이내 - 노랑
+    return '#4285f4'; // 그 이상 - 파랑
+}
+
+// ========================================
 // ========================================
 // 페이지 로드 시 초기화
 // ========================================

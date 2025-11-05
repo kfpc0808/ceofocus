@@ -128,7 +128,7 @@
                 <h4>중요도</h4>
                 <label class="filter-checkbox">
                     <input type="checkbox" value="important" checked>
-                    ⭐ 중요 일정만
+                    중요 일정만
                 </label>
             </div>
             
@@ -189,7 +189,7 @@
                     <label>제목 *</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <button type="button" id="iconPickerBtn" class="icon-picker-btn" title="아이콘 선택">
-                            <span id="selectedIcon">📅</span>
+                            <span id="selectedIcon" data-placeholder="➕"></span>
                         </button>
                         <input type="text" id="eventTitle" class="form-input" placeholder="일정 제목" required style="flex: 1;">
                     </div>
@@ -228,7 +228,7 @@
                 <div class="priority-row">
                     <label style="display: flex; align-items: center; gap: 4px;">
                         <input type="checkbox" id="eventImportant">
-                        ⭐ 중요
+                        중요
                     </label>
                     <label style="display: flex; align-items: center; gap: 4px;">
                         <input type="checkbox" id="eventCompleted">
@@ -317,6 +317,23 @@
                 <div class="form-group">
                     <label>메모</label>
                     <textarea id="eventDescription" class="form-textarea" rows="3" placeholder="메모"></textarea>
+                </div>
+                
+                <!-- 태그/라벨 -->
+                <div class="form-group">
+                    <label>태그 🏷️</label>
+                    <input type="text" 
+                           id="eventTags" 
+                           class="form-input" 
+                           placeholder="예: #신규고객, #상담, #생명보험 (쉼표로 구분)">
+                    <div id="popularTags" class="popular-tags" style="margin-top: 8px;">
+                        <small style="color: #666;">자주 사용:</small>
+                        <button type="button" class="tag-quick" data-tag="신규고객">신규고객</button>
+                        <button type="button" class="tag-quick" data-tag="기존고객">기존고객</button>
+                        <button type="button" class="tag-quick" data-tag="상담">상담</button>
+                        <button type="button" class="tag-quick" data-tag="계약">계약</button>
+                        <button type="button" class="tag-quick" data-tag="만기관리">만기관리</button>
+                    </div>
                 </div>
             </div>
             
@@ -478,5 +495,104 @@
     <script src="js/schedule-core.js"></script>
     <script src="js/schedule-calendar.js"></script>
     
+</body>
+</html>
+
+    <!-- 날짜 선택 모달 -->
+    <div id="datePickerModal" class="modal">
+        <div class="modal-content" style="max-width: 320px;">
+            <div class="modal-header">
+                <h2>📅 날짜 선택</h2>
+                <button id="closeDatePicker" class="btn-close">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>년도</label>
+                    <select id="yearSelect" class="form-select">
+                        <!-- JavaScript로 채워짐 -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>월</label>
+                    <select id="monthSelect" class="form-select">
+                        <option value="0">1월</option>
+                        <option value="1">2월</option>
+                        <option value="2">3월</option>
+                        <option value="3">4월</option>
+                        <option value="4">5월</option>
+                        <option value="5">6월</option>
+                        <option value="6">7월</option>
+                        <option value="7">8월</option>
+                        <option value="8">9월</option>
+                        <option value="9">10월</option>
+                        <option value="10">11월</option>
+                        <option value="11">12월</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="cancelDatePicker" class="btn-secondary">취소</button>
+                <button id="confirmDatePicker" class="btn-primary">이동</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 검색 결과 모달 -->
+    <div id="searchResultModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>🔍 검색 결과</h2>
+                <button id="closeSearchResult" class="btn-close">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="searchResultsContainer" class="search-results">
+                    <!-- 검색 결과가 여기에 표시됩니다 -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="closeSearchResultBtn" class="btn-secondary">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 할일 목록 섹션 -->
+    <div id="todoSection" class="todo-section">
+        <div class="todo-header">
+            <h3>✅ 할일 목록</h3>
+            <button id="addTodoBtn" class="btn-icon" title="할일 추가">➕</button>
+            <button id="toggleTodoBtn" class="btn-icon" title="접기/펼치기">📋</button>
+        </div>
+        
+        <div id="todoContainer" class="todo-container">
+            <div class="todo-input-group">
+                <input type="text" 
+                       id="todoInput" 
+                       class="todo-input" 
+                       placeholder="할일을 입력하고 Enter를 누르세요...">
+                <button id="addTodoFromInput" class="btn-primary">추가</button>
+            </div>
+            
+            <div id="todoList" class="todo-list">
+                <!-- 할일 항목들이 여기에 표시됩니다 -->
+            </div>
+            
+            <div class="todo-stats">
+                <small id="todoStats">전체: 0 | 완료: 0 | 남음: 0</small>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/ko.global.min.js"></script>
+    <script src="js/schedule-core.js"></script>
+    <script src="js/schedule-calendar.js"></script>
+    <script src="js/schedule-features.js"></script>
 </body>
 </html>
