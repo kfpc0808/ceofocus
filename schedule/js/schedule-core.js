@@ -360,11 +360,59 @@ const scheduleAutoSave = () => {
         clearTimeout(autoSaveTimer);
     }
     
+    // 저장 중 표시
+    updateSyncStatus('saving', '저장 중...');
+    
     autoSaveTimer = setTimeout(async () => {
         await saveSchedulesToDrive();
         console.log('🔄 자동 저장 완료');
+        
+        // 저장 완료 표시
+        updateSyncStatus('saved', '저장 완료');
+        
+        // 3초 후 "연결됨"으로 변경
+        setTimeout(() => {
+            updateSyncStatus('saved', '연결됨');
+        }, 3000);
     }, 3000);
 };
+
+// ========================================
+// 동기화 상태 표시 업데이트
+// ========================================
+const updateSyncStatus = (status, text) => {
+    const syncStatus = document.getElementById('syncStatus');
+    const syncIcon = document.getElementById('syncIcon');
+    const syncText = document.getElementById('syncText');
+    
+    if (!syncStatus || !syncIcon || !syncText) return;
+    
+    // 모든 상태 클래스 제거
+    syncStatus.classList.remove('saving', 'saved', 'loading', 'error');
+    
+    // 새 상태 적용
+    switch (status) {
+        case 'saving':
+            syncStatus.classList.add('saving');
+            syncIcon.textContent = '💾';
+            break;
+        case 'saved':
+            syncStatus.classList.add('saved');
+            syncIcon.textContent = '✅';
+            break;
+        case 'loading':
+            syncStatus.classList.add('loading');
+            syncIcon.textContent = '🔄';
+            break;
+        case 'error':
+            syncStatus.classList.add('error');
+            syncIcon.textContent = '❌';
+            break;
+    }
+    
+    syncText.textContent = text;
+};
+
 
 // ========================================
 // Drive 연결 완료
@@ -376,7 +424,11 @@ const onDriveConnected = async () => {
     
     // UI 업데이트
     document.getElementById('connectBtn').style.display = 'none';
-    document.getElementById('saveBtn').style.display = 'inline-block';
+    const syncStatus = document.getElementById('syncStatus');
+    if (syncStatus) {
+        syncStatus.style.display = 'inline-flex';
+        updateSyncStatus('loading', '불러오는 중...');
+    }
     document.getElementById('syncGoogleCalendarBtn').style.display = 'inline-block';
     updateStatus('연결됨', 'connected');
     
@@ -384,12 +436,18 @@ const onDriveConnected = async () => {
     const loaded = await loadSchedulesFromDrive();
     
     if (loaded && calendarData.schedules.length > 0) {
+        updateSyncStatus('saved', `${calendarData.schedules.length}개 로드됨`);
         showToast(`✅ ${calendarData.schedules.length}개 일정 로드 완료`);
         // 캘린더 렌더링 (calendar.js에서 처리)
         if (typeof renderCalendar === 'function') {
             renderCalendar();
         }
+        // 3초 후 "연결됨"으로 변경
+        setTimeout(() => {
+            updateSyncStatus('saved', '연결됨');
+        }, 3000);
     } else {
+        updateSyncStatus('saved', '연결됨');
         showToast('✨ 일정관리를 시작하세요!');
     }
 };
@@ -533,13 +591,7 @@ const init = async () => {
         }
     });
     
-    // 저장 버튼
-    document.getElementById('saveBtn')?.addEventListener('click', async () => {
-        const success = await saveSchedulesToDrive();
-        if (success) {
-            showToast('💾 저장 완료');
-        }
-    });
+    // 자동 저장만 사용 (수동 저장 버튼 제거됨)
     
     console.log('✅ 초기화 완료');
 };
