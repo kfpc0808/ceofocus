@@ -24,11 +24,38 @@ function initializeCalendar() {
         timeZone: 'Asia/Seoul',
         initialView: calendarData.userSettings.defaultView || 'timeGridWeek',
         
-        // 헤더 툴바
+        // 헤더 툴바 - 상단에 연월 표시
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        
+        // 제목 형식 - "YYYY년 MM월" 또는 "YYYY년 MM월 DD일"
+        titleFormat: function(date) {
+            const year = date.date.year;
+            const month = date.date.month + 1;
+            if (date.end) {
+                // 범위가 있는 경우 (주간/일간)
+                return `${year}년 ${month}월`;
+            }
+            return `${year}년 ${month}월`;
+        },
+        
+        // 요일 헤더 형식 - "일(요일)" 형태로 간소화
+        dayHeaderFormat: function(date) {
+            const day = date.date.day;
+            const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.date.day];
+            return `${day}\n(${weekday})`;
+        },
+        
+        // 주간/일간 뷰 컬럼 헤더 형식
+        dayHeaderContent: function(args) {
+            const day = args.date.getDate();
+            const weekday = ['일', '월', '화', '수', '목', '금', '토'][args.date.getDay()];
+            return {
+                html: `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;">${day}</div><div style="font-size:10px;color:#666;">(${weekday})</div></div>`
+            };
         },
         
         // 버튼 텍스트
@@ -43,7 +70,14 @@ function initializeCalendar() {
         // 시간 설정
         slotMinTime: calendarData.userSettings.startTime || '09:00:00',
         slotMaxTime: calendarData.userSettings.endTime || '18:00:00',
-        slotDuration: calendarData.userSettings.slotDuration || '00:30:00',
+        slotDuration: '00:30:00',
+        slotLabelInterval: '01:00',
+        slotLabelFormat: {
+            hour: 'numeric',
+            minute: '2-digit',
+            meridiem: false,
+            hour12: false
+        },
         
         // 주 설정
         firstDay: 0, // 일요일부터
@@ -73,6 +107,10 @@ function initializeCalendar() {
         
         // 현재 시간 표시
         nowIndicator: true,
+        
+        // 일정 제한
+        dayMaxEvents: true,
+        dayMaxEventRows: 3,
         
         // 이벤트
         events: [],
@@ -121,6 +159,15 @@ function initializeCalendar() {
         
         eventResize: function(info) {
             updateEventDates(info.event);
+        },
+        
+        // 모바일 최적화
+        windowResize: function(arg) {
+            if (window.innerWidth < 768) {
+                calendar.setOption('dayMaxEvents', 2);
+            } else {
+                calendar.setOption('dayMaxEvents', true);
+            }
         }
     });
     
@@ -842,12 +889,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('syncGoogleCalendarBtn')?.addEventListener('click', async () => {
         if (googleCalendarEnabled) {
             stopGoogleCalendarSync();
-            document.getElementById('syncGoogleCalendarBtn').textContent = '📗 구글 캘린더';
+            document.getElementById('syncGoogleCalendarBtn').textContent = '📗';
             document.getElementById('refreshGoogleCalendarBtn').style.display = 'none';
         } else {
             const success = await startGoogleCalendarSync();
             if (success) {
-                document.getElementById('syncGoogleCalendarBtn').textContent = '📕 동기화 중지';
+                document.getElementById('syncGoogleCalendarBtn').textContent = '📕';
                 document.getElementById('refreshGoogleCalendarBtn').style.display = 'inline-block';
             }
         }

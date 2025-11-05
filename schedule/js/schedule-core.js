@@ -41,6 +41,11 @@ const GOOGLE_CLIENT_ID = "288996084140-0eo93heqd66hqhg0fh1rbum6scnt3757.apps.goo
 const GOOGLE_API_KEY = "AIzaSyAVtAzm9UjgGB1pqChvGvGKH7RpH0KCiVM";
 const ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
 
+// ========================================
+// Kakao 설정
+// ========================================
+const KAKAO_APP_KEY = "YOUR_JAVASCRIPT_KEY_HERE"; // ⚠️ 카카오 개발자에서 발급받은 키를 입력하세요!
+
 // Firebase 설정
 const firebaseConfig = {
     apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",

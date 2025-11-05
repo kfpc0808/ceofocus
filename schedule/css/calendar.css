@@ -1,38 +1,49 @@
 /* ========================================
-   캘린더 전용 스타일
+   캘린더 전용 스타일 - 모바일 최적화
+   - 달력 헤더 간소화: 일(요일)만 표시
+   - 상단에 연월 별도 표시
    - FullCalendar 커스터마이징
-   - 조르테 스타일 반영
 ======================================== */
 
 /* ========================================
-   캘린더 툴바
+   캘린더 툴바 - 컴팩트
 ======================================== */
 .fc .fc-toolbar {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    border-bottom: 2px solid var(--border-color);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: nowrap;
 }
 
 .fc .fc-toolbar-title {
-    font-size: var(--font-size-xxl);
+    font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fc .fc-toolbar-chunk {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .fc .fc-button {
     background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     color: var(--text-primary);
-    font-size: var(--font-size-md);
-    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    padding: 4px 8px;
     border-radius: var(--border-radius);
     font-weight: 500;
     transition: all 0.2s;
+    min-height: 28px;
 }
 
 .fc .fc-button:hover {
     background: var(--bg-hover);
-    border-color: var(--color-secondary);
 }
 
 .fc .fc-button:active,
@@ -40,6 +51,7 @@
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: white;
+    transform: scale(0.95);
 }
 
 .fc .fc-button:disabled {
@@ -54,35 +66,42 @@
 }
 
 .fc .fc-button-group {
-    gap: var(--spacing-sm);
+    gap: 2px;
+}
+
+/* 버튼 텍스트 줄임 (모바일) */
+.fc .fc-button .fc-icon {
+    font-size: 14px;
 }
 
 /* ========================================
-   캘린더 헤더 (요일)
+   캘린더 헤더 (요일) - 간소화
 ======================================== */
 .fc .fc-col-header {
     background: var(--bg-secondary);
 }
 
 .fc .fc-col-header-cell {
-    padding: var(--spacing-md);
-    font-size: var(--font-size-md);
+    padding: 4px 2px;
+    font-size: var(--font-size-xs);
     font-weight: 700;
     color: var(--text-primary);
     border-color: var(--border-color);
+    text-align: center;
 }
 
 .fc .fc-col-header-cell-cushion {
-    padding: var(--spacing-sm);
+    padding: 2px;
+    display: block;
 }
 
 /* 토요일 파란색 */
-.fc .fc-day-sat {
+.fc .fc-day-sat .fc-col-header-cell-cushion {
     color: #1976d2;
 }
 
 /* 일요일 빨간색 */
-.fc .fc-day-sun {
+.fc .fc-day-sun .fc-col-header-cell-cushion {
     color: #d32f2f;
 }
 
@@ -95,26 +114,36 @@
 }
 
 .fc .fc-daygrid-day-number {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-sm);
     font-weight: 600;
-    padding: var(--spacing-sm);
+    padding: 2px 4px;
     color: var(--text-primary);
 }
 
 /* 오늘 날짜 강조 */
 .fc .fc-day-today {
-    background: rgba(66, 133, 244, 0.08) !important;
+    background: rgba(66, 133, 244, 0.05) !important;
 }
 
 .fc .fc-day-today .fc-daygrid-day-number {
     background: var(--color-primary);
     color: white;
     border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+/* 토요일 */
+.fc .fc-day-sat .fc-daygrid-day-number {
+    color: #1976d2;
+}
+
+/* 일요일 */
+.fc .fc-day-sun .fc-daygrid-day-number {
+    color: #d32f2f;
 }
 
 /* 다른 달 날짜 */
@@ -127,16 +156,17 @@
    시간 그리드 (주간/일간 뷰)
 ======================================== */
 .fc .fc-timegrid-slot {
-    height: 60px;
+    height: 40px;
     border-color: var(--border-color);
 }
 
 .fc .fc-timegrid-slot-label {
-    font-size: var(--font-size-sm);
+    font-size: 10px;
     color: var(--text-secondary);
     font-weight: 600;
-    padding: var(--spacing-sm);
+    padding: 2px;
     border-color: var(--border-color);
+    vertical-align: top;
 }
 
 .fc .fc-timegrid-axis {
@@ -154,29 +184,28 @@
 }
 
 /* ========================================
-   일정 (이벤트)
+   일정 (이벤트) - 컴팩트
 ======================================== */
 .fc-event {
-    border-radius: 6px;
-    padding: var(--spacing-sm);
+    border-radius: 4px;
+    padding: 2px 4px;
     border: none !important;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: var(--font-size-sm);
+    font-size: 11px;
     font-weight: 500;
     box-shadow: var(--shadow-sm);
 }
 
-.fc-event:hover {
+.fc-event:active {
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
-    z-index: 10 !important;
 }
 
 /* 월간 뷰 일정 */
 .fc .fc-daygrid-event {
-    padding: 4px 8px;
-    margin: 2px 0;
+    padding: 1px 3px;
+    margin: 1px 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -184,28 +213,28 @@
 
 /* 주간/일간 뷰 일정 */
 .fc .fc-timegrid-event {
-    border-radius: 6px;
-    padding: var(--spacing-sm);
+    border-radius: 4px;
+    padding: 2px 4px;
 }
 
 .fc .fc-timegrid-event .fc-event-main {
-    padding: var(--spacing-xs);
+    padding: 2px;
 }
 
 /* 일정 제목 */
 .fc-event-title {
     font-weight: 600;
-    font-size: var(--font-size-sm);
+    font-size: 11px;
 }
 
 .fc-event-time {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
     opacity: 0.9;
 }
 
 /* 중요 일정 (⭐) */
 .fc-event.important {
-    border-left: 4px solid #FFD700 !important;
+    border-left: 3px solid #FFD700 !important;
     font-weight: 700;
 }
 
@@ -215,7 +244,7 @@
 
 /* 완료된 일정 */
 .fc-event.completed {
-    opacity: 0.6;
+    opacity: 0.5;
     text-decoration: line-through;
 }
 
@@ -226,7 +255,7 @@
 /* 종일 일정 */
 .fc .fc-daygrid-event.fc-event-start,
 .fc .fc-daygrid-event.fc-event-end {
-    border-radius: 6px;
+    border-radius: 4px;
 }
 
 /* ========================================
@@ -267,6 +296,13 @@
     color: white;
 }
 
+/* 구글 캘린더 일정 */
+.fc-event[data-type="구글캘린더"] {
+    background-color: #E8E8E8;
+    color: #666;
+    border: 1px dashed #CCCCCC !important;
+}
+
 /* ========================================
    리스트 뷰
 ======================================== */
@@ -276,8 +312,8 @@
 
 .fc .fc-list-day-cushion {
     background: var(--bg-secondary);
-    padding: var(--spacing-md);
-    font-size: var(--font-size-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -287,22 +323,22 @@
     transition: background 0.2s;
 }
 
-.fc .fc-list-event:hover {
+.fc .fc-list-event:active {
     background: var(--bg-hover);
 }
 
 .fc .fc-list-event-dot {
-    border-width: 6px;
+    border-width: 5px;
 }
 
 .fc .fc-list-event-title {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     font-weight: 500;
     padding: var(--spacing-md);
 }
 
 .fc .fc-list-event-time {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     color: var(--text-secondary);
     font-weight: 600;
 }
@@ -312,37 +348,36 @@
 ======================================== */
 .fc .fc-popover {
     background: var(--bg-main);
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-lg);
 }
 
 .fc .fc-popover-header {
     background: var(--bg-secondary);
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
+    padding: 4px var(--spacing-md);
+    font-size: var(--font-size-xs);
     font-weight: 700;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .fc .fc-popover-body {
-    padding: var(--spacing-sm);
+    padding: 4px;
 }
 
 .fc .fc-more-link {
-    font-size: var(--font-size-sm);
+    font-size: 10px;
     color: var(--color-primary);
     font-weight: 600;
-    padding: 4px 8px;
-    margin: 2px 0;
+    padding: 2px 4px;
+    margin: 1px 0;
     display: inline-block;
-    border-radius: 4px;
+    border-radius: 3px;
     transition: all 0.2s;
 }
 
-.fc .fc-more-link:hover {
+.fc .fc-more-link:active {
     background: var(--bg-hover);
-    text-decoration: none;
 }
 
 /* ========================================
@@ -357,7 +392,6 @@
     opacity: 0.7;
 }
 
-/* 드래그 시 복사 */
 .fc-event.fc-helper {
     border: 2px dashed var(--color-primary);
     background: rgba(66, 133, 244, 0.1);
@@ -367,75 +401,86 @@
    스크롤바 커스터마이징
 ======================================== */
 .fc-scroller::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
 
 .fc-scroller::-webkit-scrollbar-track {
     background: var(--bg-secondary);
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .fc-scroller::-webkit-scrollbar-thumb {
     background: var(--border-color);
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
-.fc-scroller::-webkit-scrollbar-thumb:hover {
+.fc-scroller::-webkit-scrollbar-thumb:active {
     background: var(--text-secondary);
 }
 
 /* ========================================
-   반응형 (모바일)
+   모바일 최적화
 ======================================== */
 @media (max-width: 768px) {
     .fc .fc-toolbar {
-        flex-direction: column;
-        gap: var(--spacing-md);
-        padding: var(--spacing-sm);
+        padding: 4px;
     }
     
     .fc .fc-toolbar-title {
-        font-size: var(--font-size-xl);
-        text-align: center;
-        order: -1;
-    }
-    
-    .fc .fc-toolbar-chunk {
-        display: flex;
-        justify-content: center;
-        width: 100%;
+        font-size: var(--font-size-md);
     }
     
     .fc .fc-button {
-        font-size: var(--font-size-sm);
-        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 11px;
+        padding: 3px 6px;
+        min-height: 24px;
     }
     
     .fc .fc-timegrid-slot {
-        height: 40px;
+        height: 32px;
     }
     
     .fc .fc-timegrid-slot-label {
-        font-size: 11px;
+        font-size: 9px;
     }
     
     .fc-event-title {
-        font-size: 12px;
-    }
-    
-    .fc-event-time {
         font-size: 10px;
     }
     
-    /* 모바일에서 리스트 뷰 최적화 */
+    .fc-event-time {
+        font-size: 9px;
+    }
+    
+    /* 월간 뷰 - 날짜 크게 */
+    .fc .fc-daygrid-day-number {
+        font-size: var(--font-size-md);
+    }
+    
+    /* 리스트 뷰 최적화 */
     .fc .fc-list-event-title {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-sm);
     }
     
     .fc .fc-list-day-cushion {
-        font-size: var(--font-size-sm);
-        padding: var(--spacing-sm);
+        font-size: var(--font-size-xs);
+        padding: 4px var(--spacing-sm);
+    }
+}
+
+/* ========================================
+   iOS 최적화
+======================================== */
+@supports (-webkit-touch-callout: none) {
+    .fc-event {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+    }
+    
+    .fc .fc-button {
+        -webkit-tap-highlight-color: transparent;
     }
 }
 
@@ -476,7 +521,7 @@
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-lg);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     font-weight: 700;
     color: var(--color-primary);
     z-index: 1000;

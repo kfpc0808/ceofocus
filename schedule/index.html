@@ -13,6 +13,11 @@
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
+    <!-- Kakao JavaScript SDK -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js"
+            integrity="sha384-l+xbElFSnPZ2rOaPrU//2FF5B4LB8FiX5q4fXYTlfcG4PGpMkE1vcL7kNXI6Cci0"
+            crossorigin="anonymous"></script>
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -25,34 +30,41 @@
     
     <!-- 상단 헤더 -->
     <header class="header">
-        <div class="header-left">
+        <div class="header-top">
+            <a href="https://ceofocus123.netlify.app/index.html" class="btn-main">🏠 Main</a>
             <h1>📅 일정관리</h1>
             <div class="status-indicator">
                 <span class="status-dot" id="statusDot"></span>
-                <span class="status-text" id="statusText">연결 대기중</span>
+                <span class="status-text" id="statusText">대기중</span>
             </div>
         </div>
         
-        <div class="header-right">
+        <div class="header-controls">
             <!-- 검색 -->
             <div class="search-container">
                 <input type="text" 
                        id="searchInput" 
                        class="search-input" 
-                       placeholder="일정 검색...">
+                       placeholder="검색...">
                 <button id="searchBtn" class="btn-icon" title="검색">🔍</button>
                 <button id="searchClear" class="btn-icon" style="display:none;" title="지우기">✕</button>
             </div>
             
+            <!-- 구글 캘린더 동기화 -->
+            <button id="syncGoogleCalendarBtn" class="btn-compact" style="display:none;" title="구글 캘린더 동기화">
+                📗
+            </button>
+            <button id="refreshGoogleCalendarBtn" class="btn-icon" style="display:none;" title="새로고침">🔄</button>
+            
             <!-- 필터 -->
-            <button id="filterBtn" class="btn-secondary">📋 필터</button>
+            <button id="filterBtn" class="btn-compact">📋</button>
             
             <!-- 인쇄 -->
-            <button id="printBtn" class="btn-secondary">🖨️ 인쇄</button>
+            <button id="printBtn" class="btn-compact">🖨️</button>
             
             <!-- 구글 연동 -->
-            <button id="connectBtn" class="btn-primary">구글 드라이브 연결</button>
-            <button id="saveBtn" class="btn-success" style="display:none;">💾 저장</button>
+            <button id="connectBtn" class="btn-compact btn-primary">연결</button>
+            <button id="saveBtn" class="btn-compact btn-success" style="display:none;">💾</button>
         </div>
     </header>
     
@@ -297,6 +309,7 @@
             </div>
             
             <div class="modal-footer">
+                <button id="shareKakaoBtn" class="btn-kakao">💬 카톡공유</button>
                 <button id="editEventBtn" class="btn-primary">✏️ 수정</button>
                 <button id="completeToggleBtn" class="btn-success">✅ 완료</button>
                 <button id="closeDetailBtn" class="btn-secondary">닫기</button>
