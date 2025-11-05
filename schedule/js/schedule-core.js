@@ -48,7 +48,7 @@ const ENCRYPTION_KEY = "K7mP9nR4sT2vX8wY3zA6bC1dE5fG0hJ9";
 // ========================================
 // Kakao 설정
 // ========================================
-const KAKAO_APP_KEY = "YOUR_JAVASCRIPT_KEY_HERE"; // ⚠️ 카카오 개발자에서 발급받은 키를 입력하세요!
+const KAKAO_APP_KEY = "1ada66397913195f6a7512567faa5fac"; // ✅ 카카오 JavaScript 키
 
 // Firebase 설정
 const firebaseConfig = {
