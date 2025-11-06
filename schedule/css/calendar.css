@@ -501,6 +501,7 @@
 @media (max-width: 768px) {
     .fc .fc-toolbar {
         padding: 4px;
+        top: 70px !important;  /* 모바일 header 높이에 맞춤 */
     }
     
     .fc .fc-toolbar-title {
