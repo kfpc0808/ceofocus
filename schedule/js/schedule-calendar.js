@@ -104,6 +104,7 @@ function initializeCalendar() {
         slotMaxTime: '24:00:00',
         slotDuration: '00:30:00',
         slotLabelInterval: '01:00',
+        scrollTime: '00:00:00', // 처음 시작 시간을 밤 12시로 설정
         slotLabelFormat: {
             hour: 'numeric',     // 숫자만
             minute: undefined,   // 분 표시 안함
