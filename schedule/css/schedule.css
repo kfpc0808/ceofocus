@@ -81,7 +81,7 @@ body {
     line-height: 1.4;
     color: var(--text-primary);
     background: var(--bg-secondary);
-    padding-top: calc(110px + var(--safe-area-inset-top)); /* header 전체 높이 */
+    padding-top: 80px; /* header 여백 축소 */
     padding-bottom: calc(48px + var(--safe-area-inset-bottom));
     overflow-x: hidden;
     min-height: 100vh;
@@ -869,7 +869,7 @@ button {
     }
     
     body {
-        padding-top: 50px !important;
+        padding-top: 40px !important;
     }
 }
 

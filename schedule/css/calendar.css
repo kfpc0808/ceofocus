@@ -10,12 +10,11 @@
 ======================================== */
 .fc .fc-toolbar {
     padding: 4px var(--spacing-sm);
-    margin-top: -50px;  /* 위로 당겨서 여백 제거 */
-    margin-bottom: 2px;
+    margin-bottom: 0px;  /* 날짜와 붙임 */
     border-bottom: 1px solid var(--border-color);
     flex-wrap: nowrap;
     position: sticky !important;
-    top: 110px !important;
+    top: 80px !important;  /* body padding-top에 맞춤 */
     z-index: 1001 !important;
     background: var(--bg-main);
 }
@@ -87,6 +86,8 @@
     position: sticky !important;
     top: 0 !important;
     z-index: 1000 !important;
+    margin-top: 0 !important;  /* toolbar와 붙임 */
+    padding-top: 0 !important;
 }
 
 /* 스크롤 컨테이너 내부 헤더 */
@@ -502,8 +503,7 @@
 @media (max-width: 768px) {
     .fc .fc-toolbar {
         padding: 1px 4px;
-        margin-top: -30px;  /* 위로 당겨서 여백 제거 */
-        top: 50px !important;  /* header 바로 붙임 */
+        top: 40px !important;  /* body padding-top에 맞춤 */
         margin-bottom: 0px;
     }
     
@@ -620,6 +620,7 @@
 .fc .fc-view-harness {
     position: relative;
     overflow: visible !important;
+    margin-top: 0 !important;  /* toolbar와 붙임 */
 }
 
 /* 주간/일간/5일 뷰 헤더 고정 */
@@ -683,6 +684,7 @@
 /* 요일 헤더 고정 */
 .fc-theme-standard .fc-scrollgrid {
     border-collapse: separate !important;
+    margin-top: 0 !important;  /* toolbar와 붙임 */
 }
 
 .fc .fc-daygrid-body {
@@ -720,6 +722,7 @@
 .fc-view-harness {
     overflow: hidden !important;
     position: relative !important;
+    margin-top: 0 !important;  /* toolbar와 붙임 */
 }
 
 .fc-scroller-harness {
