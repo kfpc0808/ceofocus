@@ -13,7 +13,8 @@
     margin-bottom: var(--spacing-sm);
     border-bottom: 1px solid var(--border-color);
     flex-wrap: nowrap;
-    position: relative;
+    position: sticky !important;
+    top: 110px !important;
     z-index: 1001 !important;
     background: var(--bg-main);
 }
