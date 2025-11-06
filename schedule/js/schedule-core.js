@@ -159,11 +159,13 @@ const initGoogleDrive = async () => {
 // Drive 접근 권한 요청
 // ========================================
 const requestDriveAccess = async () => {
-    if (accessToken) {
-        const expiry = localStorage.getItem('tokenExpiry');
-        if (expiry && Date.now() < parseInt(expiry)) {
-            return true;
-        }
+    // 이미 저장된 토큰이 있으면 확인
+    const savedToken = localStorage.getItem('googleAccessToken');
+    const expiry = localStorage.getItem('tokenExpiry');
+    
+    if (savedToken && expiry && Date.now() < parseInt(expiry)) {
+        accessToken = savedToken;
+        return true;
     }
     
     if (!gisInited) {
@@ -843,20 +845,41 @@ const shareToKakao = (schedule) => {
         const bottomMessage = calendarData.userInfo.kakaoMessage || '';
         const bottomText = bottomMessage ? `\n\n※ ${bottomMessage}` : '';
         
-        // URL 링크 (설정에서 가져오기)
+        // URL 링크 처리
         const kakaoUrl = calendarData.userInfo.kakaoUrl || '';
-        const urlText = kakaoUrl ? `\n🔗 ${kakaoUrl}` : '';
+        const kakaoUrlTitle = calendarData.userInfo.kakaoUrlTitle || '';
+        
+        let linkText = '';
+        let linkObj = null;
+        
+        if (kakaoUrl) {
+            if (kakaoUrlTitle) {
+                // 제목이 있으면 제목만 표시
+                linkText = `\n\n🔗 ${kakaoUrlTitle}`;
+            } else {
+                // 제목이 없으면 URL 그대로 표시
+                linkText = `\n\n🔗 ${kakaoUrl}`;
+            }
+            
+            // link 속성 추가 (클릭 가능하게)
+            linkObj = {
+                mobileWebUrl: kakaoUrl,
+                webUrl: kakaoUrl
+            };
+        }
         
         // 카카오톡 메시지 전송
-        Kakao.Share.sendDefault({
+        const kakaoParams = {
             objectType: 'text',
-            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}${bottomText}${urlText}`,
-            link: {
-                mobileWebUrl: 'https://ceofocus123.netlify.app',
-                webUrl: 'https://ceofocus123.netlify.app',
-            },
-            buttons: []  // 버튼 제거
-        });
+            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}${bottomText}${linkText}`
+        };
+        
+        // link가 있으면 추가
+        if (linkObj) {
+            kakaoParams.link = linkObj;
+        }
+        
+        Kakao.Share.sendDefault(kakaoParams);
         
         console.log('✅ 카카오톡 공유 완료:', schedule.title);
         showToast('✅ 카카오톡으로 공유했습니다');

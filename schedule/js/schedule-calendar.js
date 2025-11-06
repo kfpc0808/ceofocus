@@ -24,8 +24,8 @@ function initializeCalendar() {
         timeZone: 'Asia/Seoul',
         initialView: calendarData.userSettings.defaultView || 'timeGridWeek',
         
-        // 모바일: 기본 5일 표시, PC: 7일
-        dayCount: window.innerWidth <= 768 ? 5 : 7,
+        // 기본 5일 표시
+        dayCount: 5,
         
         // 헤더 툴바 - 상단에 연월 표시
         headerToolbar: {
@@ -422,7 +422,7 @@ function openEventModal(mode = 'add', date = new Date(), allDay = false, endDate
         if (selectedIcon) selectedIcon.textContent = '';
         
         document.getElementById('eventType').value = '미팅';
-        document.getElementById('eventColor').value = calendarData.colorSettings['미팅'];
+        document.getElementById('eventColor').value = '#FFFFFF';  // 명확하게 흰색으로 설정
         document.getElementById('eventAllDay').checked = allDay;
         document.getElementById('eventStartDate').value = formatDate(date);
         document.getElementById('eventStartTime').value = '09:00';
@@ -503,6 +503,34 @@ function closeEventModal() {
     document.getElementById('eventModal').classList.remove('show');
     currentEditingEvent = null;
 }
+
+// ========================================
+// 반복 종료일 토글
+// ========================================
+function toggleRecurrenceEnd() {
+    const recurrence = document.getElementById('eventRecurrence').value;
+    const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
+    const recurrenceEndInput = document.getElementById('eventRecurrenceEnd');
+    
+    if (recurrence === 'none') {
+        recurrenceEndGroup.style.opacity = '0.5';
+        recurrenceEndInput.disabled = true;
+        recurrenceEndInput.value = '';
+    } else {
+        recurrenceEndGroup.style.opacity = '1';
+        recurrenceEndInput.disabled = false;
+        
+        // 기본값: 1년 후
+        if (!recurrenceEndInput.value) {
+            const oneYearLater = new Date();
+            oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+            recurrenceEndInput.value = oneYearLater.toISOString().split('T')[0];
+        }
+    }
+}
+
+// 전역으로 노출
+window.toggleRecurrenceEnd = toggleRecurrenceEnd;
 
 // ========================================
 // 종일 체크박스 처리
@@ -1055,6 +1083,10 @@ function openSettingsModal() {
     document.querySelectorAll('.color-picker').forEach(picker => {
         const type = picker.dataset.type;
         picker.value = calendarData.colorSettings[type];
+        
+        // 실시간 색상 변경 이벤트 (기존 이벤트 제거 후 새로 등록)
+        picker.removeEventListener('input', handleColorChange);
+        picker.addEventListener('input', handleColorChange);
     });
     
     // 기본 설정 로드
@@ -1067,11 +1099,25 @@ function openSettingsModal() {
         document.getElementById('userName').value = calendarData.userInfo.name || '';
         document.getElementById('userTitle').value = calendarData.userInfo.title || '';
         document.getElementById('kakaoMessage').value = calendarData.userInfo.kakaoMessage || '';
+        document.getElementById('kakaoUrlTitle').value = calendarData.userInfo.kakaoUrlTitle || '';
         document.getElementById('kakaoUrl').value = calendarData.userInfo.kakaoUrl || '';
         updateUserInfoPreview();
     }
     
     modal.classList.add('show');
+}
+
+// 색상 변경 핸들러
+function handleColorChange(e) {
+    const picker = e.target;
+    const type = picker.dataset.type;
+    const color = picker.value;
+    
+    // 임시로 colorSettings 업데이트 (미리보기용)
+    calendarData.colorSettings[type] = color;
+    
+    // 캘린더 다시 렌더링하여 즉시 반영
+    renderCalendar();
 }
 
 function closeSettingsModal() {
@@ -1116,6 +1162,7 @@ function saveSettings() {
             name: userName,
             title: document.getElementById('userTitle').value.trim(),
             kakaoMessage: document.getElementById('kakaoMessage').value.trim(),
+            kakaoUrlTitle: document.getElementById('kakaoUrlTitle').value.trim(),
             kakaoUrl: document.getElementById('kakaoUrl').value.trim()
         };
         saveSchedulesToDrive(); // 드라이브에 저장
@@ -1142,7 +1189,7 @@ function resetSettings() {
             '보험만기일': '#FF9500',
             '생일': '#9B59B6',
             '결혼기념일': '#FFB6C1',
-            '미팅': '#FFD93D',
+            '미팅': '#FFFFFF',
             '상담': '#6BCF7F',
             '기타': '#95a5a6'
         };
@@ -1550,6 +1597,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // 할일 목록 UI
     // ========================================
     
+    // ToDo 버튼으로 모달 열기
+    const todoBtn = document.getElementById('todoBtn');
+    const todoModal = document.getElementById('todoModal');
+    const closeTodoModal = document.getElementById('closeTodoModal');
+    
+    if (todoBtn && todoModal) {
+        todoBtn.addEventListener('click', () => {
+            todoModal.classList.add('show');
+        });
+    }
+    
+    if (closeTodoModal && todoModal) {
+        closeTodoModal.addEventListener('click', () => {
+            todoModal.classList.remove('show');
+        });
+    }
+    
+    // 모달 외부 클릭 시 닫기
+    if (todoModal) {
+        todoModal.addEventListener('click', (e) => {
+            if (e.target === todoModal) {
+                todoModal.classList.remove('show');
+            }
+        });
+    }
+    
     // 할일 목록 렌더링
     window.renderTodoList = function() {
         const todoList = document.getElementById('todoList');
@@ -1600,7 +1673,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // 할일 추가
-    const addTodoBtn = document.getElementById('addTodoBtn');
     const addTodoFromInput = document.getElementById('addTodoFromInput');
     const todoInput = document.getElementById('todoInput');
     
@@ -1613,12 +1685,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    if (addTodoBtn) {
-        addTodoBtn.addEventListener('click', () => {
-            todoInput.focus();
-        });
-    }
-    
     if (addTodoFromInput) {
         addTodoFromInput.addEventListener('click', handleAddTodo);
     }
@@ -1628,18 +1694,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') {
                 handleAddTodo();
             }
-        });
-    }
-    
-    // 할일 목록 토글
-    const toggleTodoBtn = document.getElementById('toggleTodoBtn');
-    const todoContainer = document.getElementById('todoContainer');
-    
-    if (toggleTodoBtn && todoContainer) {
-        toggleTodoBtn.addEventListener('click', () => {
-            const isHidden = todoContainer.style.display === 'none';
-            todoContainer.style.display = isHidden ? 'block' : 'none';
-            toggleTodoBtn.textContent = isHidden ? '📋' : '📁';
         });
     }
     
