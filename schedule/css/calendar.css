@@ -9,8 +9,8 @@
    캘린더 툴바 - 컴팩트
 ======================================== */
 .fc .fc-toolbar {
-    padding: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    padding: 4px var(--spacing-sm);
+    margin-bottom: 2px;
     border-bottom: 1px solid var(--border-color);
     flex-wrap: nowrap;
     position: sticky !important;
@@ -500,8 +500,9 @@
 ======================================== */
 @media (max-width: 768px) {
     .fc .fc-toolbar {
-        padding: 4px;
-        top: 70px !important;  /* 모바일 header 높이에 맞춤 */
+        padding: 2px 4px;
+        top: 65px !important;  /* header 바로 아래 - 여백 최소화 */
+        margin-bottom: 2px;
     }
     
     .fc .fc-toolbar-title {
