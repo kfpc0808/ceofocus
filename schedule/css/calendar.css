@@ -10,6 +10,7 @@
 ======================================== */
 .fc .fc-toolbar {
     padding: 4px var(--spacing-sm);
+    margin-top: -50px;  /* 위로 당겨서 여백 제거 */
     margin-bottom: 2px;
     border-bottom: 1px solid var(--border-color);
     flex-wrap: nowrap;
@@ -501,6 +502,7 @@
 @media (max-width: 768px) {
     .fc .fc-toolbar {
         padding: 1px 4px;
+        margin-top: -30px;  /* 위로 당겨서 여백 제거 */
         top: 50px !important;  /* header 바로 붙임 */
         margin-bottom: 0px;
     }
