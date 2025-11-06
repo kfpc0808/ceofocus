@@ -794,3 +794,42 @@
 .fc-timegrid-slots {
     background: #ffffff !important;
 }
+
+/* ========================================
+   🔥 강제 여백 제거 - 최우선 순위
+======================================== */
+/* 모든 캘린더 요소 여백 강제 제거 */
+.fc,
+.fc * {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* toolbar (연월) 복원 */
+.fc .fc-toolbar {
+    padding: 4px 8px !important;
+    margin-bottom: 0 !important;
+}
+
+/* 날짜 셀 복원 */
+.fc .fc-col-header-cell {
+    padding: 4px 2px !important;
+}
+
+/* 시간 셀 복원 */
+.fc .fc-timegrid-slot {
+    padding: 2px !important;
+}
+
+/* 이벤트 복원 */
+.fc-event {
+    padding: 2px 4px !important;
+    margin: 1px 0 !important;
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+    .fc .fc-toolbar {
+        padding: 2px 4px !important;
+    }
+}
