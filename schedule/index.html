@@ -158,9 +158,9 @@
             <span class="nav-icon">➕</span>
             <span class="nav-label">추가</span>
         </button>
-        <button id="filterNavBtn" class="nav-btn">
-            <span class="nav-icon">🔍</span>
-            <span class="nav-label">필터</span>
+        <button id="todoBtn" class="nav-btn">
+            <span class="nav-icon">✅</span>
+            <span class="nav-label">ToDo</span>
         </button>
         <button id="settingsBtn" class="nav-btn">
             <span class="nav-icon">⚙️</span>
@@ -185,9 +185,9 @@
             </div>
             
             <div class="modal-body">
-                <div class="form-group">
+                <div class="form-group" style="position: relative;">
                     <label>제목 *</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
+                    <div style="display: flex; gap: 8px; align-items: center; position: relative;">
                         <button type="button" id="iconPickerBtn" class="icon-picker-btn" title="아이콘 선택">
                             <span id="selectedIcon" data-placeholder="➕"></span>
                         </button>
@@ -294,7 +294,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>반복</label>
-                        <select id="eventRecurrence" class="form-select">
+                        <select id="eventRecurrence" class="form-select" onchange="toggleRecurrenceEnd()">
                             <option value="none">한번만</option>
                             <option value="daily">매일</option>
                             <option value="weekly">매주</option>
@@ -303,9 +303,10 @@
                         </select>
                     </div>
                     
-                    <div class="form-group" id="recurrenceEndGroup" style="display:none;">
+                    <div class="form-group" id="recurrenceEndGroup">
                         <label>반복 종료일</label>
                         <input type="date" id="eventRecurrenceEnd" class="form-input">
+                        <small style="color: var(--text-secondary);">반복 설정 시 필수 입력</small>
                     </div>
                 </div>
                 
@@ -338,9 +339,9 @@
             </div>
             
             <div class="modal-footer">
-                <button id="deleteEventBtn" class="btn-danger" style="display:none;">🗑️ 삭제</button>
-                <button id="cancelEventBtn" class="btn-secondary">취소</button>
-                <button id="saveEventBtn" class="btn-primary">저장</button>
+                <button type="button" id="deleteEventBtn" class="btn-danger" style="display:none;">🗑️ 삭제</button>
+                <button type="button" id="cancelEventBtn" class="btn-secondary">취소</button>
+                <button type="button" id="saveEventBtn" class="btn-primary">저장</button>
             </div>
         </div>
     </div>
@@ -422,7 +423,7 @@
                         </div>
                         <div class="color-setting-row">
                             <label>미팅</label>
-                            <input type="color" class="color-picker" data-type="미팅" value="#FFD93D">
+                            <input type="color" class="color-picker" data-type="미팅" value="#FFFFFF">
                         </div>
                         <div class="color-setting-row">
                             <label>상담</label>
@@ -450,9 +451,14 @@
                         <small style="color:#666;font-size:11px;">※ 빈칸으로 두면 하단 메시지가 표시되지 않습니다.</small>
                     </div>
                     <div class="form-group">
+                        <label>링크 제목 (선택)</label>
+                        <input type="text" id="kakaoUrlTitle" class="form-input" placeholder="예: 상세보기, 더보기, 자세한 정보" maxlength="20">
+                        <small style="color:#666;font-size:11px;">※ 카톡에 표시될 짧은 제목입니다. (예: 상세보기)</small>
+                    </div>
+                    <div class="form-group">
                         <label>링크 URL (선택)</label>
                         <input type="url" id="kakaoUrl" class="form-input" placeholder="예: https://example.com/info" maxlength="200">
-                        <small style="color:#666;font-size:11px;">※ 상세 정보 페이지 링크를 입력하세요. (http:// 또는 https:// 포함)</small>
+                        <small style="color:#666;font-size:11px;">※ 제목 클릭 시 이동할 주소입니다. (http:// 또는 https:// 포함)</small>
                     </div>
                     <div style="background:#f0f8ff;padding:10px;border-radius:4px;font-size:12px;margin-top:8px;">
                         <strong>미리보기:</strong><br>
@@ -560,29 +566,30 @@
         </div>
     </div>
 
-    <!-- 할일 목록 섹션 -->
-    <div id="todoSection" class="todo-section">
-        <div class="todo-header">
-            <h3>✅ 할일 목록</h3>
-            <button id="addTodoBtn" class="btn-icon" title="할일 추가">➕</button>
-            <button id="toggleTodoBtn" class="btn-icon" title="접기/펼치기">📋</button>
-        </div>
-        
-        <div id="todoContainer" class="todo-container">
-            <div class="todo-input-group">
-                <input type="text" 
-                       id="todoInput" 
-                       class="todo-input" 
-                       placeholder="할일을 입력하고 Enter를 누르세요...">
-                <button id="addTodoFromInput" class="btn-primary">추가</button>
+    <!-- 할일 목록 모달 -->
+    <div id="todoModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>✅ 할일 목록</h2>
+                <button id="closeTodoModal" class="btn-close">✕</button>
             </div>
             
-            <div id="todoList" class="todo-list">
-                <!-- 할일 항목들이 여기에 표시됩니다 -->
-            </div>
-            
-            <div class="todo-stats">
-                <small id="todoStats">전체: 0 | 완료: 0 | 남음: 0</small>
+            <div class="modal-body">
+                <div class="todo-input-group">
+                    <input type="text" 
+                           id="todoInput" 
+                           class="todo-input" 
+                           placeholder="할일을 입력하고 Enter를 누르세요...">
+                    <button id="addTodoFromInput" class="btn-primary">추가</button>
+                </div>
+                
+                <div id="todoList" class="todo-list">
+                    <!-- 할일 항목들이 여기에 표시됩니다 -->
+                </div>
+                
+                <div class="todo-stats">
+                    <small id="todoStats">전체: 0 | 완료: 0 | 남음: 0</small>
+                </div>
             </div>
         </div>
     </div>
