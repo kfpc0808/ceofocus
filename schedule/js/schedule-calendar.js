@@ -112,12 +112,10 @@ function initializeCalendar() {
             meridiem: false,     // AM/PM 표시 안함
             hour12: true         // 12시간 형식
         },
-        // 시간 레이블을 숫자만 표시 (오전/오후 제거)
+        // 시간 레이블을 24시간 형식으로 표시 (0~23시)
         slotLabelContent: function(arg) {
             let hour = arg.date.getHours();
-            // 12시간 형식으로 변환 (1~12)
-            if (hour === 0) hour = 12;
-            else if (hour > 12) hour = hour - 12;
+            // 24시간 형식 그대로 표시 (0, 1, 2, ... 23)
             return { html: hour };
         },
         
