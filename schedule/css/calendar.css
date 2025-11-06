@@ -739,10 +739,6 @@
     padding: 2px 4px !important;
 }
 
-/* 할일 목록을 위한 캘린더 하단 여백 */
-#calendar {
-    margin-bottom: 280px;
-}
 
 @media (max-width: 768px) {
     #calendar {
@@ -762,4 +758,23 @@
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
+}
+
+/* 주간뷰/일간뷰에서 날짜 헤더 강력 고정 */
+.fc-timegrid .fc-col-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    background: #ffffff !important;
+}
+
+.fc-timegrid-axis {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1001 !important;
+    background: #ffffff !important;
+}
+
+.fc-timegrid-slots {
+    background: #ffffff !important;
 }
