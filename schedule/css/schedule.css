@@ -98,7 +98,7 @@ body {
     right: 0;
     background: var(--bg-main);
     border-bottom: 1px solid var(--border-color);
-    z-index: 1000;
+    z-index: 1100;
     box-shadow: var(--shadow-sm);
     padding-top: var(--safe-area-inset-top);
 }
