@@ -500,9 +500,9 @@
 ======================================== */
 @media (max-width: 768px) {
     .fc .fc-toolbar {
-        padding: 2px 4px;
-        top: 65px !important;  /* header 바로 아래 - 여백 최소화 */
-        margin-bottom: 2px;
+        padding: 1px 4px;
+        top: 55px !important;  /* header 바로 붙임 */
+        margin-bottom: 0px;
     }
     
     .fc .fc-toolbar-title {

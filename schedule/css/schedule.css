@@ -851,14 +851,15 @@ button {
         grid-template-columns: 1fr;
     }
     
-    /* 모바일 여백 90% 축소 */
+    /* 모바일 여백 완전히 제거 */
     .header-controls {
-        padding: 2px var(--spacing-sm) !important;
+        padding: 0px var(--spacing-sm) !important;
         gap: 2px !important;
+        margin-bottom: 0px !important;
     }
     
     body {
-        padding-top: 70px !important;
+        padding-top: 55px !important;
     }
 }
 
