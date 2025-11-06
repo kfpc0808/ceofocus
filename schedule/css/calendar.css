@@ -602,7 +602,8 @@
     font-size: var(--font-size-md);
     font-weight: 700;
     color: var(--color-primary);
-    z-
+    z-index: 999;
+}
 /* ========================================
    날짜 헤더 고정 강화 (추가)
 ======================================== */
@@ -611,22 +612,42 @@
     overflow: visible !important;
 }
 
-/* 주간/일간 뷰 헤더 고정 */
+/* 주간/일간/5일 뷰 헤더 고정 - 강화 */
 .fc-timegrid .fc-col-header,
 .fc-timeGridWeek-view .fc-col-header,
-.fc-timeGridDay-view .fc-col-header {
+.fc-timeGridDay-view .fc-col-header,
+.fc-timeGridFiveDays-view .fc-col-header {
     position: sticky !important;
     top: 0 !important;
-    z-index: 100 !important;
+    z-index: 1000 !important;
+    background: var(--bg-secondary) !important;
+}
+
+/* 날짜 헤더 테이블 전체 고정 */
+.fc .fc-col-header,
+.fc-timegrid-axis,
+.fc .fc-scrollgrid-section-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    background: var(--bg-secondary) !important;
+}
+
+/* 각 날짜 셀도 고정 */
+.fc .fc-col-header-cell {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
     background: var(--bg-secondary) !important;
 }
 
 /* All-Day 행 고정 */
 .fc-timegrid .fc-daygrid-body,
-.fc-timeGridWeek-view .fc-daygrid-body {
+.fc-timeGridWeek-view .fc-daygrid-body,
+.fc-timeGridFiveDays-view .fc-daygrid-body {
     position: sticky !important;
     top: 40px !important;
-    z-index: 99 !important;
+    z-index: 999 !important;
     background: var(--bg-main) !important;
 }
 
@@ -658,12 +679,12 @@
     overflow-y: auto !important;
 }
 
-/* 날짜 헤더 고정 */
+/* 날짜 헤더 고정 - z-index 강화 */
 .fc .fc-col-header-cell {
     position: sticky !important;
     top: 0 !important;
-    z-index: 100 !important;
-    background: var(--bg-main) !important;
+    z-index: 1000 !important;
+    background: var(--bg-secondary) !important;
     border-bottom: 2px solid var(--border-color) !important;
 }
 
@@ -695,12 +716,12 @@
     -webkit-overflow-scrolling: touch !important;
 }
 
-/* 스크롤 시에도 헤더 고정 */
+/* 스크롤 시에도 헤더 고정 - z-index 강화 */
 .fc-scrollgrid-section-header {
     position: sticky !important;
     top: 0 !important;
-    z-index: 100 !important;
-    background: var(--bg-main) !important;
+    z-index: 1000 !important;
+    background: var(--bg-secondary) !important;
 }
 
 /* iOS Safari 스크롤 최적화 */
@@ -745,12 +766,9 @@
         margin-bottom: 250px;
     }
 }
-�스트 강조 */
-.fc-event:has-text("D-Day"),
-.fc-event:has-text("D-0"),
-.fc-event:has-text("D-1"),
-.fc-event:has-text("D-2"),
-.fc-event:has-text("D-3") {
+
+/* D-Day 텍스트 강조 */
+.fc-event[data-dday="true"] {
     font-weight: 700 !important;
     animation: pulse 2s infinite;
 }

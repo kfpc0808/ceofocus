@@ -22,16 +22,25 @@ function initializeCalendar() {
         // 기본 설정
         locale: 'ko',
         timeZone: 'Asia/Seoul',
-        initialView: calendarData.userSettings.defaultView || 'timeGridWeek',
+        initialView: 'timeGridFiveDays',
         
-        // 기본 5일 표시
-        dayCount: 5,
+        // 커스텀 뷰 정의 - 오늘부터 5일
+        views: {
+            timeGridFiveDays: {
+                type: 'timeGrid',
+                duration: { days: 5 },
+                buttonText: '5일'
+            }
+        },
+        
+        // 오늘 날짜로 시작
+        initialDate: new Date(),
         
         // 헤더 툴바 - 상단에 연월 표시
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            right: 'dayGridMonth,timeGridFiveDays,timeGridDay,listWeek'
         },
         
         // 제목 형식 - 요일을 날짜 우측에 배치
@@ -50,21 +59,21 @@ function initializeCalendar() {
             return `${year}년 ${month}월`;
         },
         
-        // 요일 헤더 형식 - 뷰별로 다르게
+        // 요일 헤더 형식 - 날짜(요일) 형식으로 간단하게
         dayHeaderContent: function(args) {
-            const day = args.date.getDate();
+            const day = args.date.getDate(); // 날짜만 (1-31)
             const weekday = ['일', '월', '화', '수', '목', '금', '토'][args.date.getDay()];
             
-            // 월간 뷰: 요일만 표시 (월, 화, 수, 목, 금, 토, 일)
+            // 월간 뷰: 요일만 표시
             if (args.view.type === 'dayGridMonth') {
                 return {
                     html: `<div style="text-align:center;font-size:14px;font-weight:700;">${weekday}</div>`
                 };
             }
             
-            // 주간/일간 뷰: 날짜와 요일 표시 (5(수), 6(목))
+            // 5일 뷰/일간 뷰: 날짜(요일) 형식 - 예: 6(목)
             return {
-                html: `<div style="text-align:center;font-size:14px;font-weight:700;">${day}<span style="font-size:12px;color:#666;">(${weekday})</span></div>`
+                html: `<div style="text-align:center;font-size:14px;font-weight:700;">${day}<span style="font-size:14px;color:#666;">(${weekday})</span></div>`
             };
         },
         
@@ -86,6 +95,9 @@ function initializeCalendar() {
             day: '일',
             list: '목록'
         },
+        
+        // 날짜 헤더 포맷 제거 (dayHeaderContent 사용)
+        dayHeaderFormat: false,
         
         // 시간 설정
         slotMinTime: '00:00:00',
@@ -110,7 +122,6 @@ function initializeCalendar() {
         
         // 주 설정
         firstDay: 0, // 일요일부터
-        weekends: true,
         
         // 날짜 헤더 고정 (스크롤 시) - 종일 업무까지 고정
         stickyHeaderDates: true,

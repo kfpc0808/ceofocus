@@ -170,7 +170,7 @@
     
     <!-- 뷰 변경 메뉴 -->
     <div id="viewMenu" class="popup-menu">
-        <button data-view="timeGridWeek" class="menu-item active">📅 주간 뷰</button>
+        <button data-view="timeGridFiveDays" class="menu-item active">📅 5일 뷰</button>
         <button data-view="dayGridMonth" class="menu-item">📆 월간 뷰</button>
         <button data-view="timeGridDay" class="menu-item">📋 일간 뷰</button>
         <button data-view="listWeek" class="menu-item">📃 리스트 뷰</button>
@@ -471,7 +471,7 @@
                     <div class="form-group">
                         <label>기본 뷰</label>
                         <select id="defaultView" class="form-select">
-                            <option value="timeGridWeek">주간 뷰</option>
+                            <option value="timeGridFiveDays">5일 뷰</option>
                             <option value="dayGridMonth">월간 뷰</option>
                             <option value="timeGridDay">일간 뷰</option>
                         </select>
@@ -494,16 +494,6 @@
         </div>
     </div>
     
-    <!-- 토스트 메시지 -->
-    <div id="toast" class="toast"></div>
-    
-    <!-- Local Scripts -->
-    <script src="js/schedule-core.js"></script>
-    <script src="js/schedule-calendar.js"></script>
-    
-</body>
-</html>
-
     <!-- 날짜 선택 모달 -->
     <div id="datePickerModal" class="modal">
         <div class="modal-content" style="max-width: 320px;">
@@ -594,12 +584,12 @@
         </div>
     </div>
 
+    <!-- 토스트 메시지 -->
+    <div id="toast" class="toast"></div>
     
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/ko.global.min.js"></script>
+    <!-- Local Scripts -->
     <script src="js/schedule-core.js"></script>
     <script src="js/schedule-calendar.js"></script>
-    <script src="js/schedule-features.js"></script>
+    
 </body>
 </html>

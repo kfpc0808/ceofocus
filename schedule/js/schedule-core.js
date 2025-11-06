@@ -21,9 +21,9 @@ let calendarData = {
         '기타': '#95a5a6'
     },
     userSettings: {
-        defaultView: 'timeGridWeek',
-        startTime: '09:00',
-        endTime: '18:00',
+        defaultView: 'timeGridFiveDays',
+        startTime: '00:00',
+        endTime: '23:59',
         slotDuration: '00:30:00'
     },
     userInfo: {

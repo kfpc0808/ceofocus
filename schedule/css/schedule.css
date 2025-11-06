@@ -1163,13 +1163,15 @@ button {
     animation: rotate 1s linear infinite;
 }
 
-@keyfr
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* 아이콘이 비어있을 때 placeholder 표시 */
 #selectedIcon:empty::before {
     content: attr(data-placeholder);
     opacity: 0.5;
-}
-  50% { opacity: 0.5; }
 }
 
 @media (max-width: 768px) {
