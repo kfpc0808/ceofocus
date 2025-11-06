@@ -178,6 +178,7 @@ body {
     align-items: center;
     gap: 4px;
     padding: 4px var(--spacing-md);
+    margin: 0 !important;
     flex-wrap: wrap;
     overflow: visible;
 }
