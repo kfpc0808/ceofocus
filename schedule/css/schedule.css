@@ -852,6 +852,16 @@ button {
     }
     
     /* 모바일 여백 완전히 제거 */
+    .header {
+        padding-bottom: 0px !important;
+        margin-bottom: 0px !important;
+    }
+    
+    .header-top {
+        padding: 4px var(--spacing-sm) !important;
+        min-height: 32px !important;
+    }
+    
     .header-controls {
         padding: 0px var(--spacing-sm) !important;
         gap: 2px !important;
@@ -859,7 +869,7 @@ button {
     }
     
     body {
-        padding-top: 55px !important;
+        padding-top: 50px !important;
     }
 }
 
