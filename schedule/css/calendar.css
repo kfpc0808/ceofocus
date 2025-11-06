@@ -9,15 +9,14 @@
    캘린더 툴바 - 컴팩트
 ======================================== */
 .fc .fc-toolbar {
-    padding: 2px var(--spacing-sm); /* 상하 여백 최소화 */
-    margin-bottom: 0px;
-    margin-top: 0px; /* 상단 여백도 제거 */
+    padding: 4px 8px !important;
+    margin: 0 !important;
     border-bottom: 1px solid var(--border-color);
     flex-wrap: nowrap;
-    position: sticky !important;
-    top: 80px !important;  /* body padding-top에 맞춤 */
-    z-index: 1001 !important;
+    position: relative !important; /* sticky 제거 */
+    z-index: 10 !important;
     background: var(--bg-main);
+    height: auto !important;
 }
 
 .fc .fc-toolbar-title {
@@ -84,33 +83,30 @@
 ======================================== */
 .fc .fc-col-header {
     background: var(--bg-secondary) !important;
-    position: sticky !important;
-    top: 104px !important; /* toolbar 높이를 고려한 위치 (80 + 24) */
-    z-index: 1000 !important;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+    position: relative !important; /* sticky 제거하여 자연스럽게 배치 */
+    z-index: 10 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* 스크롤 컨테이너 내부 헤더 */
 .fc .fc-timegrid-axis-frame,
 .fc .fc-timegrid-slots .fc-scrollgrid-section,
 .fc .fc-scrollgrid-section.fc-scrollgrid-section-header {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 999 !important;
+    position: relative !important;
+    z-index: 10 !important;
 }
 
 .fc .fc-col-header-cell {
-    padding: 4px 2px;
+    padding: 4px 2px !important;
     font-size: var(--font-size-xs);
     font-weight: 700;
     color: var(--text-primary);
     border-color: var(--border-color);
     text-align: center;
     background: var(--bg-secondary) !important;
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 1000 !important;
+    position: relative !important;
+    z-index: 10 !important;
 }
 
 .fc .fc-col-header-cell-cushion {
@@ -503,14 +499,18 @@
 ======================================== */
 @media (max-width: 768px) {
     .fc .fc-toolbar {
-        padding: 1px 4px; /* 상하 여백 최소화 */
-        top: 40px !important;  /* body padding-top에 맞춤 */
-        margin-bottom: 0px;
-        margin-top: 0px;
+        padding: 2px 4px !important;
+        margin: 0 !important;
     }
     
     .fc .fc-col-header {
-        top: 62px !important; /* 모바일: 40px (body padding) + 22px (toolbar 높이) */
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .fc .fc-col-header-cell {
+        padding: 4px 2px !important;
+        margin: 0 !important;
     }
     
     .fc .fc-toolbar-title {
@@ -626,9 +626,8 @@
 .fc .fc-view-harness {
     position: relative;
     overflow: visible !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* 주간/일간/5일 뷰 헤더 고정 */
@@ -692,8 +691,8 @@
 /* 요일 헤더 고정 */
 .fc-theme-standard .fc-scrollgrid {
     border-collapse: separate !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .fc .fc-daygrid-body {
@@ -812,28 +811,37 @@
     margin: 0 !important;
 }
 
-/* 내부 요소들 기본 여백 제거 */
+/* FullCalendar 기본 구조 여백 제거 */
 .fc-view-harness,
 .fc-scrollgrid,
 .fc-scrollgrid-section,
-.fc-scrollgrid-sync-table {
+.fc-scrollgrid-sync-table,
+.fc-scrollgrid-sync-inner,
+.fc-daygrid-body,
+.fc-scrollgrid-section-header,
+.fc-scrollgrid-section-body,
+.fc-col-header,
+.fc-daygrid-header {
     margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* toolbar (연월) 최소 padding */
 .fc .fc-toolbar {
-    padding: 2px 8px !important;
+    padding: 4px 8px !important;
     margin: 0 !important;
 }
 
 /* 날짜 셀 최소 padding */
 .fc .fc-col-header-cell {
     padding: 4px 2px !important;
+    margin: 0 !important;
 }
 
 /* 시간 셀 최소 padding */
 .fc .fc-timegrid-slot {
     padding: 2px !important;
+    margin: 0 !important;
 }
 
 /* 이벤트 최소 padding */
@@ -845,6 +853,6 @@
 /* 모바일 */
 @media (max-width: 768px) {
     .fc .fc-toolbar {
-        padding: 1px 4px !important;
+        padding: 2px 4px !important;
     }
 }

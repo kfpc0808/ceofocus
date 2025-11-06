@@ -177,10 +177,10 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 4px var(--spacing-md) 0 var(--spacing-md); /* 하단 여백 제거 */
+    padding: 4px var(--spacing-md) 4px var(--spacing-md); /* 하단도 4px 유지 */
+    margin: 0 !important; /* 모든 margin 제거 */
     flex-wrap: wrap;
     overflow: visible;
-    border-bottom: 1px solid var(--border-color); /* header와 구분선 */
 }
 
 .header-controls::-webkit-scrollbar {
@@ -475,7 +475,7 @@ button {
    메인 콘텐츠
 ======================================== */
 .main-content {
-    padding: 4px;
+    padding: 0 !important; /* 모든 padding 제거 */
     max-width: 100%;
     margin: 0 auto;
     height: calc(100vh - 160px);  /* 헤더 + 하단 메뉴 높이 제외 */
@@ -484,9 +484,9 @@ button {
 
 #calendar {
     background: var(--bg-main);
-    border-radius: var(--border-radius);
-    padding: 2px;
-    box-shadow: var(--shadow-sm);
+    border-radius: 0; /* border-radius 제거 */
+    padding: 0 !important; /* 모든 padding 제거 */
+    box-shadow: none; /* 그림자 제거 */
     position: relative;
 }
 
