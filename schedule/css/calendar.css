@@ -9,8 +9,9 @@
    캘린더 툴바 - 컴팩트
 ======================================== */
 .fc .fc-toolbar {
-    padding: 4px var(--spacing-sm);
-    margin-bottom: 0px;  /* 날짜와 붙임 */
+    padding: 2px var(--spacing-sm); /* 상하 여백 최소화 */
+    margin-bottom: 0px;
+    margin-top: 0px; /* 상단 여백도 제거 */
     border-bottom: 1px solid var(--border-color);
     flex-wrap: nowrap;
     position: sticky !important;
@@ -84,9 +85,9 @@
 .fc .fc-col-header {
     background: var(--bg-secondary) !important;
     position: sticky !important;
-    top: 0 !important;
+    top: 104px !important; /* toolbar 높이를 고려한 위치 (80 + 24) */
     z-index: 1000 !important;
-    margin-top: 0 !important;  /* toolbar와 붙임 */
+    margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
@@ -502,9 +503,14 @@
 ======================================== */
 @media (max-width: 768px) {
     .fc .fc-toolbar {
-        padding: 1px 4px;
+        padding: 1px 4px; /* 상하 여백 최소화 */
         top: 40px !important;  /* body padding-top에 맞춤 */
         margin-bottom: 0px;
+        margin-top: 0px;
+    }
+    
+    .fc .fc-col-header {
+        top: 62px !important; /* 모바일: 40px (body padding) + 22px (toolbar 높이) */
     }
     
     .fc .fc-toolbar-title {
@@ -620,7 +626,9 @@
 .fc .fc-view-harness {
     position: relative;
     overflow: visible !important;
-    margin-top: 0 !important;  /* toolbar와 붙임 */
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
 }
 
 /* 주간/일간/5일 뷰 헤더 고정 */
@@ -684,7 +692,8 @@
 /* 요일 헤더 고정 */
 .fc-theme-standard .fc-scrollgrid {
     border-collapse: separate !important;
-    margin-top: 0 !important;  /* toolbar와 붙임 */
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
 
 .fc .fc-daygrid-body {
@@ -798,30 +807,36 @@
 /* ========================================
    🔥 강제 여백 제거 - 최우선 순위
 ======================================== */
-/* 모든 캘린더 요소 여백 강제 제거 */
-.fc,
-.fc * {
+/* 캘린더 컨테이너 여백 제거 */
+.fc {
     margin: 0 !important;
-    padding: 0 !important;
 }
 
-/* toolbar (연월) 복원 */
+/* 내부 요소들 기본 여백 제거 */
+.fc-view-harness,
+.fc-scrollgrid,
+.fc-scrollgrid-section,
+.fc-scrollgrid-sync-table {
+    margin: 0 !important;
+}
+
+/* toolbar (연월) 최소 padding */
 .fc .fc-toolbar {
-    padding: 4px 8px !important;
-    margin-bottom: 0 !important;
+    padding: 2px 8px !important;
+    margin: 0 !important;
 }
 
-/* 날짜 셀 복원 */
+/* 날짜 셀 최소 padding */
 .fc .fc-col-header-cell {
     padding: 4px 2px !important;
 }
 
-/* 시간 셀 복원 */
+/* 시간 셀 최소 padding */
 .fc .fc-timegrid-slot {
     padding: 2px !important;
 }
 
-/* 이벤트 복원 */
+/* 이벤트 최소 padding */
 .fc-event {
     padding: 2px 4px !important;
     margin: 1px 0 !important;
@@ -830,6 +845,6 @@
 /* 모바일 */
 @media (max-width: 768px) {
     .fc .fc-toolbar {
-        padding: 2px 4px !important;
+        padding: 1px 4px !important;
     }
 }

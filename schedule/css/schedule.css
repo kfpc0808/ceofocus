@@ -177,9 +177,10 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 4px var(--spacing-md);
+    padding: 4px var(--spacing-md) 0 var(--spacing-md); /* 하단 여백 제거 */
     flex-wrap: wrap;
     overflow: visible;
+    border-bottom: 1px solid var(--border-color); /* header와 구분선 */
 }
 
 .header-controls::-webkit-scrollbar {
