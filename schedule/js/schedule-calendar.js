@@ -337,13 +337,9 @@ function renderCalendar() {
     const events = calendarData.schedules
         .filter(schedule => filterSchedule(schedule))
         .map(schedule => {
-            // D-day 계산 및 표시
-            const dday = calculateDday(schedule.date);
-            const ddayText = dday !== null && dday <= 30 ? ` ${getDdayText(dday)}` : '';
-            
             return {
                 id: schedule.id,
-                title: schedule.icon ? (schedule.icon + ' ' + schedule.title + ddayText) : (schedule.title + ddayText),  // 아이콘 + 제목 + D-day
+                title: schedule.icon ? (schedule.icon + ' ' + schedule.title) : schedule.title,  // 아이콘 + 제목
                 start: schedule.all_day ? schedule.date : `${schedule.date}T${schedule.start_time}`,
                 end: schedule.all_day ? schedule.end_date : `${schedule.end_date}T${schedule.end_time}`,
                 allDay: schedule.all_day,
