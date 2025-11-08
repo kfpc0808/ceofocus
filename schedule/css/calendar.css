@@ -18,7 +18,7 @@
     flex-wrap: nowrap;
     position: sticky !important;
     top: 80px !important;
-    z-index: 1002 !important;
+    z-index: 1000 !important; /* 날짜 행보다 낮게 변경 */
     background: var(--bg-main);
 }
 
@@ -509,10 +509,12 @@
         top: 40px !important;  /* 모바일 header 바로 아래 */
         margin: 0 !important;
         height: 26px !important;
+        z-index: 1000 !important; /* 날짜 행보다 낮게 */
     }
     
     .fc .fc-col-header {
         top: 66px !important; /* toolbar 바로 아래 (40 + 26) */
+        z-index: 1001 !important; /* 연월보다 높게 */
     }
     
     .fc .fc-col-header-cell {
