@@ -1746,5 +1746,53 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTodoList();
     updateTodoStats();
     
+    // ========================================
+    // ========================================
+    // 날짜 헤더 강제 고정 (모바일 전용)
+    // ========================================
+    function fixDateHeader() {
+        const isMobile = window.innerWidth <= 768;
+        
+        if (!isMobile) {
+            // PC는 CSS만 사용
+            return;
+        }
+        
+        // 모바일에서만 강제 적용
+        const toolbar = document.querySelector('.fc-toolbar');
+        const colHeader = document.querySelector('.fc-col-header');
+        
+        if (toolbar) {
+            toolbar.style.position = 'fixed';
+            toolbar.style.top = '40px';
+            toolbar.style.left = '0';
+            toolbar.style.right = '0';
+            toolbar.style.zIndex = '200';
+            toolbar.style.background = '#ffffff';
+        }
+        
+        if (colHeader) {
+            colHeader.style.position = 'fixed';
+            colHeader.style.top = '66px';
+            colHeader.style.left = '0';
+            colHeader.style.right = '0';
+            colHeader.style.zIndex = '100';
+            colHeader.style.background = '#f8f9fa';
+        }
+    }
+    
+    // 캘린더 렌더링 후 실행
+    setTimeout(() => {
+        fixDateHeader();
+        
+        // 윈도우 리사이즈 시에도 재적용
+        window.addEventListener('resize', fixDateHeader);
+        
+        // 캘린더 뷰 변경 시에도 재적용
+        if (calendar) {
+            calendar.on('datesSet', fixDateHeader);
+        }
+    }, 500);
+    
     console.log('✅ 캘린더 이벤트 리스너 등록 완료');
 });
