@@ -432,7 +432,7 @@ const onDriveConnected = async () => {
         syncStatus.style.display = 'inline-flex';
         updateSyncStatus('loading', '불러오는 중...');
     }
-    document.getElementById('syncGoogleCalendarBtn').style.display = 'inline-block';
+    document.getElementById('syncGoogleCalendarBtn').style.display = 'inline-block';  // 다시 표시
     updateStatus('연결됨', 'connected');
     
     // 데이터 로드
