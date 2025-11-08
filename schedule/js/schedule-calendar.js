@@ -144,9 +144,9 @@ function initializeCalendar() {
         // 주 설정
         firstDay: 0, // 일요일부터
         
-        // 날짜 헤더 고정 (스크롤 시) - 종일 업무까지 고정
-        stickyHeaderDates: true,
-        stickyFooterScrollbar: true,
+        // 날짜 헤더 고정 - CSS로 제어하므로 비활성화
+        stickyHeaderDates: false,
+        stickyFooterScrollbar: false,
         
         // 높이 - 스크롤 발생시키기 위해 고정 높이 필요
         height: 'calc(100vh - 120px)', // 화면 높이 - 헤더
