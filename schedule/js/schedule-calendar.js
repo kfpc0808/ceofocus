@@ -1748,37 +1748,40 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ========================================
     // ========================================
-    // 날짜 헤더 강제 고정 (모바일 전용)
+    // 날짜 헤더 강제 고정 (PC & 모바일)
     // ========================================
     function fixDateHeader() {
         const isMobile = window.innerWidth <= 768;
+        const headerHeight = isMobile ? 40 : 80;
+        const toolbarHeight = isMobile ? 26 : 37;
+        const toolbarTop = headerHeight;
+        const colHeaderTop = headerHeight + toolbarHeight;
         
-        if (!isMobile) {
-            // PC는 CSS만 사용
-            return;
-        }
-        
-        // 모바일에서만 강제 적용
         const toolbar = document.querySelector('.fc-toolbar');
         const colHeader = document.querySelector('.fc-col-header');
         
+        // 연월 행 고정
         if (toolbar) {
             toolbar.style.position = 'fixed';
-            toolbar.style.top = '40px';
+            toolbar.style.top = toolbarTop + 'px';
             toolbar.style.left = '0';
             toolbar.style.right = '0';
-            toolbar.style.zIndex = '200';
+            toolbar.style.zIndex = '900';
             toolbar.style.background = '#ffffff';
+            toolbar.style.borderBottom = '1px solid #dadce0';
         }
         
+        // 일자 행 고정
         if (colHeader) {
             colHeader.style.position = 'fixed';
-            colHeader.style.top = '66px';
+            colHeader.style.top = colHeaderTop + 'px';
             colHeader.style.left = '0';
             colHeader.style.right = '0';
-            colHeader.style.zIndex = '100';
+            colHeader.style.zIndex = '800';
             colHeader.style.background = '#f8f9fa';
         }
+        
+        console.log(`고정 적용: 툴바=${toolbarTop}px, 일자=${colHeaderTop}px`);
     }
     
     // 캘린더 렌더링 후 실행
