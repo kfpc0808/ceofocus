@@ -1760,28 +1760,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const toolbar = document.querySelector('.fc-toolbar');
         const colHeader = document.querySelector('.fc-col-header');
         
-        // 연월 행 고정
+        // 연월 행 고정 (z-index 높게, !important로 강제)
         if (toolbar) {
-            toolbar.style.position = 'fixed';
-            toolbar.style.top = toolbarTop + 'px';
-            toolbar.style.left = '0';
-            toolbar.style.right = '0';
-            toolbar.style.zIndex = '900';
-            toolbar.style.background = '#ffffff';
-            toolbar.style.borderBottom = '1px solid #dadce0';
+            toolbar.style.setProperty('position', 'fixed', 'important');
+            toolbar.style.setProperty('top', toolbarTop + 'px', 'important');
+            toolbar.style.setProperty('left', '0', 'important');
+            toolbar.style.setProperty('right', '0', 'important');
+            toolbar.style.setProperty('z-index', '1050', 'important');
+            toolbar.style.setProperty('background', '#ffffff', 'important');
+            toolbar.style.setProperty('border-bottom', '1px solid #dadce0', 'important');
         }
         
-        // 일자 행 고정
+        // 일자 행 고정 (z-index 낮게, !important로 강제)
         if (colHeader) {
-            colHeader.style.position = 'fixed';
-            colHeader.style.top = colHeaderTop + 'px';
-            colHeader.style.left = '0';
-            colHeader.style.right = '0';
-            colHeader.style.zIndex = '800';
-            colHeader.style.background = '#f8f9fa';
+            colHeader.style.setProperty('position', 'fixed', 'important');
+            colHeader.style.setProperty('top', colHeaderTop + 'px', 'important');
+            colHeader.style.setProperty('left', '0', 'important');
+            colHeader.style.setProperty('right', '0', 'important');
+            colHeader.style.setProperty('z-index', '500', 'important');
+            colHeader.style.setProperty('background', '#f8f9fa', 'important');
         }
         
-        console.log(`고정 적용: 툴바=${toolbarTop}px, 일자=${colHeaderTop}px`);
+        console.log(`고정 적용: 툴바=${toolbarTop}px(z:1050), 일자=${colHeaderTop}px(z:500)`);
     }
     
     // 캘린더 렌더링 후 실행
