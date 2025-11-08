@@ -13,6 +13,19 @@ let currentFilters = {
 };
 
 // ========================================
+// 태그 파싱 함수
+// ========================================
+function parseTags(tagsString) {
+    if (!tagsString || !tagsString.trim()) return [];
+    
+    // 쉼표로 구분하고, # 제거 후 공백 제거
+    return tagsString
+        .split(',')
+        .map(tag => tag.trim().replace(/^#/, ''))
+        .filter(tag => tag.length > 0);
+}
+
+// ========================================
 // FullCalendar 초기화
 // ========================================
 function initializeCalendar() {
