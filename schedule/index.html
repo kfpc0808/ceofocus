@@ -170,7 +170,8 @@
     
     <!-- 뷰 변경 메뉴 -->
     <div id="viewMenu" class="popup-menu">
-        <button data-view="timeGridFiveDays" class="menu-item active">📅 5일 뷰</button>
+        <button data-view="timeGridSevenDays" class="menu-item">📅 7일 뷰</button>
+        <button data-view="timeGridFiveDays" class="menu-item">📅 5일 뷰</button>
         <button data-view="dayGridMonth" class="menu-item">📆 월간 뷰</button>
         <button data-view="timeGridDay" class="menu-item">📋 일간 뷰</button>
         <button data-view="listWeek" class="menu-item">📃 리스트 뷰</button>
@@ -471,6 +472,7 @@
                     <div class="form-group">
                         <label>기본 뷰</label>
                         <select id="defaultView" class="form-select">
+                            <option value="timeGridSevenDays">7일 뷰</option>
                             <option value="timeGridFiveDays">5일 뷰</option>
                             <option value="dayGridMonth">월간 뷰</option>
                             <option value="timeGridDay">일간 뷰</option>
