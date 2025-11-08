@@ -21,7 +21,7 @@
     top: 80px !important;  /* 헤더(80px) 바로 아래 */
     left: 0 !important;
     right: 0 !important;
-    z-index: 900 !important;  /* 중간 레벨 */
+    z-index: 1050 !important;  /* 900 → 1050 대폭 상승 */
     background: var(--bg-main);
 }
 
@@ -93,7 +93,7 @@
     top: 117px !important;  /* 헤더(80) + 툴바(37) = 117 */
     left: 0 !important;
     right: 0 !important;
-    z-index: 800 !important;  /* 연월보다 낮게 */
+    z-index: 500 !important;  /* 800 → 500 대폭 하향 */
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -515,7 +515,7 @@
         right: 0 !important;
         margin: 0 !important;
         height: 26px !important;
-        z-index: 900 !important;  /* 중간 레벨 */
+        z-index: 1050 !important;  /* 900 → 1050 대폭 상승 */
         background: var(--bg-main) !important;
         border-bottom: 1px solid var(--border-color) !important;
     }
@@ -526,7 +526,7 @@
         top: 66px !important;  /* 헤더(40) + 툴바(26) = 66 */
         left: 0 !important;
         right: 0 !important;
-        z-index: 800 !important;  /* 연월보다 낮게 */
+        z-index: 500 !important;  /* 800 → 500 대폭 하향 */
         background: var(--bg-secondary) !important;
     }
     
@@ -673,9 +673,11 @@
 .fc-timeGridWeek-view .fc-col-header,
 .fc-timeGridDay-view .fc-col-header,
 .fc-timeGridFiveDays-view .fc-col-header {
-    position: sticky !important;
+    position: fixed !important;
     top: 117px !important;
-    z-index: 1001 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 500 !important;  /* 1001 → 500으로 통일 */
     background: var(--bg-secondary) !important;
 }
 
@@ -719,9 +721,9 @@
 
 /* 날짜 헤더 고정 - z-index 강화 */
 .fc .fc-col-header-cell {
-    position: sticky !important;
+    position: relative !important;  /* sticky → relative로 변경 */
     top: 0 !important;
-    z-index: 1000 !important;
+    z-index: 1 !important;  /* 1000 → 1로 변경 */
     background: var(--bg-secondary) !important;
     border-bottom: 2px solid var(--border-color) !important;
 }
@@ -757,9 +759,9 @@
 
 /* 스크롤 시에도 헤더 고정 - z-index 강화 */
 .fc-scrollgrid-section-header {
-    position: sticky !important;
+    position: relative !important;  /* sticky → relative로 변경 */
     top: 0 !important;
-    z-index: 1000 !important;
+    z-index: 98 !important;  /* 1000 → 98로 변경 */
     background: var(--bg-secondary) !important;
 }
 
@@ -823,16 +825,18 @@
 
 /* 주간뷰/일간뷰에서 날짜 헤더 강력 고정 */
 .fc-timegrid .fc-col-header {
-    position: sticky !important;
+    position: fixed !important;  /* sticky → fixed로 변경 */
     top: 117px !important;
-    z-index: 1001 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 500 !important;  /* 1001 → 500으로 변경 */
     background: var(--bg-secondary) !important;
 }
 
 .fc-timegrid-axis {
-    position: sticky !important;
-    top: 117px !important;
-    z-index: 1000 !important;
+    position: relative !important;  /* sticky → relative로 변경 */
+    top: 0 !important;
+    z-index: 10 !important;  /* 1000 → 10으로 변경 */
     background: var(--bg-secondary) !important;
 }
 
