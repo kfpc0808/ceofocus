@@ -18,7 +18,7 @@
     flex-wrap: nowrap;
     position: sticky !important;
     top: 80px !important;
-    z-index: 1000 !important; /* 날짜 행보다 낮게 변경 */
+    z-index: 1002 !important; /* 연월이 위에 - 높게 */
     background: var(--bg-main);
 }
 
@@ -93,12 +93,10 @@
     padding: 0 !important;
 }
 
-/* 스크롤 컨테이너 내부 헤더 */
+/* 스크롤 컨테이너 내부 헤더 - sticky 제거 (충돌 방지) */
 .fc .fc-timegrid-axis-frame,
-.fc .fc-timegrid-slots .fc-scrollgrid-section,
-.fc .fc-scrollgrid-section.fc-scrollgrid-section-header {
-    position: sticky !important;
-    top: 0 !important;
+.fc .fc-timegrid-slots .fc-scrollgrid-section {
+    position: relative !important;
     z-index: 999 !important;
 }
 
@@ -142,12 +140,11 @@
     max-height: 40px !important;
 }
 
-/* All-Day 영역 고정 - 더 강력한 설정 */
+/* All-Day 영역 - sticky 제거 (날짜 행만 고정) */
 .fc .fc-scrollgrid-section-header,
 .fc .fc-timegrid-body .fc-scrollgrid-section-header,
 .fc .fc-daygrid-header {
-    position: sticky !important;
-    top: 40px !important; /* 요일 헤더 아래 */
+    position: relative !important;
     z-index: 98 !important;
     background: var(--bg-main) !important;
 }
@@ -509,16 +506,18 @@
         top: 40px !important;  /* 모바일 header 바로 아래 */
         margin: 0 !important;
         height: 26px !important;
-        z-index: 1000 !important; /* 날짜 행보다 낮게 */
+        z-index: 1002 !important; /* 연월이 위에 - 높게 */
     }
     
     .fc .fc-col-header {
         top: 66px !important; /* toolbar 바로 아래 (40 + 26) */
-        z-index: 1001 !important; /* 연월보다 높게 */
+        z-index: 1001 !important; /* 날짜 행이 아래 - 낮게 */
     }
     
     .fc .fc-col-header-cell {
+        position: sticky !important; /* 명시적으로 sticky 설정 */
         top: 66px !important; /* toolbar 바로 아래 (40 + 26) */
+        z-index: 1001 !important;
     }
     
     .fc .fc-toolbar-title {
