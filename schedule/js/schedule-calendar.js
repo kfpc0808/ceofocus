@@ -671,9 +671,18 @@ function createRecurringEvents(scheduleData) {
     const endDate = new Date(scheduleData.recurrence_end);
     const recurrence = scheduleData.recurrence;
     
+    // 종료일 검증
+    if (endDate < startDate) {
+        showToast('반복 종료일은 시작일보다 이후여야 합니다', 'error');
+        return;
+    }
+    
     let currentDate = new Date(startDate);
     let count = 0;
     const MAX_EVENTS = 365; // 최대 365개까지만 생성
+    
+    // 월간 반복을 위한 원래 날짜 저장
+    const originalDay = startDate.getDate();
     
     while (currentDate <= endDate && count < MAX_EVENTS) {
         const eventData = {
@@ -698,12 +707,20 @@ function createRecurringEvents(scheduleData) {
                 currentDate.setDate(currentDate.getDate() + 7);
                 break;
             case 'monthly':
+                // 월만 증가
                 currentDate.setMonth(currentDate.getMonth() + 1);
+                // 원래 날짜로 복원 (해당 월에 날짜가 없으면 마지막 날로)
+                const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                currentDate.setDate(Math.min(originalDay, lastDayOfMonth));
                 break;
             case 'yearly':
                 currentDate.setFullYear(currentDate.getFullYear() + 1);
                 break;
         }
+    }
+    
+    if (count >= MAX_EVENTS) {
+        showToast(`⚠️ 최대 ${MAX_EVENTS}개까지만 생성됩니다`, 'warning');
     }
 }
 
@@ -939,7 +956,7 @@ function showSearchResults(results, query) {
                             <div class="search-result-title">${schedule.title}</div>
                             <div class="search-result-meta">
                                 <span class="search-result-date">
-                                    📅 ${formatDate(schedule.date)}
+                                    📅 ${formatDateDisplay(schedule.date)}
                                     ${!schedule.all_day ? `⏰ ${schedule.start_time}` : ''}
                                 </span>
                                 <span class="search-result-type" style="background: ${calendarData.colorSettings[schedule.type]};">
@@ -982,7 +999,7 @@ function showSearchResults(results, query) {
                     }
                 }, 300);
                 
-                showToast(`📅 ${formatDate(date)}로 이동했습니다`);
+                showToast(`📅 ${formatDateDisplay(date)}로 이동했습니다`);
             });
         });
     }
@@ -991,7 +1008,7 @@ function showSearchResults(results, query) {
     modal.classList.add('show');
 }
 
-function formatDate(dateStr) {
+function formatDateDisplay(dateStr) {
     const date = new Date(dateStr);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
