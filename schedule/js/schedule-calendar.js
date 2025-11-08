@@ -455,19 +455,27 @@ function openEventModal(mode = 'add', date = new Date(), allDay = false, endDate
         document.getElementById('eventStartDate').value = formatDate(date);
         
         // 클릭한 시간 사용 (하드코딩 제거)
+        console.log('🕐 클릭한 date 객체:', date);
+        console.log('🕐 date.getHours():', date.getHours());
+        console.log('🕐 date.getMinutes():', date.getMinutes());
+        
         const startHour = date.getHours();
         const startMinute = date.getMinutes();
         const startTimeStr = String(startHour).padStart(2, '0') + ':' + String(startMinute).padStart(2, '0');
         
+        console.log('🕐 생성된 시작 시간:', startTimeStr);
+        
         // 종료 시간은 시작 시간 + 1시간
-        const endDate = new Date(date);
-        endDate.setHours(startHour + 1);
-        const endHour = endDate.getHours();
-        const endMinute = endDate.getMinutes();
+        const endDateObj = new Date(date);
+        endDateObj.setHours(startHour + 1);
+        const endHour = endDateObj.getHours();
+        const endMinute = endDateObj.getMinutes();
         const endTimeStr = String(endHour).padStart(2, '0') + ':' + String(endMinute).padStart(2, '0');
         
+        console.log('🕐 생성된 종료 시간:', endTimeStr);
+        
         document.getElementById('eventStartTime').value = startTimeStr;
-        document.getElementById('eventEndDate').value = formatDate(endDate);
+        document.getElementById('eventEndDate').value = formatDate(endDateObj);
         document.getElementById('eventEndTime').value = endTimeStr;
         
         document.getElementById('eventLocation').value = '';
