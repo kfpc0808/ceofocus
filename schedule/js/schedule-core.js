@@ -676,7 +676,8 @@ const fetchGoogleCalendarEvents = async () => {
 const startGoogleCalendarSync = async () => {
     const initialized = await initGoogleCalendar();
     if (!initialized) {
-        showToast('구글 캘린더 초기화 실패', 'error');
+        console.warn('⚠️ 구글 캘린더 API 사용 불가 (권한 필요)');
+        showToast('📗 구글 캘린더 권한이 없습니다. 일정 관리는 정상 작동합니다.', 'warning');
         return false;
     }
     
