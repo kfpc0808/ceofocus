@@ -31,18 +31,27 @@ function parseTags(tagsString) {
 function initializeCalendar() {
     const calendarEl = document.getElementById('calendar');
     
+    // 화면 크기에 따라 초기 뷰 결정
+    const isMobile = window.innerWidth <= 768;
+    const defaultView = isMobile ? 'timeGridFiveDays' : 'timeGridSevenDays';
+    
     calendar = new FullCalendar.Calendar(calendarEl, {
         // 기본 설정
         locale: 'ko',
         timeZone: 'Asia/Seoul',
-        initialView: 'timeGridFiveDays',
+        initialView: defaultView,
         
-        // 커스텀 뷰 정의 - 오늘부터 5일
+        // 커스텀 뷰 정의
         views: {
             timeGridFiveDays: {
                 type: 'timeGrid',
                 duration: { days: 5 },
                 buttonText: '5일'
+            },
+            timeGridSevenDays: {
+                type: 'timeGrid',
+                duration: { days: 7 },
+                buttonText: '7일'
             }
         },
         
@@ -53,7 +62,7 @@ function initializeCalendar() {
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridFiveDays,timeGridDay,listWeek'
+            right: 'dayGridMonth,timeGridSevenDays,timeGridFiveDays,timeGridDay,listWeek'
         },
         
         // 제목 형식 - 요일을 날짜 우측에 배치
