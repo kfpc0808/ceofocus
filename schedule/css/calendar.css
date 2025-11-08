@@ -88,7 +88,7 @@
     background: var(--bg-secondary) !important;
     position: sticky !important;
     top: 117px !important;
-    z-index: 1001 !important;
+    z-index: 999 !important;  /* 1001 → 999 (연월보다 낮게) */
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -110,7 +110,7 @@
     background: var(--bg-secondary) !important;
     position: sticky !important;
     top: 117px !important;
-    z-index: 1001 !important;
+    z-index: 999 !important;  /* 1001 → 999 (연월보다 낮게) */
 }
 
 .fc .fc-col-header-cell-cushion {
@@ -503,21 +503,29 @@
 @media (max-width: 768px) {
     .fc .fc-toolbar {
         padding: 2px 4px !important;
+        position: fixed !important;  /* sticky → fixed로 변경 */
         top: 40px !important;  /* 모바일 header 바로 아래 */
+        left: 0 !important;
+        right: 0 !important;
         margin: 0 !important;
         height: 26px !important;
-        z-index: 1002 !important; /* 연월이 위에 - 높게 */
+        z-index: 200 !important; /* 연월이 중간 */
+        background: var(--bg-main) !important;
     }
     
     .fc .fc-col-header {
+        position: fixed !important;  /* sticky → fixed로 변경 */
         top: 66px !important; /* toolbar 바로 아래 (40 + 26) */
-        z-index: 1001 !important; /* 날짜 행이 아래 - 낮게 */
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 100 !important; /* 일자가 가장 낮음 */
+        background: var(--bg-secondary) !important;
     }
     
     .fc .fc-col-header-cell {
-        position: sticky !important; /* 명시적으로 sticky 설정 */
-        top: 66px !important; /* toolbar 바로 아래 (40 + 26) */
-        z-index: 1001 !important;
+        position: relative !important; /* 부모가 fixed이므로 relative */
+        top: 0 !important;
+        z-index: 1 !important;
     }
     
     .fc .fc-toolbar-title {
