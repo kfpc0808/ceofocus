@@ -81,7 +81,7 @@ body {
     line-height: 1.4;
     color: var(--text-primary);
     background: var(--bg-secondary);
-    padding-top: 80px; /* header 여백 축소 */
+    padding-top: 160px; /* header(80) + 연월행(37) + 일자행(43) = 160px */
     padding-bottom: calc(48px + var(--safe-area-inset-bottom));
     overflow-x: hidden;
     min-height: 100vh;
@@ -870,13 +870,13 @@ button {
     }
     
     body {
-        padding-top: 40px !important;
+        padding-top: 100px !important; /* 헤더(40) + 연월행(26) + 일자행(34) = 100px */
     }
 }
 
 @media (min-width: 769px) {
     body {
-        padding-top: 70px;
+        padding-top: 160px; /* 헤더(80) + 연월행(37) + 일자행(43) = 160px */
         padding-bottom: 70px;
     }
     
