@@ -21,8 +21,9 @@
     top: 80px !important;  /* 헤더(80px) 바로 아래 */
     left: 0 !important;
     right: 0 !important;
-    z-index: 1050 !important;  /* 900 → 1050 대폭 상승 */
+    z-index: 1090 !important;  /* 1050 → 1090 더 상승 */
     background: var(--bg-main);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; /* 그림자 추가로 명확히 구분 */
 }
 
 .fc .fc-toolbar-title {
@@ -93,7 +94,7 @@
     top: 117px !important;  /* 헤더(80) + 툴바(37) = 117 */
     left: 0 !important;
     right: 0 !important;
-    z-index: 500 !important;  /* 800 → 500 대폭 하향 */
+    z-index: 400 !important;  /* 500 → 400 하향 (연월행 1090보다 낮음) */
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -102,7 +103,7 @@
 .fc .fc-timegrid-axis-frame,
 .fc .fc-timegrid-slots .fc-scrollgrid-section {
     position: relative !important;
-    z-index: 999 !important;
+    z-index: 10 !important;  /* 999 → 10 대폭 하향 */
 }
 
 .fc .fc-col-header-cell {
@@ -115,7 +116,7 @@
     background: var(--bg-secondary) !important;
     position: relative !important;  /* 부모가 fixed이므로 relative */
     top: 0 !important;
-    z-index: 1 !important;
+    z-index: 1 !important;  /* 연월행보다 훨씬 낮게 */
 }
 
 .fc .fc-col-header-cell-cushion {
@@ -150,7 +151,7 @@
 .fc .fc-timegrid-body .fc-scrollgrid-section-header,
 .fc .fc-daygrid-header {
     position: relative !important;
-    z-index: 98 !important;
+    z-index: 50 !important;  /* 98 → 50 하향 */
     background: var(--bg-main) !important;
 }
 
@@ -515,9 +516,10 @@
         right: 0 !important;
         margin: 0 !important;
         height: 26px !important;
-        z-index: 1050 !important;  /* 900 → 1050 대폭 상승 */
+        z-index: 1090 !important;  /* 1050 → 1090 더 상승 */
         background: var(--bg-main) !important;
         border-bottom: 1px solid var(--border-color) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }
     
     /* 일자 행 - 고정 */
@@ -526,7 +528,7 @@
         top: 66px !important;  /* 헤더(40) + 툴바(26) = 66 */
         left: 0 !important;
         right: 0 !important;
-        z-index: 500 !important;  /* 800 → 500 대폭 하향 */
+        z-index: 400 !important;  /* 500 → 400 하향 (연월행 1090보다 낮음) */
         background: var(--bg-secondary) !important;
     }
     
