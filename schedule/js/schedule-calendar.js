@@ -38,7 +38,7 @@ function initializeCalendar() {
     calendar = new FullCalendar.Calendar(calendarEl, {
         // 기본 설정
         locale: 'ko',
-        timeZone: 'Asia/Seoul',
+        timeZone: 'local',  // 브라우저 로컬 시간 사용
         initialView: defaultView,
         
         // 커스텀 뷰 정의
@@ -217,12 +217,7 @@ function initializeCalendar() {
         
         // 클릭 이벤트 (터치도 클릭으로 처리)
         dateClick: function(info) {
-            // info.date를 로컬 Date 객체로 명시적 변환
-            const localDate = new Date(info.date.getTime());
-            console.log('🎯 dateClick - 원본 info.date:', info.date);
-            console.log('🎯 dateClick - 변환된 localDate:', localDate);
-            console.log('🎯 dateClick - allDay:', info.allDay);
-            openEventModal('add', localDate, info.allDay);
+            openEventModal('add', info.date, info.allDay);
         },
         
         // select 제거 - 터치 오작동 방지
@@ -459,25 +454,19 @@ function openEventModal(mode = 'add', date = new Date(), allDay = false, endDate
         document.getElementById('eventAllDay').checked = allDay;
         document.getElementById('eventStartDate').value = formatDate(date);
         
-        // 클릭한 시간 사용 (로컬 시간으로 명시적 처리)
+        // 클릭한 시간 사용 (하드코딩 제거)
         console.log('🕐 클릭한 date 객체:', date);
-        console.log('🕐 date.toString():', date.toString());
-        console.log('🕐 date.toISOString():', date.toISOString());
+        console.log('🕐 date.getHours():', date.getHours());
+        console.log('🕐 date.getMinutes():', date.getMinutes());
         
-        // Date 객체를 로컬 시간으로 명시적 처리
-        const localDate = new Date(date.getTime());
-        const startHour = localDate.getHours();
-        const startMinute = localDate.getMinutes();
-        
-        console.log('🕐 localDate.getHours():', startHour);
-        console.log('🕐 localDate.getMinutes():', startMinute);
-        
+        const startHour = date.getHours();
+        const startMinute = date.getMinutes();
         const startTimeStr = String(startHour).padStart(2, '0') + ':' + String(startMinute).padStart(2, '0');
         
         console.log('🕐 생성된 시작 시간:', startTimeStr);
         
         // 종료 시간은 시작 시간 + 1시간
-        const endDateObj = new Date(localDate);
+        const endDateObj = new Date(date);
         endDateObj.setHours(startHour + 1);
         const endHour = endDateObj.getHours();
         const endMinute = endDateObj.getMinutes();
