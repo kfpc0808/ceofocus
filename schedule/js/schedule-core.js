@@ -29,9 +29,7 @@ let calendarData = {
     userInfo: {
         name: '홍길동',           // ⚠️ 여기에 사용자 이름 입력
         title: '지점장',          // ⚠️ 여기에 직책 입력 (선택)
-        enableLinkFields: false,  // 링크 메시지 필드 활성화 여부
         kakaoMessage: '자세한 내용은 연락주시기 바랍니다.',  // 카카오톡 공유 하단 메시지
-        kakaoUrlTitle: '상세보기', // 카카오톡 공유 링크 제목
         kakaoUrl: ''              // 카카오톡 공유 링크 URL (선택)
     }
 };
@@ -852,35 +850,42 @@ const shareToKakao = (schedule) => {
         const kakaoUrl = calendarData.userInfo.kakaoUrl || '';
         const kakaoUrlTitle = calendarData.userInfo.kakaoUrlTitle || '';
         
-        let linkText = '';
-        let linkObj = null;
+        // 디버깅: 카카오톡 공유 시 사용되는 URL 확인
+        console.log('📱 카카오톡 공유 - userInfo:', calendarData.userInfo);
+        console.log('📱 kakaoUrl:', kakaoUrl);
+        console.log('📱 kakaoUrlTitle:', kakaoUrlTitle);
         
-        if (kakaoUrl) {
-            if (kakaoUrlTitle) {
-                // 제목이 있으면 제목만 표시
-                linkText = `\n\n🔗 ${kakaoUrlTitle}`;
-            } else {
-                // 제목이 없으면 URL 그대로 표시
-                linkText = `\n\n🔗 ${kakaoUrl}`;
-            }
-            
-            // link 속성 추가 (클릭 가능하게)
-            linkObj = {
-                mobileWebUrl: kakaoUrl,
-                webUrl: kakaoUrl
-            };
-        }
-        
-        // 카카오톡 메시지 전송
-        const kakaoParams = {
-            objectType: 'text',
-            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}${bottomText}${linkText}`
+        // link 속성은 항상 포함 (카카오톡 API 필수)
+        // 사용자가 설정한 링크가 있으면 그것을 사용하고, 없으면 현재 페이지로
+        const linkObj = {
+            mobileWebUrl: kakaoUrl || window.location.href,
+            webUrl: kakaoUrl || window.location.href
         };
         
-        // link가 있으면 추가
-        if (linkObj) {
-            kakaoParams.link = linkObj;
+        console.log('📱 최종 linkObj:', linkObj);
+        
+        // 카카오톡 메시지 기본 파라미터
+        const kakaoParams = {
+            objectType: 'text',
+            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}${bottomText}`,
+            link: linkObj
+        };
+        
+        // 사용자가 링크를 설정했을 때만 버튼 추가 (클릭 가능한 링크)
+        if (kakaoUrl) {
+            console.log('📱 버튼 추가 - title:', kakaoUrlTitle || '자세히 보기');
+            kakaoParams.buttons = [
+                {
+                    title: kakaoUrlTitle || '자세히 보기',
+                    link: {
+                        mobileWebUrl: kakaoUrl,
+                        webUrl: kakaoUrl
+                    }
+                }
+            ];
         }
+        
+        console.log('📱 최종 kakaoParams:', kakaoParams);
         
         Kakao.Share.sendDefault(kakaoParams);
         
