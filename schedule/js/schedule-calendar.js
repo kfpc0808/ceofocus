@@ -38,7 +38,7 @@ function initializeCalendar() {
     calendar = new FullCalendar.Calendar(calendarEl, {
         // 기본 설정
         locale: 'ko',
-        timeZone: 'local',  // 브라우저 로컬 시간 사용
+        timeZone: 'local',
         initialView: defaultView,
         
         // 커스텀 뷰 정의
@@ -1165,55 +1165,40 @@ function openSettingsModal() {
     if (calendarData.userInfo) {
         document.getElementById('userName').value = calendarData.userInfo.name || '';
         document.getElementById('userTitle').value = calendarData.userInfo.title || '';
-        
-        // 링크 필드 활성화 체크박스 상태 로드
-        const enableLinkFields = calendarData.userInfo.enableLinkFields || false;
-        document.getElementById('enableLinkFields').checked = enableLinkFields;
-        
         document.getElementById('kakaoMessage').value = calendarData.userInfo.kakaoMessage || '';
         document.getElementById('kakaoUrlTitle').value = calendarData.userInfo.kakaoUrlTitle || '';
         document.getElementById('kakaoUrl').value = calendarData.userInfo.kakaoUrl || '';
         
-        // 링크 필드 활성화/비활성화 적용
-        toggleLinkFields(enableLinkFields);
+        // 링크 필드에 값이 있는지 확인
+        const hasLinkData = calendarData.userInfo.kakaoMessage || 
+                           calendarData.userInfo.kakaoUrlTitle || 
+                           calendarData.userInfo.kakaoUrl;
+        
+        // 체크박스 상태 설정
+        const enableLinkMessageCheckbox = document.getElementById('enableLinkMessage');
+        if (enableLinkMessageCheckbox) {
+            enableLinkMessageCheckbox.checked = hasLinkData ? true : false;
+            
+            // 체크박스 상태에 따라 필드 활성화/비활성화
+            const kakaoMessage = document.getElementById('kakaoMessage');
+            const kakaoUrlTitle = document.getElementById('kakaoUrlTitle');
+            const kakaoUrl = document.getElementById('kakaoUrl');
+            
+            if (hasLinkData) {
+                kakaoMessage.disabled = false;
+                kakaoUrlTitle.disabled = false;
+                kakaoUrl.disabled = false;
+            } else {
+                kakaoMessage.disabled = true;
+                kakaoUrlTitle.disabled = true;
+                kakaoUrl.disabled = true;
+            }
+        }
         
         updateUserInfoPreview();
     }
     
-    // 체크박스 이벤트 리스너 등록
-    const enableCheckbox = document.getElementById('enableLinkFields');
-    enableCheckbox.removeEventListener('change', handleLinkFieldsToggle);
-    enableCheckbox.addEventListener('change', handleLinkFieldsToggle);
-    
     modal.classList.add('show');
-}
-
-// 링크 필드 토글 핸들러
-function handleLinkFieldsToggle(e) {
-    toggleLinkFields(e.target.checked);
-}
-
-// 링크 필드 활성화/비활성화
-function toggleLinkFields(enable) {
-    const kakaoMessage = document.getElementById('kakaoMessage');
-    const kakaoUrlTitle = document.getElementById('kakaoUrlTitle');
-    const kakaoUrl = document.getElementById('kakaoUrl');
-    
-    if (enable) {
-        kakaoMessage.disabled = false;
-        kakaoUrlTitle.disabled = false;
-        kakaoUrl.disabled = false;
-        kakaoMessage.style.opacity = '1';
-        kakaoUrlTitle.style.opacity = '1';
-        kakaoUrl.style.opacity = '1';
-    } else {
-        kakaoMessage.disabled = true;
-        kakaoUrlTitle.disabled = true;
-        kakaoUrl.disabled = true;
-        kakaoMessage.style.opacity = '0.5';
-        kakaoUrlTitle.style.opacity = '0.5';
-        kakaoUrl.style.opacity = '0.5';
-    }
 }
 
 // 색상 변경 핸들러
@@ -1267,17 +1252,16 @@ function saveSettings() {
     // 사용자 정보 저장
     const userName = document.getElementById('userName').value.trim();
     if (userName) {
-        // 링크 필드 활성화 체크박스 상태 확인
-        const enableLinkFields = document.getElementById('enableLinkFields').checked;
+        // 체크박스 상태 확인
+        const enableLinkMessage = document.getElementById('enableLinkMessage').checked;
         
         calendarData.userInfo = {
             name: userName,
             title: document.getElementById('userTitle').value.trim(),
-            enableLinkFields: enableLinkFields,
-            // 체크박스가 체크되지 않으면 링크 정보를 빈 값으로 저장
-            kakaoMessage: enableLinkFields ? document.getElementById('kakaoMessage').value.trim() : '',
-            kakaoUrlTitle: enableLinkFields ? document.getElementById('kakaoUrlTitle').value.trim() : '',
-            kakaoUrl: enableLinkFields ? document.getElementById('kakaoUrl').value.trim() : ''
+            // 체크박스가 체크되지 않았으면 빈 값으로 저장
+            kakaoMessage: enableLinkMessage ? document.getElementById('kakaoMessage').value.trim() : '',
+            kakaoUrlTitle: enableLinkMessage ? document.getElementById('kakaoUrlTitle').value.trim() : '',
+            kakaoUrl: enableLinkMessage ? document.getElementById('kakaoUrl').value.trim() : ''
         };
         saveSchedulesToDrive(); // 드라이브에 저장
     } else {
@@ -1487,6 +1471,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // 사용자 정보 미리보기 업데이트
     document.getElementById('userName')?.addEventListener('input', updateUserInfoPreview);
     document.getElementById('userTitle')?.addEventListener('input', updateUserInfoPreview);
+    
+    // 링크 메시지 체크박스 이벤트
+    const enableLinkMessageCheckbox = document.getElementById('enableLinkMessage');
+    if (enableLinkMessageCheckbox) {
+        enableLinkMessageCheckbox.addEventListener('change', function() {
+            const kakaoMessage = document.getElementById('kakaoMessage');
+            const kakaoUrlTitle = document.getElementById('kakaoUrlTitle');
+            const kakaoUrl = document.getElementById('kakaoUrl');
+            
+            if (this.checked) {
+                // 체크박스 체크 시 활성화
+                kakaoMessage.disabled = false;
+                kakaoUrlTitle.disabled = false;
+                kakaoUrl.disabled = false;
+            } else {
+                // 체크박스 해제 시 비활성화
+                kakaoMessage.disabled = true;
+                kakaoUrlTitle.disabled = true;
+                kakaoUrl.disabled = true;
+            }
+        });
+    }
     
     // 구글 캘린더 동기화
     document.getElementById('syncGoogleCalendarBtn')?.addEventListener('click', async () => {
