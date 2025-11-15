@@ -1255,6 +1255,12 @@ function saveSettings() {
         // 체크박스 상태 확인
         const enableLinkMessage = document.getElementById('enableLinkMessage').checked;
         
+        // 디버깅: 체크박스 상태와 입력값 확인
+        console.log('🔍 체크박스 상태:', enableLinkMessage);
+        console.log('🔍 kakaoMessage 값:', document.getElementById('kakaoMessage').value);
+        console.log('🔍 kakaoUrlTitle 값:', document.getElementById('kakaoUrlTitle').value);
+        console.log('🔍 kakaoUrl 값:', document.getElementById('kakaoUrl').value);
+        
         calendarData.userInfo = {
             name: userName,
             title: document.getElementById('userTitle').value.trim(),
@@ -1263,6 +1269,10 @@ function saveSettings() {
             kakaoUrlTitle: enableLinkMessage ? document.getElementById('kakaoUrlTitle').value.trim() : '',
             kakaoUrl: enableLinkMessage ? document.getElementById('kakaoUrl').value.trim() : ''
         };
+        
+        // 디버깅: 최종 저장되는 값 확인
+        console.log('💾 저장되는 userInfo:', calendarData.userInfo);
+        
         saveSchedulesToDrive(); // 드라이브에 저장
     } else {
         showToast('⚠️ 이름을 입력해주세요', 'error');
