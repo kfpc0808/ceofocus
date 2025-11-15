@@ -29,7 +29,9 @@ let calendarData = {
     userInfo: {
         name: '홍길동',           // ⚠️ 여기에 사용자 이름 입력
         title: '지점장',          // ⚠️ 여기에 직책 입력 (선택)
+        enableLinkFields: false,  // 링크 메시지 필드 활성화 여부
         kakaoMessage: '자세한 내용은 연락주시기 바랍니다.',  // 카카오톡 공유 하단 메시지
+        kakaoUrlTitle: '상세보기', // 카카오톡 공유 링크 제목
         kakaoUrl: ''              // 카카오톡 공유 링크 URL (선택)
     }
 };

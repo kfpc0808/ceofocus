@@ -1165,13 +1165,55 @@ function openSettingsModal() {
     if (calendarData.userInfo) {
         document.getElementById('userName').value = calendarData.userInfo.name || '';
         document.getElementById('userTitle').value = calendarData.userInfo.title || '';
+        
+        // 링크 필드 활성화 체크박스 상태 로드
+        const enableLinkFields = calendarData.userInfo.enableLinkFields || false;
+        document.getElementById('enableLinkFields').checked = enableLinkFields;
+        
         document.getElementById('kakaoMessage').value = calendarData.userInfo.kakaoMessage || '';
         document.getElementById('kakaoUrlTitle').value = calendarData.userInfo.kakaoUrlTitle || '';
         document.getElementById('kakaoUrl').value = calendarData.userInfo.kakaoUrl || '';
+        
+        // 링크 필드 활성화/비활성화 적용
+        toggleLinkFields(enableLinkFields);
+        
         updateUserInfoPreview();
     }
     
+    // 체크박스 이벤트 리스너 등록
+    const enableCheckbox = document.getElementById('enableLinkFields');
+    enableCheckbox.removeEventListener('change', handleLinkFieldsToggle);
+    enableCheckbox.addEventListener('change', handleLinkFieldsToggle);
+    
     modal.classList.add('show');
+}
+
+// 링크 필드 토글 핸들러
+function handleLinkFieldsToggle(e) {
+    toggleLinkFields(e.target.checked);
+}
+
+// 링크 필드 활성화/비활성화
+function toggleLinkFields(enable) {
+    const kakaoMessage = document.getElementById('kakaoMessage');
+    const kakaoUrlTitle = document.getElementById('kakaoUrlTitle');
+    const kakaoUrl = document.getElementById('kakaoUrl');
+    
+    if (enable) {
+        kakaoMessage.disabled = false;
+        kakaoUrlTitle.disabled = false;
+        kakaoUrl.disabled = false;
+        kakaoMessage.style.opacity = '1';
+        kakaoUrlTitle.style.opacity = '1';
+        kakaoUrl.style.opacity = '1';
+    } else {
+        kakaoMessage.disabled = true;
+        kakaoUrlTitle.disabled = true;
+        kakaoUrl.disabled = true;
+        kakaoMessage.style.opacity = '0.5';
+        kakaoUrlTitle.style.opacity = '0.5';
+        kakaoUrl.style.opacity = '0.5';
+    }
 }
 
 // 색상 변경 핸들러
@@ -1225,12 +1267,17 @@ function saveSettings() {
     // 사용자 정보 저장
     const userName = document.getElementById('userName').value.trim();
     if (userName) {
+        // 링크 필드 활성화 체크박스 상태 확인
+        const enableLinkFields = document.getElementById('enableLinkFields').checked;
+        
         calendarData.userInfo = {
             name: userName,
             title: document.getElementById('userTitle').value.trim(),
-            kakaoMessage: document.getElementById('kakaoMessage').value.trim(),
-            kakaoUrlTitle: document.getElementById('kakaoUrlTitle').value.trim(),
-            kakaoUrl: document.getElementById('kakaoUrl').value.trim()
+            enableLinkFields: enableLinkFields,
+            // 체크박스가 체크되지 않으면 링크 정보를 빈 값으로 저장
+            kakaoMessage: enableLinkFields ? document.getElementById('kakaoMessage').value.trim() : '',
+            kakaoUrlTitle: enableLinkFields ? document.getElementById('kakaoUrlTitle').value.trim() : '',
+            kakaoUrl: enableLinkFields ? document.getElementById('kakaoUrl').value.trim() : ''
         };
         saveSchedulesToDrive(); // 드라이브에 저장
     } else {
