@@ -196,6 +196,27 @@ function initializeCalendar() {
             // 타입별 데이터 속성
             if (info.event.extendedProps.type) {
                 info.el.setAttribute('data-type', info.event.extendedProps.type);
+                
+                // 인라인 스타일로 색상 강제 적용 (CSS보다 우선)
+                const bgColor = info.event.backgroundColor;
+                const txtColor = info.event.textColor || '#333333';
+                
+                // 배경색과 글자색을 인라인 스타일로 적용
+                info.el.style.backgroundColor = bgColor;
+                info.el.style.borderColor = bgColor;
+                info.el.style.color = txtColor;
+                
+                // 흰색 배경인 경우 테두리 추가
+                if (bgColor === '#FFFFFF' || bgColor.toLowerCase() === '#ffffff') {
+                    info.el.style.border = '1px solid #dadce0';
+                    info.el.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+                }
+                
+                // 내부 요소들에도 글자색 적용
+                const titleEl = info.el.querySelector('.fc-event-title');
+                if (titleEl) titleEl.style.color = txtColor;
+                const timeEl = info.el.querySelector('.fc-event-time');
+                if (timeEl) timeEl.style.color = txtColor;
             }
             
             // 중요 일정
@@ -346,14 +367,20 @@ function renderCalendar() {
     const events = calendarData.schedules
         .filter(schedule => filterSchedule(schedule))
         .map(schedule => {
+            const bgColor = schedule.color || calendarData.colorSettings[schedule.type] || '#95a5a6';
+            const txtColor = calendarData.textColorSettings ? 
+                            calendarData.textColorSettings[schedule.type] || '#333333' : 
+                            '#333333';
+            
             return {
                 id: schedule.id,
                 title: schedule.icon ? (schedule.icon + ' ' + schedule.title) : schedule.title,  // 아이콘 + 제목
                 start: schedule.all_day ? schedule.date : `${schedule.date}T${schedule.start_time}`,
                 end: schedule.all_day ? schedule.end_date : `${schedule.end_date}T${schedule.end_time}`,
                 allDay: schedule.all_day,
-                backgroundColor: schedule.color || calendarData.colorSettings[schedule.type] || '#95a5a6',
-                borderColor: schedule.color || calendarData.colorSettings[schedule.type] || '#95a5a6',
+                backgroundColor: bgColor,
+                borderColor: bgColor,
+                textColor: txtColor,  // 글자색 추가
                 extendedProps: {
                     type: schedule.type,
                     customer_name: schedule.customer_name,
@@ -1210,6 +1237,17 @@ function handleColorChange(e) {
     // 임시로 colorSettings 업데이트 (미리보기용)
     calendarData.colorSettings[type] = color;
     
+    // 글자색 자동 설정 (밝은 배경 → 어두운 글자, 어두운 배경 → 밝은 글자)
+    const rgb = parseInt(color.slice(1), 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = rgb & 0xff;
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    if (calendarData.textColorSettings) {
+        calendarData.textColorSettings[type] = brightness > 128 ? '#333333' : '#FFFFFF';
+    }
+    
     // 캘린더 다시 렌더링하여 즉시 반영
     renderCalendar();
 }
@@ -1837,36 +1875,84 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================
     function fixDateHeader() {
         const isMobile = window.innerWidth <= 768;
-        const headerHeight = isMobile ? 40 : 80;
-        const toolbarHeight = isMobile ? 26 : 37;
-        const toolbarTop = headerHeight;
-        const colHeaderTop = headerHeight + toolbarHeight;
+        
+        // 실제 header 높이를 동적으로 측정
+        const header = document.querySelector('.header');
+        const headerTop = document.querySelector('.header-top');
+        const headerControls = document.querySelector('.header-controls');
+        
+        let actualHeaderHeight = 80;  // 기본값
+        
+        if (header) {
+            // 모바일에서는 헤더가 2줄로 나뉠 수 있음
+            if (isMobile && headerTop && headerControls) {
+                // 각 행의 높이를 개별 측정
+                const topHeight = headerTop.getBoundingClientRect().height;
+                const controlsHeight = headerControls.getBoundingClientRect().height;
+                actualHeaderHeight = topHeight + controlsHeight + 10;  // 여백 포함
+            } else {
+                actualHeaderHeight = header.getBoundingClientRect().height;
+            }
+        }
+        
+        // 모바일/PC별 높이 설정
+        const toolbarHeight = isMobile ? 30 : 37;  // 모바일은 좀 더 여유있게
+        const colHeaderHeight = isMobile ? 35 : 43;  // 일자 행 높이
+        const toolbarPadding = isMobile ? '3px 5px' : '5px 10px';
+        
+        // 위치 계산
+        const toolbarTop = actualHeaderHeight;
+        const colHeaderTop = actualHeaderHeight + toolbarHeight;
         
         const toolbar = document.querySelector('.fc-toolbar');
         const colHeader = document.querySelector('.fc-col-header');
         
-        // 연월 행 고정 (z-index 높게, !important로 강제)
+        // 연월 행 고정
         if (toolbar) {
             toolbar.style.setProperty('position', 'fixed', 'important');
             toolbar.style.setProperty('top', toolbarTop + 'px', 'important');
             toolbar.style.setProperty('left', '0', 'important');
             toolbar.style.setProperty('right', '0', 'important');
-            toolbar.style.setProperty('z-index', '1050', 'important');
+            toolbar.style.setProperty('z-index', '1090', 'important');
             toolbar.style.setProperty('background', '#ffffff', 'important');
             toolbar.style.setProperty('border-bottom', '1px solid #dadce0', 'important');
+            toolbar.style.setProperty('padding', toolbarPadding, 'important');
+            toolbar.style.setProperty('height', toolbarHeight + 'px', 'important');
+            
+            // 모바일에서 폰트 크기 조정
+            if (isMobile) {
+                toolbar.style.setProperty('font-size', '12px', 'important');
+            }
         }
         
-        // 일자 행 고정 (z-index 낮게, !important로 강제)
+        // 일자 행 고정
         if (colHeader) {
             colHeader.style.setProperty('position', 'fixed', 'important');
             colHeader.style.setProperty('top', colHeaderTop + 'px', 'important');
             colHeader.style.setProperty('left', '0', 'important');
             colHeader.style.setProperty('right', '0', 'important');
-            colHeader.style.setProperty('z-index', '500', 'important');
+            colHeader.style.setProperty('z-index', '1080', 'important');
             colHeader.style.setProperty('background', '#f8f9fa', 'important');
+            colHeader.style.setProperty('height', colHeaderHeight + 'px', 'important');
+            
+            // 모바일에서 폰트 크기 조정
+            if (isMobile) {
+                colHeader.style.setProperty('font-size', '11px', 'important');
+            }
         }
         
-        console.log(`고정 적용: 툴바=${toolbarTop}px(z:1050), 일자=${colHeaderTop}px(z:500)`);
+        // body padding 조정 (캘린더 콘텐츠가 가려지지 않도록)
+        const totalHeaderHeight = colHeaderTop + colHeaderHeight;
+        document.body.style.paddingTop = totalHeaderHeight + 'px';
+        
+        // 캘린더 자체의 상단 여백도 조정
+        const calendarEl = document.getElementById('calendar');
+        if (calendarEl) {
+            calendarEl.style.marginTop = '0';
+            calendarEl.style.paddingTop = '5px';
+        }
+        
+        console.log(`[${isMobile ? 'Mobile' : 'PC'}] 헤더: ${actualHeaderHeight}px, 총 높이: ${totalHeaderHeight}px`);
     }
     
     // 캘린더 렌더링 후 실행
@@ -1880,7 +1966,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (calendar) {
             calendar.on('datesSet', fixDateHeader);
         }
-    }, 500);
+    }, 1000);  // 500 → 1000ms로 증가하여 확실한 렌더링 후 적용
     
     console.log('✅ 캘린더 이벤트 리스너 등록 완료');
 });

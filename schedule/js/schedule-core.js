@@ -16,9 +16,19 @@ let calendarData = {
         '보험만기일': '#FF9500',
         '생일': '#9B59B6',
         '결혼기념일': '#FFB6C1',
-        '미팅': '#FFFFFF',  // 흰색 배경
+        '미팅': '#FFFFFF',  // 흰색 배경 (보험업계 미팅 중심 사용 패턴 고려)
         '상담': '#6BCF7F',
-        '기타': '#95a5a6'
+        '기타': '#FFFFFF'   // 흰색 배경으로 변경
+    },
+    // 타입별 글자색 설정 (배경색과 대비를 위해)
+    textColorSettings: {
+        '상령일': '#FFFFFF',      // 빨간 배경 → 흰 글자
+        '보험만기일': '#FFFFFF',   // 주황 배경 → 흰 글자
+        '생일': '#FFFFFF',        // 보라 배경 → 흰 글자
+        '결혼기념일': '#333333',  // 분홍 배경 → 검정 글자
+        '미팅': '#333333',        // 흰 배경 → 검정 글자
+        '상담': '#FFFFFF',        // 초록 배경 → 흰 글자
+        '기타': '#333333'         // 흰 배경 → 검정 글자
     },
     userSettings: {
         defaultView: 'timeGridFiveDays',
@@ -198,11 +208,17 @@ const findFile = async (filename) => {
         const response = await fetch(
             `https://www.googleapis.com/drive/v3/files?q=name='${filename}'&fields=files(id,name,modifiedTime)`,
             {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
+                headers: { 'Authorization': `Bearer ${accessToken}` }
             }
         );
+        
+        if (response.status === 401) {
+            console.log('❌ 토큰 만료');
+            accessToken = null;
+            localStorage.removeItem('googleAccessToken');
+            localStorage.removeItem('tokenExpiry');
+            return null;
+        }
         
         const data = await response.json();
         return data.files && data.files.length > 0 ? data.files[0] : null;
@@ -213,58 +229,67 @@ const findFile = async (filename) => {
 };
 
 // ========================================
-// 드라이브에 업로드
+// 파일 읽기
 // ========================================
-const uploadToDrive = async (filename, content) => {
-    if (!accessToken) return null;
-    
-    try {
-        const metadata = {
-            name: filename,
-            mimeType: 'text/plain'
-        };
-        
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', new Blob([content], { type: 'text/plain' }));
-        
-        const response = await fetch(
-            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: form
-            }
-        );
-        
-        return await response.json();
-    } catch (error) {
-        console.error('업로드 오류:', error);
-        return null;
-    }
-};
-
-// ========================================
-// 드라이브에서 다운로드
-// ========================================
-const downloadFromDrive = async (fileId) => {
+const readFile = async (fileId) => {
     if (!accessToken) return null;
     
     try {
         const response = await fetch(
             `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
             {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
+                headers: { 'Authorization': `Bearer ${accessToken}` }
             }
         );
         
-        return await response.text();
+        if (!response.ok) {
+            console.error('❌ 파일 읽기 실패:', response.status);
+            return null;
+        }
+        
+        const encryptedData = await response.text();
+        return decryptData(encryptedData);
     } catch (error) {
-        console.error('다운로드 오류:', error);
+        console.error('파일 읽기 오류:', error);
+        return null;
+    }
+};
+
+// ========================================
+// 파일 생성
+// ========================================
+const createFile = async (filename, content) => {
+    if (!accessToken) return null;
+    
+    const metadata = {
+        name: filename,
+        mimeType: 'text/plain'
+    };
+    
+    const encryptedContent = encryptData(content);
+    
+    const formData = new FormData();
+    formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    formData.append('file', new Blob([encryptedContent], { type: 'text/plain' }));
+    
+    try {
+        const response = await fetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                body: formData
+            }
+        );
+        
+        if (!response.ok) {
+            console.error('❌ 파일 생성 실패:', response.status);
+            return null;
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('파일 생성 오류:', error);
         return null;
     }
 };
@@ -273,7 +298,9 @@ const downloadFromDrive = async (fileId) => {
 // 파일 업데이트
 // ========================================
 const updateFile = async (fileId, content) => {
-    if (!accessToken) return null;
+    if (!accessToken) return false;
+    
+    const encryptedContent = encryptData(content);
     
     try {
         const response = await fetch(
@@ -284,168 +311,194 @@ const updateFile = async (fileId, content) => {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'text/plain'
                 },
-                body: content
+                body: encryptedContent
             }
         );
         
         if (!response.ok) {
-            throw new Error(`Update failed: ${response.status}`);
+            console.error('❌ 파일 업데이트 실패:', response.status);
+            return false;
         }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('파일 업데이트 오류:', error);
-        return null;
-    }
-};
-
-// ========================================
-// 일정 데이터 저장
-// ========================================
-const saveSchedulesToDrive = async () => {
-    try {
-        const encrypted = encryptData(calendarData);
-        const file = await findFile('schedules.cal');
-        
-        if (file) {
-            await updateFile(file.id, encrypted);
-            console.log('✅ 일정 업데이트 완료');
-        } else {
-            await uploadToDrive('schedules.cal', encrypted);
-            console.log('✅ 일정 저장 완료');
-        }
-        
-        updateStatus('저장 완료', 'connected');
-        setTimeout(() => {
-            updateStatus('연결됨', 'connected');
-        }, 1500);
         
         return true;
     } catch (error) {
-        console.error('❌ 저장 오류:', error);
-        showToast('저장 실패', 'error');
+        console.error('파일 업데이트 오류:', error);
         return false;
     }
 };
 
 // ========================================
-// 일정 데이터 로드
+// 데이터 저장
 // ========================================
-const loadSchedulesFromDrive = async () => {
-    try {
-        const file = await findFile('schedules.cal');
-        
-        if (file) {
-            const encryptedData = await downloadFromDrive(file.id);
-            if (encryptedData) {
-                calendarData = decryptData(encryptedData);
-                console.log('✅ 일정 로드 완료:', calendarData.schedules.length, '개');
-                return true;
+const saveToGoogleDrive = async () => {
+    if (!accessToken) return;
+    
+    updateStatus('저장 중...', 'saving');
+    
+    const filename = 'kfpc_schedule_data.enc';
+    const file = await findFile(filename);
+    
+    let saved = false;
+    if (file) {
+        saved = await updateFile(file.id, calendarData);
+    } else {
+        const newFile = await createFile(filename, calendarData);
+        saved = !!newFile;
+    }
+    
+    if (saved) {
+        updateStatus('저장 완료', 'saved');
+        console.log('✅ Google Drive에 저장 완료');
+        setTimeout(() => updateStatus('연결됨', ''), 1000);
+    } else {
+        updateStatus('저장 실패', 'error');
+        showToast('❌ 저장 실패', 'error');
+    }
+};
+
+// ========================================
+// 데이터 로드
+// ========================================
+const loadFromGoogleDrive = async () => {
+    if (!accessToken) return;
+    
+    updateStatus('불러오는 중...', 'loading');
+    
+    const filename = 'kfpc_schedule_data.enc';
+    const file = await findFile(filename);
+    
+    if (file) {
+        const data = await readFile(file.id);
+        if (data) {
+            calendarData = data;
+            
+            // textColorSettings가 없는 경우 초기화
+            if (!calendarData.textColorSettings) {
+                calendarData.textColorSettings = {
+                    '상령일': '#FFFFFF',
+                    '보험만기일': '#FFFFFF',
+                    '생일': '#FFFFFF',
+                    '결혼기념일': '#333333',
+                    '미팅': '#333333',
+                    '상담': '#FFFFFF',
+                    '기타': '#333333'
+                };
             }
+            
+            console.log('✅ Google Drive에서 불러오기 완료');
+            updateStatus('불러오기 완료', 'saved');
+            return true;
         }
-        
-        console.log('ℹ️ 저장된 일정 없음');
-        return false;
-    } catch (error) {
-        console.error('❌ 로드 오류:', error);
-        showToast('로드 실패', 'error');
-        return false;
     }
+    
+    updateStatus('데이터 없음', '');
+    return false;
 };
 
 // ========================================
-// 자동 저장 스케줄
+// 로컬 스토리지 백업
+// ========================================
+const saveToLocalStorage = () => {
+    try {
+        localStorage.setItem('kfpc_calendar_data', JSON.stringify(calendarData));
+        console.log('💾 로컬 스토리지 백업 완료');
+    } catch (error) {
+        console.error('로컬 스토리지 저장 실패:', error);
+    }
+};
+
+const loadFromLocalStorage = () => {
+    try {
+        const data = localStorage.getItem('kfpc_calendar_data');
+        if (data) {
+            calendarData = JSON.parse(data);
+            
+            // textColorSettings가 없는 경우 초기화
+            if (!calendarData.textColorSettings) {
+                calendarData.textColorSettings = {
+                    '상령일': '#FFFFFF',
+                    '보험만기일': '#FFFFFF',
+                    '생일': '#FFFFFF',
+                    '결혼기념일': '#333333',
+                    '미팅': '#333333',
+                    '상담': '#FFFFFF',
+                    '기타': '#333333'
+                };
+            }
+            
+            console.log('💾 로컬 스토리지에서 불러오기 완료');
+            return true;
+        }
+    } catch (error) {
+        console.error('로컬 스토리지 로드 실패:', error);
+    }
+    return false;
+};
+
+// ========================================
+// 자동 저장
 // ========================================
 const scheduleAutoSave = () => {
-    if (!accessToken || !isConnected) return;
-    
+    // 이전 타이머 취소
     if (autoSaveTimer) {
         clearTimeout(autoSaveTimer);
     }
     
-    // 저장 중 표시
-    updateSyncStatus('saving', '저장 중...');
-    
-    autoSaveTimer = setTimeout(async () => {
-        await saveSchedulesToDrive();
-        console.log('🔄 자동 저장 완료');
+    // 3초 후 저장
+    autoSaveTimer = setTimeout(() => {
+        saveToLocalStorage(); // 로컬 스토리지에 즉시 백업
         
-        // 저장 완료 표시
-        updateSyncStatus('saved', '저장 완료');
-        
-        // 3초 후 "연결됨"으로 변경
-        setTimeout(() => {
-            updateSyncStatus('saved', '연결됨');
-        }, 3000);
+        if (accessToken) {
+            saveToGoogleDrive(); // 구글 드라이브에도 저장
+        }
     }, 3000);
 };
 
 // ========================================
-// 동기화 상태 표시 업데이트
+// 동기화 상태 업데이트
 // ========================================
 const updateSyncStatus = (status, text) => {
     const syncStatus = document.getElementById('syncStatus');
     const syncIcon = document.getElementById('syncIcon');
     const syncText = document.getElementById('syncText');
+    const connectBtn = document.getElementById('connectBtn');
     
-    if (!syncStatus || !syncIcon || !syncText) return;
-    
-    // 모든 상태 클래스 제거
-    syncStatus.classList.remove('saving', 'saved', 'loading', 'error');
-    
-    // 새 상태 적용
-    switch (status) {
-        case 'saving':
-            syncStatus.classList.add('saving');
-            syncIcon.textContent = '💾';
-            break;
-        case 'saved':
-            syncStatus.classList.add('saved');
-            syncIcon.textContent = '✅';
-            break;
-        case 'loading':
-            syncStatus.classList.add('loading');
-            syncIcon.textContent = '🔄';
-            break;
-        case 'error':
-            syncStatus.classList.add('error');
-            syncIcon.textContent = '❌';
-            break;
+    if (status === 'connected' || status === 'saved') {
+        syncStatus.style.display = 'inline-flex';
+        connectBtn.style.display = 'none';
+        syncIcon.textContent = '✅';
+        syncText.textContent = text || '연결됨';
+    } else {
+        syncStatus.style.display = 'none';
+        connectBtn.style.display = 'inline-block';
     }
-    
-    syncText.textContent = text;
 };
 
-
 // ========================================
-// Drive 연결 완료
+// 연결 완료 후 처리
 // ========================================
 const onDriveConnected = async () => {
-    console.log('✅ Google Drive 연결 완료');
-    
     isConnected = true;
+    updateSyncStatus('connected', '연결됨');
     
-    // UI 업데이트
-    document.getElementById('connectBtn').style.display = 'none';
-    const syncStatus = document.getElementById('syncStatus');
-    if (syncStatus) {
-        syncStatus.style.display = 'inline-flex';
-        updateSyncStatus('loading', '불러오는 중...');
-    }
-    document.getElementById('syncGoogleCalendarBtn').style.display = 'inline-block';  // 다시 표시
-    updateStatus('연결됨', 'connected');
+    // 구글 캘린더 버튼 표시
+    document.getElementById('syncGoogleCalendarBtn').style.display = 'inline-block';
+    document.getElementById('refreshGoogleCalendarBtn').style.display = 'inline-block';
     
     // 데이터 로드
-    const loaded = await loadSchedulesFromDrive();
+    const loaded = await loadFromGoogleDrive();
     
-    if (loaded && calendarData.schedules.length > 0) {
-        updateSyncStatus('saved', `${calendarData.schedules.length}개 로드됨`);
-        showToast(`✅ ${calendarData.schedules.length}개 일정 로드 완료`);
-        // 캘린더 렌더링 (calendar.js에서 처리)
+    if (loaded) {
+        // 데이터가 있으면 캘린더 다시 렌더링
         if (typeof renderCalendar === 'function') {
             renderCalendar();
         }
-        // 3초 후 "연결됨"으로 변경
+        
+        // 할일 목록 렌더링
+        if (typeof renderTodoList === 'function') {
+            renderTodoList();
+        }
+        
         setTimeout(() => {
             updateSyncStatus('saved', '연결됨');
         }, 3000);
@@ -555,6 +608,19 @@ const searchSchedules = (query) => {
 // ========================================
 const updateColorSettings = (type, color) => {
     calendarData.colorSettings[type] = color;
+    
+    // 글자색 자동 계산 (밝기에 따라)
+    const rgb = parseInt(color.slice(1), 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = rgb & 0xff;
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    if (!calendarData.textColorSettings) {
+        calendarData.textColorSettings = {};
+    }
+    calendarData.textColorSettings[type] = brightness > 128 ? '#333333' : '#FFFFFF';
+    
     scheduleAutoSave();
 };
 
@@ -609,388 +675,191 @@ let googleCalendarSyncInterval = null;
 // 구글 캘린더 API 로드
 const loadGoogleCalendarAPI = async () => {
     return new Promise((resolve) => {
-        if (window.gapi && window.gapi.client) {
+        gapi.load('client', async () => {
+            await gapi.client.init({
+                apiKey: GOOGLE_API_KEY,
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+            });
             resolve();
-            return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/api.js';
-        script.onload = () => {
-            gapi.load('client', resolve);
-        };
-        document.head.appendChild(script);
+        });
     });
 };
 
-// 구글 캘린더 초기화
-const initGoogleCalendar = async () => {
-    try {
-        await loadGoogleCalendarAPI();
-        
-        await gapi.client.init({
-            apiKey: GOOGLE_API_KEY,
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-        });
-        
-        // Access Token 설정
-        gapi.client.setToken({ access_token: accessToken });
-        
-        console.log('✅ 구글 캘린더 API 초기화 완료');
-        return true;
-    } catch (error) {
-        console.error('❌ 구글 캘린더 API 초기화 실패:', error);
-        return false;
-    }
-};
-
-// 구글 캘린더 일정 가져오기
+// 구글 캘린더 이벤트 가져오기
 const fetchGoogleCalendarEvents = async () => {
-    if (!googleCalendarEnabled) return [];
+    if (!accessToken) {
+        console.error('❌ 구글 캘린더 접근 토큰이 없습니다');
+        return [];
+    }
     
     try {
-        const now = new Date();
-        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const twoMonthsLater = new Date(now.getFullYear(), now.getMonth() + 3, 0);
+        // 현재 시간 기준 앞뒤 3개월
+        const timeMin = new Date();
+        timeMin.setMonth(timeMin.getMonth() - 1);
+        const timeMax = new Date();
+        timeMax.setMonth(timeMax.getMonth() + 3);
         
-        const response = await gapi.client.calendar.events.list({
-            calendarId: 'primary',
-            timeMin: oneMonthAgo.toISOString(),
-            timeMax: twoMonthsLater.toISOString(),
-            maxResults: 100,
-            singleEvents: true,
-            orderBy: 'startTime'
-        });
+        const response = await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
+            `timeMin=${timeMin.toISOString()}&` +
+            `timeMax=${timeMax.toISOString()}&` +
+            `singleEvents=true&` +
+            `orderBy=startTime&` +
+            `maxResults=100`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            }
+        );
         
-        googleCalendarEvents = response.result.items || [];
-        console.log(`✅ 구글 캘린더 일정 ${googleCalendarEvents.length}개 로드`);
+        if (!response.ok) {
+            console.error('❌ 구글 캘린더 API 호출 실패:', response.status);
+            return [];
+        }
         
-        return googleCalendarEvents;
+        const data = await response.json();
+        console.log(`📗 구글 캘린더에서 ${data.items.length}개 이벤트 가져옴`);
+        return data.items || [];
     } catch (error) {
-        console.error('❌ 구글 캘린더 일정 로드 실패:', error);
+        console.error('구글 캘린더 이벤트 가져오기 오류:', error);
         return [];
     }
 };
 
-// 구글 캘린더 동기화 시작
-const startGoogleCalendarSync = async () => {
-    const initialized = await initGoogleCalendar();
-    if (!initialized) {
-        console.warn('⚠️ 구글 캘린더 API 사용 불가 (권한 필요)');
-        showToast('📗 구글 캘린더 권한이 없습니다. 일정 관리는 정상 작동합니다.', 'warning');
-        return false;
-    }
+// 구글 캘린더 동기화 토글
+const toggleGoogleCalendarSync = async () => {
+    const btn = document.getElementById('syncGoogleCalendarBtn');
     
-    googleCalendarEnabled = true;
-    
-    // 첫 동기화
-    await fetchGoogleCalendarEvents();
-    
-    // 캘린더 렌더링 (calendar.js에서 처리)
-    if (typeof renderCalendar === 'function') {
-        renderCalendar();
-    }
-    
-    // 자동 동기화 (1시간마다)
-    if (googleCalendarSyncInterval) {
-        clearInterval(googleCalendarSyncInterval);
-    }
-    
-    googleCalendarSyncInterval = setInterval(async () => {
-        console.log('🔄 구글 캘린더 자동 동기화...');
-        await fetchGoogleCalendarEvents();
-        if (typeof renderCalendar === 'function') {
-            renderCalendar();
-        }
-    }, 3600000); // 1시간
-    
-    showToast('✅ 구글 캘린더 동기화 시작');
-    return true;
-};
-
-// 구글 캘린더 동기화 중지
-const stopGoogleCalendarSync = () => {
-    googleCalendarEnabled = false;
-    googleCalendarEvents = [];
-    
-    if (googleCalendarSyncInterval) {
-        clearInterval(googleCalendarSyncInterval);
-        googleCalendarSyncInterval = null;
-    }
-    
-    if (typeof renderCalendar === 'function') {
-        renderCalendar();
-    }
-    
-    showToast('구글 캘린더 동기화 중지');
-};
-
-// 수동 새로고침
-const refreshGoogleCalendar = async () => {
     if (!googleCalendarEnabled) {
-        showToast('구글 캘린더가 연결되지 않았습니다', 'error');
-        return;
+        // 활성화
+        googleCalendarEvents = await fetchGoogleCalendarEvents();
+        googleCalendarEnabled = true;
+        btn.classList.add('active');
+        btn.title = '구글 캘린더 동기화 중';
+        
+        // 30초마다 자동 새로고침
+        googleCalendarSyncInterval = setInterval(async () => {
+            if (googleCalendarEnabled) {
+                googleCalendarEvents = await fetchGoogleCalendarEvents();
+                if (typeof renderCalendar === 'function') {
+                    renderCalendar();
+                }
+            }
+        }, 30000);
+        
+        showToast('📗 구글 캘린더 동기화 시작', 'success');
+    } else {
+        // 비활성화
+        googleCalendarEnabled = false;
+        googleCalendarEvents = [];
+        btn.classList.remove('active');
+        btn.title = '구글 캘린더 동기화';
+        
+        if (googleCalendarSyncInterval) {
+            clearInterval(googleCalendarSyncInterval);
+            googleCalendarSyncInterval = null;
+        }
+        
+        showToast('📗 구글 캘린더 동기화 중지', 'info');
     }
     
-    showToast('🔄 동기화 중...');
-    await fetchGoogleCalendarEvents();
+    // 캘린더 다시 렌더링
+    if (typeof renderCalendar === 'function') {
+        renderCalendar();
+    }
+};
+
+// 구글 캘린더 새로고침
+const refreshGoogleCalendar = async () => {
+    if (!googleCalendarEnabled) return;
+    
+    const btn = document.getElementById('refreshGoogleCalendarBtn');
+    btn.classList.add('rotating');
+    
+    googleCalendarEvents = await fetchGoogleCalendarEvents();
     
     if (typeof renderCalendar === 'function') {
         renderCalendar();
     }
     
-    showToast('✅ 동기화 완료');
+    setTimeout(() => {
+        btn.classList.remove('rotating');
+    }, 500);
+    
+    showToast('📗 구글 캘린더 새로고침 완료', 'success');
 };
 
 // ========================================
-// 카카오톡 공유 기능
+// 할일 관리
 // ========================================
-
-// 카카오 SDK 초기화
-const initKakao = () => {
-    if (typeof Kakao === 'undefined') {
-        console.warn('⚠️ Kakao SDK가 로드되지 않았습니다');
-        return false;
-    }
-    
-    if (!Kakao.isInitialized()) {
-        try {
-            Kakao.init(KAKAO_APP_KEY);
-            console.log('✅ Kakao SDK 초기화 완료');
-            console.log('Kakao SDK 버전:', Kakao.VERSION);
-            return true;
-        } catch (error) {
-            console.error('❌ Kakao SDK 초기화 실패:', error);
-            return false;
-        }
-    }
-    return true;
-};
-
-// 받침 판단 함수 (이/가 자동 선택)
-const getSubjectParticle = (word) => {
-    if (!word || word.length === 0) return '이';
-    
-    const lastChar = word.charAt(word.length - 1);
-    const lastCharCode = lastChar.charCodeAt(0);
-    
-    // 한글이 아니면 '이' 반환
-    if (lastCharCode < 0xAC00 || lastCharCode > 0xD7A3) {
-        return '이';
-    }
-    
-    // 한글의 받침 유무 판단
-    // 한글 유니코드: 0xAC00(가) ~ 0xD7A3(힣)
-    // (코드 - 0xAC00) % 28 == 0 이면 받침 없음
-    const hasJongseong = (lastCharCode - 0xAC00) % 28 !== 0;
-    
-    return hasJongseong ? '이' : '가';
-};
-
-// 일정을 카카오톡으로 공유
-const shareToKakao = (schedule) => {
-    // 카카오 SDK 확인
-    if (!initKakao()) {
-        showToast('카카오톡 연동 오류', 'error');
-        return;
-    }
-    
-    // 플레이스홀더 키 체크
-    if (KAKAO_APP_KEY === 'YOUR_JAVASCRIPT_KEY_HERE') {
-        alert('⚠️ 카카오 개발자 설정이 필요합니다\n\nschedule-core.js 파일에서\nKAKAO_APP_KEY를 발급받은 키로 변경해주세요.');
-        return;
-    }
-    
-    try {
-        // 일정 정보 포맷팅
-        const scheduleDate = new Date(schedule.date);
-        const dateStr = scheduleDate.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            weekday: 'short'
-        });
-        
-        const timeStr = schedule.all_day 
-            ? '종일' 
-            : `${schedule.start_time} ~ ${schedule.end_time}`;
-        
-        const locationStr = schedule.location || '장소 미정';
-        
-        // 타입별 이모지
-        const emojiMap = {
-            '상령일': '🎂',
-            '보험만기일': '⭐',
-            '생일': '🎁',
-            '결혼기념일': '💑',
-            '미팅': '🤝',
-            '상담': '📞',
-            '기타': '📋'
-        };
-        const emoji = emojiMap[schedule.type] || '📅';
-        
-        // 메모 추가
-        const memoStr = schedule.description ? `\n📝 ${schedule.description}` : '';
-        
-        // 사용자 정보 및 조사 처리
-        const userName = calendarData.userInfo.name || '담당자';
-        const userTitle = calendarData.userInfo.title || '';
-        
-        // 받침에 따라 '이/가' 자동 선택
-        const particle = getSubjectParticle(userTitle || userName);
-        const senderInfo = userTitle 
-            ? `💼 ${userName} ${userTitle}${particle} 공유한 일정입니다.\n\n`
-            : `💼 ${userName}${particle} 공유한 일정입니다.\n\n`;
-        
-        // 하단 메시지 (설정에서 가져오기)
-        const bottomMessage = calendarData.userInfo.kakaoMessage || '';
-        const bottomText = bottomMessage ? `\n\n※ ${bottomMessage}` : '';
-        
-        // URL 링크 처리
-        const kakaoUrl = calendarData.userInfo.kakaoUrl || '';
-        const kakaoUrlTitle = calendarData.userInfo.kakaoUrlTitle || '';
-        
-        // 디버깅: 카카오톡 공유 시 사용되는 URL 확인
-        console.log('📱 카카오톡 공유 - userInfo:', calendarData.userInfo);
-        console.log('📱 kakaoUrl:', kakaoUrl);
-        console.log('📱 kakaoUrlTitle:', kakaoUrlTitle);
-        
-        // link 속성은 항상 포함 (카카오톡 API 필수)
-        // 사용자가 설정한 링크가 있으면 그것을 사용하고, 없으면 현재 페이지로
-        const linkObj = {
-            mobileWebUrl: kakaoUrl || window.location.href,
-            webUrl: kakaoUrl || window.location.href
-        };
-        
-        console.log('📱 최종 linkObj:', linkObj);
-        
-        // 카카오톡 메시지 기본 파라미터
-        const kakaoParams = {
-            objectType: 'text',
-            text: `${senderInfo}${emoji} ${schedule.title}\n\n📅 ${dateStr}\n🕐 ${timeStr}\n📍 ${locationStr}${memoStr}${bottomText}`,
-            link: linkObj
-        };
-        
-        // 사용자가 링크를 설정했을 때만 버튼 추가 (클릭 가능한 링크)
-        if (kakaoUrl) {
-            console.log('📱 버튼 추가 - title:', kakaoUrlTitle || '자세히 보기');
-            kakaoParams.buttons = [
-                {
-                    title: kakaoUrlTitle || '자세히 보기',
-                    link: {
-                        mobileWebUrl: kakaoUrl,
-                        webUrl: kakaoUrl
-                    }
-                }
-            ];
-        }
-        
-        console.log('📱 최종 kakaoParams:', kakaoParams);
-        
-        Kakao.Share.sendDefault(kakaoParams);
-        
-        console.log('✅ 카카오톡 공유 완료:', schedule.title);
-        showToast('✅ 카카오톡으로 공유했습니다');
-        
-    } catch (error) {
-        console.error('❌ 카카오톡 공유 오류:', error);
-        showToast('카카오톡 공유 실패', 'error');
-    }
-}
-
-// ========================================
-// 할일 목록 관리
-// ========================================
-function addTodo(text, priority = 'normal') {
-    if (!text || !text.trim()) return null;
-    
+const addTodo = (text) => {
     const todo = {
-        id: Date.now().toString(),
-        text: text.trim(),
+        id: 'TODO_' + Date.now(),
+        text: text,
         completed: false,
-        priority: priority,  // high, normal, low
-        createdAt: new Date().toISOString(),
-        completedAt: null
+        created_at: new Date().toISOString()
     };
     
     calendarData.todos.push(todo);
-    saveData();
-    renderTodoList();
-    updateTodoStats();
-    
+    scheduleAutoSave();
     return todo;
-}
+};
 
-function toggleTodo(todoId) {
+const toggleTodo = (todoId) => {
     const todo = calendarData.todos.find(t => t.id === todoId);
     if (todo) {
         todo.completed = !todo.completed;
-        todo.completedAt = todo.completed ? new Date().toISOString() : null;
-        saveData();
-        renderTodoList();
-        updateTodoStats();
+        scheduleAutoSave();
+        return true;
+    }
+    return false;
+};
+
+const deleteTodo = (todoId) => {
+    const index = calendarData.todos.findIndex(t => t.id === todoId);
+    if (index !== -1) {
+        calendarData.todos.splice(index, 1);
+        scheduleAutoSave();
+        return true;
+    }
+    return false;
+};
+
+// ========================================
+// 카카오 SDK 초기화
+// ========================================
+if (typeof Kakao !== 'undefined') {
+    try {
+        if (!Kakao.isInitialized()) {
+            Kakao.init(KAKAO_APP_KEY);
+            console.log('✅ Kakao SDK 초기화 완료');
+        }
+    } catch (error) {
+        console.warn('Kakao SDK 초기화 실패:', error);
     }
 }
 
-function deleteTodo(todoId) {
-    calendarData.todos = calendarData.todos.filter(t => t.id !== todoId);
-    saveData();
-    renderTodoList();
-    updateTodoStats();
-}
+// 사용자 정보 업데이트
+const updateUserInfo = (info) => {
+    calendarData.userInfo = {
+        ...calendarData.userInfo,
+        ...info
+    };
+    scheduleAutoSave();
+};
 
-function updateTodo(todoId, newText) {
-    const todo = calendarData.todos.find(t => t.id === todoId);
-    if (todo && newText && newText.trim()) {
-        todo.text = newText.trim();
-        saveData();
-        renderTodoList();
-    }
-}
-
-function clearCompletedTodos() {
-    calendarData.todos = calendarData.todos.filter(t => !t.completed);
-    saveData();
-    renderTodoList();
-    updateTodoStats();
-}
-
-// ========================================
-// 디데이 (D-Day) 계산
-// ========================================
-function calculateDday(targetDate) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+// 받침 판별 함수
+function getSubjectParticle(word) {
+    if (!word || word.length === 0) return '이';
     
-    const target = new Date(targetDate);
-    target.setHours(0, 0, 0, 0);
+    const lastChar = word.charCodeAt(word.length - 1);
+    // 한글 범위 체크 (가 = 44032, 힣 = 55203)
+    if (lastChar < 44032 || lastChar > 55203) return '이';
     
-    const diffTime = target - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
+    // 받침 유무 판별 ((lastChar - 44032) % 28)
+    return ((lastChar - 44032) % 28) === 0 ? '가' : '이';
 }
 
-function getDdayText(days) {
-    if (days === 0) return 'D-Day';
-    if (days > 0) return `D-${days}`;
-    if (days < 0) return `D+${Math.abs(days)}`;
-}
-
-function getDdayColor(days) {
-    if (days === 0) return '#ff0000'; // 오늘 - 빨강
-    if (days <= 3) return '#ff6b6b'; // 3일 이내 - 주황
-    if (days <= 7) return '#ffa500'; // 7일 이내 - 주황
-    if (days <= 14) return '#ffd700'; // 14일 이내 - 노랑
-    return '#4285f4'; // 그 이상 - 파랑
-}
-
-// ========================================
-// ========================================
-// 페이지 로드 시 초기화
-// ========================================
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    init();
-}
+// DOMContentLoaded 이벤트
+document.addEventListener('DOMContentLoaded', init);
