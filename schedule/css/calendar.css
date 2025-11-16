@@ -366,8 +366,10 @@
 }
 
 .fc-event[data-type="미팅"] {
-    background-color: #FFD93D;
+    background-color: #FFFFFF;
     color: #333;
+    border: 1px solid #dadce0 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .fc-event[data-type="상담"] {
@@ -376,8 +378,10 @@
 }
 
 .fc-event[data-type="기타"] {
-    background-color: #95a5a6;
-    color: white;
+    background-color: #FFFFFF;
+    color: #333;
+    border: 1px solid #dadce0 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 /* 구글 캘린더 일정 */
