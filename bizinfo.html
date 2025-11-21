@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>기업 지원사업 AI 매칭 - KFPC</title>
+  
+  <style>
+    /* ==================== iOS Safari 최적화 ==================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+      -webkit-touch-callout: none;
+    }
+    
+    html {
+      /* iOS Safari 100vh 문제 해결 */
+      height: -webkit-fill-available;
+      height: 100%;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
+      color: #fff;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      
+      /* iOS Safari 스크롤 최적화 */
+      -webkit-overflow-scrolling: touch;
+      overflow-y: auto;
+      
+      /* 노치 대응 */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      
+      /* 텍스트 선택 방지 (폼 제외) */
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    /* 입력 필드는 선택 가능 */
+    input, textarea, select {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    
+    /* ==================== 로딩 화면 ==================== */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      height: -webkit-fill-available;
+      background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    
+    #loading-screen.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    
+    /* ==================== 메인 컨테이너 ==================== */
+    #main-content {
+      display: none;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+      padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+    }
+    
+    /* ==================== 헤더 ==================== */
+    .header {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .header h1 {
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    
+    .header p {
+      font-size: clamp(0.9rem, 3vw, 1rem);
+      opacity: 0.9;
+    }
+    
+    .top-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    /* ==================== 버튼 스타일 ==================== */
+    .btn {
+      padding: 0.75rem 1.25rem;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      /* iOS 터치 최적화 */
+      -webkit-appearance: none;
+      appearance: none;
+      touch-action: manipulation;
+      min-height: 44px; /* iOS 권장 터치 타겟 크기 */
+    }
+    
+    .btn:active {
+      transform: scale(0.98);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(255, 136, 2, 0.3);
+    }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-home {
+      background: rgba(76, 175, 80, 0.2);
+      color: #fff;
+      border: 1px solid rgba(76, 175, 80, 0.4);
+    }
+    
+    /* ==================== 카드 스타일 ==================== */
+    .card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .card h2 {
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      margin-bottom: 1rem;
+      color: #ffd27f;
+    }
+    
+    /* ==================== 고객사 선택 섹션 ==================== */
+    .company-selector {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .company-selector select {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    /* ==================== 입력 필드 ==================== */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #ffd27f;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.875rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.95);
+      color: #333;
+      font-size: 16px; /* iOS zoom 방지 */
+      
+      /* iOS 스타일 제거 */
+      -webkit-appearance: none;
+      appearance: none;
+      
+      /* iOS 그림자 제거 */
+      -webkit-box-shadow: none;
+      box-shadow: none;
+    }
+    
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.875rem center;
+      padding-right: 2.5rem;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #FF8802;
+      box-shadow: 0 0 0 3px rgba(255, 136, 2, 0.2);
+    }
+    
+    /* ==================== 체크박스 그리드 ==================== */
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      padding: 0.625rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 44px;
+    }
+    
+    .checkbox-item:active {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .checkbox-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 0.5rem;
+      cursor: pointer;
+      
+      /* iOS 체크박스 커스터마이징 */
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255,255,255,0.9);
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 4px;
+      position: relative;
+    }
+    
+    .checkbox-item input[type="checkbox"]:checked {
+      background: #FF8802;
+      border-color: #FF8802;
+    }
+    
+    .checkbox-item input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .checkbox-item label {
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin: 0;
+      color: #fff;
+    }
+    
+    /* ==================== 저장된 고객사 목록 ==================== */
+    .companies-list {
+      max-height: 300px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 1rem;
+    }
+    
+    .company-item {
+      background: rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 60px;
+    }
+    
+    .company-item:active {
+      background: rgba(255,255,255,0.2);
+      transform: scale(0.99);
+    }
+    
+    .company-info h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .company-info p {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    
+    .company-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .btn-small {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      min-height: 36px;
+    }
+    
+    /* ==================== 결과 카드 ==================== */
+    .result-card {
+      background: rgba(255,255,255,0.95);
+      color: #333;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .result-card .rank {
+      display: inline-block;
+      background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    
+    .result-card h3 {
+      font-size: 1.2rem;
+      color: #0c2c54;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+    }
+    
+    .result-card .org {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .match-score {
+      display: inline-block;
+      background: #4CAF50;
+      color: white;
+      padding: 0.375rem 0.875rem;
+      border-radius: 20px;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .result-section {
+      margin-bottom: 1rem;
+    }
+    
+    .result-section h4 {
+      font-size: 0.95rem;
+      color: #0c2c54;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    
+    .result-section p {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #555;
+    }
+    
+    .priority-tag {
+      display: inline-block;
+      padding: 0.375rem 0.875rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+    
+    .priority-즉시신청 {
+      background: #ff5252;
+      color: white;
+    }
+    
+    .priority-준비후신청 {
+      background: #FFA726;
+      color: white;
+    }
+    
+    .priority-장기검토 {
+      background: #42A5F5;
+      color: white;
+    }
+    
+    /* ==================== 모바일 최적화 ==================== */
+    @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+      }
+      
+      #main-content {
+        padding: 0.5rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+      }
+      
+      .header {
+        padding: 1rem;
+      }
+      
+      .card {
+        padding: 1rem;
+      }
+      
+      .checkbox-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem;
+      }
+      
+      .top-buttons {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+      
+      .company-selector {
+        flex-direction: column;
+      }
+      
+      .company-selector select,
+      .company-selector .btn {
+        width: 100%;
+      }
+    }
+    
+    /* iPhone SE 등 소형 기기 */
+    @media (max-width: 375px) {
+      .header h1 {
+        font-size: 1.3rem;
+      }
+      
+      .checkbox-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .result-card {
+        padding: 1rem;
+      }
+    }
+    
+    /* ==================== 가로 모드 최적화 ==================== */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        padding-top: 0.5rem;
+      }
+      
+      .header {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      
+      .card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+    }
+    
+    /* ==================== 다크모드 대응 ==================== */
+    @media (prefers-color-scheme: dark) {
+      /* iOS 다크모드 사용자를 위한 추가 최적화 */
+      .form-group input,
+      .form-group select {
+        background: rgba(255,255,255,0.9);
+      }
+    }
+    
+    /* ==================== 로딩 오버레이 ==================== */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      height: -webkit-fill-available;
+      background: rgba(12, 44, 84, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      flex-direction: column;
+    }
+    
+    .loading-overlay.show {
+      display: flex;
+    }
+    
+    .loading-overlay .loader {
+      width: 60px;
+      height: 60px;
+      border-width: 5px;
+    }
+    
+    .loading-overlay .loading-text {
+      font-size: 1.2rem;
+      text-align: center;
+      padding: 0 2rem;
+    }
+    
+    .loading-steps {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      text-align: center;
+    }
+    
+    /* ==================== 스크롤바 스타일 (WebKit만) ==================== */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- 로딩 화면 -->
+  <div id="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text">앱 로딩 중...</div>
+  </div>
+
+  <!-- 로딩 오버레이 (분석 중) -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loader"></div>
+    <div class="loading-text" id="overlay-text">기업마당 조회 중...</div>
+    <div class="loading-steps" id="overlay-steps"></div>
+  </div>
+
+  <!-- 메인 컨텐츠 -->
+  <div id="main-content">
+    <!-- 헤더 -->
+    <div class="header">
+      <h1>🏢 기업 지원사업 AI 매칭</h1>
+      <p>Gemini 2.0 Flash 기반 맞춤 추천</p>
+      <div class="top-buttons">
+        <button class="btn btn-home" onclick="goHome()">🏠 메인으로</button>
+      </div>
+    </div>
+
+    <!-- 고객사 선택/등록 -->
+    <div class="card">
+      <h2>1. 고객사 선택</h2>
+      <div class="company-selector">
+        <select id="company-select" onchange="loadSelectedCompany()">
+          <option value="">-- 새로 입력 --</option>
+        </select>
+        <button class="btn btn-primary btn-small" onclick="showCompanyList()">목록 보기</button>
+      </div>
+    </div>
+
+    <!-- 기업 정보 입력 -->
+    <div class="card">
+      <h2>2. 기업 정보 입력</h2>
+      
+      <div class="form-group">
+        <label for="company-name">회사명 *</label>
+        <input type="text" id="company-name" placeholder="예: (주)한국FP센터" required>
+      </div>
+
+      <div class="form-group">
+        <label for="industry">업종 *</label>
+        <select id="industry" required>
+          <option value="">선택하세요</option>
+          <option value="IT/소프트웨어">IT/소프트웨어</option>
+          <option value="제조업">제조업</option>
+          <option value="서비스업">서비스업</option>
+          <option value="도소매">도소매/유통</option>
+          <option value="건설">건설</option>
+          <option value="관광/숙박">관광/숙박/음식</option>
+          <option value="교육">교육</option>
+          <option value="의료/바이오">의료/바이오</option>
+          <option value="문화/콘텐츠">문화/콘텐츠</option>
+          <option value="농림어업">농림어업</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="location">소재지 *</label>
+        <select id="location" required>
+          <option value="">선택하세요</option>
+          <option value="서울">서울</option>
+          <option value="경기">경기</option>
+          <option value="인천">인천</option>
+          <option value="부산">부산</option>
+          <option value="대구">대구</option>
+          <option value="대전">대전</option>
+          <option value="광주">광주</option>
+          <option value="울산">울산</option>
+          <option value="세종">세종</option>
+          <option value="강원">강원</option>
+          <option value="충북">충북</option>
+          <option value="충남">충남</option>
+          <option value="전북">전북</option>
+          <option value="전남">전남</option>
+          <option value="경북">경북</option>
+          <option value="경남">경남</option>
+          <option value="제주">제주</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="size">기업 규모 *</label>
+        <select id="size" required>
+          <option value="">선택하세요</option>
+          <option value="소기업">소기업</option>
+          <option value="중기업">중기업</option>
+          <option value="대기업">대기업</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="revenue">매출액 (억원) *</label>
+        <input type="number" id="revenue" placeholder="예: 15" required>
+      </div>
+
+      <div class="form-group">
+        <label for="experience">업력 (년) *</label>
+        <input type="number" id="experience" placeholder="예: 5" required>
+      </div>
+    </div>
+
+    <!-- 인증 정보 -->
+    <div class="card">
+      <h2>3. 인증 정보 (선택)</h2>
+      <div class="checkbox-grid" id="certifications">
+        <div class="checkbox-item">
+          <input type="checkbox" id="cert-venture" value="벤처기업">
+          <label for="cert-venture">벤처기업</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="cert-innobiz" value="이노비즈">
+          <label for="cert-innobiz">이노비즈</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="cert-mainbiz" value="메인비즈">
+          <label for="cert-mainbiz">메인비즈</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="cert-woman" value="여성기업">
+          <label for="cert-woman">여성기업</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="cert-social" value="사회적기업">
+          <label for="cert-social">사회적기업</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="cert-export" value="수출기업">
+          <label for="cert-export">수출기업</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 목표 (선택) -->
+    <div class="card">
+      <h2>4. 지원 목표 (선택)</h2>
+      <div class="checkbox-grid" id="goals">
+        <div class="checkbox-item">
+          <input type="checkbox" id="goal-rd" value="R&D">
+          <label for="goal-rd">R&D/기술개발</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="goal-export" value="수출">
+          <label for="goal-export">수출/해외진출</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="goal-employ" value="고용">
+          <label for="goal-employ">고용/인력</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="goal-facility" value="시설">
+          <label for="goal-facility">시설/설비</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="goal-marketing" value="마케팅">
+          <label for="goal-marketing">마케팅/판로</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="goal-funding" value="자금">
+          <label for="goal-funding">운영자금</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실행 버튼 -->
+    <div class="card">
+      <button class="btn btn-primary" onclick="analyzePrograms()" style="width: 100%; font-size: 1.1rem; padding: 1rem;">
+        🔍 맞춤 지원사업 찾기
+      </button>
+      <button class="btn btn-secondary" onclick="saveCompany()" style="width: 100%; margin-top: 0.75rem;">
+        💾 이 정보 저장하기
+      </button>
+    </div>
+
+    <!-- 결과 표시 영역 -->
+    <div id="results-section" style="display: none;">
+      <!-- 결과가 여기에 동적으로 추가됨 -->
+    </div>
+  </div>
+
+  <script>
+    // ==================== 전역 변수 ====================
+    let savedCompanies = {};
+
+    // ==================== 앱 초기화 ====================
+    async function initializeApp() {
+      try {
+        console.log('🚀 앱 초기화 시작');
+        
+        // 저장된 고객사 불러오기 (localStorage 사용)
+        loadSavedCompanies();
+        
+        hideLoading();
+        
+      } catch (error) {
+        console.error('❌ 초기화 실패:', error);
+        alert('시스템 초기화에 실패했습니다.\n\n' + error.message);
+      }
+    }
+    
+    function hideLoading() {
+      const loading = document.getElementById('loading-screen');
+      const mainContent = document.getElementById('main-content');
+      
+      loading.classList.add('hide');
+      mainContent.style.display = 'block';
+      
+      setTimeout(() => {
+        loading.style.display = 'none';
+      }, 300);
+    }
+    
+    // ==================== 고객사 저장/불러오기 (localStorage) ====================
+    async function loadSavedCompanies() {
+      try {
+        console.log('📁 저장된 고객사 불러오는 중...');
+        
+        const saved = localStorage.getItem('bizinfo_companies');
+        if (saved) {
+          savedCompanies = JSON.parse(saved);
+          updateCompanySelect();
+          console.log(`✅ ${Object.keys(savedCompanies).length}개 고객사 로드`);
+        } else {
+          console.log('ℹ️ 저장된 고객사 없음');
+        }
+        
+      } catch (error) {
+        console.warn('⚠️ 고객사 로드 실패:', error);
+      }
+    }
+    
+    function updateCompanySelect() {
+      const select = document.getElementById('company-select');
+      select.innerHTML = '<option value="">-- 새로 입력 --</option>';
+      
+      Object.keys(savedCompanies).forEach(id => {
+        const company = savedCompanies[id];
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = `${company.name} (${company.industry})`;
+        select.appendChild(option);
+      });
+    }
+    
+    function loadSelectedCompany() {
+      const select = document.getElementById('company-select');
+      const companyId = select.value;
+      
+      if (!companyId) {
+        clearForm();
+        return;
+      }
+      
+      const company = savedCompanies[companyId];
+      if (!company) return;
+      
+      // 폼에 데이터 채우기
+      document.getElementById('company-name').value = company.name || '';
+      document.getElementById('industry').value = company.industry || '';
+      document.getElementById('location').value = company.location || '';
+      document.getElementById('size').value = company.size || '';
+      document.getElementById('revenue').value = company.revenue || '';
+      document.getElementById('experience').value = company.experience || '';
+      
+      // 체크박스
+      document.querySelectorAll('#certifications input[type="checkbox"]').forEach(cb => {
+        cb.checked = company.certifications?.includes(cb.value) || false;
+      });
+      
+      document.querySelectorAll('#goals input[type="checkbox"]').forEach(cb => {
+        cb.checked = company.goals?.includes(cb.value) || false;
+      });
+      
+      console.log('✅ 고객사 정보 로드:', company.name);
+    }
+    
+    async function saveCompany() {
+      try {
+        const companyData = collectFormData();
+        
+        if (!companyData.companyName) {
+          alert('회사명을 입력해주세요.');
+          return;
+        }
+        
+        const companyId = Date.now().toString();
+        savedCompanies[companyId] = {
+          ...companyData,
+          name: companyData.companyName,
+          savedAt: new Date().toISOString()
+        };
+        
+        // localStorage에 저장
+        localStorage.setItem('bizinfo_companies', JSON.stringify(savedCompanies));
+        
+        updateCompanySelect();
+        
+        alert(`✅ "${companyData.companyName}" 저장 완료!`);
+        console.log('💾 고객사 저장 완료');
+        
+      } catch (error) {
+        console.error('❌ 저장 실패:', error);
+        alert('저장에 실패했습니다.\n\n' + error.message);
+      }
+    }
+    
+    function showCompanyList() {
+      const companies = Object.values(savedCompanies);
+      
+      if (companies.length === 0) {
+        alert('저장된 고객사가 없습니다.');
+        return;
+      }
+      
+      let html = '<div class="card"><h2>📋 저장된 고객사</h2><div class="companies-list">';
+      
+      Object.keys(savedCompanies).forEach(id => {
+        const company = savedCompanies[id];
+        html += `
+          <div class="company-item" onclick="selectAndLoadCompany('${id}')">
+            <div class="company-info">
+              <h3>${company.name}</h3>
+              <p>${company.industry} | ${company.location} | ${company.size}</p>
+            </div>
+            <div class="company-actions">
+              <button class="btn btn-primary btn-small" onclick="event.stopPropagation(); selectAndLoadCompany('${id}')">선택</button>
+              <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); deleteCompany('${id}')">삭제</button>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div></div>';
+      
+      const resultsSection = document.getElementById('results-section');
+      resultsSection.innerHTML = html;
+      resultsSection.style.display = 'block';
+      resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function selectAndLoadCompany(companyId) {
+      const select = document.getElementById('company-select');
+      select.value = companyId;
+      loadSelectedCompany();
+      
+      // 스크롤을 폼으로
+      document.getElementById('company-name').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    async function deleteCompany(companyId) {
+      const company = savedCompanies[companyId];
+      if (!confirm(`"${company.name}"을(를) 삭제하시겠습니까?`)) {
+        return;
+      }
+      
+      try {
+        delete savedCompanies[companyId];
+        
+        // localStorage에 저장
+        localStorage.setItem('bizinfo_companies', JSON.stringify(savedCompanies));
+        
+        updateCompanySelect();
+        showCompanyList(); // 목록 갱신
+        
+        alert('삭제되었습니다.');
+        
+      } catch (error) {
+        console.error('❌ 삭제 실패:', error);
+        alert('삭제에 실패했습니다.');
+      }
+    }
+    
+    // ==================== 폼 데이터 수집 ====================
+    function collectFormData() {
+      const certifications = Array.from(
+        document.querySelectorAll('#certifications input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      
+      const goals = Array.from(
+        document.querySelectorAll('#goals input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      
+      return {
+        companyName: document.getElementById('company-name').value.trim(),
+        industry: document.getElementById('industry').value,
+        location: document.getElementById('location').value,
+        size: document.getElementById('size').value,
+        revenue: document.getElementById('revenue').value,
+        experience: document.getElementById('experience').value,
+        certifications: certifications,
+        goals: goals
+      };
+    }
+    
+    function clearForm() {
+      document.getElementById('company-name').value = '';
+      document.getElementById('industry').value = '';
+      document.getElementById('location').value = '';
+      document.getElementById('size').value = '';
+      document.getElementById('revenue').value = '';
+      document.getElementById('experience').value = '';
+      
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+      });
+    }
+    
+    // ==================== AI 분석 실행 ====================
+    async function analyzePrograms() {
+      const companyData = collectFormData();
+      
+      // 필수 항목 확인
+      if (!companyData.companyName || !companyData.industry || 
+          !companyData.location || !companyData.size || 
+          !companyData.revenue || !companyData.experience) {
+        alert('필수 항목(*)을 모두 입력해주세요.');
+        return;
+      }
+      
+      try {
+        // 로딩 오버레이 표시
+        showLoadingOverlay('기업마당 API 조회 중...', '500개 지원사업 확인 중');
+        
+        console.log('🔍 분석 시작:', companyData.companyName);
+        
+        // Netlify Functions 호출
+        const response = await fetch('/.netlify/functions/analyzeBizInfo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            companyProfile: companyData
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`서버 오류: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        console.log('✅ 분석 완료:', result);
+        
+        hideLoadingOverlay();
+        
+        // 결과 표시
+        displayResults(result);
+        
+      } catch (error) {
+        hideLoadingOverlay();
+        console.error('❌ 분석 실패:', error);
+        
+        let errorMsg = '분석에 실패했습니다.';
+        if (error.message) {
+          errorMsg += '\n\n' + error.message;
+        }
+        
+        alert(errorMsg);
+      }
+    }
+    
+    function showLoadingOverlay(text, steps) {
+      const overlay = document.getElementById('loading-overlay');
+      const textEl = document.getElementById('overlay-text');
+      const stepsEl = document.getElementById('overlay-steps');
+      
+      textEl.textContent = text;
+      stepsEl.textContent = steps || '';
+      overlay.classList.add('show');
+      
+      // 진행 상황 시뮬레이션
+      setTimeout(() => {
+        if (overlay.classList.contains('show')) {
+          textEl.textContent = 'Gemini 2.0 Flash 분석 중...';
+          stepsEl.textContent = '최적의 사업 선별 중';
+        }
+      }, 3000);
+    }
+    
+    function hideLoadingOverlay() {
+      const overlay = document.getElementById('loading-overlay');
+      overlay.classList.remove('show');
+    }
+    
+    // ==================== 결과 표시 ====================
+    function displayResults(data) {
+      const resultsSection = document.getElementById('results-section');
+      
+      if (!data.success || !data.recommendations || data.recommendations.length === 0) {
+        resultsSection.innerHTML = `
+          <div class="card" style="background: rgba(255,200,100,0.2);">
+            <h2>⚠️ 추천 결과 없음</h2>
+            <p>현재 입력하신 조건에 맞는 지원사업을 찾지 못했습니다.</p>
+            <p style="margin-top: 1rem;">다른 조건으로 다시 검색해보세요.</p>
+          </div>
+        `;
+        resultsSection.style.display = 'block';
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      
+      let html = `
+        <div class="card">
+          <h2>💡 AI 추천 결과</h2>
+          <p>총 ${data.totalPrograms}개 중 ${data.filteredPrograms}개 필터링 → ${data.recommendations.length}개 추천</p>
+        </div>
+      `;
+      
+      data.recommendations.forEach((rec, index) => {
+        html += `
+          <div class="result-card">
+            <span class="rank">${rec.rank || (index + 1)}위</span>
+            <h3>${rec.programName}</h3>
+            <div class="org">${rec.organization}</div>
+            <span class="match-score">매칭도 ${rec.matchScore}점</span>
+            
+            <div class="result-section">
+              <h4>✅ 추천 이유</h4>
+              <p>${rec.reason}</p>
+            </div>
+            
+            ${rec.benefits ? `
+            <div class="result-section">
+              <h4>💰 지원 내용</h4>
+              <p>${rec.benefits}</p>
+            </div>
+            ` : ''}
+            
+            ${rec.cautions ? `
+            <div class="result-section">
+              <h4>⚠️ 주의사항</h4>
+              <p>${rec.cautions}</p>
+            </div>
+            ` : ''}
+            
+            ${rec.applicationPeriod ? `
+            <div class="result-section">
+              <h4>📅 신청기간</h4>
+              <p>${rec.applicationPeriod}</p>
+            </div>
+            ` : ''}
+            
+            ${rec.priority ? `
+              <span class="priority-tag priority-${rec.priority}">${rec.priority}</span>
+            ` : ''}
+            
+            ${rec.detailUrl ? `
+              <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" 
+                      onclick="window.open('${rec.detailUrl}', '_blank')">
+                상세보기 →
+              </button>
+            ` : ''}
+          </div>
+        `;
+      });
+      
+      resultsSection.innerHTML = html;
+      resultsSection.style.display = 'block';
+      
+      // 부드럽게 스크롤
+      setTimeout(() => {
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+    
+    // ==================== 네비게이션 ====================
+    function goHome() {
+      window.location.href = 'index.html';
+    }
+    
+    // ==================== 페이지 로드 시 초기화 ====================
+    window.addEventListener('load', () => {
+      console.log('📱 페이지 로드 완료');
+      initializeApp();
+    });
+  </script>
+</body>
+</html>
