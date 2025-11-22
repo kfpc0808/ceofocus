@@ -3696,6 +3696,13 @@
                     <div style="color: ${data.mainbiz === 'Y' ? '#10b981' : '#999'}; font-weight: 700;">${data.mainbiz === 'Y' ? '있음' : '없음'}</div>
                   </div>
                 ` : ''}
+                
+                ${data.researchLab ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">연구조직</div>
+                    <div style="color: #10b981; font-weight: 700;">${data.researchLab}</div>
+                  </div>
+                ` : ''}
               </div>
             </div>
             
@@ -4056,6 +4063,41 @@
     }
     
     /**
+     * 🔬 기업부설연구소 조회
+     */
+    async function getResearchLabInfo(companyName, businessNumber) {
+      try {
+        console.log(`🔬 부설연구소 조회 시작: ${companyName}`);
+        
+        // Netlify Function 호출
+        const response = await fetch('/.netlify/functions/getResearchLab', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            companyName: companyName,
+            businessNumber: businessNumber
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log(`✅ 부설연구소 조회 성공: ${result.labType || '보유'}`);
+        } else {
+          console.log(`❌ 부설연구소 조회 실패: ${result.message}`);
+        }
+        
+        return result;
+        
+      } catch (error) {
+        console.error('❌ 부설연구소 API 오류:', error);
+        return { success: false, message: 'API 호출 실패: ' + error.message };
+      }
+    }
+    
+    /**
      * 🤖 통합 자동입력 함수 (실제 API 호출)
      */
     async function autoFillCompanyInfo(businessNumber) {
@@ -4066,6 +4108,7 @@
         '🚀 벤처기업 인증 확인 중...',
         '💡 이노비즈 인증 확인 중...',
         '🏆 메인비즈 인증 확인 중...',
+        '🔬 기업부설연구소 확인 중...',
         '✨ 데이터 통합 중...'
       ];
       
@@ -4075,6 +4118,7 @@
       let ventureData = null;
       let innobizData = null;
       let mainbizData = null;
+      let researchLabData = null;
       
       const messageInterval = setInterval(() => {
         const loadingMsg = document.getElementById('loading-message');
@@ -4223,6 +4267,24 @@
           }
         }
         
+        // 7단계: 기업부설연구소 조회
+        researchLabData = await getResearchLabInfo(ntsData.companyName, businessNumber);
+        
+        if (researchLabData.success) {
+          const researchOrgElem = document.getElementById('research-org');
+          
+          if (researchOrgElem && researchLabData.labType) {
+            // labType에 따라 선택
+            if (researchLabData.labType.includes('연구소')) {
+              researchOrgElem.value = '기업부설연구소';
+            } else if (researchLabData.labType.includes('전담부서')) {
+              researchOrgElem.value = '연구개발전담부서';
+            } else {
+              researchOrgElem.value = '기업부설연구소'; // 기본값
+            }
+          }
+        }
+        
         clearInterval(messageInterval);
         
         // 3대 인증 정보 추가
@@ -4252,6 +4314,15 @@
           }
         }
         
+        // 부설연구소 정보 추가
+        if (researchLabData.success) {
+          successMsg += `\n🔬 기업부설연구소:\n`;
+          successMsg += `✅ ${researchLabData.labType || '기업부설연구소'} 보유\n`;
+          if (researchLabData.labName) {
+            successMsg += `   연구소명: ${researchLabData.labName}\n`;
+          }
+        }
+        
         successMsg += `\n나머지 항목은 수동으로 입력해주세요.`;
         
         // 결과 반환
@@ -4267,7 +4338,8 @@
           patents: patentData?.totalCount || null,
           venture: ventureData?.isValid ? '있음' : ventureData?.success ? '만료' : null,
           innobiz: innobizData?.isValid ? '있음' : innobizData?.success ? '만료' : null,
-          mainbiz: mainbizData?.isValid ? 'Y' : mainbizData?.success ? 'N' : null
+          mainbiz: mainbizData?.isValid ? 'Y' : mainbizData?.success ? 'N' : null,
+          researchLab: researchLabData?.success ? researchLabData.labType : null
         };
         
       } catch (error) {
