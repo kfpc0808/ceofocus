@@ -462,6 +462,17 @@
       .card {
         padding: 1.25rem;
       }
+      
+      /* 자동입력 버튼 모바일 최적화 */
+      .auto-fill-btn {
+        padding: 1.2rem;
+        font-size: 1.1rem;
+        min-height: 56px; /* 터치하기 쉬운 크기 */
+      }
+      
+      .auto-fill-btn span {
+        font-size: 1.1rem;
+      }
     }
     
     /* 버튼 1행 고정 */
@@ -673,44 +684,41 @@
       </button>
     </div>
 
-    <!-- 회사명 검색 섹션 -->
-    <div class="company-search-section">
-      <h3>🔍 회사 빠른 검색</h3>
-      <p class="hint">회사명 또는 사업자등록번호로 검색하세요</p>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
-        <!-- 회사명 입력 -->
-        <div class="form-group" style="margin: 0;">
-          <label>회사명</label>
-          <input 
-            type="text" 
-            id="company-search-input"
-            placeholder="예: 삼성전자"
-            autocomplete="off"
-            style="width: 100%; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px;">
-        </div>
-        
-        <!-- 사업자등록번호 입력 -->
-        <div class="form-group" style="margin: 0;">
-          <label>사업자등록번호</label>
-          <div style="display: flex; align-items: center; gap: 0.3rem;">
-            <input type="text" id="search-biz-1" placeholder="000" maxlength="3" style="width: 70px; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px; text-align: center;" inputmode="numeric" oninput="allowOnlyNumbers(this); if(this.value.length===3) document.getElementById('search-biz-2').focus()">
-            <span style="color: #FFB84D; font-weight: 700;">-</span>
-            <input type="text" id="search-biz-2" placeholder="00" maxlength="2" style="width: 55px; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px; text-align: center;" inputmode="numeric" oninput="allowOnlyNumbers(this); if(this.value.length===2) document.getElementById('search-biz-3').focus()">
-            <span style="color: #FFB84D; font-weight: 700;">-</span>
-            <input type="text" id="search-biz-3" placeholder="00000" maxlength="5" style="width: 90px; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px; text-align: center;" inputmode="numeric" oninput="allowOnlyNumbers(this)">
+    <!-- 사용 안내 섹션 -->
+    <div class="company-search-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+      <h3 style="color: white; margin-bottom: 1rem;">💡 사용 안내</h3>
+      <div style="background: rgba(255,255,255,0.95); padding: 1.5rem; border-radius: 15px;">
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; align-items: start; gap: 1rem;">
+            <div style="background: #4CAF50; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
+            <div>
+              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Section 1에서 사업자번호 입력</h4>
+              <p style="color: #666; margin: 0; font-size: 0.95rem;">기업 식별정보 → 사업자등록번호 3개 칸 모두 입력</p>
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: start; gap: 1rem;">
+            <div style="background: #FF8802; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
+            <div>
+              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🤖 기업정보 자동입력 버튼 클릭</h4>
+              <p style="color: #666; margin: 0; font-size: 0.95rem;">국세청, 금융위원회 등 실제 API로 <strong>전국 모든 사업자</strong> 조회 가능</p>
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: start; gap: 1rem;">
+            <div style="background: #2196F3; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
+            <div>
+              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">자동으로 모든 정보 입력 완료</h4>
+              <p style="color: #666; margin: 0; font-size: 0.95rem;">기업명, 대표자, 업종, 소재지 등 자동 입력 (3~5초 소요)</p>
+            </div>
           </div>
         </div>
         
-        <!-- 조회 버튼 -->
-        <button id="search-company-btn" class="btn" style="background: #FF8802; color: white; padding: 0.875rem 2rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; white-space: nowrap; height: 52px;">
-          🔍 조회
-        </button>
-      </div>
-      
-      <!-- 검색 결과 -->
-      <div id="search-results" class="search-dropdown" style="display:none; margin-top: 1rem;">
-        <!-- 검색 결과가 여기에 표시됩니다 -->
+        <div style="margin-top: 1.5rem; padding: 1rem; background: #FFF3E0; border-left: 4px solid #FF8802; border-radius: 8px;">
+          <p style="margin: 0; color: #E65100; font-weight: 600;">
+            ⚡ <strong>전국 모든 사업자 조회 가능!</strong> 사업자번호만 입력하면 즉시 조회됩니다.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -753,6 +761,18 @@
           <input type="date" id="establish-date" required>
           <span class="info-text">입력 시 업력 자동 계산됨</span>
         </div>
+      </div>
+      
+      <!-- 기업정보 자동입력 버튼 -->
+      <div style="margin-top: 1.5rem;">
+        <button type="button" id="auto-fill-btn" class="auto-fill-btn" disabled>
+          <span>🤖</span>
+          <span>기업정보 자동입력</span>
+        </button>
+        <p style="text-align: center; margin-top: 0.75rem; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
+          💡 사업자번호를 입력하면 버튼이 활성화됩니다<br>
+          클릭 시 국세청, 금융위원회 등에서 자동으로 정보를 가져옵니다
+        </p>
       </div>
       
       <h3>1-2. 기업 분류</h3>
@@ -1822,7 +1842,7 @@
         🔍 맞춤 지원사업 찾기
       </button>
       <button class="btn btn-secondary" onclick="saveCompany()" style="width: 100%;">
-        💾 이 정보 저장하기 (AES-256 암호화)
+        💾 저장
       </button>
     </div>
 
@@ -1857,6 +1877,33 @@
     
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
+    
+    // ==================== 유틸리티 함수 ====================
+    
+    /**
+     * 숫자만 입력 허용
+     */
+    function allowOnlyNumbers(input) {
+      input.value = input.value.replace(/[^0-9]/g, '');
+    }
+    
+    /**
+     * 숫자 포맷팅 (천단위 쉼표)
+     */
+    function formatNumber(num) {
+      if (!num) return '';
+      return parseInt(num).toLocaleString('ko-KR');
+    }
+    
+    /**
+     * 최대 길이 도달 시 자동 포커스 이동
+     */
+    function moveFocusOnMaxLength(current, nextId, maxLength) {
+      if (current.value.length >= maxLength) {
+        const nextElement = document.getElementById(nextId);
+        if (nextElement) nextElement.focus();
+      }
+    }
     
     // ==================== 테스트 데이터 (Phase 1) ====================
     const MOCK_COMPANIES = [
@@ -2982,7 +3029,26 @@
           await autoFillCompanyInfo(businessNumber);
         } catch (error) {
           console.error('자동입력 오류:', error);
-          alert('❌ 자동입력에 실패했습니다.\n수동으로 입력해주세요.');
+          
+          // 에러 유형에 따른 명확한 안내
+          let errorMsg = '❌ 기업정보 자동입력 실패\n\n';
+          
+          if (error.message.includes('API') || error.message.includes('Failed to fetch')) {
+            errorMsg += '📡 API 연결 오류\n';
+            errorMsg += '• 네트워크 연결을 확인해주세요\n';
+            errorMsg += '• 방화벽 설정을 확인해주세요\n';
+            errorMsg += '• HTTPS로 접속했는지 확인해주세요\n\n';
+          } else if (error.message.includes('찾을 수 없습니다')) {
+            errorMsg += '🔍 사업자 정보 없음\n';
+            errorMsg += '• 사업자번호를 다시 확인해주세요\n';
+            errorMsg += '• 폐업된 사업자일 수 있습니다\n\n';
+          } else {
+            errorMsg += '⚠️ ' + error.message + '\n\n';
+          }
+          
+          errorMsg += '💡 수동으로 입력을 진행해주세요';
+          
+          alert(errorMsg);
         } finally {
           autoFillBtn.disabled = false;
           autoFillBtn.innerHTML = '<span>🤖</span><span>기업정보 자동입력</span>';
@@ -3448,6 +3514,28 @@
       const localTaxArrears = document.getElementById('local-tax-arrears');
       if (localTaxArrears) localTaxArrears.value = '0';
       
+      // 업종코드 (KSIC 코드)
+      const ksicCode = document.getElementById('ksic-code');
+      if (ksicCode && data.industryCode) {
+        ksicCode.value = data.industryCode;
+      }
+      
+      // 소재지 (시도 + 시군구)
+      const locationSido = document.getElementById('location-sido');
+      if (locationSido && data.locationSido) {
+        locationSido.value = data.locationSido;
+        // 시군구 옵션 업데이트 (수도권 여부도 자동 설정됨)
+        updateSigunguOptions();
+        
+        // 시군구 설정 (DOM 업데이트 대기)
+        setTimeout(() => {
+          const locationSigungu = document.getElementById('location-sigungu');
+          if (locationSigungu && data.locationSigungu) {
+            locationSigungu.value = data.locationSigungu;
+          }
+        }, 100);
+      }
+      
       console.log('✅ 자동입력 완료:', data.name);
     }
     
@@ -3514,7 +3602,7 @@
     const originalInit = window.addEventListener;
     window.addEventListener('load', function(event) {
       initializeApp();
-      setupCompanySearch();
+      // setupCompanySearch(); // 상단 검색 기능 제거됨
       setupAutoFill();
     });
     
