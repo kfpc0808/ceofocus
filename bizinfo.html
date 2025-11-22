@@ -399,6 +399,136 @@
         padding: 1.25rem;
       }
     }
+    
+    /* 버튼 1행 고정 */
+    button, .btn-primary, .btn-secondary {
+      white-space: nowrap !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* 회사명 검색 자동완성 스타일 */
+    .company-search-section {
+      background: rgba(255,184,77,0.1);
+      border: 2px solid #FFB84D;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .company-search-section h3 {
+      font-size: 1.2rem;
+      color: #FFB84D;
+      margin-bottom: 0.5rem;
+    }
+    
+    .company-search-section .hint {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 1rem;
+    }
+    
+    .search-input-wrapper {
+      position: relative;
+    }
+    
+    .search-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 1000;
+      margin-top: 0.5rem;
+    }
+    
+    .search-result-item {
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+    
+    .search-result-item:hover {
+      background: #f8f9fa;
+    }
+    
+    .search-result-item .company-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.25rem;
+    }
+    
+    .search-result-item .company-info {
+      font-size: 0.85rem;
+      color: #666;
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .search-loading,
+    .search-error,
+    .no-results {
+      padding: 1.5rem;
+      text-align: center;
+      color: #666;
+    }
+    
+    .search-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .search-loading .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #FF8802;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .auto-fill-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    
+    .auto-fill-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(76,175,80,0.4);
+    }
+    
+    .auto-fill-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -477,6 +607,31 @@
       <button class="btn btn-secondary" onclick="clearForm()" style="margin-top: 1rem;">
         🔄 새로 입력
       </button>
+    </div>
+
+    <!-- 회사명 검색 섹션 -->
+    <div class="company-search-section">
+      <h3>🔍 회사명으로 빠른 검색</h3>
+      <p class="hint">회사명을 입력하면 사업자번호가 자동으로 입력됩니다</p>
+      
+      <div class="search-input-wrapper">
+        <input 
+          type="text" 
+          id="company-search-input"
+          placeholder="회사명을 입력하세요 (예: 삼성전자, LG전자)"
+          autocomplete="off">
+        
+        <div id="search-results" class="search-dropdown" style="display:none">
+          <!-- 검색 결과가 여기에 표시됩니다 -->
+        </div>
+      </div>
+      
+      <div style="margin-top: 1rem;">
+        <button id="auto-fill-btn" class="auto-fill-btn" disabled>
+          <span>🤖</span>
+          <span>기업정보 자동입력</span>
+        </button>
+      </div>
     </div>
 
     <!-- Section 1: 기업 기본정보 -->
@@ -861,6 +1016,84 @@
         <div class="form-group full-width">
           <label>우선 채용 분야</label>
           <input type="text" id="hiring-field" placeholder="예: 연구개발, 생산, 영업마케팅">
+        </div>
+      </div>
+      
+      <h3>4-3. 고용 안정성 (고용지원금 필수)</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>최근 신규 채용일 <span style="color: #FFB84D;">★</span></label>
+          <input type="date" id="recent-hire-date">
+          <span class="info-text">최근 6개월 내 채용 시 필수</span>
+        </div>
+        
+        <div class="form-group">
+          <label>근로계약 형태 <span style="color: #FFB84D;">★</span></label>
+          <select id="contract-type">
+            <option value="">선택</option>
+            <option value="정규직">정규직</option>
+            <option value="계약직">계약직 (기간제)</option>
+            <option value="파트타임">파트타임</option>
+            <option value="계약직전환">계약직→정규직 전환</option>
+          </select>
+          <span class="info-text">정규직 전환 시 별도 지원금</span>
+        </div>
+        
+        <div class="form-group">
+          <label>최근 6개월 감원 여부 <span style="color: #ff6b6b;">⚠️</span></label>
+          <select id="layoff-recent">
+            <option value="없음">없음</option>
+            <option value="권고사직">있음 (권고사직)</option>
+            <option value="정리해고">있음 (정리해고)</option>
+            <option value="자연퇴사">자연 퇴사만 있음</option>
+          </select>
+          <span class="info-text" style="color: #ff6b6b;">
+            ⚠️ 감원 시 대부분 지원금 제외
+          </span>
+        </div>
+        
+        <div class="form-group">
+          <label>평균 월 임금 (만원) <span style="color: #FFB84D;">★</span></label>
+          <input type="number" id="avg-monthly-wage" placeholder="예: 300">
+          <span class="info-text">최저임금 이상 필수</span>
+        </div>
+        
+        <div class="form-group">
+          <label>대표자 가족 고용 여부</label>
+          <select id="family-employee">
+            <option value="없음">없음</option>
+            <option value="배우자">배우자 고용</option>
+            <option value="직계존비속">직계 존비속 고용</option>
+            <option value="기타친인척">기타 친인척</option>
+          </select>
+          <span class="info-text">가족 고용 시 일부 지원금 제외</span>
+        </div>
+        
+        <div class="form-group">
+          <label>경력단절 여성 고용 (명)</label>
+          <input type="number" id="career-break-women" placeholder="인원">
+          <span class="info-text">워라밸 일자리 지원금 가점</span>
+        </div>
+        
+        <div class="form-group">
+          <label>휴업/휴직 실시 여부</label>
+          <select id="leave-status">
+            <option value="없음">없음</option>
+            <option value="휴업">휴업 실시 중</option>
+            <option value="휴직">휴직자 있음</option>
+          </select>
+          <span class="info-text">고용유지지원금 신청 가능</span>
+        </div>
+        
+        <div class="form-group">
+          <label>임금 체불 여부 <span style="color: #ff6b6b;">⚠️</span></label>
+          <select id="wage-unpaid">
+            <option value="없음">없음</option>
+            <option value="있음">있음</option>
+          </select>
+          <span class="info-text" style="color: #ff6b6b;">
+            ⚠️ 체불 시 모든 지원금 제외
+          </span>
         </div>
       </div>
     </div>
@@ -1454,17 +1687,18 @@
   <script>
     // ==================== Firebase & Google Drive 설정 ====================
     
-    // Firebase 설정 (사용자가 Firebase Console에서 받은 값으로 교체 필요)
-const firebaseConfig = {
-  apiKey: "AIzaSyDjS3bsIsl3uDtyQIrzpZTO3IigLmLNG1E",
-  authDomain: "kfpc-company-support-project.firebaseapp.com",
-  databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "kfpc-company-support-project",
-  storageBucket: "kfpc-company-support-project.firebasestorage.app",
-  messagingSenderId: "1012609333373",
-  appId: "1:1012609333373:web:5453ab357b06015d56d914",
-  measurementId: "G-5BDZFX0SC6"
-};    
+    // Firebase 설정
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjS3bsIsl3uDtyQIrzpZTO3IigLmLNG1E",
+      authDomain: "kfpc-company-support-project.firebaseapp.com",
+      databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "kfpc-company-support-project",
+      storageBucket: "kfpc-company-support-project.firebasestorage.app",
+      messagingSenderId: "1012609333373",
+      appId: "1:1012609333373:web:5453ab357b06015d56d914",
+      measurementId: "G-5BDZFX0SC6"
+    };
+    
     // Firebase 초기화
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -1478,7 +1712,89 @@ const firebaseConfig = {
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
     
-    // Google API 초기화
+    // ==================== 테스트 데이터 (Phase 1) ====================
+    const MOCK_COMPANIES = [
+      {
+        name: '삼성전자(주)',
+        businessNumber: '124-81-00998',
+        ceo: '한종희',
+        openingDate: '1969-01-13',
+        industryCode: 'C26',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '수원시',
+        revenue: '300000000000',
+        employeeCount: '120000'
+      },
+      {
+        name: 'LG전자(주)',
+        businessNumber: '107-86-14075',
+        ceo: '조주완',
+        openingDate: '1958-10-01',
+        industryCode: 'C26',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '서울',
+        locationSigungu: '영등포구',
+        revenue: '70000000000',
+        employeeCount: '70000'
+      },
+      {
+        name: '현대자동차(주)',
+        businessNumber: '101-81-42555',
+        ceo: '장재훈',
+        openingDate: '1967-12-29',
+        industryCode: 'C30',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '서울',
+        locationSigungu: '서초구',
+        revenue: '130000000000',
+        employeeCount: '75000'
+      },
+      {
+        name: 'SK하이닉스(주)',
+        businessNumber: '120-81-62902',
+        ceo: '곽노정',
+        openingDate: '1983-02-15',
+        industryCode: 'C26',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '이천시',
+        revenue: '40000000000',
+        employeeCount: '35000'
+      },
+      {
+        name: '네이버(주)',
+        businessNumber: '220-81-62517',
+        ceo: '최수연',
+        openingDate: '1999-06-02',
+        industryCode: 'J63',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '성남시',
+        revenue: '8000000000',
+        employeeCount: '4000'
+      },
+      {
+        name: '카카오(주)',
+        businessNumber: '120-81-47521',
+        ceo: '홍은택',
+        openingDate: '2006-02-16',
+        industryCode: 'J63',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '성남시',
+        revenue: '6000000000',
+        employeeCount: '3500'
+      }
+    ];
+    
+    // ==================== Google API 초기화 ====================
     function gapiLoaded() {
       gapi.load('client', initializeGapiClient);
     }
@@ -2185,7 +2501,616 @@ const firebaseConfig = {
       window.location.href = 'index.html';
     }
     
-    window.addEventListener('load', initializeApp);
+    // ==================== 회사명 검색 기능 ====================
+    let searchTimeout;
+    
+    function setupCompanySearch() {
+      const searchInput = document.getElementById('company-search-input');
+      const searchResults = document.getElementById('search-results');
+      const autoFillBtn = document.getElementById('auto-fill-btn');
+      
+      if (!searchInput) return;
+      
+      // 회사명 검색 (자동완성)
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+        
+        if (query.length < 2) {
+          hideSearchResults();
+          return;
+        }
+        
+        // 디바운싱 (500ms 대기)
+        searchTimeout = setTimeout(() => {
+          searchCompanies(query);
+        }, 500);
+      });
+      
+      // 외부 클릭 시 검색 결과 숨기기
+      document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+          hideSearchResults();
+        }
+      });
+    }
+    
+    function searchCompanies(query) {
+      const searchResults = document.getElementById('search-results');
+      
+      // 로딩 표시
+      searchResults.innerHTML = `
+        <div class="search-loading">
+          <div class="spinner"></div>
+          <span>검색 중...</span>
+        </div>
+      `;
+      searchResults.style.display = 'block';
+      
+      // 검색 실행 (테스트 데이터)
+      setTimeout(() => {
+        const results = MOCK_COMPANIES.filter(c => 
+          c.name.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        displaySearchResults(results);
+      }, 300);
+    }
+    
+    function displaySearchResults(companies) {
+      const searchResults = document.getElementById('search-results');
+      
+      if (companies.length === 0) {
+        searchResults.innerHTML = '<div class="no-results">❌ 검색 결과가 없습니다</div>';
+        searchResults.style.display = 'block';
+        return;
+      }
+      
+      searchResults.innerHTML = companies.map(company => `
+        <div class="search-result-item" onclick="selectCompany('${company.businessNumber}')">
+          <div class="company-name">${company.name}</div>
+          <div class="company-info">
+            <span>📋 ${company.businessNumber}</span>
+            <span>👤 ${company.ceo}</span>
+          </div>
+        </div>
+      `).join('');
+      
+      searchResults.style.display = 'block';
+    }
+    
+    function hideSearchResults() {
+      const searchResults = document.getElementById('search-results');
+      if (searchResults) {
+        searchResults.style.display = 'none';
+      }
+    }
+    
+    function selectCompany(businessNumber) {
+      // 사업자번호 자동입력
+      const parts = businessNumber.split('-');
+      const bn1 = document.getElementById('business-num-1');
+      const bn2 = document.getElementById('business-num-2');
+      const bn3 = document.getElementById('business-num-3');
+      
+      if (bn1) bn1.value = parts[0];
+      if (bn2) bn2.value = parts[1];
+      if (bn3) bn3.value = parts[2];
+      
+      // 검색 결과 숨기기
+      hideSearchResults();
+      
+      // 자동입력 버튼 활성화
+      const autoFillBtn = document.getElementById('auto-fill-btn');
+      if (autoFillBtn) {
+        autoFillBtn.disabled = false;
+      }
+      
+      // 검색 입력창 초기화
+      const searchInput = document.getElementById('company-search-input');
+      if (searchInput) {
+        searchInput.value = '';
+      }
+      
+      alert('✅ 사업자번호가 입력되었습니다!\n\n이제 "기업정보 자동입력" 버튼을 클릭하세요.');
+    }
+    
+    // ==================== 기업정보 자동입력 ====================
+    function setupAutoFill() {
+      const autoFillBtn = document.getElementById('auto-fill-btn');
+      if (!autoFillBtn) return;
+      
+      const businessNum1 = document.getElementById('business-num-1');
+      const businessNum2 = document.getElementById('business-num-2');
+      const businessNum3 = document.getElementById('business-num-3');
+      
+      // 사업자번호 입력 시 자동입력 버튼 활성화
+      [businessNum1, businessNum2, businessNum3].forEach(input => {
+        if (input) {
+          input.addEventListener('input', () => {
+            const hasAllNumbers = 
+              businessNum1 && businessNum1.value.length === 3 &&
+              businessNum2 && businessNum2.value.length === 2 &&
+              businessNum3 && businessNum3.value.length === 5;
+            
+            if (autoFillBtn) {
+              autoFillBtn.disabled = !hasAllNumbers;
+            }
+          });
+        }
+      });
+      
+      // 자동입력 버튼 클릭
+      autoFillBtn.addEventListener('click', async () => {
+        const businessNumber = `${businessNum1.value}-${businessNum2.value}-${businessNum3.value}`;
+        
+        autoFillBtn.disabled = true;
+        autoFillBtn.innerHTML = '<span>⏳</span><span>조회 중...</span>';
+        
+        try {
+          await autoFillCompanyInfo(businessNumber);
+        } catch (error) {
+          console.error('자동입력 오류:', error);
+          alert('❌ 자동입력에 실패했습니다.\n수동으로 입력해주세요.');
+        } finally {
+          autoFillBtn.disabled = false;
+          autoFillBtn.innerHTML = '<span>🤖</span><span>기업정보 자동입력</span>';
+        }
+      });
+    }
+    
+    // ============================================
+    // 🔥 실제 API 설정 및 호출 함수들
+    // ============================================
+    
+    const API_CONFIG = {
+      // 공통 인증키 (모든 API 사용)
+      API_KEY: '76d690873af0a9d983453b22529a6e313625867da9f460d7cb72f7ab9e654de1',
+      
+      // API 엔드포인트
+      NTS_BASE_URL: 'https://api.odcloud.kr/api/nts-businessman/v1',
+      FSC_BASE_URL: 'https://apis.data.go.kr/1160100/service/GetCorpBasicInfoService_V2',
+      PATENT_BASE_URL: 'https://kipo-api.kipi.or.kr/openapi/service/patUtiModInfoSearchSevice',
+      
+      // 3대 인증 API
+      VENTURE_BASE_URL: 'https://api.odcloud.kr/api/15084581/v1/uddi:41944402-8249-4e45-9e9d-a03027ccf595',
+      INNOBIZ_BASE_URL: 'https://api.odcloud.kr/api/15134641/v1/uddi:56633b5d-548b-45e5-a295-f0b0b1933c0f'
+    };
+    
+    /**
+     * 🏢 국세청 API - 사업자등록 상태조회
+     */
+    async function getNTSInfo(businessNumber) {
+      try {
+        const cleanBN = businessNumber.replace(/-/g, '');
+        
+        const response = await fetch(
+          `${API_CONFIG.NTS_BASE_URL}/status?serviceKey=${API_CONFIG.API_KEY}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              b_no: [cleanBN]
+            })
+          }
+        );
+        
+        const result = await response.json();
+        
+        if (result.status_code === 'OK' && result.data && result.data.length > 0) {
+          const data = result.data[0];
+          return {
+            success: true,
+            companyName: data.b_nm || '',
+            ceo: data.p_nm || '',
+            businessStatus: data.b_stt || '',
+            taxType: data.tax_type || '',
+            address: data.b_adr || '',
+            startDate: data.start_dt || '',
+            rbfTaxType: data.rbf_tax_type || '',
+            rbfTaxTypeCd: data.rbf_tax_type_cd || ''
+          };
+        } else {
+          return { success: false, message: '사업자 정보를 찾을 수 없습니다.' };
+        }
+      } catch (error) {
+        console.error('국세청 API 오류:', error);
+        return { success: false, message: 'API 호출 실패: ' + error.message };
+      }
+    }
+    
+    /**
+     * 🏛️ 금융위원회 API - 기업개요조회
+     */
+    async function getFSCInfo(corpNumber) {
+      try {
+        const cleanCN = corpNumber.replace(/-/g, '');
+        const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        
+        const response = await fetch(
+          `${API_CONFIG.FSC_BASE_URL}/getCorpOutline_V2?` +
+          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
+          `crno=${cleanCN}&` +
+          `basDt=${today}&` +
+          `resultType=json`
+        );
+        
+        const result = await response.json();
+        
+        if (result.response.header.resultCode === '00') {
+          const items = result.response.body.items;
+          if (items && items.item) {
+            const data = Array.isArray(items.item) ? items.item[0] : items.item;
+            return {
+              success: true,
+              corpName: data.corpNm || '',
+              corpNameEng: data.corpEnsnNm || '',
+              ceo: data.enpRprFnm || '',
+              businessNumber: data.bzno || '',
+              address: data.enpOzpno || '',
+              industry: data.enpBsatp || '',
+              sector: data.enpDetailBzcnd || '',
+              capital: data.enpCpta || '',
+              establishDate: data.enpEstbDt || '',
+              listed: data.lstgYn || ''
+            };
+          }
+        }
+        return { success: false, message: '법인 정보를 찾을 수 없습니다.' };
+      } catch (error) {
+        console.error('금융위원회 API 오류:', error);
+        return { success: false, message: 'API 호출 실패: ' + error.message };
+      }
+    }
+    
+    /**
+     * 📜 특허청 API - 특허 검색
+     */
+    async function getPatentInfo(companyName) {
+      try {
+        const response = await fetch(
+          `${API_CONFIG.PATENT_BASE_URL}/getWordSearch?` +
+          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
+          `word=${encodeURIComponent(companyName)}&` +
+          `docsStart=1&` +
+          `docsCount=10`
+        );
+        
+        const text = await response.text();
+        
+        // XML 파싱
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, 'text/xml');
+        
+        const resultCode = xmlDoc.querySelector('resultCode')?.textContent;
+        
+        if (resultCode === '00') {
+          const items = xmlDoc.querySelectorAll('item');
+          const patents = [];
+          
+          items.forEach(item => {
+            patents.push({
+              title: item.querySelector('inventionTitle')?.textContent || '',
+              applicationNumber: item.querySelector('applicationNumber')?.textContent || '',
+              registrationNumber: item.querySelector('registrationNumber')?.textContent || '',
+              applicant: item.querySelector('applicantName')?.textContent || '',
+              applicationDate: item.querySelector('applicationDate')?.textContent || ''
+            });
+          });
+          
+          return {
+            success: true,
+            totalCount: patents.length,
+            patents: patents
+          };
+        }
+        return { success: false, message: '특허 정보를 찾을 수 없습니다.' };
+      } catch (error) {
+        console.error('특허청 API 오류:', error);
+        return { success: false, message: 'API 호출 실패: ' + error.message };
+      }
+    }
+    
+    /**
+     * 🚀 벤처기업 인증 조회
+     */
+    async function getVentureInfo(companyName) {
+      try {
+        const response = await fetch(
+          `${API_CONFIG.VENTURE_BASE_URL}?` +
+          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
+          `page=1&` +
+          `perPage=10&` +
+          `cond[업체명::LIKE]=${encodeURIComponent(companyName)}`
+        );
+        
+        const result = await response.json();
+        
+        if (result.data && result.data.length > 0) {
+          const venture = result.data[0];
+          
+          // 만료일 유효성 확인
+          const today = new Date();
+          const endDate = venture['벤처유효만료일'];
+          let isValid = false;
+          
+          if (endDate) {
+            const expiryDate = new Date(endDate);
+            isValid = expiryDate > today;
+          }
+          
+          return {
+            success: true,
+            companyName: venture['업체명'],
+            ceo: venture['대표자'],
+            type: venture['벤처확인유형'],
+            startDate: venture['벤처유효시작일'],
+            endDate: endDate,
+            agency: venture['확인기관'],
+            isValid: isValid
+          };
+        }
+        
+        return { success: false, message: '벤처인증 정보 없음' };
+      } catch (error) {
+        console.error('벤처기업 API 오류:', error);
+        return { success: false, message: 'API 호출 실패: ' + error.message };
+      }
+    }
+    
+    /**
+     * 💡 이노비즈 인증 조회
+     */
+    async function getInnobizInfo(companyName) {
+      try {
+        const response = await fetch(
+          `${API_CONFIG.INNOBIZ_BASE_URL}?` +
+          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
+          `page=1&` +
+          `perPage=10&` +
+          `cond[회사명::LIKE]=${encodeURIComponent(companyName)}`
+        );
+        
+        const result = await response.json();
+        
+        if (result.data && result.data.length > 0) {
+          const innobiz = result.data[0];
+          
+          // 만료일 유효성 확인
+          const today = new Date();
+          const endDate = innobiz['이노비즈 유효기간 종료일'];
+          let isValid = false;
+          
+          if (endDate) {
+            const expiryDate = new Date(endDate);
+            isValid = expiryDate > today;
+          }
+          
+          return {
+            success: true,
+            companyName: innobiz['회사명'],
+            ceo: innobiz['대표자명'],
+            region: innobiz['지역'],
+            products: innobiz['주 생산품'],
+            startDate: innobiz['이노비즈 유효기간 시작일'],
+            endDate: endDate,
+            website: innobiz['홈페이지 주소'],
+            isValid: isValid
+          };
+        }
+        
+        return { success: false, message: '이노비즈 인증 정보 없음' };
+      } catch (error) {
+        console.error('이노비즈 API 오류:', error);
+        return { success: false, message: 'API 호출 실패: ' + error.message };
+      }
+    }
+    
+    /**
+     * 🤖 통합 자동입력 함수 (실제 API 호출)
+     */
+    async function autoFillCompanyInfo(businessNumber) {
+      const loadingMessages = [
+        '🔍 국세청에서 기업정보 조회 중...',
+        '🏛️ 금융위원회에서 법인정보 확인 중...',
+        '📜 특허청에서 특허정보 검색 중...',
+        '🚀 벤처기업 인증 확인 중...',
+        '💡 이노비즈 인증 확인 중...',
+        '✨ 데이터 통합 중...'
+      ];
+      
+      let messageIndex = 0;
+      const messageInterval = setInterval(() => {
+        const autoFillBtn = document.getElementById('auto-fill-btn');
+        if (autoFillBtn && messageIndex < loadingMessages.length) {
+          autoFillBtn.innerHTML = `<span>⏳</span><span>${loadingMessages[messageIndex]}</span>`;
+          messageIndex++;
+        }
+      }, 800);
+      
+      try {
+        // 1단계: 국세청 API로 기본 정보 조회
+        const ntsData = await getNTSInfo(businessNumber);
+        
+        if (!ntsData.success) {
+          clearInterval(messageInterval);
+          alert(`❌ 국세청 조회 실패\n\n${ntsData.message}\n\n사업자번호를 확인하거나 수동으로 입력해주세요.`);
+          return;
+        }
+        
+        // 기본 정보 입력
+        const companyNameElem = document.getElementById('company-name');
+        if (companyNameElem) companyNameElem.value = ntsData.companyName;
+        
+        const ceoNameElem = document.getElementById('ceo-name');
+        if (ceoNameElem) ceoNameElem.value = ntsData.ceo;
+        
+        const establishDateElem = document.getElementById('establish-date');
+        if (establishDateElem && ntsData.startDate) {
+          const dateStr = ntsData.startDate;
+          const formattedDate = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
+          establishDateElem.value = formattedDate;
+        }
+        
+        // 2단계: 법인번호가 있으면 금융위원회 API 호출
+        const corpNum1 = document.getElementById('corp-number-1')?.value || '';
+        const corpNum2 = document.getElementById('corp-number-2')?.value || '';
+        
+        if (corpNum1 && corpNum2) {
+          const corpNumber = `${corpNum1}-${corpNum2}`;
+          const fscData = await getFSCInfo(corpNumber);
+          
+          if (fscData.success) {
+            // 자본금
+            const capitalElem = document.getElementById('capital');
+            if (capitalElem && fscData.capital) {
+              capitalElem.value = formatNumber(fscData.capital);
+            }
+            
+            // 업종
+            const industryElem = document.getElementById('industry');
+            if (industryElem && fscData.industry) {
+              industryElem.value = fscData.industry;
+            }
+            
+            // 상장여부
+            if (fscData.listed === 'Y') {
+              const listedElem = document.getElementById('listed-yes');
+              if (listedElem) listedElem.checked = true;
+            }
+          }
+        }
+        
+        // 3단계: 특허 정보 조회
+        const patentData = await getPatentInfo(ntsData.companyName);
+        
+        if (patentData.success && patentData.totalCount > 0) {
+          const patentsElem = document.getElementById('patents-registered');
+          if (patentsElem) {
+            patentsElem.value = patentData.totalCount.toString();
+          }
+        }
+        
+        // 4단계: 벤처기업 인증 조회
+        const ventureData = await getVentureInfo(ntsData.companyName);
+        
+        if (ventureData.success) {
+          const certVentureElem = document.getElementById('cert-venture');
+          const certVentureExpireElem = document.getElementById('cert-venture-expire');
+          
+          if (certVentureElem) {
+            certVentureElem.value = ventureData.isValid ? '있음' : '만료';
+          }
+          
+          if (certVentureExpireElem && ventureData.endDate) {
+            certVentureExpireElem.value = ventureData.endDate;
+          }
+        }
+        
+        // 5단계: 이노비즈 인증 조회
+        const innobizData = await getInnobizInfo(ntsData.companyName);
+        
+        if (innobizData.success) {
+          const certInnobizElem = document.getElementById('cert-innobiz');
+          const certInnobizExpireElem = document.getElementById('cert-innobiz-expire');
+          
+          if (certInnobizElem) {
+            certInnobizElem.value = innobizData.isValid ? '있음' : '만료';
+          }
+          
+          if (certInnobizExpireElem && innobizData.endDate) {
+            certInnobizExpireElem.value = innobizData.endDate;
+          }
+        }
+        
+        clearInterval(messageInterval);
+        
+        // 성공 메시지
+        let successMsg = `✅ 기업정보 자동입력 완료!\n\n`;
+        successMsg += `📌 ${ntsData.companyName}\n`;
+        successMsg += `👤 대표자: ${ntsData.ceo}\n`;
+        successMsg += `📊 사업자상태: ${ntsData.businessStatus}\n`;
+        
+        if (patentData.success && patentData.totalCount > 0) {
+          successMsg += `📜 특허 보유: ${patentData.totalCount}건\n`;
+        }
+        
+        // 3대 인증 정보 추가
+        if (ventureData.success || innobizData.success) {
+          successMsg += `\n🎯 3대 인증 현황:\n`;
+          
+          if (ventureData.success) {
+            successMsg += `🚀 벤처기업: ${ventureData.isValid ? '✅ 유효' : '❌ 만료'} (${ventureData.endDate}까지)\n`;
+          }
+          
+          if (innobizData.success) {
+            successMsg += `💡 이노비즈: ${innobizData.isValid ? '✅ 유효' : '❌ 만료'} (${innobizData.endDate}까지)\n`;
+          }
+        }
+        
+        successMsg += `\n나머지 항목은 수동으로 입력해주세요.`;
+        
+        alert(successMsg);
+        
+      } catch (error) {
+        clearInterval(messageInterval);
+        console.error('자동입력 오류:', error);
+        alert('❌ 자동입력 중 오류가 발생했습니다.\n\n' + error.message + '\n\n수동으로 입력해주세요.');
+      }
+    }
+    
+    function fillCompanyData(data) {
+      // 기업명
+      const companyName = document.getElementById('company-name');
+      if (companyName) companyName.value = data.name;
+      
+      // 대표자명
+      const ceoName = document.getElementById('ceo-name');
+      if (ceoName && data.ceo) ceoName.value = data.ceo;
+      
+      // 개업일
+      const openingDate = document.getElementById('opening-date');
+      if (openingDate && data.openingDate) openingDate.value = data.openingDate;
+      
+      // 기업규모
+      const companySize = document.getElementById('company-size');
+      if (companySize && data.companySize) companySize.value = data.companySize;
+      
+      // 기업형태
+      const companyType = document.getElementById('company-type');
+      if (companyType && data.companyType) companyType.value = data.companyType;
+      
+      // 매출액
+      const revenue = document.getElementById('revenue');
+      if (revenue && data.revenue) {
+        revenue.value = parseInt(data.revenue).toLocaleString('ko-KR');
+      }
+      
+      // 직원수
+      const employeeCount = document.getElementById('total-employees');
+      if (employeeCount && data.employeeCount) employeeCount.value = data.employeeCount;
+      
+      // 체납 정보 초기화 (일반적으로 0)
+      const taxArrears = document.getElementById('tax-arrears');
+      if (taxArrears) taxArrears.value = '0';
+      
+      const localTaxArrears = document.getElementById('local-tax-arrears');
+      if (localTaxArrears) localTaxArrears.value = '0';
+      
+      console.log('✅ 자동입력 완료:', data.name);
+    }
+    
+    // 초기화 함수 수정
+    const originalInit = window.addEventListener;
+    window.addEventListener('load', function(event) {
+      initializeApp();
+      setupCompanySearch();
+      setupAutoFill();
+    });
+    
   </script>
 </body>
 </html>
