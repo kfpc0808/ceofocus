@@ -8,6 +8,13 @@
   <!-- CryptoJS for AES-256 encryption -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  
+  <!-- Google API for Drive -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     
@@ -400,10 +407,56 @@
     <div class="loading-text">앱 로딩 중...</div>
   </div>
 
+  <!-- Google 로그인 화면 -->
+  <div id="login-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%;">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">🏢</div>
+      <h2 style="color: #0c2c54; margin-bottom: 0.5rem; font-size: 1.8rem;">기업 지원사업 AI 매칭</h2>
+      <p style="color: #666; margin-bottom: 2rem; font-size: 0.95rem;">구글 드라이브에 안전하게 저장됩니다</p>
+      
+      <button id="google-signin-btn" onclick="signInWithGoogle()" style="
+        width: 100%;
+        padding: 1rem;
+        background: white;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.2s;
+      " onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='none'">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Google 계정으로 시작하기
+      </button>
+      
+      <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: left; font-size: 0.85rem; color: #666;">
+        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #0c2c54;">🔒 정보보호</div>
+        <div style="line-height: 1.6;">
+          • 데이터는 사용자의 구글 드라이브에 암호화 저장<br>
+          • 언제든 수정/삭제 가능
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="container" id="main-content" style="display: none;">
     <div class="header">
       <h1>🏢 기업 지원사업 AI 매칭</h1>
-      <button class="btn-main" onclick="goHome()">메인</button>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div id="user-info" style="font-size: 0.9rem; color: #ddd;"></div>
+        <button class="btn-main" onclick="signOut()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">로그아웃</button>
+        <button class="btn-main" onclick="goHome()">메인</button>
+      </div>
     </div>
 
     <div class="required-notice">
@@ -439,20 +492,30 @@
         
         <div class="form-group">
           <label>사업자등록번호 <span class="required">*</span></label>
-          <input type="text" id="business-number" placeholder="000-00-00000" maxlength="12" required>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="text" id="business-number-1" placeholder="000" maxlength="3" style="width: 80px;" inputmode="numeric" required oninput="moveFocusOnMaxLength(this, 'business-number-2', 3)">
+            <span style="color: #ddd;">-</span>
+            <input type="text" id="business-number-2" placeholder="00" maxlength="2" style="width: 60px;" inputmode="numeric" required oninput="moveFocusOnMaxLength(this, 'business-number-3', 2)">
+            <span style="color: #ddd;">-</span>
+            <input type="text" id="business-number-3" placeholder="00000" maxlength="5" style="width: 100px;" inputmode="numeric" required>
+          </div>
           <span class="info-text">API 자동조회 키</span>
         </div>
         
         <div class="form-group">
           <label>법인등록번호</label>
-          <input type="text" id="corp-number" placeholder="000000-0000000" maxlength="14">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="text" id="corp-number-1" placeholder="000000" maxlength="6" style="width: 100px;" inputmode="numeric" oninput="moveFocusOnMaxLength(this, 'corp-number-2', 6)">
+            <span style="color: #ddd;">-</span>
+            <input type="text" id="corp-number-2" placeholder="0000000" maxlength="7" style="width: 120px;" inputmode="numeric">
+          </div>
           <span class="info-text">법인인 경우 필수</span>
         </div>
         
         <div class="form-group">
-          <label>설립일 <span class="required">*</span></label>
+          <label>개업연월일(사업자등록증) <span class="required">*</span></label>
           <input type="date" id="establish-date" required>
-          <span class="info-text">업력 자동계산</span>
+          <span class="info-text">입력 시 업력 자동 계산됨</span>
         </div>
       </div>
       
@@ -1389,6 +1452,219 @@
   </div>
 
   <script>
+    // ==================== Firebase & Google Drive 설정 ====================
+    
+    // Firebase 설정 (사용자가 Firebase Console에서 받은 값으로 교체 필요)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    
+    // Firebase 초기화
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    
+    // Google API 클라이언트 초기화
+    let gapiInited = false;
+    let gisInited = false;
+    let tokenClient;
+    let accessToken = null;
+    
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
+    
+    // Google API 초기화
+    function gapiLoaded() {
+      gapi.load('client', initializeGapiClient);
+    }
+    
+    async function initializeGapiClient() {
+      await gapi.client.init({
+        discoveryDocs: [DISCOVERY_DOC],
+      });
+      gapiInited = true;
+    }
+    
+    // Google 로그인
+    async function signInWithGoogle() {
+      try {
+        console.log('🔐 Google 로그인 시작...');
+        
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/drive.file');
+        provider.addScope('https://www.googleapis.com/auth/drive.appdata');
+        
+        const result = await auth.signInWithPopup(provider);
+        const credential = result.credential;
+        accessToken = credential.accessToken;
+        
+        console.log('✅ 로그인 성공:', result.user.email);
+        
+        // Google API 클라이언트 설정
+        gapi.client.setToken({ access_token: accessToken });
+        
+        // 로그인 화면 숨기고 메인 화면 표시
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        
+        // Google Drive에서 데이터 로드
+        await loadFromDrive();
+        
+      } catch (error) {
+        console.error('❌ 로그인 실패:', error);
+        alert('로그인에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+    
+    // Google 로그아웃
+    async function signOut() {
+      try {
+        await auth.signOut();
+        accessToken = null;
+        savedCompanies = {};
+        
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        
+        console.log('✅ 로그아웃 완료');
+      } catch (error) {
+        console.error('❌ 로그아웃 실패:', error);
+      }
+    }
+    
+    // Google Drive에 저장
+    async function saveToDrive(data) {
+      try {
+        if (!accessToken) {
+          console.error('❌ Access token이 없습니다');
+          return false;
+        }
+        
+        console.log('💾 Google Drive에 저장 중...');
+        
+        // 데이터 암호화
+        const encryptedData = encryptData(data);
+        
+        // 기존 파일 검색
+        const searchResponse = await gapi.client.drive.files.list({
+          q: "name='kfpc-bizinfo-data.json' and trashed=false",
+          spaces: 'appDataFolder',
+          fields: 'files(id, name)',
+        });
+        
+        const files = searchResponse.result.files;
+        const fileContent = JSON.stringify({ encryptedData, timestamp: new Date().toISOString() });
+        const file = new Blob([fileContent], { type: 'application/json' });
+        
+        if (files && files.length > 0) {
+          // 기존 파일 업데이트
+          const fileId = files[0].id;
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify({})], { type: 'application/json' }));
+          form.append('file', file);
+          
+          const updateResponse = await fetch(
+            `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+            {
+              method: 'PATCH',
+              headers: { Authorization: `Bearer ${accessToken}` },
+              body: form,
+            }
+          );
+          
+          if (updateResponse.ok) {
+            console.log('✅ Drive 업데이트 완료');
+            return true;
+          }
+        } else {
+          // 새 파일 생성
+          const metadata = {
+            name: 'kfpc-bizinfo-data.json',
+            mimeType: 'application/json',
+            parents: ['appDataFolder'],
+          };
+          
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', file);
+          
+          const createResponse = await fetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}` },
+              body: form,
+            }
+          );
+          
+          if (createResponse.ok) {
+            console.log('✅ Drive 저장 완료');
+            return true;
+          }
+        }
+        
+        return false;
+      } catch (error) {
+        console.error('❌ Drive 저장 실패:', error);
+        return false;
+      }
+    }
+    
+    // Google Drive에서 불러오기
+    async function loadFromDrive() {
+      try {
+        if (!accessToken) {
+          console.error('❌ Access token이 없습니다');
+          return false;
+        }
+        
+        console.log('📥 Google Drive에서 불러오는 중...');
+        
+        const searchResponse = await gapi.client.drive.files.list({
+          q: "name='kfpc-bizinfo-data.json' and trashed=false",
+          spaces: 'appDataFolder',
+          fields: 'files(id, name)',
+        });
+        
+        const files = searchResponse.result.files;
+        if (!files || files.length === 0) {
+          console.log('📁 저장된 파일이 없습니다');
+          return false;
+        }
+        
+        const fileId = files[0].id;
+        const getResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        
+        if (getResponse.ok) {
+          const fileData = await getResponse.json();
+          const decryptedData = decryptData(fileData.encryptedData);
+          
+          if (decryptedData) {
+            savedCompanies = decryptedData;
+            updateCompanySelect();
+            console.log('✅ Drive 로드 완료:', Object.keys(savedCompanies).length, '개 고객사');
+            return true;
+          }
+        }
+        
+        return false;
+      } catch (error) {
+        console.error('❌ Drive 로드 실패:', error);
+        return false;
+      }
+    }
+    
+    // ==================== AES-256 암호화 ====================
+    
     // AES-256 암호화 키 (앱 고유 키)
     const ENCRYPTION_KEY = 'KFPC-BizInfo-2025-AES256-SecureKey';
     
@@ -1407,6 +1683,20 @@
       } catch (e) {
         console.error('복호화 실패:', e);
         return null;
+      }
+    }
+    
+    // ==================== 등록번호 입력 자동 포커스 ====================
+    function moveFocusOnMaxLength(currentInput, nextInputId, maxLength) {
+      // 숫자만 입력되도록 필터링
+      currentInput.value = currentInput.value.replace(/[^\d]/g, '');
+      
+      // 최대 길이에 도달하면 다음 input으로 포커스 이동
+      if (currentInput.value.length >= maxLength) {
+        const nextInput = document.getElementById(nextInputId);
+        if (nextInput) {
+          nextInput.focus();
+        }
       }
     }
     
@@ -1486,29 +1776,76 @@
     async function initializeApp() {
       try {
         console.log('🚀 앱 초기화');
-        loadSavedCompanies();
-        attachNumberFormatting();
-        hideLoading();
+        
+        // Google API 로드
+        gapi.load('client', gapiLoaded);
+        
+        // Firebase 인증 상태 확인
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            console.log('✅ 로그인 상태:', user.email);
+            
+            // 사용자 정보 표시
+            document.getElementById('user-info').textContent = user.email;
+            
+            // 토큰 갱신
+            const credential = await user.getIdTokenResult();
+            accessToken = credential.token;
+            
+            // Google API 클라이언트 설정
+            if (gapiInited) {
+              gapi.client.setToken({ access_token: accessToken });
+            }
+            
+            // 로그인 화면 숨기고 메인 화면 표시
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            
+            // Google Drive에서 데이터 로드
+            await loadFromDrive();
+            
+            // 숫자 포맷팅 활성화
+            attachNumberFormatting();
+            
+            hideLoading();
+          } else {
+            console.log('⚠️ 로그인 필요');
+            // 로그인 화면 표시
+            document.getElementById('login-screen').style.display = 'flex';
+            hideLoading();
+          }
+        });
+        
       } catch (error) {
-        console.error('초기화 실패:', error);
+        console.error('❌ 초기화 실패:', error);
+        hideLoading();
       }
     }
     
     function hideLoading() {
       const loading = document.getElementById('loading-screen');
-      const mainContent = document.getElementById('main-content');
       loading.classList.add('hide');
-      mainContent.style.display = 'block';
       setTimeout(() => loading.style.display = 'none', 300);
     }
     
     function collectFormData() {
+      // 사업자등록번호 3개 input 합치기
+      const bizNum1 = document.getElementById('business-number-1').value;
+      const bizNum2 = document.getElementById('business-number-2').value;
+      const bizNum3 = document.getElementById('business-number-3').value;
+      const businessNumber = bizNum1 && bizNum2 && bizNum3 ? `${bizNum1}-${bizNum2}-${bizNum3}` : '';
+      
+      // 법인등록번호 2개 input 합치기
+      const corpNum1 = document.getElementById('corp-number-1').value;
+      const corpNum2 = document.getElementById('corp-number-2').value;
+      const corpNumber = corpNum1 && corpNum2 ? `${corpNum1}-${corpNum2}` : '';
+      
       // 모든 입력 필드 데이터 수집
       const data = {
         // Section 1
         companyName: document.getElementById('company-name').value,
-        businessNumber: document.getElementById('business-number').value,
-        corpNumber: document.getElementById('corp-number').value,
+        businessNumber: businessNumber,
+        corpNumber: corpNumber,
         establishDate: document.getElementById('establish-date').value,
         businessAge: document.getElementById('business-age')?.value || '',
         companySize: document.getElementById('company-size').value,
@@ -1632,18 +1969,6 @@
       return data;
     }
     
-    function loadSavedCompanies() {
-      const encrypted = localStorage.getItem('bizinfo_companies_encrypted');
-      if (encrypted) {
-        const decrypted = decryptData(encrypted);
-        if (decrypted) {
-          savedCompanies = decrypted;
-          updateCompanySelect();
-          console.log(`✅ ${Object.keys(savedCompanies).length}개 고객사 로드 (복호화 완료)`);
-        }
-      }
-    }
-    
     function updateCompanySelect() {
       const select = document.getElementById('company-select');
       select.innerHTML = '<option value="">-- 새로 입력 --</option>';
@@ -1669,6 +1994,25 @@
       const company = savedCompanies[companyId];
       if (!company) return;
       
+      // 사업자등록번호 분리 (123-45-67890 → 3개 input)
+      if (company.businessNumber) {
+        const bizParts = company.businessNumber.split('-');
+        if (bizParts.length === 3) {
+          document.getElementById('business-number-1').value = bizParts[0];
+          document.getElementById('business-number-2').value = bizParts[1];
+          document.getElementById('business-number-3').value = bizParts[2];
+        }
+      }
+      
+      // 법인등록번호 분리 (123456-1234567 → 2개 input)
+      if (company.corpNumber) {
+        const corpParts = company.corpNumber.split('-');
+        if (corpParts.length === 2) {
+          document.getElementById('corp-number-1').value = corpParts[0];
+          document.getElementById('corp-number-2').value = corpParts[1];
+        }
+      }
+      
       // 숫자 필드 목록
       const numberFieldKeys = [
         'revenueRecent', 'revenuePrev1', 'revenuePrev2', 'profitRecent',
@@ -1684,6 +2028,9 @@
       
       // 모든 필드에 데이터 로드
       Object.keys(company).forEach(key => {
+        // businessNumber, corpNumber는 이미 처리했으므로 스킵
+        if (key === 'businessNumber' || key === 'corpNumber') return;
+        
         const element = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
         if (element) {
           if (element.type === 'checkbox') {
@@ -1704,7 +2051,7 @@
       console.log('✅ 고객사 정보 로드:', company.companyName);
     }
     
-    function saveCompany() {
+    async function saveCompany() {
       const companyData = collectFormData();
       
       if (!companyData.companyName) {
@@ -1723,14 +2070,16 @@
         savedAt: new Date().toISOString()
       };
       
-      // AES-256 암호화하여 저장
-      const encrypted = encryptData(savedCompanies);
-      localStorage.setItem('bizinfo_companies_encrypted', encrypted);
+      // Google Drive에 암호화하여 저장
+      const success = await saveToDrive(savedCompanies);
       
-      updateCompanySelect();
-      
-      alert(`✅ "${companyData.companyName}" 저장 완료!\n\n🔐 AES-256 암호화로 안전하게 보호됩니다.`);
-      console.log('💾 고객사 저장 완료 (암호화)');
+      if (success) {
+        updateCompanySelect();
+        alert(`✅ "${companyData.companyName}" 저장 완료!\n\n🔐 구글 드라이브에 AES-256 암호화로 안전하게 저장되었습니다.`);
+        console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
+      } else {
+        alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
+      }
     }
     
     function clearForm() {
