@@ -712,11 +712,11 @@
         <div class="form-group">
           <label>사업자등록번호 <span class="required">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="text" id="business-number-1" placeholder="000" maxlength="3" style="width: 80px;" inputmode="numeric" required oninput="moveFocusOnMaxLength(this, 'business-number-2', 3)">
+            <input type="text" id="business-number-1" placeholder="000" maxlength="3" style="width: 80px;" inputmode="numeric" required oninput="allowOnlyNumbers(this); moveFocusOnMaxLength(this, 'business-number-2', 3)">
             <span style="color: #ddd;">-</span>
-            <input type="text" id="business-number-2" placeholder="00" maxlength="2" style="width: 60px;" inputmode="numeric" required oninput="moveFocusOnMaxLength(this, 'business-number-3', 2)">
+            <input type="text" id="business-number-2" placeholder="00" maxlength="2" style="width: 60px;" inputmode="numeric" required oninput="allowOnlyNumbers(this); moveFocusOnMaxLength(this, 'business-number-3', 2)">
             <span style="color: #ddd;">-</span>
-            <input type="text" id="business-number-3" placeholder="00000" maxlength="5" style="width: 100px;" inputmode="numeric" required>
+            <input type="text" id="business-number-3" placeholder="00000" maxlength="5" style="width: 100px;" inputmode="numeric" required oninput="allowOnlyNumbers(this)">
           </div>
           <span class="info-text">API 자동조회 키</span>
         </div>
@@ -724,9 +724,9 @@
         <div class="form-group">
           <label>법인등록번호</label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="text" id="corp-number-1" placeholder="000000" maxlength="6" style="width: 100px;" inputmode="numeric" oninput="moveFocusOnMaxLength(this, 'corp-number-2', 6)">
+            <input type="text" id="corp-number-1" placeholder="000000" maxlength="6" style="width: 100px;" inputmode="numeric" oninput="allowOnlyNumbers(this); moveFocusOnMaxLength(this, 'corp-number-2', 6)">
             <span style="color: #ddd;">-</span>
-            <input type="text" id="corp-number-2" placeholder="0000000" maxlength="7" style="width: 120px;" inputmode="numeric">
+            <input type="text" id="corp-number-2" placeholder="0000000" maxlength="7" style="width: 120px;" inputmode="numeric" oninput="allowOnlyNumbers(this)">
           </div>
           <span class="info-text">법인인 경우 필수</span>
         </div>
@@ -2661,9 +2661,9 @@
     function selectCompany(businessNumber) {
       // 사업자번호 자동입력
       const parts = businessNumber.split('-');
-      const bn1 = document.getElementById('business-num-1');
-      const bn2 = document.getElementById('business-num-2');
-      const bn3 = document.getElementById('business-num-3');
+      const bn1 = document.getElementById('business-number-1');
+      const bn2 = document.getElementById('business-number-2');
+      const bn3 = document.getElementById('business-number-3');
       
       if (bn1) bn1.value = parts[0];
       if (bn2) bn2.value = parts[1];
@@ -2672,19 +2672,21 @@
       // 검색 결과 숨기기
       hideSearchResults();
       
-      // 자동입력 버튼 활성화
-      const autoFillBtn = document.getElementById('auto-fill-btn');
-      if (autoFillBtn) {
-        autoFillBtn.disabled = false;
-      }
-      
       // 검색 입력창 초기화
       const searchInput = document.getElementById('company-search-input');
       if (searchInput) {
         searchInput.value = '';
       }
       
-      alert('✅ 사업자번호가 입력되었습니다!\n\n이제 "기업정보 자동입력" 버튼을 클릭하세요.');
+      // 자동으로 API 호출 (팝업 없이!)
+      setTimeout(async () => {
+        try {
+          await autoFillCompanyInfo(businessNumber);
+        } catch (error) {
+          console.error('자동입력 오류:', error);
+          alert('❌ 자동입력에 실패했습니다.\n수동으로 입력해주세요.');
+        }
+      }, 300);
     }
     
     // ==================== 기업정보 자동입력 ====================
@@ -2692,9 +2694,9 @@
       const autoFillBtn = document.getElementById('auto-fill-btn');
       if (!autoFillBtn) return;
       
-      const businessNum1 = document.getElementById('business-num-1');
-      const businessNum2 = document.getElementById('business-num-2');
-      const businessNum3 = document.getElementById('business-num-3');
+      const businessNum1 = document.getElementById('business-number-1');
+      const businessNum2 = document.getElementById('business-number-2');
+      const businessNum3 = document.getElementById('business-number-3');
       
       // 사업자번호 입력 시 자동입력 버튼 활성화
       [businessNum1, businessNum2, businessNum3].forEach(input => {
