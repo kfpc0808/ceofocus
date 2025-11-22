@@ -161,6 +161,70 @@
       color: #ffd27f;
       padding-bottom: 0.75rem;
       border-bottom: 2px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .section-info-icon {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: rgba(255, 210, 127, 0.2);
+      border: 1.5px solid #ffd27f;
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffd27f;
+      cursor: help;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .section-info-icon:hover {
+      background: rgba(255, 210, 127, 0.3);
+      transform: scale(1.1);
+    }
+    
+    .section-info-tooltip {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      left: 30px;
+      top: -10px;
+      background: rgba(20, 40, 70, 0.98);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 400;
+      line-height: 1.5;
+      white-space: nowrap;
+      z-index: 1000;
+      border: 1px solid rgba(255, 210, 127, 0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+    
+    .section-info-tooltip::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 6px;
+      border-style: solid;
+      border-color: transparent rgba(20, 40, 70, 0.98) transparent transparent;
+    }
+    
+    .section-info-icon:hover .section-info-tooltip {
+      visibility: visible;
+      opacity: 1;
+      left: 35px;
     }
     
     .card h3 {
@@ -964,7 +1028,15 @@
 
     <!-- Section 4: 고용 정보 -->
     <div class="card">
-      <h2>Section 4. 고용 정보</h2>
+      <h2>
+        Section 4. 고용 정보
+        <span class="section-info-icon">
+          i
+          <span class="section-info-tooltip">
+            ⚠️ 개인정보보호법으로 인해 자동 조회가 불가능합니다. 수동으로 입력해주세요.
+          </span>
+        </span>
+      </h2>
       
       <h3>4-1. 인력 현황</h3>
       <div class="form-grid">
