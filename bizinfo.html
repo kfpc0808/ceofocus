@@ -685,42 +685,44 @@
     </div>
 
     <!-- 사용 안내 섹션 -->
-    <!-- 회사 빠른 검색 섹션 (NEW!) -->
-    <div class="company-search-section" style="background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%); border: 2px solid rgba(255,255,255,0.3); padding: 2rem; border-radius: 16px; margin-bottom: 2rem;">
-      <h3 style="color: white; margin-bottom: 0.5rem; font-size: 1.4rem;">🔍 회사 빠른 검색</h3>
-      <p class="hint" style="color: rgba(255,255,255,0.9); margin-bottom: 1.5rem; font-size: 0.95rem;">
-        사업자번호를 모르시나요? 기업명으로 검색하여 사업자번호를 확인하세요!
-      </p>
-      
-      <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end;">
-        <!-- 회사명 입력 -->
-        <div class="form-group" style="margin: 0;">
-          <label style="color: white; font-weight: 600;">회사명</label>
-          <div style="position: relative;">
-            <input 
-              type="text" 
-              id="company-search-input"
-              placeholder="예: 삼성전자"
-              autocomplete="off"
-              style="width: 100%; padding: 0.875rem; border-radius: 10px; border: 2px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.95); color: #333; font-size: 16px;">
-            
-            <!-- 검색 결과 드롭다운 -->
-            <div id="search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-height: 350px; overflow-y: auto; z-index: 1000; margin-top: 0.5rem;"></div>
+    <div class="company-search-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+      <h3 style="color: white; margin-bottom: 1rem;">💡 사용 안내</h3>
+      <div style="background: rgba(255,255,255,0.95); padding: 1.5rem; border-radius: 15px;">
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; align-items: start; gap: 1rem;">
+            <div style="background: #4CAF50; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
+            <div>
+              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Section 1에서 사업자번호 입력</h4>
+              <p style="color: #666; margin: 0; font-size: 0.95rem;">기업 식별정보 → 사업자등록번호 3개 칸 모두 입력</p>
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: start; gap: 1rem;">
+            <div style="background: #FF8802; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
+            <div>
+              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🤖 가져오기 버튼 클릭</h4>
+              <p style="color: #666; margin: 0; font-size: 0.95rem;">국세청, 금융위원회 등 실제 API로 <strong>전국 모든 사업자</strong> 조회 가능</p>
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: start; gap: 1rem;">
+            <div style="background: #2196F3; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
+            <div>
+              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">자동으로 모든 정보 입력 완료</h4>
+              <p style="color: #666; margin: 0; font-size: 0.95rem;">기업명, 대표자, 업종, 소재지 등 자동 입력 (3~5초 소요)</p>
+            </div>
           </div>
         </div>
         
-        <!-- 검색 버튼 -->
-        <button id="search-company-btn" class="btn" style="background: white; color: #FF8802; padding: 0.875rem 2rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; white-space: nowrap; height: 52px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-          🔍 검색
-        </button>
-      </div>
-      
-      <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.2); border-radius: 8px; border-left: 4px solid white;">
-        <p style="margin: 0; color: white; font-size: 0.9rem;">
-          💡 <strong>검색 후</strong> 원하는 기업을 클릭하면 <strong>사업자번호가 자동으로 입력</strong>됩니다!
-        </p>
+        <div style="margin-top: 1.5rem; padding: 1rem; background: #FFF3E0; border-left: 4px solid #FF8802; border-radius: 8px;">
+          <p style="margin: 0; color: #E65100; font-weight: 600;">
+            ⚡ <strong>전국 모든 사업자 조회 가능!</strong> 사업자번호만 입력하면 즉시 조회됩니다.
+          </p>
+        </div>
       </div>
     </div>
+
+
     <!-- Section 1: 기업 기본정보 -->
     <div class="card">
       <h2>Section 1. 기업 기본정보</h2>
@@ -4337,361 +4339,6 @@
       setupAutoFill();
     });
     
-
-    // ==================== 완전한 자동완성 + 진행률 + API 연동 ====================
-    
-    window.addEventListener('load', function() {
-      initCompanyAutocomplete();
-      enhanceAutoFillButton();
-    });
-    
-    // ==================== 1. 기업명 자동완성 ====================
-    
-    function initCompanyAutocomplete() {
-      console.log('🔍 자동완성 초기화...');
-      
-      let companySearchTimeout = null;
-      const searchInput = document.getElementById('company-search-input');
-      const searchResults = document.getElementById('search-results');
-      const searchBtn = document.getElementById('search-company-btn');
-      
-      if (!searchInput || !searchResults) {
-        console.error('❌ 검색 요소를 찾을 수 없습니다.');
-        return;
-      }
-      
-      // 기업명 입력 시 자동 검색
-      searchInput.addEventListener('input', function(e) {
-        const query = e.target.value.trim();
-        
-        if (query.length < 2) {
-          searchResults.style.display = 'none';
-          return;
-        }
-        
-        clearTimeout(companySearchTimeout);
-        companySearchTimeout = setTimeout(() => {
-          searchCompaniesByName(query);
-        }, 500);
-      });
-      
-      // 검색 버튼
-      if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-          const query = searchInput.value.trim();
-          if (query.length >= 2) searchCompaniesByName(query);
-        });
-      }
-      
-      // 외부 클릭 시 닫기
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('.company-search-section')) {
-          searchResults.style.display = 'none';
-        }
-      });
-      
-      async function searchCompaniesByName(query) {
-        try {
-          searchResults.innerHTML = '<div class="search-loading"><div class="spinner"></div><div>검색 중...</div></div>';
-          searchResults.style.display = 'block';
-          
-          const response = await fetch('/.netlify/functions/searchCompanyByName', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ companyName: query })
-          });
-          
-          if (!response.ok) throw new Error('검색 실패');
-          
-          const data = await response.json();
-          
-          if (data.success && data.companies && data.companies.length > 0) {
-            displayResults(data.companies);
-          } else {
-            searchResults.innerHTML = '<div class="no-results">검색 결과가 없습니다.</div>';
-          }
-        } catch (error) {
-          console.error('검색 오류:', error);
-          searchResults.innerHTML = '<div class="search-error">검색 중 오류가 발생했습니다.</div>';
-        }
-      }
-      
-      function displayResults(companies) {
-        searchResults.innerHTML = companies.map((company, index) => {
-          const bizNo = formatBizNo(company.bizNo);
-          return `
-            <div class="search-result-item" data-index="${index}" style="cursor: pointer;">
-              <div class="company-name">${escapeHtml(company.name)}</div>
-              <div class="company-info">
-                <span style="font-family: monospace; font-weight: 500;">${bizNo}</span>
-                <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; ${company.status === '계속사업자' ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}">
-                  ${company.status}
-                </span>
-                ${company.address ? `<span>📍 ${escapeHtml(company.address)}</span>` : ''}
-              </div>
-            </div>
-          `;
-        }).join('');
-        
-        const items = searchResults.querySelectorAll('.search-result-item');
-        items.forEach((item, index) => {
-          item.addEventListener('click', function() {
-            selectCompany(companies[index]);
-          });
-        });
-        
-        searchResults.style.display = 'block';
-      }
-      
-      function selectCompany(company) {
-        console.log('✅ 선택:', company.name);
-        
-        // 검색란에 입력
-        searchInput.value = company.name;
-        
-        const cleaned = company.bizNo.replace(/[^0-9]/g, '');
-        
-        // 검색 섹션 사업자번호
-        if (cleaned.length === 10) {
-          const b1 = document.getElementById('search-biz-1');
-          const b2 = document.getElementById('search-biz-2');
-          const b3 = document.getElementById('search-biz-3');
-          if (b1) b1.value = cleaned.substring(0, 3);
-          if (b2) b2.value = cleaned.substring(3, 5);
-          if (b3) b3.value = cleaned.substring(5, 10);
-        }
-        
-        // Section 1 기업명
-        const companyName = document.getElementById('company-name');
-        if (companyName) companyName.value = company.name;
-        
-        // Section 1 사업자번호
-        if (cleaned.length === 10) {
-          const bn1 = document.getElementById('business-number-1');
-          const bn2 = document.getElementById('business-number-2');
-          const bn3 = document.getElementById('business-number-3');
-          if (bn1) bn1.value = cleaned.substring(0, 3);
-          if (bn2) bn2.value = cleaned.substring(3, 5);
-          if (bn3) bn3.value = cleaned.substring(5, 10);
-        }
-        
-        searchResults.style.display = 'none';
-        
-        alert(`✅ ${company.name} 선택됨!\n\n사업자번호: ${formatBizNo(company.bizNo)}\n\n아래에서 나머지 정보를 입력하세요.`);
-        
-        const section1 = document.querySelector('.card h2');
-        if (section1) section1.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      
-      function formatBizNo(bizNo) {
-        const cleaned = bizNo.replace(/[^0-9]/g, '');
-        return cleaned.length === 10 ? cleaned.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3') : bizNo;
-      }
-      
-      function escapeHtml(text) {
-        const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};
-        return text.replace(/[&<>"']/g, m => map[m]);
-      }
-      
-      console.log('✅ 자동완성 활성화 완료');
-    }
-    
-    // ==================== 2. 가져오기 버튼 + 진행률 + API 연동 ====================
-    
-    function enhanceAutoFillButton() {
-      console.log('🤖 가져오기 버튼 강화...');
-      
-      const autoFillBtn = document.getElementById('auto-fill-btn');
-      if (!autoFillBtn) {
-        console.error('❌ 가져오기 버튼을 찾을 수 없습니다.');
-        return;
-      }
-      
-      // 진행률 HTML 추가
-      const progressHTML = `
-        <div id="progress-container" style="display: none; margin: 2rem 0; padding: 2rem; background: rgba(255,255,255,0.1); border-radius: 12px; border: 2px solid rgba(255,255,255,0.2);">
-          <div style="background: rgba(255,255,255,0.2); border-radius: 20px; height: 10px; overflow: hidden; margin-bottom: 1rem;">
-            <div id="progress-bar" style="height: 100%; background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%); border-radius: 20px; width: 0%; transition: width 0.4s;"></div>
-          </div>
-          <div id="progress-text" style="text-align: center; color: #FFD700; font-weight: 600; font-size: 1.1rem; margin-bottom: 1.5rem;">준비 중...</div>
-          <div style="display: flex; justify-content: space-between; gap: 1rem;">
-            <div id="step1" class="progress-step" style="flex: 1; text-align: center; padding: 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔍</div>
-              <div style="font-size: 0.9rem;">기업 검증</div>
-            </div>
-            <div id="step2" class="progress-step" style="flex: 1; text-align: center; padding: 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
-              <div style="font-size: 0.9rem;">국세청 조회</div>
-            </div>
-            <div id="step3" class="progress-step" style="flex: 1; text-align: center; padding: 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">📈</div>
-              <div style="font-size: 0.9rem;">공시정보</div>
-            </div>
-            <div id="step4" class="progress-step" style="flex: 1; text-align: center; padding: 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
-              <div style="font-size: 0.9rem;">분석 완료</div>
-            </div>
-          </div>
-        </div>
-        
-        <div id="api-results" style="display: none; margin: 2rem 0;"></div>
-      `;
-      
-      // 가져오기 버튼 아래에 진행률 추가
-      autoFillBtn.parentElement.insertAdjacentHTML('afterend', progressHTML);
-      
-      // 기존 클릭 이벤트 제거하고 새로 추가
-      const newBtn = autoFillBtn.cloneNode(true);
-      autoFillBtn.parentNode.replaceChild(newBtn, autoFillBtn);
-      
-      newBtn.addEventListener('click', async function() {
-        await fetchCompanyData();
-      });
-      
-      async function fetchCompanyData() {
-        try {
-          // 사업자번호 가져오기
-          const bn1 = document.getElementById('business-number-1')?.value || '';
-          const bn2 = document.getElementById('business-number-2')?.value || '';
-          const bn3 = document.getElementById('business-number-3')?.value || '';
-          const bizNo = bn1 + bn2 + bn3;
-          
-          if (bizNo.length !== 10) {
-            alert('⚠️ 사업자번호를 정확히 입력해주세요.');
-            return;
-          }
-          
-          // 버튼 비활성화
-          newBtn.disabled = true;
-          newBtn.innerHTML = '<span>⏳</span><span>조회 중...</span>';
-          
-          // 진행률 표시
-          const progressContainer = document.getElementById('progress-container');
-          const progressBar = document.getElementById('progress-bar');
-          const progressText = document.getElementById('progress-text');
-          progressContainer.style.display = 'block';
-          
-          // Step 1: 기업 검증 (25%)
-          updateProgress(25, '🔍 기업 정보 검증 중...', 1);
-          await sleep(800);
-          
-          // Step 2: 국세청 조회 (50%)
-          updateProgress(50, '📊 국세청 데이터 조회 중...', 2);
-          const ntsData = await callNTSAPI(bizNo);
-          await sleep(1000);
-          
-          // Step 3: 공시정보 수집 (75%)
-          updateProgress(75, '📈 공시정보 수집 중...', 3);
-          const publicData = await callAnalyzeBizInfoAPI(bizNo);
-          await sleep(1000);
-          
-          // Step 4: 완료 (100%)
-          updateProgress(100, '✅ 분석 완료!', 4);
-          await sleep(500);
-          
-          // 결과 표시
-          displayAPIResults(ntsData, publicData);
-          
-          alert('✅ 기업 정보를 성공적으로 가져왔습니다!');
-          
-        } catch (error) {
-          console.error('❌ 오류:', error);
-          alert('❌ 데이터를 가져오는 중 오류가 발생했습니다:\n' + error.message);
-        } finally {
-          newBtn.disabled = false;
-          newBtn.innerHTML = '<span>🤖</span><span>가져오기</span>';
-          
-          setTimeout(() => {
-            document.getElementById('progress-container').style.display = 'none';
-          }, 2000);
-        }
-      }
-      
-      function updateProgress(percent, text, step) {
-        document.getElementById('progress-bar').style.width = percent + '%';
-        document.getElementById('progress-text').textContent = text;
-        
-        for (let i = 1; i <= 4; i++) {
-          const stepEl = document.getElementById('step' + i);
-          if (i < step) {
-            stepEl.style.background = 'rgba(76, 175, 80, 0.3)';
-            stepEl.style.color = '#4CAF50';
-          } else if (i === step) {
-            stepEl.style.background = 'rgba(255, 215, 0, 0.3)';
-            stepEl.style.color = '#FFD700';
-          }
-        }
-      }
-      
-      async function callNTSAPI(bizNo) {
-        const response = await fetch('/.netlify/functions/getNTS', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ businessNumber: bizNo })
-        });
-        
-        if (!response.ok) throw new Error('국세청 API 호출 실패');
-        return await response.json();
-      }
-      
-      async function callAnalyzeBizInfoAPI(bizNo) {
-        const response = await fetch('/.netlify/functions/analyzeBizInfo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ businessNumber: bizNo })
-        });
-        
-        if (!response.ok) throw new Error('공시정보 API 호출 실패');
-        return await response.json();
-      }
-      
-      function displayAPIResults(ntsData, publicData) {
-        const resultsDiv = document.getElementById('api-results');
-        
-        resultsDiv.innerHTML = `
-          <div style="background: rgba(255,255,255,0.95); border-radius: 12px; padding: 2rem; color: #333;">
-            <h3 style="color: #0c2c54; margin-bottom: 1.5rem; font-size: 1.5rem;">📊 조회 결과</h3>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-              <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #4CAF50;">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">국세청 상태</div>
-                <div style="font-size: 1.2rem; font-weight: 600; color: #333;">${ntsData?.status || ntsData?.taxType || '확인 필요'}</div>
-              </div>
-              
-              <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #2196F3;">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">업종</div>
-                <div style="font-size: 1.2rem; font-weight: 600; color: #333;">${ntsData?.type || publicData?.industry || '-'}</div>
-              </div>
-              
-              <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #FF9800;">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">매출액</div>
-                <div style="font-size: 1.2rem; font-weight: 600; color: #333;">${publicData?.revenue || publicData?.sales || '-'}</div>
-              </div>
-              
-              <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #9C27B0;">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">직원 수</div>
-                <div style="font-size: 1.2rem; font-weight: 600; color: #333;">${publicData?.employees || publicData?.employeeCount || '-'}</div>
-              </div>
-            </div>
-            
-            <div style="background: #e3f2fd; padding: 1rem; border-radius: 8px; border-left: 4px solid #2196F3;">
-              <div style="font-size: 0.9rem; color: #1565c0; font-weight: 600;">💡 조회된 정보가 자동으로 입력되지 않았다면 수동으로 입력해주세요.</div>
-            </div>
-          </div>
-        `;
-        
-        resultsDiv.style.display = 'block';
-        
-        // 결과로 스크롤
-        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      
-      function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-      }
-      
-      console.log('✅ 가져오기 버튼 강화 완료');
-    }
   </script>
 </body>
 </html>
