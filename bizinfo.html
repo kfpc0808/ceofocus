@@ -3689,6 +3689,13 @@
                     <div style="color: ${data.innobiz === '있음' ? '#10b981' : '#999'}; font-weight: 700;">${data.innobiz}</div>
                   </div>
                 ` : ''}
+                
+                ${data.mainbiz ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">메인비즈</div>
+                    <div style="color: ${data.mainbiz === 'Y' ? '#10b981' : '#999'}; font-weight: 700;">${data.mainbiz === 'Y' ? '있음' : '없음'}</div>
+                  </div>
+                ` : ''}
               </div>
             </div>
             
@@ -4014,6 +4021,41 @@
     }
     
     /**
+     * 🏆 메인비즈 인증 조회
+     */
+    async function getMainbizInfo(companyName, businessNumber) {
+      try {
+        console.log(`🏆 메인비즈 조회 시작: ${companyName}`);
+        
+        // Netlify Function 호출
+        const response = await fetch('/.netlify/functions/getMainbiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            companyName: companyName,
+            businessNumber: businessNumber
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log(`✅ 메인비즈 조회 성공: ${result.companyName}`);
+        } else {
+          console.log(`❌ 메인비즈 조회 실패: ${result.message}`);
+        }
+        
+        return result;
+        
+      } catch (error) {
+        console.error('❌ 메인비즈 API 오류:', error);
+        return { success: false, message: 'API 호출 실패: ' + error.message };
+      }
+    }
+    
+    /**
      * 🤖 통합 자동입력 함수 (실제 API 호출)
      */
     async function autoFillCompanyInfo(businessNumber) {
@@ -4023,6 +4065,7 @@
         '📜 특허청에서 특허정보 검색 중...',
         '🚀 벤처기업 인증 확인 중...',
         '💡 이노비즈 인증 확인 중...',
+        '🏆 메인비즈 인증 확인 중...',
         '✨ 데이터 통합 중...'
       ];
       
@@ -4031,6 +4074,7 @@
       let patentData = null;
       let ventureData = null;
       let innobizData = null;
+      let mainbizData = null;
       
       const messageInterval = setInterval(() => {
         const loadingMsg = document.getElementById('loading-message');
@@ -4163,6 +4207,22 @@
           }
         }
         
+        // 6단계: 메인비즈 인증 조회
+        mainbizData = await getMainbizInfo(ntsData.companyName, businessNumber);
+        
+        if (mainbizData.success) {
+          const certMainbizElem = document.getElementById('cert-mainbiz');
+          const certMainbizExpireElem = document.getElementById('cert-mainbiz-expire');
+          
+          if (certMainbizElem) {
+            certMainbizElem.value = mainbizData.isValid ? 'Y' : 'N';
+          }
+          
+          if (certMainbizExpireElem && mainbizData.endDate) {
+            certMainbizExpireElem.value = mainbizData.endDate;
+          }
+        }
+        
         clearInterval(messageInterval);
         
         // 3대 인증 정보 추가
@@ -4176,7 +4236,7 @@
         }
         
         // 3대 인증 정보 추가
-        if (ventureData.success || innobizData.success) {
+        if (ventureData.success || innobizData.success || mainbizData.success) {
           successMsg += `\n🎯 3대 인증 현황:\n`;
           
           if (ventureData.success) {
@@ -4185,6 +4245,10 @@
           
           if (innobizData.success) {
             successMsg += `💡 이노비즈: ${innobizData.isValid ? '✅ 유효' : '❌ 만료'} (${innobizData.endDate}까지)\n`;
+          }
+          
+          if (mainbizData.success) {
+            successMsg += `🏆 메인비즈: ${mainbizData.isValid ? '✅ 유효' : '❌ 만료'} (${mainbizData.endDate}까지)\n`;
           }
         }
         
@@ -4202,7 +4266,8 @@
           industry: fscData?.industry || null,
           patents: patentData?.totalCount || null,
           venture: ventureData?.isValid ? '있음' : ventureData?.success ? '만료' : null,
-          innobiz: innobizData?.isValid ? '있음' : innobizData?.success ? '만료' : null
+          innobiz: innobizData?.isValid ? '있음' : innobizData?.success ? '만료' : null,
+          mainbiz: mainbizData?.isValid ? 'Y' : mainbizData?.success ? 'N' : null
         };
         
       } catch (error) {
