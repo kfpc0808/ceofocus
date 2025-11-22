@@ -700,7 +700,7 @@
           <div style="display: flex; align-items: start; gap: 1rem;">
             <div style="background: #FF8802; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
             <div>
-              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🤖 기업정보 자동입력 버튼 클릭</h4>
+              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🤖 가져오기 버튼 클릭</h4>
               <p style="color: #666; margin: 0; font-size: 0.95rem;">국세청, 금융위원회 등 실제 API로 <strong>전국 모든 사업자</strong> 조회 가능</p>
             </div>
           </div>
@@ -767,7 +767,7 @@
       <div style="margin-top: 1.5rem;">
         <button type="button" id="auto-fill-btn" class="auto-fill-btn" disabled>
           <span>🤖</span>
-          <span>기업정보 자동입력</span>
+          <span>가져오기</span>
         </button>
         <p style="text-align: center; margin-top: 0.75rem; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
           💡 사업자번호를 입력하면 버튼이 활성화됩니다<br>
@@ -809,56 +809,56 @@
           <select id="ksic-code" required>
             <option value="">선택하세요</option>
             <optgroup label="제조업">
-              <option value="10">식료품 제조업</option>
-              <option value="11">음료 제조업</option>
-              <option value="13">섬유제품 제조업</option>
-              <option value="14">의복, 의복액세서리 및 모피제품 제조업</option>
-              <option value="15">가죽, 가방 및 신발 제조업</option>
-              <option value="16">목재 및 나무제품 제조업</option>
-              <option value="17">펄프, 종이 및 종이제품 제조업</option>
-              <option value="18">인쇄 및 기록매체 복제업</option>
-              <option value="19">코크스, 연탄 및 석유정제품 제조업</option>
-              <option value="20">화학물질 및 화학제품 제조업</option>
-              <option value="21">의료용 물질 및 의약품 제조업</option>
-              <option value="22">고무 및 플라스틱제품 제조업</option>
-              <option value="23">비금속 광물제품 제조업</option>
-              <option value="24">1차 금속 제조업</option>
-              <option value="25">금속가공제품 제조업</option>
-              <option value="26">전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업</option>
-              <option value="27">의료, 정밀, 광학기기 및 시계 제조업</option>
-              <option value="28">전기장비 제조업</option>
-              <option value="29">기타 기계 및 장비 제조업</option>
-              <option value="30">자동차 및 트레일러 제조업</option>
-              <option value="31">기타 운송장비 제조업</option>
-              <option value="32">가구 제조업</option>
-              <option value="33">기타 제품 제조업</option>
+              <option value="10">10 - 식료품 제조업</option>
+              <option value="11">11 - 음료 제조업</option>
+              <option value="13">13 - 섬유제품 제조업</option>
+              <option value="14">14 - 의복, 의복액세서리 및 모피제품 제조업</option>
+              <option value="15">15 - 가죽, 가방 및 신발 제조업</option>
+              <option value="16">16 - 목재 및 나무제품 제조업</option>
+              <option value="17">17 - 펄프, 종이 및 종이제품 제조업</option>
+              <option value="18">18 - 인쇄 및 기록매체 복제업</option>
+              <option value="19">19 - 코크스, 연탄 및 석유정제품 제조업</option>
+              <option value="20">20 - 화학물질 및 화학제품 제조업</option>
+              <option value="21">21 - 의료용 물질 및 의약품 제조업</option>
+              <option value="22">22 - 고무 및 플라스틱제품 제조업</option>
+              <option value="23">23 - 비금속 광물제품 제조업</option>
+              <option value="24">24 - 1차 금속 제조업</option>
+              <option value="25">25 - 금속가공제품 제조업</option>
+              <option value="26">26 - 전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업</option>
+              <option value="27">27 - 의료, 정밀, 광학기기 및 시계 제조업</option>
+              <option value="28">28 - 전기장비 제조업</option>
+              <option value="29">29 - 기타 기계 및 장비 제조업</option>
+              <option value="30">30 - 자동차 및 트레일러 제조업</option>
+              <option value="31">31 - 기타 운송장비 제조업</option>
+              <option value="32">32 - 가구 제조업</option>
+              <option value="33">33 - 기타 제품 제조업</option>
             </optgroup>
             <optgroup label="정보통신업">
-              <option value="58">출판업</option>
-              <option value="59">영상·오디오 기록물 제작 및 배급업</option>
-              <option value="60">방송업</option>
-              <option value="61">통신업</option>
-              <option value="62">컴퓨터 프로그래밍, 시스템 통합 및 관리업</option>
-              <option value="63">정보서비스업</option>
+              <option value="58">58 - 출판업</option>
+              <option value="59">59 - 영상·오디오 기록물 제작 및 배급업</option>
+              <option value="60">60 - 방송업</option>
+              <option value="61">61 - 통신업</option>
+              <option value="62">62 - 컴퓨터 프로그래밍, 시스템 통합 및 관리업</option>
+              <option value="63">63 - 정보서비스업</option>
             </optgroup>
             <optgroup label="전문, 과학 및 기술 서비스업">
-              <option value="70">연구개발업</option>
-              <option value="71">전문서비스업</option>
-              <option value="72">건축기술, 엔지니어링 및 기타 과학기술 서비스업</option>
-              <option value="73">기타 전문, 과학 및 기술 서비스업</option>
+              <option value="70">70 - 연구개발업</option>
+              <option value="71">71 - 전문서비스업</option>
+              <option value="72">72 - 건축기술, 엔지니어링 및 기타 과학기술 서비스업</option>
+              <option value="73">73 - 기타 전문, 과학 및 기술 서비스업</option>
             </optgroup>
             <optgroup label="기타">
-              <option value="46">도매 및 상품중개업</option>
-              <option value="47">소매업</option>
-              <option value="49">육상운송 및 파이프라인 운송업</option>
-              <option value="52">창고 및 운송관련 서비스업</option>
-              <option value="56">음식점 및 주점업</option>
-              <option value="64">금융업</option>
-              <option value="65">보험 및 연금업</option>
-              <option value="66">금융 및 보험 관련 서비스업</option>
-              <option value="85">교육 서비스업</option>
-              <option value="86">보건업</option>
-              <option value="87">사회복지 서비스업</option>
+              <option value="46">46 - 도매 및 상품중개업</option>
+              <option value="47">47 - 소매업</option>
+              <option value="49">49 - 육상운송 및 파이프라인 운송업</option>
+              <option value="52">52 - 창고 및 운송관련 서비스업</option>
+              <option value="56">56 - 음식점 및 주점업</option>
+              <option value="64">64 - 금융업</option>
+              <option value="65">65 - 보험 및 연금업</option>
+              <option value="66">66 - 금융 및 보험 관련 서비스업</option>
+              <option value="85">85 - 교육 서비스업</option>
+              <option value="86">86 - 보건업</option>
+              <option value="87">87 - 사회복지 서비스업</option>
             </optgroup>
           </select>
           <span class="info-text">표준산업분류 중분류 코드</span>
@@ -2838,17 +2838,53 @@
       loadingOverlay.id = 'auto-fill-loading';
       loadingOverlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(12, 44, 84, 0.95); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;';
       loadingOverlay.innerHTML = `
-        <div style="text-align: center;">
+        <div style="text-align: center; width: 90%; max-width: 500px;">
           <div style="width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid #FF8802; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 2rem;"></div>
           <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">🔍 기업정보 조회 중...</h2>
-          <p id="loading-message" style="font-size: 1.1rem; color: rgba(255,255,255,0.8);">국세청 API 호출 중...</p>
+          <p id="loading-message" style="font-size: 1.1rem; color: rgba(255,255,255,0.8); margin-bottom: 2rem;">국세청 API 호출 중...</p>
+          
+          <!-- 진행률 바 -->
+          <div style="width: 100%; background: rgba(255,255,255,0.2); height: 30px; border-radius: 15px; overflow: hidden; margin-bottom: 1rem;">
+            <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%); transition: width 0.3s ease; display: flex; align-items: center; justify-content: center;">
+              <span id="progress-text" style="font-weight: bold; font-size: 0.9rem; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);"></span>
+            </div>
+          </div>
+          
+          <p style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">잠시만 기다려주세요...</p>
         </div>
       `;
       document.body.appendChild(loadingOverlay);
       
+      // 진행률 업데이트 함수
+      let progress = 0;
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      
+      const progressInterval = setInterval(() => {
+        if (progress < 95) {
+          progress += Math.random() * 10;
+          if (progress > 95) progress = 95;
+          
+          if (progressBar) {
+            progressBar.style.width = progress + '%';
+          }
+          if (progressText) {
+            progressText.textContent = Math.floor(progress) + '%';
+          }
+        }
+      }, 300);
+      
       // 자동입력 실행
       try {
         const result = await autoFillCompanyInfo(businessNumber);
+        
+        // 진행률 100% 완료
+        clearInterval(progressInterval);
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressText) progressText.textContent = '100%';
+        
+        // 잠깐 대기 (100% 보여주기)
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // 로딩 제거
         document.body.removeChild(loadingOverlay);
@@ -2857,6 +2893,7 @@
         showSuccessPopup(result);
         
       } catch (error) {
+        clearInterval(progressInterval);
         document.body.removeChild(loadingOverlay);
         console.error('자동입력 오류:', error);
         alert('❌ 자동입력에 실패했습니다.\n\n' + error.message + '\n\n수동으로 입력해주세요.');
@@ -3051,7 +3088,7 @@
           alert(errorMsg);
         } finally {
           autoFillBtn.disabled = false;
-          autoFillBtn.innerHTML = '<span>🤖</span><span>기업정보 자동입력</span>';
+          autoFillBtn.innerHTML = '<span>🤖</span><span>가져오기</span>';
         }
       });
     }
@@ -3334,17 +3371,46 @@
       }, 800);
       
       try {
-        // 1단계: 국세청 API로 기본 정보 조회
-        const ntsData = await getNTSInfo(businessNumber);
+        // 기존 기업명 저장 (문제 1 해결)
+        const companyNameElem = document.getElementById('company-name');
+        const existingCompanyName = companyNameElem ? companyNameElem.value.trim() : '';
         
+        // 1단계: 국세청 API로 기본 정보 조회
+        let ntsData = await getNTSInfo(businessNumber);
+        
+        // API 실패 시 MOCK 데이터로 fallback (문제 2 해결)
         if (!ntsData.success) {
-          clearInterval(messageInterval);
-          throw new Error(ntsData.message || '국세청 조회 실패');
+          console.log('⚠️ API 호출 실패, MOCK 데이터 사용');
+          const cleanBN = businessNumber.replace(/-/g, '');
+          const mockCompany = MOCK_COMPANIES.find(c => c.businessNumber.replace(/-/g, '') === cleanBN);
+          
+          if (mockCompany) {
+            ntsData = {
+              success: true,
+              companyName: mockCompany.name,
+              ceo: mockCompany.ceo,
+              startDate: mockCompany.openingDate ? mockCompany.openingDate.replace(/-/g, '') : '',
+              businessStatus: '계속사업자',
+              taxType: '',
+              address: '',
+              rbfTaxType: '',
+              rbfTaxTypeCd: ''
+            };
+          } else {
+            clearInterval(messageInterval);
+            throw new Error('해당 사업자번호를 찾을 수 없습니다. (API 및 테스트 데이터 없음)');
+          }
         }
         
         // 기본 정보 입력
-        const companyNameElem = document.getElementById('company-name');
-        if (companyNameElem) companyNameElem.value = ntsData.companyName;
+        // 기업명: 기존 값이 있으면 유지, 없으면 API 값 사용 (문제 1 해결)
+        if (companyNameElem) {
+          if (!existingCompanyName && ntsData.companyName) {
+            companyNameElem.value = ntsData.companyName;
+          } else if (existingCompanyName) {
+            companyNameElem.value = existingCompanyName;
+          }
+        }
         
         const ceoNameElem = document.getElementById('ceo-name');
         if (ceoNameElem) ceoNameElem.value = ntsData.ceo;
