@@ -100,13 +100,20 @@ exports.handler = async (event, context) => {
 
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
+      console.log('📦 JSON 응답 받음');
     } else {
       // XML 응답일 경우
       const text = await response.text();
-      console.log('XML 응답:', text.substring(0, 500));
+      console.log('📦 XML 응답 받음');
       
-      // XML을 간단히 파싱 (정규식)
+      // XML을 JSON으로 파싱
       data = parseXmlToJson(text);
+    }
+
+    // 기업마당 API는 JSON 응답을 jsonArray로 감싼다
+    if (data.jsonArray) {
+      data = data.jsonArray;
+      console.log('📦 jsonArray 언래핑');
     }
 
     // 데이터 정규화
@@ -190,7 +197,7 @@ function parseXmlToJson(xmlText) {
       excInsttNm: extractTag(itemXml, 'excInsttNm'),
       lcategory: extractTag(itemXml, 'lcategory') || extractTag(itemXml, 'pldirSportRealmLclasCodeNm'),
       pubDate: extractTag(itemXml, 'pubDate') || extractTag(itemXml, 'creatPnttm'),
-      reqstBeginEndDe: extractTag(itemXml, 'reqstDt') || extractTag(itemXml, 'reqstBeginEndDe'),
+      reqstDt: extractTag(itemXml, 'reqstDt') || extractTag(itemXml, 'reqstBeginEndDe'),
       trgetNm: extractTag(itemXml, 'trgetNm')
     };
     
@@ -239,12 +246,13 @@ function normalizePrograms(data) {
       organization: item.author || item.jrsdInsttNm || '미상',
       category: categoryMap[item.lcategory || item.pldirSportRealmLclasCodeNm] || '기타',
       budget: '상세 페이지 참조',
-      description: (item.description || item.bsnsSumryCn || '').substring(0, 200),
+      description: (item.description || item.bsnsSumryCn || '').replace(/<[^>]+>/g, '').substring(0, 200),
       website: item.link || item.pblancUrl || 'https://www.bizinfo.go.kr',
       
       // 추가 정보
-      startDate: item.reqstBeginEndDe ? item.reqstBeginEndDe.split(' ~ ')[0] : '',
-      endDate: item.reqstBeginEndDe ? item.reqstBeginEndDe.split(' ~ ')[1] : '',
+      reqstPeriod: item.reqstDt || item.reqstBeginEndDe || '',
+      startDate: (item.reqstDt || item.reqstBeginEndDe || '').split(' ~ ')[0] || '',
+      endDate: (item.reqstDt || item.reqstBeginEndDe || '').split(' ~ ')[1] || '',
       target: item.trgetNm || '',
       pubDate: item.pubDate || item.creatPnttm || '',
       executor: item.excInsttNm || '',
