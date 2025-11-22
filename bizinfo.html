@@ -4340,12 +4340,17 @@
     });
     
 
-    // ==================== 기업명 자동완성 기능 (추가) ====================
+    // ==================== 기업명 자동완성 기능 (수정) ====================
     
-    (function() {
-      'use strict';
+    // DOM 로드 완료 후 실행
+    window.addEventListener('load', function() {
+      initCompanyAutocomplete();
+    });
+    
+    function initCompanyAutocomplete() {
+      console.log('🔍 자동완성 초기화 시작...');
       
-      // 전역 변수 (기존 코드와 충돌 방지)
+      // 전역 변수
       let companySearchTimeout = null;
       let selectedCompanyData = null;
       
@@ -4354,16 +4359,25 @@
       const searchResults = document.getElementById('search-results');
       const searchBtn = document.getElementById('search-company-btn');
       
-      if (!searchInput || !searchResults) {
-        console.warn('⚠️ 검색 입력란 또는 결과 영역을 찾을 수 없습니다.');
+      if (!searchInput) {
+        console.error('❌ company-search-input을 찾을 수 없습니다.');
         return;
       }
+      
+      if (!searchResults) {
+        console.error('❌ search-results를 찾을 수 없습니다.');
+        return;
+      }
+      
+      console.log('✅ DOM 요소 찾기 완료');
       
       // ==================== 이벤트 리스너 ====================
       
       // 기업명 입력 시 자동 검색
       searchInput.addEventListener('input', function(e) {
         const query = e.target.value.trim();
+        
+        console.log('📝 입력:', query);
         
         // 2글자 미만이면 검색 안 함
         if (query.length < 2) {
@@ -4374,6 +4388,7 @@
         // 디바운싱 (0.5초 후 검색)
         clearTimeout(companySearchTimeout);
         companySearchTimeout = setTimeout(() => {
+          console.log('🔍 검색 시작:', query);
           searchCompaniesByName(query);
         }, 500);
       });
@@ -4389,6 +4404,7 @@
       if (searchBtn) {
         searchBtn.addEventListener('click', function() {
           const query = searchInput.value.trim();
+          console.log('🔍 버튼 클릭, 검색어:', query);
           if (query.length >= 2) {
             searchCompaniesByName(query);
           }
@@ -4400,6 +4416,7 @@
       // 기업명으로 검색
       async function searchCompaniesByName(query) {
         try {
+          console.log('📡 API 호출:', query);
           showLoading();
           
           const response = await fetch('/.netlify/functions/searchCompanyByName', {
@@ -4408,11 +4425,14 @@
             body: JSON.stringify({ companyName: query })
           });
           
+          console.log('📡 응답 상태:', response.status);
+          
           if (!response.ok) {
-            throw new Error('검색 실패');
+            throw new Error('검색 실패: ' + response.status);
           }
           
           const data = await response.json();
+          console.log('📊 검색 결과:', data);
           
           if (data.success && data.companies && data.companies.length > 0) {
             displaySearchResults(data.companies);
@@ -4420,8 +4440,8 @@
             showNoResults();
           }
         } catch (error) {
-          console.error('검색 오류:', error);
-          showError('검색 중 오류가 발생했습니다.');
+          console.error('❌ 검색 오류:', error);
+          showError('검색 중 오류가 발생했습니다: ' + error.message);
         }
       }
       
@@ -4440,29 +4460,50 @@
       
       // 검색 결과 표시
       function displaySearchResults(companies) {
-        searchResults.innerHTML = companies.map(company => `
-          <div class="search-result-item" onclick="window.selectCompanyFromSearch('${escapeHtml(company.name)}', '${company.bizNo}', '${escapeHtml(company.address || '')}')">
-            <div class="company-name">${company.name}</div>
-            <div class="company-info">
-              <span style="font-family: monospace; font-weight: 500;">${formatBizNo(company.bizNo)}</span>
-              <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; ${company.status === '계속사업자' ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}">
-                ${company.status}
-              </span>
-              ${company.address ? `<span>📍 ${company.address}</span>` : ''}
+        console.log('✅ 결과 표시:', companies.length + '개');
+        
+        searchResults.innerHTML = companies.map((company, index) => {
+          const escapedName = escapeHtml(company.name);
+          const escapedAddress = escapeHtml(company.address || '');
+          const bizNo = company.bizNo;
+          
+          return `
+            <div class="search-result-item" data-index="${index}">
+              <div class="company-name">${company.name}</div>
+              <div class="company-info">
+                <span style="font-family: monospace; font-weight: 500;">${formatBizNo(bizNo)}</span>
+                <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; ${company.status === '계속사업자' ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}">
+                  ${company.status}
+                </span>
+                ${company.address ? `<span>📍 ${company.address}</span>` : ''}
+              </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
+        
+        // 각 항목에 클릭 이벤트 추가
+        const items = searchResults.querySelectorAll('.search-result-item');
+        items.forEach((item, index) => {
+          item.addEventListener('click', function() {
+            const company = companies[index];
+            console.log('✅ 선택:', company.name);
+            selectCompanyFromSearch(company.name, company.bizNo, company.address || '');
+          });
+        });
+        
         searchResults.style.display = 'block';
       }
       
       // 결과 없음 표시
       function showNoResults() {
+        console.log('ℹ️ 검색 결과 없음');
         searchResults.innerHTML = '<div class="no-results">검색 결과가 없습니다.</div>';
         searchResults.style.display = 'block';
       }
       
       // 에러 표시
       function showError(message) {
+        console.error('❌', message);
         searchResults.innerHTML = `<div class="search-error">${message}</div>`;
         searchResults.style.display = 'block';
       }
@@ -4495,10 +4536,12 @@
         return text.replace(/[&<>"']/g, m => map[m]);
       }
       
-      // ==================== 전역 함수 (onclick에서 호출) ====================
+      // ==================== 기업 선택 함수 ====================
       
       // 기업 선택 시 자동 입력
-      window.selectCompanyFromSearch = function(name, bizNo, address) {
+      function selectCompanyFromSearch(name, bizNo, address) {
+        console.log('🎯 자동 입력 시작:', name);
+        
         selectedCompanyData = { name, bizNo, address };
         
         // 검색란에 기업명 입력
@@ -4511,15 +4554,20 @@
           const part2 = cleaned.substring(3, 5);
           const part3 = cleaned.substring(5, 10);
           
-          document.getElementById('search-biz-1').value = part1;
-          document.getElementById('search-biz-2').value = part2;
-          document.getElementById('search-biz-3').value = part3;
+          const biz1 = document.getElementById('search-biz-1');
+          const biz2 = document.getElementById('search-biz-2');
+          const biz3 = document.getElementById('search-biz-3');
+          
+          if (biz1) biz1.value = part1;
+          if (biz2) biz2.value = part2;
+          if (biz3) biz3.value = part3;
         }
         
         // Section 1 기업명에도 자동 입력
         const companyNameInput = document.getElementById('company-name');
         if (companyNameInput) {
           companyNameInput.value = name;
+          console.log('✅ Section 1 기업명 입력 완료');
         }
         
         // Section 1 사업자번호에도 자동 입력
@@ -4531,6 +4579,8 @@
           if (bizNo1) bizNo1.value = cleaned.substring(0, 3);
           if (bizNo2) bizNo2.value = cleaned.substring(3, 5);
           if (bizNo3) bizNo3.value = cleaned.substring(5, 10);
+          
+          console.log('✅ Section 1 사업자번호 입력 완료');
         }
         
         // 검색 결과 숨김
@@ -4545,13 +4595,12 @@
           section1.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         
-        console.log('✅ 기업 선택:', { name, bizNo, address });
-      };
+        console.log('✅ 자동 입력 완료');
+      }
       
-      // 초기화 완료 로그
-      console.log('✅ 기업명 자동완성 기능 활성화');
-      
-    })();
+      // 초기화 완료
+      console.log('✅ 기업명 자동완성 기능 활성화 완료!');
+    }
   </script>
 </body>
 </html>
