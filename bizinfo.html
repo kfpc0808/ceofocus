@@ -675,28 +675,45 @@
 
     <!-- 회사명 검색 섹션 -->
     <div class="company-search-section">
-      <h3>🔍 회사명으로 빠른 검색</h3>
-      <p class="hint">회사명을 입력하면 사업자번호가 자동으로 입력됩니다</p>
+      <h3>🔍 회사 빠른 검색</h3>
+      <p class="hint">회사명 또는 사업자등록번호로 검색하세요</p>
       
-      <div class="search-input-wrapper">
-        <input 
-          type="text" 
-          id="company-search-input"
-          placeholder="회사명을 입력하세요 (예: 삼성전자, LG전자)"
-          autocomplete="off">
-        
-        <div id="search-results" class="search-dropdown" style="display:none">
-          <!-- 검색 결과가 여기에 표시됩니다 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+        <!-- 회사명 입력 -->
+        <div class="form-group" style="margin: 0;">
+          <label>회사명</label>
+          <input 
+            type="text" 
+            id="company-search-input"
+            placeholder="예: 삼성전자"
+            autocomplete="off"
+            style="width: 100%; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px;">
         </div>
-      </div>
-      
-      <div style="margin-top: 1rem;">
-        <button id="auto-fill-btn" class="auto-fill-btn" disabled>
-          <span>🤖</span>
-          <span>기업정보 자동입력</span>
+        
+        <!-- 사업자등록번호 입력 -->
+        <div class="form-group" style="margin: 0;">
+          <label>사업자등록번호</label>
+          <div style="display: flex; align-items: center; gap: 0.3rem;">
+            <input type="text" id="search-biz-1" placeholder="000" maxlength="3" style="width: 70px; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px; text-align: center;" inputmode="numeric" oninput="allowOnlyNumbers(this); if(this.value.length===3) document.getElementById('search-biz-2').focus()">
+            <span style="color: #FFB84D; font-weight: 700;">-</span>
+            <input type="text" id="search-biz-2" placeholder="00" maxlength="2" style="width: 55px; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px; text-align: center;" inputmode="numeric" oninput="allowOnlyNumbers(this); if(this.value.length===2) document.getElementById('search-biz-3').focus()">
+            <span style="color: #FFB84D; font-weight: 700;">-</span>
+            <input type="text" id="search-biz-3" placeholder="00000" maxlength="5" style="width: 90px; padding: 0.875rem; border-radius: 10px; border: 2px solid #FFB84D; background: rgba(255,255,255,0.95); color: #333; font-size: 16px; text-align: center;" inputmode="numeric" oninput="allowOnlyNumbers(this)">
+          </div>
+        </div>
+        
+        <!-- 조회 버튼 -->
+        <button id="search-company-btn" class="btn" style="background: #FF8802; color: white; padding: 0.875rem 2rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; white-space: nowrap; height: 52px;">
+          🔍 조회
         </button>
       </div>
+      
+      <!-- 검색 결과 -->
+      <div id="search-results" class="search-dropdown" style="display:none; margin-top: 1rem;">
+        <!-- 검색 결과가 여기에 표시됩니다 -->
+      </div>
     </div>
+
 
     <!-- Section 1: 기업 기본정보 -->
     <div class="card">
@@ -2577,53 +2594,79 @@
     let searchTimeout;
     
     function setupCompanySearch() {
+      const searchBtn = document.getElementById('search-company-btn');
       const searchInput = document.getElementById('company-search-input');
+      const searchBiz1 = document.getElementById('search-biz-1');
+      const searchBiz2 = document.getElementById('search-biz-2');
+      const searchBiz3 = document.getElementById('search-biz-3');
       const searchResults = document.getElementById('search-results');
-      const autoFillBtn = document.getElementById('auto-fill-btn');
       
-      if (!searchInput) return;
+      if (!searchBtn) return;
       
-      // 회사명 검색 (자동완성)
-      searchInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        const query = e.target.value.trim();
+      // 조회 버튼 클릭
+      searchBtn.addEventListener('click', () => {
+        const companyName = searchInput.value.trim();
+        const bizNum = `${searchBiz1.value}-${searchBiz2.value}-${searchBiz3.value}`;
         
-        if (query.length < 2) {
-          hideSearchResults();
+        // 회사명 또는 사업자번호 입력 확인
+        if (!companyName && bizNum.length < 12) {
+          alert('❌ 회사명 또는 사업자등록번호를 입력하세요');
           return;
         }
         
-        // 디바운싱 (500ms 대기)
-        searchTimeout = setTimeout(() => {
-          searchCompanies(query);
-        }, 500);
+        // 검색 실행
+        if (companyName) {
+          searchCompanies(companyName, 'name');
+        } else {
+          searchCompanies(bizNum, 'biznum');
+        }
+      });
+      
+      // Enter 키 검색
+      [searchInput, searchBiz1, searchBiz2, searchBiz3].forEach(input => {
+        if (input) {
+          input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              searchBtn.click();
+            }
+          });
+        }
       });
       
       // 외부 클릭 시 검색 결과 숨기기
       document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        if (!searchResults.contains(e.target) && 
+            !searchBtn.contains(e.target) &&
+            !searchInput.contains(e.target)) {
           hideSearchResults();
         }
       });
     }
     
-    function searchCompanies(query) {
+    function searchCompanies(query, type) {
       const searchResults = document.getElementById('search-results');
       
       // 로딩 표시
       searchResults.innerHTML = `
-        <div class="search-loading">
-          <div class="spinner"></div>
-          <span>검색 중...</span>
+        <div class="search-loading" style="padding: 2rem; text-align: center; background: white; border-radius: 10px;">
+          <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #FF8802; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <div style="margin-top: 1rem; color: #666; font-size: 1rem;">검색 중...</div>
         </div>
       `;
       searchResults.style.display = 'block';
       
-      // 검색 실행 (테스트 데이터)
+      // 검색 실행
       setTimeout(() => {
-        const results = MOCK_COMPANIES.filter(c => 
-          c.name.toLowerCase().includes(query.toLowerCase())
-        );
+        let results;
+        if (type === 'name') {
+          results = MOCK_COMPANIES.filter(c => 
+            c.name.toLowerCase().includes(query.toLowerCase())
+          );
+        } else {
+          results = MOCK_COMPANIES.filter(c => 
+            c.businessNumber === query
+          );
+        }
         
         displaySearchResults(results);
       }, 300);
@@ -2633,14 +2676,26 @@
       const searchResults = document.getElementById('search-results');
       
       if (companies.length === 0) {
-        searchResults.innerHTML = '<div class="no-results">❌ 검색 결과가 없습니다</div>';
+        searchResults.innerHTML = `
+          <div style="padding: 2rem; text-align: center; background: white; border-radius: 10px; color: #999;">
+            ❌ 검색 결과가 없습니다
+          </div>
+        `;
         searchResults.style.display = 'block';
         return;
       }
       
       searchResults.innerHTML = companies.map(company => `
-        <div class="search-result-item" onclick="selectCompany('${company.businessNumber}')">
-          <div class="company-name">${company.name}</div>
+        <div class="search-result-item" onclick="selectCompanyAndFill('${company.businessNumber}')" style="padding: 1.5rem; border-bottom: 1px solid #eee; cursor: pointer; transition: all 0.2s; background: white;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+          <div style="font-weight: 700; color: #333; margin-bottom: 0.5rem; font-size: 1.1rem;">${company.name}</div>
+          <div style="display: flex; gap: 1.5rem; color: #666; font-size: 0.9rem;">
+            <span>📋 ${company.businessNumber}</span>
+            <span>👤 ${company.ceo}</span>
+          </div>
+        </div>
+      `).join('');
+      searchResults.style.display = 'block';
+    }
           <div class="company-info">
             <span>📋 ${company.businessNumber}</span>
             <span>👤 ${company.ceo}</span>
@@ -2656,6 +2711,160 @@
       if (searchResults) {
         searchResults.style.display = 'none';
       }
+    }
+    
+    // 회사 선택 후 바로 자동입력
+    async function selectCompanyAndFill(businessNumber) {
+      // 사업자번호 입력
+      const parts = businessNumber.split('-');
+      const bn1 = document.getElementById('business-number-1');
+      const bn2 = document.getElementById('business-number-2');
+      const bn3 = document.getElementById('business-number-3');
+      
+      if (bn1) bn1.value = parts[0];
+      if (bn2) bn2.value = parts[1];
+      if (bn3) bn3.value = parts[2];
+      
+      // 검색 결과 숨기기
+      hideSearchResults();
+      
+      // 검색 입력창 초기화
+      const searchInput = document.getElementById('company-search-input');
+      const searchBiz1 = document.getElementById('search-biz-1');
+      const searchBiz2 = document.getElementById('search-biz-2');
+      const searchBiz3 = document.getElementById('search-biz-3');
+      if (searchInput) searchInput.value = '';
+      if (searchBiz1) searchBiz1.value = '';
+      if (searchBiz2) searchBiz2.value = '';
+      if (searchBiz3) searchBiz3.value = '';
+      
+      // 로딩 표시
+      const loadingOverlay = document.createElement('div');
+      loadingOverlay.id = 'auto-fill-loading';
+      loadingOverlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(12, 44, 84, 0.95); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;';
+      loadingOverlay.innerHTML = `
+        <div style="text-align: center;">
+          <div style="width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid #FF8802; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 2rem;"></div>
+          <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">🔍 기업정보 조회 중...</h2>
+          <p id="loading-message" style="font-size: 1.1rem; color: rgba(255,255,255,0.8);">국세청 API 호출 중...</p>
+        </div>
+      `;
+      document.body.appendChild(loadingOverlay);
+      
+      // 자동입력 실행
+      try {
+        const result = await autoFillCompanyInfo(businessNumber);
+        
+        // 로딩 제거
+        document.body.removeChild(loadingOverlay);
+        
+        // 성공 팝업 표시
+        showSuccessPopup(result);
+        
+      } catch (error) {
+        document.body.removeChild(loadingOverlay);
+        console.error('자동입력 오류:', error);
+        alert('❌ 자동입력에 실패했습니다.\n\n' + error.message + '\n\n수동으로 입력해주세요.');
+      }
+    }
+    
+    // 자동입력 성공 팝업
+    function showSuccessPopup(data) {
+      const popup = document.createElement('div');
+      popup.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 2rem;';
+      
+      popup.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+          <div style="background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); color: white; padding: 2rem; border-radius: 20px 20px 0 0;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">✅ 자동입력 완료!</h2>
+            <p style="opacity: 0.9; font-size: 1rem;">기업정보가 성공적으로 입력되었습니다</p>
+          </div>
+          
+          <div style="padding: 2rem;">
+            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #f0f0f0;">
+              <h3 style="color: #0c2c54; font-size: 1.3rem; margin-bottom: 1rem;">📊 입력된 정보</h3>
+              
+              <div style="display: grid; gap: 1rem;">
+                ${data.companyName ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">기업명</div>
+                    <div style="color: #333; font-weight: 500;">${data.companyName}</div>
+                  </div>
+                ` : ''}
+                
+                ${data.ceo ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">대표자</div>
+                    <div style="color: #333; font-weight: 500;">${data.ceo}</div>
+                  </div>
+                ` : ''}
+                
+                ${data.startDate ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">개업일</div>
+                    <div style="color: #333; font-weight: 500;">${data.startDate}</div>
+                  </div>
+                ` : ''}
+                
+                ${data.businessStatus ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">사업자상태</div>
+                    <div style="color: ${data.businessStatus === '계속사업자' ? '#10b981' : '#f59e0b'}; font-weight: 700;">${data.businessStatus}</div>
+                  </div>
+                ` : ''}
+                
+                ${data.capital ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">자본금</div>
+                    <div style="color: #333; font-weight: 500;">${formatNumber(data.capital)}원</div>
+                  </div>
+                ` : ''}
+                
+                ${data.industry ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">업종</div>
+                    <div style="color: #333; font-weight: 500;">${data.industry}</div>
+                  </div>
+                ` : ''}
+                
+                ${data.patents ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">특허</div>
+                    <div style="color: #333; font-weight: 500;">${data.patents}건</div>
+                  </div>
+                ` : ''}
+                
+                ${data.venture ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">벤처인증</div>
+                    <div style="color: ${data.venture === '있음' ? '#10b981' : '#999'}; font-weight: 700;">${data.venture}</div>
+                  </div>
+                ` : ''}
+                
+                ${data.innobiz ? `
+                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #666; width: 120px;">이노비즈</div>
+                    <div style="color: ${data.innobiz === '있음' ? '#10b981' : '#999'}; font-weight: 700;">${data.innobiz}</div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            
+            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #FF8802 0%, #FF6B02 100%); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              확인
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(popup);
+      
+      // 클릭 시 닫기
+      popup.addEventListener('click', (e) => {
+        if (e.target === popup) {
+          popup.remove();
+        }
+      });
     }
     
     function selectCompany(businessNumber) {
@@ -2997,10 +3206,15 @@
       ];
       
       let messageIndex = 0;
+      let fscData = null;
+      let patentData = null;
+      let ventureData = null;
+      let innobizData = null;
+      
       const messageInterval = setInterval(() => {
-        const autoFillBtn = document.getElementById('auto-fill-btn');
-        if (autoFillBtn && messageIndex < loadingMessages.length) {
-          autoFillBtn.innerHTML = `<span>⏳</span><span>${loadingMessages[messageIndex]}</span>`;
+        const loadingMsg = document.getElementById('loading-message');
+        if (loadingMsg && messageIndex < loadingMessages.length) {
+          loadingMsg.textContent = loadingMessages[messageIndex];
           messageIndex++;
         }
       }, 800);
@@ -3011,8 +3225,7 @@
         
         if (!ntsData.success) {
           clearInterval(messageInterval);
-          alert(`❌ 국세청 조회 실패\n\n${ntsData.message}\n\n사업자번호를 확인하거나 수동으로 입력해주세요.`);
-          return;
+          throw new Error(ntsData.message || '국세청 조회 실패');
         }
         
         // 기본 정보 입력
@@ -3035,7 +3248,7 @@
         
         if (corpNum1 && corpNum2) {
           const corpNumber = `${corpNum1}-${corpNum2}`;
-          const fscData = await getFSCInfo(corpNumber);
+          fscData = await getFSCInfo(corpNumber);
           
           if (fscData.success) {
             // 자본금
@@ -3059,7 +3272,7 @@
         }
         
         // 3단계: 특허 정보 조회
-        const patentData = await getPatentInfo(ntsData.companyName);
+        patentData = await getPatentInfo(ntsData.companyName);
         
         if (patentData.success && patentData.totalCount > 0) {
           const patentsElem = document.getElementById('patents-registered');
@@ -3069,7 +3282,7 @@
         }
         
         // 4단계: 벤처기업 인증 조회
-        const ventureData = await getVentureInfo(ntsData.companyName);
+        ventureData = await getVentureInfo(ntsData.companyName);
         
         if (ventureData.success) {
           const certVentureElem = document.getElementById('cert-venture');
@@ -3085,7 +3298,7 @@
         }
         
         // 5단계: 이노비즈 인증 조회
-        const innobizData = await getInnobizInfo(ntsData.companyName);
+        innobizData = await getInnobizInfo(ntsData.companyName);
         
         if (innobizData.success) {
           const certInnobizElem = document.getElementById('cert-innobiz');
@@ -3102,7 +3315,7 @@
         
         clearInterval(messageInterval);
         
-        // 성공 메시지
+        // 3대 인증 정보 추가
         let successMsg = `✅ 기업정보 자동입력 완료!\n\n`;
         successMsg += `📌 ${ntsData.companyName}\n`;
         successMsg += `👤 대표자: ${ntsData.ceo}\n`;
@@ -3127,12 +3340,25 @@
         
         successMsg += `\n나머지 항목은 수동으로 입력해주세요.`;
         
-        alert(successMsg);
+        // 결과 반환
+        clearInterval(messageInterval);
+        return {
+          success: true,
+          companyName: ntsData.companyName,
+          ceo: ntsData.ceo,
+          startDate: ntsData.startDate ? `${ntsData.startDate.slice(0, 4)}-${ntsData.startDate.slice(4, 6)}-${ntsData.startDate.slice(6, 8)}` : null,
+          businessStatus: ntsData.businessStatus,
+          capital: fscData?.capital || null,
+          industry: fscData?.industry || null,
+          patents: patentData?.totalCount || null,
+          venture: ventureData?.isValid ? '있음' : ventureData?.success ? '만료' : null,
+          innobiz: innobizData?.isValid ? '있음' : innobizData?.success ? '만료' : null
+        };
         
       } catch (error) {
         clearInterval(messageInterval);
         console.error('자동입력 오류:', error);
-        alert('❌ 자동입력 중 오류가 발생했습니다.\n\n' + error.message + '\n\n수동으로 입력해주세요.');
+        throw error;
       }
     }
     
