@@ -1455,15 +1455,16 @@
     // ==================== Firebase & Google Drive 설정 ====================
     
     // Firebase 설정 (사용자가 Firebase Console에서 받은 값으로 교체 필요)
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    
+const firebaseConfig = {
+  apiKey: "AIzaSyDjS3bsIsl3uDtyQIrzpZTO3IigLmLNG1E",
+  authDomain: "kfpc-company-support-project.firebaseapp.com",
+  databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "kfpc-company-support-project",
+  storageBucket: "kfpc-company-support-project.firebasestorage.app",
+  messagingSenderId: "1012609333373",
+  appId: "1:1012609333373:web:5453ab357b06015d56d914",
+  measurementId: "G-5BDZFX0SC6"
+};    
     // Firebase 초기화
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
