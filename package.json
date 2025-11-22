@@ -1,11 +1,23 @@
 {
-  "name": "ceofocus123",
+  "name": "bizinfo-backend",
   "version": "1.0.0",
-  "description": "CEO Focus Business Solutions",
-  "dependencies": {
-    "node-fetch": "^2.6.7"
+  "description": "기업정보 조회 백엔드 API (Netlify Functions)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "engines": {
-    "node": ">=18.0.0"
+  "keywords": [
+    "netlify",
+    "functions",
+    "api",
+    "proxy",
+    "gemini",
+    "ai"
+  ],
+  "author": "KFPC",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^2.6.7",
+    "abort-controller": "^3.0.0"
   }
 }
