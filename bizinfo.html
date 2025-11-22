@@ -3895,49 +3895,52 @@
     
     /**
      * 📜 특허청 API - 특허 검색
+     * Netlify Function으로 호출
      */
     async function getPatentInfo(companyName) {
       try {
-        const response = await fetch(
-          `${API_CONFIG.PATENT_BASE_URL}/getWordSearch?` +
-          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
-          `word=${encodeURIComponent(companyName)}&` +
-          `docsStart=1&` +
-          `docsCount=10`
-        );
+        console.log(`📜 특허청 조회 시작: ${companyName}`);
         
-        const text = await response.text();
+        // Netlify Function 호출
+        const response = await fetch('/.netlify/functions/getPatent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            companyName: companyName
+          })
+        });
         
-        // XML 파싱
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(text, 'text/xml');
-        
-        const resultCode = xmlDoc.querySelector('resultCode')?.textContent;
-        
-        if (resultCode === '00') {
-          const items = xmlDoc.querySelectorAll('item');
-          const patents = [];
-          
-          items.forEach(item => {
-            patents.push({
-              title: item.querySelector('inventionTitle')?.textContent || '',
-              applicationNumber: item.querySelector('applicationNumber')?.textContent || '',
-              registrationNumber: item.querySelector('registrationNumber')?.textContent || '',
-              applicant: item.querySelector('applicantName')?.textContent || '',
-              applicationDate: item.querySelector('applicationDate')?.textContent || ''
-            });
-          });
-          
+        if (!response.ok) {
+          console.error(`특허청 API HTTP 오류: ${response.status}`);
           return {
-            success: true,
-            totalCount: patents.length,
-            patents: patents
+            success: false,
+            message: `특허청 API 호출 실패 (HTTP ${response.status})`,
+            totalCount: 0,
+            patents: []
           };
         }
-        return { success: false, message: '특허 정보를 찾을 수 없습니다.' };
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log(`✅ 특허청 조회 성공: ${result.totalCount}건`);
+        } else {
+          console.log(`⚠️ 특허청 조회: ${result.message}`);
+        }
+        
+        return result;
+        
       } catch (error) {
-        console.error('특허청 API 오류:', error);
-        return { success: false, message: 'API 호출 실패: ' + error.message };
+        console.error('❌ 특허청 API 오류:', error);
+        // API 오류 시에도 계속 진행할 수 있도록 success: false 반환
+        return { 
+          success: false, 
+          message: 'API 호출 실패: ' + error.message, 
+          totalCount: 0,
+          patents: []
+        };
       }
     }
     
