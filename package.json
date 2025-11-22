@@ -1,0 +1,11 @@
+{
+  "name": "ceofocus123",
+  "version": "1.0.0",
+  "description": "CEO Focus Business Solutions",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
