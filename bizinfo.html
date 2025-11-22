@@ -1987,6 +1987,462 @@
       }
     ];
     
+    // ==================== 테스트 지원사업 데이터 ====================
+    /**
+     * 실제 지원사업 데이터 (2025년 기준)
+     * 클라이언트 사이드 매칭에 사용
+     */
+    const MOCK_PROGRAMS = [
+      // 1. 창업 지원
+      {
+        id: 'startup-001',
+        name: '예비창업패키지',
+        organization: '중소벤처기업부',
+        category: '창업',
+        budget: '최대 1억원',
+        description: '우수한 사업 아이디어를 보유한 예비창업자에게 사업화 자금, 멘토링, 교육 등을 종합 지원',
+        
+        // 자격 조건
+        requiresNoArrears: true,
+        minBusinessAge: null,
+        maxBusinessAge: 0, // 창업 전
+        targetCompanySize: [],
+        maxCeoAge: 39,
+        
+        // 선호 조건
+        targetIndustry: [], // 전 업종
+        targetRegion: [],
+        prefersYouthEmployment: true,
+        
+        website: 'https://www.k-startup.go.kr'
+      },
+      
+      {
+        id: 'startup-002',
+        name: '초기창업패키지',
+        organization: '중소벤처기업부',
+        category: '창업',
+        budget: '최대 1억원',
+        description: '업력 3년 이하 초기창업기업의 성장 지원 (사업화 자금, 멘토링, 마케팅 등)',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: 3,
+        targetCompanySize: ['소기업', '중소기업'],
+        maxCeoAge: null,
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        website: 'https://www.k-startup.go.kr'
+      },
+      
+      {
+        id: 'startup-003',
+        name: '청년창업사관학교',
+        organization: '중소벤처기업부',
+        category: '창업',
+        budget: '최대 1억원 + 입주공간',
+        description: '만 39세 이하 청년 창업자 대상 창업 교육, 자금, 공간 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: 3,
+        targetCompanySize: ['소기업', '중소기업'],
+        maxCeoAge: 39,
+        
+        targetIndustry: [],
+        targetRegion: [],
+        prefersYouthEmployment: true,
+        
+        website: 'https://www.k-startup.go.kr'
+      },
+      
+      // 2. R&D 지원
+      {
+        id: 'rnd-001',
+        name: '중소기업 기술개발사업',
+        organization: '중소벤처기업부',
+        category: 'R&D',
+        budget: '최대 5억원',
+        description: '중소기업의 기술경쟁력 강화를 위한 R&D 과제 지원 (제품개발, 공정개선 등)',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: ['10', '20', '21', '26', '27', '28', '29', '62', '70'],
+        targetRegion: [],
+        
+        prefersPatent: true,
+        prefersRnD: true,
+        prefersVenture: true,
+        prefersInnobiz: true,
+        
+        website: 'https://www.smtech.go.kr'
+      },
+      
+      {
+        id: 'rnd-002',
+        name: '산업기술 R&D (알키미스트)',
+        organization: '산업통상자원부',
+        category: 'R&D',
+        budget: '최대 20억원',
+        description: '소재·부품·장비(소부장) 핵심기술 개발 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 3,
+        maxBusinessAge: null,
+        targetCompanySize: ['중소기업', '중견기업'],
+        
+        targetIndustry: ['20', '21', '26', '27', '28'], // 화학, 전자부품, 반도체
+        targetRegion: [],
+        
+        prefersPatent: true,
+        prefersRnD: true,
+        prefersVenture: true,
+        
+        website: 'https://www.motie.go.kr'
+      },
+      
+      {
+        id: 'rnd-003',
+        name: '산학연협력 기술개발',
+        organization: '중소벤처기업부',
+        category: 'R&D',
+        budget: '최대 3억원',
+        description: '중소기업과 대학/연구소 간 공동 R&D 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersPatent: true,
+        prefersRnD: true,
+        
+        website: 'https://www.smtech.go.kr'
+      },
+      
+      // 3. 금융 지원
+      {
+        id: 'finance-001',
+        name: '정책자금융자',
+        organization: '중소벤처기업진흥공단',
+        category: '금융',
+        budget: '최대 30억원',
+        description: '중소기업 운영자금 및 시설자금 저리 융자 (연 2~3% 금리)',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        website: 'https://www.kosmes.or.kr'
+      },
+      
+      {
+        id: 'finance-002',
+        name: '벤처기업 투융자',
+        organization: '중소벤처기업진흥공단',
+        category: '금융',
+        budget: '최대 50억원',
+        description: '벤처기업 성장 지원 투융자 (투자+융자 패키지)',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: 7,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersVenture: true,
+        prefersPatent: true,
+        
+        website: 'https://www.kosmes.or.kr'
+      },
+      
+      {
+        id: 'finance-003',
+        name: '소상공인 정책자금',
+        organization: '소상공인시장진흥공단',
+        category: '금융',
+        budget: '최대 7천만원',
+        description: '소상공인 운영자금 및 시설개선 자금 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업'],
+        
+        targetIndustry: ['46', '47', '56'], // 도소매, 음식점
+        targetRegion: [],
+        
+        website: 'https://www.semas.or.kr'
+      },
+      
+      // 4. 수출 지원
+      {
+        id: 'export-001',
+        name: '수출바우처',
+        organization: '중소벤처기업부',
+        category: '수출',
+        budget: '최대 2천만원',
+        description: '중소기업 해외 전시회 참가, 마케팅, 인증획득 등 수출 역량 강화 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersExport: true,
+        
+        website: 'https://www.exportvoucher.com'
+      },
+      
+      {
+        id: 'export-002',
+        name: 'K-스타트업 글로벌 진출',
+        organization: '중소벤처기업부',
+        category: '수출',
+        budget: '최대 5천만원',
+        description: '유망 스타트업 해외시장 진출 지원 (현지화, 마케팅, IR 등)',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: 7,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: ['58', '62', '63', '70'],
+        targetRegion: [],
+        
+        prefersVenture: true,
+        prefersPatent: true,
+        
+        website: 'https://www.k-startup.go.kr'
+      },
+      
+      {
+        id: 'export-003',
+        name: '글로벌 강소기업 육성',
+        organization: '산업통상자원부',
+        category: '수출',
+        budget: '최대 10억원',
+        description: '수출 유망 중소기업의 글로벌 시장 진출 종합 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 3,
+        maxBusinessAge: null,
+        targetCompanySize: ['중소기업', '중견기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersExport: true,
+        prefersPatent: true,
+        
+        website: 'https://www.motie.go.kr'
+      },
+      
+      // 5. 고용 지원
+      {
+        id: 'employment-001',
+        name: '청년추가고용장려금',
+        organization: '고용노동부',
+        category: '고용',
+        budget: '1인당 최대 900만원',
+        description: '만 15~34세 청년 정규직 신규 채용 시 인건비 지원 (3년간)',
+        
+        requiresNoArrears: false,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업', '중견기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersYouthEmployment: true,
+        
+        website: 'https://www.work.go.kr'
+      },
+      
+      {
+        id: 'employment-002',
+        name: '일자리 안정자금',
+        organization: '고용노동부',
+        category: '고용',
+        budget: '1인당 월 최대 9만원',
+        description: '최저임금 인상에 따른 소상공인·영세중소기업 지원',
+        
+        requiresNoArrears: false,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        website: 'https://www.work.go.kr'
+      },
+      
+      {
+        id: 'employment-003',
+        name: '여성고용 우수기업 지원',
+        organization: '여성가족부',
+        category: '고용',
+        budget: '최대 5천만원',
+        description: '여성 고용 비율이 높은 기업에 대한 인센티브 및 지원',
+        
+        requiresNoArrears: false,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersFemaleEmployment: true,
+        
+        website: 'https://www.mogef.go.kr'
+      },
+      
+      // 6. 지역 특화
+      {
+        id: 'region-001',
+        name: '지역주력산업 육성사업',
+        organization: '산업통상자원부',
+        category: '지역특화',
+        budget: '최대 10억원',
+        description: '지역별 주력산업(자동차, 조선, 섬유 등) 육성 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: ['부산', '대구', '울산', '경북', '경남', '전북', '전남'],
+        
+        preferNonCapital: true,
+        
+        website: 'https://www.motie.go.kr'
+      },
+      
+      {
+        id: 'region-002',
+        name: '지역산업 맞춤형 일자리창출',
+        organization: '고용노동부',
+        category: '지역특화',
+        budget: '최대 3억원',
+        description: '지역 특성에 맞는 일자리 창출 기업 지원',
+        
+        requiresNoArrears: false,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: ['강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'],
+        
+        preferNonCapital: true,
+        
+        website: 'https://www.work.go.kr'
+      },
+      
+      // 7. 디지털전환
+      {
+        id: 'digital-001',
+        name: '스마트공장 구축 지원',
+        organization: '중소벤처기업부',
+        category: '디지털전환',
+        budget: '최대 1억원',
+        description: '제조업 스마트공장 구축 및 고도화 지원 (설비, SW, 컨설팅)',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: ['10', '11', '13', '14', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31'],
+        targetRegion: [],
+        
+        website: 'https://www.smart-factory.kr'
+      },
+      
+      {
+        id: 'digital-002',
+        name: '중소기업 AI·빅데이터 바우처',
+        organization: '과학기술정보통신부',
+        category: '디지털전환',
+        budget: '최대 7천만원',
+        description: 'AI·빅데이터 기술 도입 및 활용 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersRnD: true,
+        
+        website: 'https://www.msit.go.kr'
+      },
+      
+      // 8. 기타
+      {
+        id: 'etc-001',
+        name: '소상공인 희망리턴패키지',
+        organization: '소상공인시장진흥공단',
+        category: '재기지원',
+        budget: '최대 5천만원',
+        description: '폐업 후 재창업하는 소상공인 지원 (교육, 자금, 컨설팅)',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: 1,
+        targetCompanySize: ['소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        website: 'https://www.semas.or.kr'
+      },
+      
+      {
+        id: 'etc-002',
+        name: '여성기업 지원사업',
+        organization: '중소벤처기업부',
+        category: '여성기업',
+        budget: '최대 3억원',
+        description: '여성기업 및 여성 CEO 기업 대상 자금, 판로, 교육 지원',
+        
+        requiresNoArrears: true,
+        minBusinessAge: 0,
+        maxBusinessAge: null,
+        targetCompanySize: ['소기업', '중소기업'],
+        
+        targetIndustry: [],
+        targetRegion: [],
+        
+        prefersFemaleEmployment: true,
+        
+        website: 'https://www.smba.go.kr'
+      }
+    ];
+    
     // ==================== Google API 초기화 ====================
     function gapiLoaded() {
       gapi.load('client', initializeGapiClient);
@@ -2603,6 +3059,220 @@
       document.getElementById('company-select').value = '';
     }
     
+    // ==================== 클라이언트 사이드 매칭 엔진 ====================
+    
+    /**
+     * 업력 계산 (년)
+     */
+    function calculateBusinessAge(establishDate) {
+      if (!establishDate) return 0;
+      const today = new Date();
+      const established = new Date(establishDate);
+      const years = (today - established) / (365.25 * 24 * 60 * 60 * 1000);
+      return Math.floor(years);
+    }
+    
+    /**
+     * 나이 계산
+     */
+    function calculateAge(birthDate) {
+      if (!birthDate) return 0;
+      const today = new Date();
+      const birth = new Date(birthDate);
+      const age = (today - birth) / (365.25 * 24 * 60 * 60 * 1000);
+      return Math.floor(age);
+    }
+    
+    /**
+     * 클라이언트 사이드 매칭 엔진
+     * 백엔드 없이 작동하는 지원사업 추천 알고리즘
+     */
+    function clientSideMatching(companyData) {
+      console.log('🎯 클라이언트 매칭 시작:', companyData.companyName);
+      
+      const businessAge = calculateBusinessAge(companyData.establishDate);
+      const ceoAge = calculateAge(companyData.ceoBirth);
+      
+      console.log(`📊 기업 정보 - 업력: ${businessAge}년, CEO 나이: ${ceoAge}세`);
+      
+      // Step 1: Kill-Out 필터 (즉시 탈락)
+      let eligiblePrograms = MOCK_PROGRAMS.filter(program => {
+        // 체납 체크
+        if (program.requiresNoArrears) {
+          if (companyData.taxArrears === 'Y' || companyData.localTaxArrears === 'Y') {
+            console.log(`❌ ${program.name}: 체납으로 제외`);
+            return false;
+          }
+        }
+        
+        // 업력 최소 요건
+        if (program.minBusinessAge !== null && program.minBusinessAge !== undefined) {
+          if (businessAge < program.minBusinessAge) {
+            console.log(`❌ ${program.name}: 최소 업력 미달 (필요: ${program.minBusinessAge}년, 현재: ${businessAge}년)`);
+            return false;
+          }
+        }
+        
+        // 업력 최대 제한
+        if (program.maxBusinessAge !== null && program.maxBusinessAge !== undefined) {
+          if (businessAge > program.maxBusinessAge) {
+            console.log(`❌ ${program.name}: 업력 초과 (최대: ${program.maxBusinessAge}년, 현재: ${businessAge}년)`);
+            return false;
+          }
+        }
+        
+        // 기업규모 체크
+        if (program.targetCompanySize && program.targetCompanySize.length > 0) {
+          if (!program.targetCompanySize.includes(companyData.companySize)) {
+            console.log(`❌ ${program.name}: 기업규모 불일치`);
+            return false;
+          }
+        }
+        
+        // CEO 나이 제한
+        if (program.maxCeoAge !== null && program.maxCeoAge !== undefined) {
+          if (ceoAge > program.maxCeoAge) {
+            console.log(`❌ ${program.name}: CEO 나이 초과 (최대: ${program.maxCeoAge}세, 현재: ${ceoAge}세)`);
+            return false;
+          }
+        }
+        
+        return true;
+      });
+      
+      console.log(`✅ Kill-Out 통과: ${eligiblePrograms.length}개 프로그램`);
+      
+      // Step 2: 매칭 점수 계산 (Scoring)
+      const scoredPrograms = eligiblePrograms.map(program => {
+        let score = 50; // 기본 점수
+        let reasons = [];
+        
+        // 업종 매칭 (최대 +30점)
+        if (program.targetIndustry && program.targetIndustry.length > 0) {
+          if (program.targetIndustry.includes(companyData.ksicCode)) {
+            score += 30;
+            reasons.push('✅ 업종이 정확히 일치합니다');
+          } else if (program.targetIndustry.some(code => 
+            companyData.ksicCode.startsWith(code.substring(0, 2)))) {
+            score += 15;
+            reasons.push('✅ 관련 업종입니다');
+          }
+        } else {
+          // 전 업종 대상
+          score += 10;
+          reasons.push('✅ 모든 업종 지원 가능');
+        }
+        
+        // 인증 가산점 (최대 +20점)
+        if (program.prefersVenture && companyData.certVenture === 'Y') {
+          score += 10;
+          reasons.push('🚀 벤처기업 인증 보유');
+        }
+        if (program.prefersInnobiz && companyData.certInnobiz === 'Y') {
+          score += 8;
+          reasons.push('💡 이노비즈 인증 보유');
+        }
+        if (program.prefersMainbiz && companyData.certMainbiz === 'Y') {
+          score += 5;
+          reasons.push('⭐ 메인비즈 인증 보유');
+        }
+        
+        // 특허 가산점 (최대 +15점)
+        if (program.prefersPatent) {
+          const patents = parseInt(companyData.patentRegistered) || 0;
+          if (patents >= 10) {
+            score += 15;
+            reasons.push(`📜 특허 ${patents}건 보유 (기술력 우수)`);
+          } else if (patents >= 5) {
+            score += 10;
+            reasons.push(`📜 특허 ${patents}건 보유`);
+          } else if (patents >= 1) {
+            score += 5;
+            reasons.push(`📜 특허 ${patents}건 보유`);
+          }
+        }
+        
+        // 고용 가산점 (최대 +20점)
+        if (program.prefersYouthEmployment && companyData.employeesTotal > 0) {
+          const youthRatio = companyData.employeesYouth / companyData.employeesTotal;
+          if (youthRatio >= 0.3) {
+            score += 10;
+            reasons.push(`👥 청년고용 비율 ${Math.round(youthRatio * 100)}%`);
+          } else if (youthRatio >= 0.2) {
+            score += 5;
+            reasons.push(`👥 청년고용 비율 ${Math.round(youthRatio * 100)}%`);
+          }
+        }
+        
+        if (program.prefersFemaleEmployment && companyData.employeesTotal > 0) {
+          const femaleRatio = companyData.employeesFemale / companyData.employeesTotal;
+          if (femaleRatio >= 0.3) {
+            score += 8;
+            reasons.push(`👩 여성고용 비율 ${Math.round(femaleRatio * 100)}%`);
+          }
+        }
+        
+        if (companyData.employeesDisabled > 0) {
+          score += 12;
+          reasons.push(`♿ 장애인 고용 ${companyData.employeesDisabled}명`);
+        }
+        
+        // 수출 가산점 (최대 +10점)
+        if (program.prefersExport && companyData.exportRecent > 0) {
+          score += 10;
+          reasons.push(`🌏 수출실적 $${companyData.exportRecent.toLocaleString()}`);
+        }
+        
+        // R&D 투자 가산점 (최대 +10점)
+        if (program.prefersRnD && companyData.rdInvestment > 0) {
+          score += 8;
+          reasons.push(`🔬 R&D 투자 ${companyData.rdInvestment.toLocaleString()}백만원`);
+        }
+        
+        // 지역 가산점 (최대 +10점)
+        if (program.targetRegion && program.targetRegion.length > 0) {
+          if (program.targetRegion.includes(companyData.locationSido)) {
+            score += 10;
+            reasons.push(`📍 ${companyData.locationSido} 지역 우대`);
+          }
+        }
+        
+        // 수도권 여부
+        if (program.preferNonCapital && companyData.capitalArea === 'N') {
+          score += 8;
+          reasons.push('🏞️ 비수도권 우대사업');
+        }
+        
+        // 기업 단계별 가산점
+        if (companyData.companyStage === '창업준비' && program.maxBusinessAge === 0) {
+          score += 15;
+          reasons.push('🌱 예비창업자 대상 사업');
+        }
+        
+        // 긴급도 반영
+        if (companyData.urgency === 'urgent' && program.category === '금융') {
+          score += 5;
+          reasons.push('⚡ 긴급 자금 필요에 적합');
+        }
+        
+        return {
+          ...program,
+          matchScore: Math.min(score, 100), // 최대 100점
+          matchReasons: reasons.length > 0 ? reasons : ['기본 요건 충족']
+        };
+      });
+      
+      // Step 3: 점수순 정렬
+      const sortedPrograms = scoredPrograms.sort((a, b) => b.matchScore - a.matchScore);
+      
+      console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램`);
+      sortedPrograms.slice(0, 5).forEach((p, i) => {
+        console.log(`  ${i + 1}위. ${p.name} (${p.matchScore}점)`);
+      });
+      
+      return sortedPrograms;
+    }
+    
     async function analyzePrograms() {
       const companyData = collectFormData();
       
@@ -2618,19 +3288,16 @@
       }
       
       try {
-        showLoadingOverlay('기업마당 API 조회 중...', 'AI가 500개 지원사업 분석 중');
+        showLoadingOverlay('AI 분석 중...', '맞춤형 지원사업 추천 중');
         
-        const response = await fetch('/.netlify/functions/analyzeBizInfo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ companyProfile: companyData })
-        });
+        // 클라이언트 사이드 매칭 실행
+        const results = clientSideMatching(companyData);
         
-        if (!response.ok) throw new Error(`서버 오류: ${response.status}`);
+        // 약간의 대기 시간 (로딩 효과)
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        const result = await response.json();
         hideLoadingOverlay();
-        displayResults(result);
+        displayResults({ recommendations: results });
         
       } catch (error) {
         hideLoadingOverlay();
@@ -2658,34 +3325,77 @@
     
     function displayResults(result) {
       const section = document.getElementById('results-section');
-      section.innerHTML = '<div class="card"><h2>📊 AI 분석 결과</h2></div>';
       
       if (!result.recommendations || result.recommendations.length === 0) {
-        section.innerHTML += '<div class="card"><p>현재 적합한 지원사업을 찾지 못했습니다.</p></div>';
+        section.innerHTML = `
+          <div class="card">
+            <h2>📊 분석 결과</h2>
+            <div style="text-align: center; padding: 3rem; color: #666;">
+              <p style="font-size: 1.2rem; margin-bottom: 1rem;">현재 조건에 맞는 지원사업을 찾지 못했습니다.</p>
+              <p>• 입력 정보를 다시 확인해주세요</p>
+              <p>• 또는 담당자에게 문의하세요 (1357-1357)</p>
+            </div>
+          </div>
+        `;
         section.style.display = 'block';
         section.scrollIntoView({ behavior: 'smooth' });
         return;
       }
       
+      let html = `
+        <div class="card">
+          <h2>📊 맞춤형 지원사업 추천 결과</h2>
+          <p style="color: #666; margin-top: 0.5rem;">
+            총 <strong style="color: #FF8802;">${result.recommendations.length}개</strong>의 지원사업이 귀사에 적합합니다.
+          </p>
+        </div>
+      `;
+      
       result.recommendations.forEach((rec, index) => {
-        const card = `
-          <div class="result-card">
-            <span class="rank">${index + 1}위</span>
-            <h3>${rec.programName}</h3>
-            <p style="color:#666;font-size:0.9rem;margin-bottom:0.75rem;">주관: ${rec.organization}</p>
-            <span class="match-score">매칭도: ${rec.matchScore}점</span>
-            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #e0e0e0;">
-              <h4 style="color:#0c2c54;margin-bottom:0.5rem;">🎯 추천 이유</h4>
-              <p style="color:#555;line-height:1.6;">${rec.reason}</p>
-              <h4 style="color:#0c2c54;margin:1rem 0 0.5rem;">💰 지원 내용</h4>
-              <p style="color:#555;line-height:1.6;">${rec.benefits}</p>
-              ${rec.detailUrl ? `<a href="${rec.detailUrl}" target="_blank" class="btn btn-primary" style="display:inline-block;text-decoration:none;margin-top:1rem;">🔗 상세 정보</a>` : ''}
+        const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+        const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+        
+        html += `
+          <div class="result-card ${rankClass}">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <span class="rank">${rankEmoji} ${index + 1}위</span>
+              <span class="match-score" style="font-size: 1.1rem; font-weight: bold;">매칭도: ${rec.matchScore}점</span>
+            </div>
+            
+            <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">${rec.name}</h3>
+            <p style="color:#666;font-size:0.9rem;margin-bottom:0.75rem;">
+              <strong>주관:</strong> ${rec.organization} | 
+              <strong>분야:</strong> ${rec.category}
+            </p>
+            
+            <div style="margin-top:1rem;padding-top:1rem;border-top:2px solid #e0e0e0;">
+              <h4 style="color:#0c2c54;margin-bottom:0.75rem;font-size:1.05rem;">🎯 추천 이유</h4>
+              <ul style="color:#555;line-height:1.8;padding-left:1.5rem;margin-bottom:1.5rem;">
+                ${rec.matchReasons.map(reason => `<li>${reason}</li>`).join('')}
+              </ul>
+              
+              <h4 style="color:#0c2c54;margin-bottom:0.75rem;font-size:1.05rem;">💰 지원 내용</h4>
+              <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <p style="color:#333;margin-bottom:0.5rem;"><strong>지원 규모:</strong> ${rec.budget}</p>
+                <p style="color:#555;line-height:1.6;margin:0;">${rec.description}</p>
+              </div>
+              
+              <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                <a href="${rec.website}" target="_blank" 
+                   style="display:inline-block;padding:0.7rem 1.5rem;background:#FF8802;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;transition:all 0.3s;">
+                  📋 상세보기 →
+                </a>
+                <button onclick="alert('상담 예약 기능은 준비 중입니다.')"
+                        style="display:inline-block;padding:0.7rem 1.5rem;background:#fff;color:#0c2c54;border:2px solid #0c2c54;border-radius:8px;font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.3s;">
+                  📞 상담 예약
+                </button>
+              </div>
             </div>
           </div>
         `;
-        section.innerHTML += card;
       });
       
+      section.innerHTML = html;
       section.style.display = 'block';
       section.scrollIntoView({ behavior: 'smooth' });
     }
@@ -3097,6 +3807,9 @@
     // 🔥 실제 API 설정 및 호출 함수들
     // ============================================
     
+    // ⚠️ 보안상의 이유로 API Key를 제거했습니다.
+    // Phase 2에서 백엔드 서버(Netlify Functions)로 이동 예정
+    /*
     const API_CONFIG = {
       // 공통 인증키 (모든 API 사용)
       API_KEY: '76d690873af0a9d983453b22529a6e313625867da9f460d7cb72f7ab9e654de1',
@@ -3110,48 +3823,38 @@
       VENTURE_BASE_URL: 'https://api.odcloud.kr/api/15084581/v1/uddi:41944402-8249-4e45-9e9d-a03027ccf595',
       INNOBIZ_BASE_URL: 'https://api.odcloud.kr/api/15134641/v1/uddi:56633b5d-548b-45e5-a295-f0b0b1933c0f'
     };
+    */
     
     /**
      * 🏢 국세청 API - 사업자등록 상태조회
      */
     async function getNTSInfo(businessNumber) {
       try {
-        const cleanBN = businessNumber.replace(/-/g, '');
+        console.log(`🔍 국세청 조회 시작: ${businessNumber}`);
         
-        const response = await fetch(
-          `${API_CONFIG.NTS_BASE_URL}/status?serviceKey=${API_CONFIG.API_KEY}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              b_no: [cleanBN]
-            })
-          }
-        );
+        // Netlify Function 호출
+        const response = await fetch('/.netlify/functions/getNTS', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            businessNumber: businessNumber
+          })
+        });
         
         const result = await response.json();
         
-        if (result.status_code === 'OK' && result.data && result.data.length > 0) {
-          const data = result.data[0];
-          return {
-            success: true,
-            companyName: data.b_nm || '',
-            ceo: data.p_nm || '',
-            businessStatus: data.b_stt || '',
-            taxType: data.tax_type || '',
-            address: data.b_adr || '',
-            startDate: data.start_dt || '',
-            rbfTaxType: data.rbf_tax_type || '',
-            rbfTaxTypeCd: data.rbf_tax_type_cd || ''
-          };
+        if (result.success) {
+          console.log(`✅ 국세청 조회 성공: ${result.companyName}`);
         } else {
-          return { success: false, message: '사업자 정보를 찾을 수 없습니다.' };
+          console.log(`❌ 국세청 조회 실패: ${result.message}`);
         }
+        
+        return result;
+        
       } catch (error) {
-        console.error('국세청 API 오류:', error);
+        console.error('❌ 국세청 API 오류:', error);
         return { success: false, message: 'API 호출 실패: ' + error.message };
       }
     }
@@ -3161,41 +3864,31 @@
      */
     async function getFSCInfo(corpNumber) {
       try {
-        const cleanCN = corpNumber.replace(/-/g, '');
-        const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        console.log(`🏛️ 금융위 조회 시작: ${corpNumber}`);
         
-        const response = await fetch(
-          `${API_CONFIG.FSC_BASE_URL}/getCorpOutline_V2?` +
-          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
-          `crno=${cleanCN}&` +
-          `basDt=${today}&` +
-          `resultType=json`
-        );
+        // Netlify Function 호출
+        const response = await fetch('/.netlify/functions/getFSC', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            corpNumber: corpNumber
+          })
+        });
         
         const result = await response.json();
         
-        if (result.response.header.resultCode === '00') {
-          const items = result.response.body.items;
-          if (items && items.item) {
-            const data = Array.isArray(items.item) ? items.item[0] : items.item;
-            return {
-              success: true,
-              corpName: data.corpNm || '',
-              corpNameEng: data.corpEnsnNm || '',
-              ceo: data.enpRprFnm || '',
-              businessNumber: data.bzno || '',
-              address: data.enpOzpno || '',
-              industry: data.enpBsatp || '',
-              sector: data.enpDetailBzcnd || '',
-              capital: data.enpCpta || '',
-              establishDate: data.enpEstbDt || '',
-              listed: data.lstgYn || ''
-            };
-          }
+        if (result.success) {
+          console.log(`✅ 금융위 조회 성공: ${result.companyName}`);
+        } else {
+          console.log(`❌ 금융위 조회 실패: ${result.message}`);
         }
-        return { success: false, message: '법인 정보를 찾을 수 없습니다.' };
+        
+        return result;
+        
       } catch (error) {
-        console.error('금융위원회 API 오류:', error);
+        console.error('❌ 금융위 API 오류:', error);
         return { success: false, message: 'API 호출 실패: ' + error.message };
       }
     }
@@ -3251,46 +3944,34 @@
     /**
      * 🚀 벤처기업 인증 조회
      */
-    async function getVentureInfo(companyName) {
+    async function getVentureInfo(companyName, businessNumber) {
       try {
-        const response = await fetch(
-          `${API_CONFIG.VENTURE_BASE_URL}?` +
-          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
-          `page=1&` +
-          `perPage=10&` +
-          `cond[업체명::LIKE]=${encodeURIComponent(companyName)}`
-        );
+        console.log(`🚀 벤처인증 조회 시작: ${companyName}`);
+        
+        // Netlify Function 호출
+        const response = await fetch('/.netlify/functions/getVenture', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            companyName: companyName,
+            businessNumber: businessNumber
+          })
+        });
         
         const result = await response.json();
         
-        if (result.data && result.data.length > 0) {
-          const venture = result.data[0];
-          
-          // 만료일 유효성 확인
-          const today = new Date();
-          const endDate = venture['벤처유효만료일'];
-          let isValid = false;
-          
-          if (endDate) {
-            const expiryDate = new Date(endDate);
-            isValid = expiryDate > today;
-          }
-          
-          return {
-            success: true,
-            companyName: venture['업체명'],
-            ceo: venture['대표자'],
-            type: venture['벤처확인유형'],
-            startDate: venture['벤처유효시작일'],
-            endDate: endDate,
-            agency: venture['확인기관'],
-            isValid: isValid
-          };
+        if (result.success) {
+          console.log(`✅ 벤처인증 조회 성공: ${result.companyName}`);
+        } else {
+          console.log(`❌ 벤처인증 조회 실패: ${result.message}`);
         }
         
-        return { success: false, message: '벤처인증 정보 없음' };
+        return result;
+        
       } catch (error) {
-        console.error('벤처기업 API 오류:', error);
+        console.error('❌ 벤처기업 API 오류:', error);
         return { success: false, message: 'API 호출 실패: ' + error.message };
       }
     }
@@ -3300,45 +3981,31 @@
      */
     async function getInnobizInfo(companyName) {
       try {
-        const response = await fetch(
-          `${API_CONFIG.INNOBIZ_BASE_URL}?` +
-          `serviceKey=${encodeURIComponent(API_CONFIG.API_KEY)}&` +
-          `page=1&` +
-          `perPage=10&` +
-          `cond[회사명::LIKE]=${encodeURIComponent(companyName)}`
-        );
+        console.log(`💡 이노비즈 조회 시작: ${companyName}`);
+        
+        // Netlify Function 호출
+        const response = await fetch('/.netlify/functions/getInnobiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            companyName: companyName
+          })
+        });
         
         const result = await response.json();
         
-        if (result.data && result.data.length > 0) {
-          const innobiz = result.data[0];
-          
-          // 만료일 유효성 확인
-          const today = new Date();
-          const endDate = innobiz['이노비즈 유효기간 종료일'];
-          let isValid = false;
-          
-          if (endDate) {
-            const expiryDate = new Date(endDate);
-            isValid = expiryDate > today;
-          }
-          
-          return {
-            success: true,
-            companyName: innobiz['회사명'],
-            ceo: innobiz['대표자명'],
-            region: innobiz['지역'],
-            products: innobiz['주 생산품'],
-            startDate: innobiz['이노비즈 유효기간 시작일'],
-            endDate: endDate,
-            website: innobiz['홈페이지 주소'],
-            isValid: isValid
-          };
+        if (result.success) {
+          console.log(`✅ 이노비즈 조회 성공: ${result.companyName}`);
+        } else {
+          console.log(`❌ 이노비즈 조회 실패: ${result.message}`);
         }
         
-        return { success: false, message: '이노비즈 인증 정보 없음' };
+        return result;
+        
       } catch (error) {
-        console.error('이노비즈 API 오류:', error);
+        console.error('❌ 이노비즈 API 오류:', error);
         return { success: false, message: 'API 호출 실패: ' + error.message };
       }
     }
@@ -3462,7 +4129,7 @@
         }
         
         // 4단계: 벤처기업 인증 조회
-        ventureData = await getVentureInfo(ntsData.companyName);
+        ventureData = await getVentureInfo(ntsData.companyName, businessNumber);
         
         if (ventureData.success) {
           const certVentureElem = document.getElementById('cert-venture');
@@ -3672,6 +4339,219 @@
       setupAutoFill();
     });
     
+
+    // ==================== 기업명 자동완성 기능 (추가) ====================
+    
+    (function() {
+      'use strict';
+      
+      // 전역 변수 (기존 코드와 충돌 방지)
+      let companySearchTimeout = null;
+      let selectedCompanyData = null;
+      
+      // DOM 요소
+      const searchInput = document.getElementById('company-search-input');
+      const searchResults = document.getElementById('search-results');
+      const searchBtn = document.getElementById('search-company-btn');
+      
+      if (!searchInput || !searchResults) {
+        console.warn('⚠️ 검색 입력란 또는 결과 영역을 찾을 수 없습니다.');
+        return;
+      }
+      
+      // ==================== 이벤트 리스너 ====================
+      
+      // 기업명 입력 시 자동 검색
+      searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        // 2글자 미만이면 검색 안 함
+        if (query.length < 2) {
+          hideSearchResults();
+          return;
+        }
+        
+        // 디바운싱 (0.5초 후 검색)
+        clearTimeout(companySearchTimeout);
+        companySearchTimeout = setTimeout(() => {
+          searchCompaniesByName(query);
+        }, 500);
+      });
+      
+      // 외부 클릭 시 검색 결과 숨김
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.company-search-section')) {
+          hideSearchResults();
+        }
+      });
+      
+      // 검색 버튼 클릭
+      if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
+          const query = searchInput.value.trim();
+          if (query.length >= 2) {
+            searchCompaniesByName(query);
+          }
+        });
+      }
+      
+      // ==================== 검색 함수 ====================
+      
+      // 기업명으로 검색
+      async function searchCompaniesByName(query) {
+        try {
+          showLoading();
+          
+          const response = await fetch('/.netlify/functions/searchCompanyByName', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ companyName: query })
+          });
+          
+          if (!response.ok) {
+            throw new Error('검색 실패');
+          }
+          
+          const data = await response.json();
+          
+          if (data.success && data.companies && data.companies.length > 0) {
+            displaySearchResults(data.companies);
+          } else {
+            showNoResults();
+          }
+        } catch (error) {
+          console.error('검색 오류:', error);
+          showError('검색 중 오류가 발생했습니다.');
+        }
+      }
+      
+      // ==================== UI 표시 함수 ====================
+      
+      // 로딩 표시
+      function showLoading() {
+        searchResults.innerHTML = `
+          <div class="search-loading">
+            <div class="spinner"></div>
+            <div>검색 중...</div>
+          </div>
+        `;
+        searchResults.style.display = 'block';
+      }
+      
+      // 검색 결과 표시
+      function displaySearchResults(companies) {
+        searchResults.innerHTML = companies.map(company => `
+          <div class="search-result-item" onclick="window.selectCompanyFromSearch('${escapeHtml(company.name)}', '${company.bizNo}', '${escapeHtml(company.address || '')}')">
+            <div class="company-name">${company.name}</div>
+            <div class="company-info">
+              <span style="font-family: monospace; font-weight: 500;">${formatBizNo(company.bizNo)}</span>
+              <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; ${company.status === '계속사업자' ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}">
+                ${company.status}
+              </span>
+              ${company.address ? `<span>📍 ${company.address}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+        searchResults.style.display = 'block';
+      }
+      
+      // 결과 없음 표시
+      function showNoResults() {
+        searchResults.innerHTML = '<div class="no-results">검색 결과가 없습니다.</div>';
+        searchResults.style.display = 'block';
+      }
+      
+      // 에러 표시
+      function showError(message) {
+        searchResults.innerHTML = `<div class="search-error">${message}</div>`;
+        searchResults.style.display = 'block';
+      }
+      
+      // 검색 결과 숨김
+      function hideSearchResults() {
+        searchResults.style.display = 'none';
+      }
+      
+      // ==================== 유틸리티 함수 ====================
+      
+      // 사업자번호 포맷팅
+      function formatBizNo(bizNo) {
+        const cleaned = bizNo.replace(/[^0-9]/g, '');
+        if (cleaned.length === 10) {
+          return cleaned.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
+        }
+        return bizNo;
+      }
+      
+      // HTML 이스케이프
+      function escapeHtml(text) {
+        const map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+      }
+      
+      // ==================== 전역 함수 (onclick에서 호출) ====================
+      
+      // 기업 선택 시 자동 입력
+      window.selectCompanyFromSearch = function(name, bizNo, address) {
+        selectedCompanyData = { name, bizNo, address };
+        
+        // 검색란에 기업명 입력
+        searchInput.value = name;
+        
+        // 사업자번호 입력 (검색 섹션)
+        const cleaned = bizNo.replace(/[^0-9]/g, '');
+        if (cleaned.length === 10) {
+          const part1 = cleaned.substring(0, 3);
+          const part2 = cleaned.substring(3, 5);
+          const part3 = cleaned.substring(5, 10);
+          
+          document.getElementById('search-biz-1').value = part1;
+          document.getElementById('search-biz-2').value = part2;
+          document.getElementById('search-biz-3').value = part3;
+        }
+        
+        // Section 1 기업명에도 자동 입력
+        const companyNameInput = document.getElementById('company-name');
+        if (companyNameInput) {
+          companyNameInput.value = name;
+        }
+        
+        // Section 1 사업자번호에도 자동 입력
+        if (cleaned.length === 10) {
+          const bizNo1 = document.getElementById('business-number-1');
+          const bizNo2 = document.getElementById('business-number-2');
+          const bizNo3 = document.getElementById('business-number-3');
+          
+          if (bizNo1) bizNo1.value = cleaned.substring(0, 3);
+          if (bizNo2) bizNo2.value = cleaned.substring(3, 5);
+          if (bizNo3) bizNo3.value = cleaned.substring(5, 10);
+        }
+        
+        // 검색 결과 숨김
+        hideSearchResults();
+        
+        // 사용자에게 알림
+        alert(`✅ ${name} 선택됨!\n\n사업자번호: ${formatBizNo(bizNo)}\n\n아래 Section 1에서 나머지 정보를 입력하세요.`);
+        
+        // Section 1로 스크롤
+        const section1 = document.querySelector('.card h2');
+        if (section1) {
+          section1.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        console.log('✅ 기업 선택:', { name, bizNo, address });
+      };
+      
+      // 초기화 완료 로그
+      console.log('✅ 기업명 자동완성 기능 활성화');
+      
+    })();
   </script>
 </body>
 </html>
