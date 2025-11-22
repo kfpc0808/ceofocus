@@ -41,18 +41,47 @@ exports.handler = async (event, context) => {
     // 기업마당 API 호출
     const apiUrl = 'https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do';
     
-    // 파라미터 구성
+    // 분야 매핑 (한글 → 코드)
+    const categoryMap = {
+      '금융': '01',
+      '기술': '02',
+      'R&D': '02',
+      '인력': '03',
+      '고용': '03',
+      '수출': '04',
+      '내수': '05',
+      '판로': '05',
+      '창업': '06',
+      '경영': '07',
+      '기타': '09'
+    };
+    
+    // 파라미터 구성 (정확한 파라미터명 사용!)
     const params = new URLSearchParams({
-      key: BIZINFO_API_KEY,
-      type: 'json'
+      crtfcKey: BIZINFO_API_KEY,  // 서비스키
+      dataType: 'json',            // 데이터타입
+      searchCnt: '100'             // 조회건수
     });
 
     // 필터가 있으면 추가
     if (filters) {
-      if (filters.category) params.append('category', filters.category);
-      if (filters.region) params.append('region', filters.region);
-      if (filters.keyword) params.append('keyword', filters.keyword);
+      // 분야 필터
+      if (filters.category) {
+        const categoryCode = categoryMap[filters.category] || '06'; // 기본값: 창업
+        params.append('searchLclasId', categoryCode);
+      }
+      
+      // 해시태그 (지역, 키워드 등)
+      const hashtags = [];
+      if (filters.region) hashtags.push(filters.region);
+      if (filters.keyword) hashtags.push(filters.keyword);
+      if (hashtags.length > 0) {
+        params.append('hashtags', hashtags.join(','));
+      }
     }
+    
+    console.log('🎯 기업마당 API 호출:', apiUrl);
+    console.log('📋 파라미터:', params.toString());
 
     const response = await fetch(`${apiUrl}?${params.toString()}`, {
       method: 'GET',
@@ -116,36 +145,6 @@ exports.handler = async (event, context) => {
 };
 
 /**
- * XML을 JSON으로 간단 변환
- */
-function parseXmlToJson(xmlText) {
-  const items = [];
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-  let match;
-
-  while ((match = itemRegex.exec(xmlText)) !== null) {
-    const itemXml = match[1];
-    
-    const item = {
-      title: extractTag(itemXml, 'title'),
-      description: extractTag(itemXml, 'description'),
-      link: extractTag(itemXml, 'link'),
-      category: extractTag(itemXml, 'category'),
-      pubDate: extractTag(itemXml, 'pubDate'),
-      organization: extractTag(itemXml, 'organization') || extractTag(itemXml, 'author'),
-      startDate: extractTag(itemXml, 'startDate'),
-      endDate: extractTag(itemXml, 'endDate'),
-      target: extractTag(itemXml, 'target'),
-      budget: extractTag(itemXml, 'budget')
-    };
-    
-    items.push(item);
-  }
-
-  return { items };
-}
-
-/**
  * XML 태그에서 내용 추출
  */
 function extractTag(xml, tagName) {
@@ -171,41 +170,84 @@ function extractTag(xml, tagName) {
 }
 
 /**
+ * XML을 JSON으로 간단 변환
+ */
+function parseXmlToJson(xmlText) {
+  const items = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+
+  while ((match = itemRegex.exec(xmlText)) !== null) {
+    const itemXml = match[1];
+    
+    const item = {
+      // 기업마당 API 정확한 필드명
+      title: extractTag(itemXml, 'title') || extractTag(itemXml, 'pblancNm'),
+      description: extractTag(itemXml, 'description') || extractTag(itemXml, 'bsnsSumryCn'),
+      link: extractTag(itemXml, 'link') || extractTag(itemXml, 'pblancUrl'),
+      seq: extractTag(itemXml, 'seq') || extractTag(itemXml, 'pblancId'),
+      author: extractTag(itemXml, 'author') || extractTag(itemXml, 'jrsdInsttNm'),
+      excInsttNm: extractTag(itemXml, 'excInsttNm'),
+      lcategory: extractTag(itemXml, 'lcategory') || extractTag(itemXml, 'pldirSportRealmLclasCodeNm'),
+      pubDate: extractTag(itemXml, 'pubDate') || extractTag(itemXml, 'creatPnttm'),
+      reqstBeginEndDe: extractTag(itemXml, 'reqstDt') || extractTag(itemXml, 'reqstBeginEndDe'),
+      trgetNm: extractTag(itemXml, 'trgetNm')
+    };
+    
+    items.push(item);
+  }
+
+  console.log(`📊 XML 파싱: ${items.length}개 항목`);
+  return { item: items };
+}
+
+/**
  * 프로그램 데이터 정규화
  */
 function normalizePrograms(data) {
-  if (!data || !data.items || !Array.isArray(data.items)) {
+  // JSON 응답의 경우 item 또는 items 배열
+  let items = [];
+  
+  if (data && data.item) {
+    items = Array.isArray(data.item) ? data.item : [data.item];
+  } else if (data && data.items) {
+    items = Array.isArray(data.items) ? data.items : [data.items];
+  }
+  
+  console.log(`📊 기업마당 원본 데이터: ${items.length}개`);
+  
+  if (items.length === 0) {
     return [];
   }
 
-  return data.items.map((item, index) => {
+  return items.map((item, index) => {
     // 분야 매핑
     const categoryMap = {
       '금융': '금융',
       '기술': 'R&D',
-      'R&D': 'R&D',
       '인력': '고용',
-      '고용': '고용',
       '수출': '수출',
       '내수': '판로',
       '창업': '창업',
-      '경영': '경영'
+      '경영': '경영',
+      '기타': '기타'
     };
 
     return {
-      id: `bizinfo-${index + 1}`,
-      name: item.title || '제목 없음',
-      organization: item.organization || '미상',
-      category: categoryMap[item.category] || '기타',
-      budget: item.budget || '미정',
-      description: (item.description || '').substring(0, 200),
-      website: item.link || 'https://www.bizinfo.go.kr',
+      id: `bizinfo-${item.seq || index + 1}`,
+      name: item.title || item.pblancNm || '제목 없음',
+      organization: item.author || item.jrsdInsttNm || '미상',
+      category: categoryMap[item.lcategory || item.pldirSportRealmLclasCodeNm] || '기타',
+      budget: '상세 페이지 참조',
+      description: (item.description || item.bsnsSumryCn || '').substring(0, 200),
+      website: item.link || item.pblancUrl || 'https://www.bizinfo.go.kr',
       
       // 추가 정보
-      startDate: item.startDate || '',
-      endDate: item.endDate || '',
-      target: item.target || '',
-      pubDate: item.pubDate || '',
+      startDate: item.reqstBeginEndDe ? item.reqstBeginEndDe.split(' ~ ')[0] : '',
+      endDate: item.reqstBeginEndDe ? item.reqstBeginEndDe.split(' ~ ')[1] : '',
+      target: item.trgetNm || '',
+      pubDate: item.pubDate || item.creatPnttm || '',
+      executor: item.excInsttNm || '',
       
       // 매칭용 기본 설정 (프론트에서 재계산)
       requiresNoArrears: true,
