@@ -67,13 +67,32 @@ exports.handler = async (event, context) => {
     }
 
     // 특허청 API 호출
+    // 주의: serviceKey는 인코딩하지 않음!
     const apiUrl = `https://kipo-api.kipi.or.kr/openapi/service/patUtiModInfoSearchSevice/getWordSearch?` +
-      `serviceKey=${encodeURIComponent(API_KEY)}&` +
+      `serviceKey=${API_KEY}&` +
       `word=${encodeURIComponent(companyName)}&` +
       `docsStart=1&` +
       `docsCount=20`;
 
+    console.log('특허청 API URL:', apiUrl.substring(0, 100) + '...');
+
     const response = await fetch(apiUrl);
+    
+    // HTTP 상태 코드 확인
+    if (!response.ok) {
+      console.error(`특허청 API HTTP 오류: ${response.status}`);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: `특허청 API 오류: ${response.status}`,
+          totalCount: 0,
+          patents: []
+        })
+      };
+    }
+    
     const xmlText = await response.text();
 
     // XML 파싱을 위한 간단한 정규식 사용
