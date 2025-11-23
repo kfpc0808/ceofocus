@@ -1906,87 +1906,6 @@
     }
     
     // ==================== 테스트 데이터 (Phase 1) ====================
-    const MOCK_COMPANIES = [
-      {
-        name: '삼성전자(주)',
-        businessNumber: '124-81-00998',
-        ceo: '한종희',
-        openingDate: '1969-01-13',
-        industryCode: 'C26',
-        companySize: '대기업',
-        companyType: '법인',
-        locationSido: '경기',
-        locationSigungu: '수원시',
-        revenue: '300000000000',
-        employeeCount: '120000'
-      },
-      {
-        name: 'LG전자(주)',
-        businessNumber: '107-86-14075',
-        ceo: '조주완',
-        openingDate: '1958-10-01',
-        industryCode: 'C26',
-        companySize: '대기업',
-        companyType: '법인',
-        locationSido: '서울',
-        locationSigungu: '영등포구',
-        revenue: '70000000000',
-        employeeCount: '70000'
-      },
-      {
-        name: '현대자동차(주)',
-        businessNumber: '101-81-42555',
-        ceo: '장재훈',
-        openingDate: '1967-12-29',
-        industryCode: 'C30',
-        companySize: '대기업',
-        companyType: '법인',
-        locationSido: '서울',
-        locationSigungu: '서초구',
-        revenue: '130000000000',
-        employeeCount: '75000'
-      },
-      {
-        name: 'SK하이닉스(주)',
-        businessNumber: '120-81-62902',
-        ceo: '곽노정',
-        openingDate: '1983-02-15',
-        industryCode: 'C26',
-        companySize: '대기업',
-        companyType: '법인',
-        locationSido: '경기',
-        locationSigungu: '이천시',
-        revenue: '40000000000',
-        employeeCount: '35000'
-      },
-      {
-        name: '네이버(주)',
-        businessNumber: '220-81-62517',
-        ceo: '최수연',
-        openingDate: '1999-06-02',
-        industryCode: 'J63',
-        companySize: '대기업',
-        companyType: '법인',
-        locationSido: '경기',
-        locationSigungu: '성남시',
-        revenue: '8000000000',
-        employeeCount: '4000'
-      },
-      {
-        name: '카카오(주)',
-        businessNumber: '120-81-47521',
-        ceo: '홍은택',
-        openingDate: '2006-02-16',
-        industryCode: 'J63',
-        companySize: '대기업',
-        companyType: '법인',
-        locationSido: '경기',
-        locationSigungu: '성남시',
-        revenue: '6000000000',
-        employeeCount: '3500'
-      }
-    ];
-    
     // ==================== 테스트 지원사업 데이터 ====================
     /**
      * 실제 지원사업 데이터 (2025년 기준)
@@ -4136,28 +4055,10 @@
         // 1단계: 국세청 API로 기본 정보 조회
         let ntsData = await getNTSInfo(businessNumber);
         
-        // API 실패 시 MOCK 데이터로 fallback (문제 2 해결)
+        // API 실패 시 명확한 에러 표시
         if (!ntsData.success) {
-          console.log('⚠️ API 호출 실패, MOCK 데이터 사용');
-          const cleanBN = businessNumber.replace(/-/g, '');
-          const mockCompany = MOCK_COMPANIES.find(c => c.businessNumber.replace(/-/g, '') === cleanBN);
-          
-          if (mockCompany) {
-            ntsData = {
-              success: true,
-              companyName: mockCompany.name,
-              ceo: mockCompany.ceo,
-              startDate: mockCompany.openingDate ? mockCompany.openingDate.replace(/-/g, '') : '',
-              businessStatus: '계속사업자',
-              taxType: '',
-              address: '',
-              rbfTaxType: '',
-              rbfTaxTypeCd: ''
-            };
-          } else {
-            clearInterval(messageInterval);
-            throw new Error('해당 사업자번호를 찾을 수 없습니다. (API 및 테스트 데이터 없음)');
-          }
+          clearInterval(messageInterval);
+          throw new Error(`국세청 API 조회 실패: ${ntsData.message || '사업자번호를 확인해주세요.'}`);
         }
         
         // 기본 정보 입력
