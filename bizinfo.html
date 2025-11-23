@@ -314,6 +314,19 @@
       gap: 0.75rem;
     }
     
+    /* 라디오 버튼 스타일 */
+    input[type="radio"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #FF8802;
+    }
+    
+    input[type="radio"]:checked + span {
+      font-weight: 600;
+      color: #FF8802;
+    }
+    
     .checkbox-item {
       display: flex;
       align-items: center;
@@ -728,6 +741,24 @@
       <h2>Section 1. 기업 기본정보</h2>
       
       <h3>1-1. 기업 식별정보</h3>
+      
+      <!-- 기업 유형 선택 -->
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>기업 유형 <span class="required">*</span></label>
+          <div style="display: flex; gap: 2rem; padding: 1rem 0;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="radio" name="company-category" value="individual" id="type-individual" checked>
+              <span style="font-size: 1rem;">개인사업자</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="radio" name="company-category" value="corporation" id="type-corporation">
+              <span style="font-size: 1rem;">법인사업자</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
       <div class="form-grid">
         <div class="form-group full-width">
           <label>기업명 <span class="required">*</span></label>
@@ -746,14 +777,14 @@
           <span class="info-text">API 자동조회 키</span>
         </div>
         
-        <div class="form-group">
-          <label>법인등록번호</label>
+        <div class="form-group" id="corp-number-group">
+          <label>법인등록번호 <span class="required" id="corp-required" style="display: none;">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <input type="text" id="corp-number-1" placeholder="000000" maxlength="6" style="width: 100px;" inputmode="numeric" oninput="allowOnlyNumbers(this); moveFocusOnMaxLength(this, 'corp-number-2', 6)">
             <span style="color: #ddd;">-</span>
             <input type="text" id="corp-number-2" placeholder="0000000" maxlength="7" style="width: 120px;" inputmode="numeric" oninput="allowOnlyNumbers(this)">
           </div>
-          <span class="info-text">법인인 경우 필수</span>
+          <span class="info-text" id="corp-info-text">법인 선택 시 필수</span>
         </div>
         
         <div class="form-group">
@@ -770,8 +801,11 @@
           <span>가져오기</span>
         </button>
         <p style="text-align: center; margin-top: 0.75rem; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
-          💡 사업자번호를 입력하면 버튼이 활성화됩니다<br>
-          클릭 시 국세청, 금융위원회 등에서 자동으로 정보를 가져옵니다
+          💡 기업 유형 선택 후 필수 정보를 입력하세요<br>
+          <span style="font-size: 0.85rem;">
+            • 개인사업자: 회사명 + 사업자번호<br>
+            • 법인사업자: 사업자번호 + 법인번호 (회사명 자동)
+          </span>
         </p>
       </div>
       
@@ -806,67 +840,32 @@
         
         <div class="form-group">
           <label>업종(KSIC 코드) <span class="required">*</span></label>
-          <select id="ksic-code" required>
-            <option value="">선택하세요</option>
-            <optgroup label="제조업">
-              <option value="10">10 - 식료품 제조업</option>
-              <option value="11">11 - 음료 제조업</option>
-              <option value="13">13 - 섬유제품 제조업</option>
-              <option value="14">14 - 의복, 의복액세서리 및 모피제품 제조업</option>
-              <option value="15">15 - 가죽, 가방 및 신발 제조업</option>
-              <option value="16">16 - 목재 및 나무제품 제조업</option>
-              <option value="17">17 - 펄프, 종이 및 종이제품 제조업</option>
-              <option value="18">18 - 인쇄 및 기록매체 복제업</option>
-              <option value="19">19 - 코크스, 연탄 및 석유정제품 제조업</option>
-              <option value="20">20 - 화학물질 및 화학제품 제조업</option>
-              <option value="21">21 - 의료용 물질 및 의약품 제조업</option>
-              <option value="22">22 - 고무 및 플라스틱제품 제조업</option>
-              <option value="23">23 - 비금속 광물제품 제조업</option>
-              <option value="24">24 - 1차 금속 제조업</option>
-              <option value="25">25 - 금속가공제품 제조업</option>
-              <option value="26">26 - 전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업</option>
-              <option value="27">27 - 의료, 정밀, 광학기기 및 시계 제조업</option>
-              <option value="28">28 - 전기장비 제조업</option>
-              <option value="29">29 - 기타 기계 및 장비 제조업</option>
-              <option value="30">30 - 자동차 및 트레일러 제조업</option>
-              <option value="31">31 - 기타 운송장비 제조업</option>
-              <option value="32">32 - 가구 제조업</option>
-              <option value="33">33 - 기타 제품 제조업</option>
-            </optgroup>
-            <optgroup label="정보통신업">
-              <option value="58">58 - 출판업</option>
-              <option value="59">59 - 영상·오디오 기록물 제작 및 배급업</option>
-              <option value="60">60 - 방송업</option>
-              <option value="61">61 - 통신업</option>
-              <option value="62">62 - 컴퓨터 프로그래밍, 시스템 통합 및 관리업</option>
-              <option value="63">63 - 정보서비스업</option>
-            </optgroup>
-            <optgroup label="전문, 과학 및 기술 서비스업">
-              <option value="70">70 - 연구개발업</option>
-              <option value="71">71 - 전문서비스업</option>
-              <option value="72">72 - 건축기술, 엔지니어링 및 기타 과학기술 서비스업</option>
-              <option value="73">73 - 기타 전문, 과학 및 기술 서비스업</option>
-            </optgroup>
-            <optgroup label="기타">
-              <option value="46">46 - 도매 및 상품중개업</option>
-              <option value="47">47 - 소매업</option>
-              <option value="49">49 - 육상운송 및 파이프라인 운송업</option>
-              <option value="52">52 - 창고 및 운송관련 서비스업</option>
-              <option value="56">56 - 음식점 및 주점업</option>
-              <option value="64">64 - 금융업</option>
-              <option value="65">65 - 보험 및 연금업</option>
-              <option value="66">66 - 금융 및 보험 관련 서비스업</option>
-              <option value="85">85 - 교육 서비스업</option>
-              <option value="86">86 - 보건업</option>
-              <option value="87">87 - 사회복지 서비스업</option>
-            </optgroup>
-          </select>
-          <span class="info-text">표준산업분류 중분류 코드</span>
+          <input type="text" id="ksic-code" placeholder="예: 62010 (컴퓨터 프로그래밍 서비스업)" maxlength="5" required pattern="[0-9]{2,5}">
+          <span class="info-text">
+            표준산업분류 코드 2~5자리 입력<br>
+            예시: 62 (중분류), 620 (소분류), 6201 (세분류), 62010 (세세분류)<br>
+            <a href="https://kssc.kostat.go.kr:8443/ksscNew_web/index.jsp" target="_blank" style="color: #FF8802;">📋 코드 찾기 (통계청)</a>
+          </span>
         </div>
         
-        <div class="form-group full-width">
-          <label>주력 제품/서비스 키워드</label>
-          <input type="text" id="product-keywords" placeholder="키워드 3개 이내 (예: AI챗봇, 고객관리SW, 클라우드)">
+        <div class="form-group">
+          <label>주력 제품/서비스 키워드 1</label>
+          <input type="text" id="product-keyword-1" placeholder="예: AI챗봇">
+        </div>
+        
+        <div class="form-group">
+          <label>주력 제품/서비스 키워드 2</label>
+          <input type="text" id="product-keyword-2" placeholder="예: 고객관리SW">
+        </div>
+        
+        <div class="form-group">
+          <label>주력 제품/서비스 키워드 3</label>
+          <input type="text" id="product-keyword-3" placeholder="예: 클라우드">
+        </div>
+        
+        <div class="form-group">
+          <label>주력 제품/서비스 키워드 4</label>
+          <input type="text" id="product-keyword-4" placeholder="추가 키워드 (선택)">
         </div>
       </div>
       
@@ -934,9 +933,9 @@
         </div>
         
         <div class="form-group">
-          <label>생년월일 <span class="required">*</span></label>
-          <input type="date" id="ceo-birth" required>
-          <span class="info-text">청년(만39세↓) 판정</span>
+          <label>생년월일</label>
+          <input type="date" id="ceo-birth">
+          <span class="info-text">청년(만39세↓) 판정 - 알 수 없으면 비워두기</span>
         </div>
         
         <div class="form-group">
@@ -998,38 +997,41 @@
       <h3>3-1. 재무 현황 (최근 3개년)</h3>
       <div class="form-grid">
         <div class="form-group">
-          <label>매출액 - 최근년도 (억원) <span class="required">*</span></label>
-          <input type="number" id="revenue-recent" placeholder="예: 15" required>
+          <label>매출액 - 최근년도 (원) <span class="required">*</span></label>
+          <input type="number" id="revenue-recent" placeholder="예: 1500000000" step="1" required>
+          <span class="info-text">15억원 = 1,500,000,000</span>
         </div>
         
         <div class="form-group">
-          <label>매출액 - 전년도 (억원)</label>
-          <input type="number" id="revenue-prev1" placeholder="예: 12">
+          <label>매출액 - 전년도 (원)</label>
+          <input type="number" id="revenue-prev1" placeholder="예: 1200000000" step="1">
         </div>
         
         <div class="form-group">
-          <label>매출액 - 전전년도 (억원)</label>
-          <input type="number" id="revenue-prev2" placeholder="예: 10">
+          <label>매출액 - 전전년도 (원)</label>
+          <input type="number" id="revenue-prev2" placeholder="예: 1000000000" step="1">
         </div>
         
         <div class="form-group">
-          <label>영업이익 - 최근년도 (억원)</label>
-          <input type="number" id="profit-recent" placeholder="예: 2">
+          <label>영업이익 - 최근년도 (원)</label>
+          <input type="number" id="profit-recent" placeholder="예: 200000000 (음수 가능)" step="1">
+          <span class="info-text">손실인 경우 음수로 입력 (예: -50000000)</span>
         </div>
         
         <div class="form-group">
-          <label>자본금 (억원)</label>
-          <input type="number" id="capital" placeholder="예: 5">
+          <label>자본금 (원)</label>
+          <input type="number" id="capital" placeholder="예: 10000000" step="1">
+          <span class="info-text">1천만원 = 10,000,000</span>
         </div>
         
         <div class="form-group">
-          <label>자본총계 (억원)</label>
-          <input type="number" id="total-equity" placeholder="예: 8">
+          <label>자본총계 (원)</label>
+          <input type="number" id="total-equity" placeholder="예: 800000000" step="1">
         </div>
         
         <div class="form-group">
-          <label>부채총계 (억원)</label>
-          <input type="number" id="total-debt" placeholder="예: 7">
+          <label>부채총계 (원)</label>
+          <input type="number" id="total-debt" placeholder="예: 700000000" step="1">
         </div>
         
         <div class="form-group">
@@ -1042,26 +1044,41 @@
       <div class="form-grid">
         <div class="form-group">
           <label>국세 체납 <span class="required">*</span></label>
-          <select id="tax-arrears" required>
+          <select id="tax-arrears" required onchange="toggleDisqualificationDetail('tax-arrears', 'tax-arrears-detail')">
             <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
+        </div>
+        
+        <div class="form-group full-width" id="tax-arrears-detail" style="display: none;">
+          <label>국세 체납 내역</label>
+          <input type="text" id="tax-arrears-description" placeholder="체납 금액, 기간 등 상세 내용">
         </div>
         
         <div class="form-group">
           <label>지방세 체납 <span class="required">*</span></label>
-          <select id="local-tax-arrears" required>
+          <select id="local-tax-arrears" required onchange="toggleDisqualificationDetail('local-tax-arrears', 'local-tax-arrears-detail')">
             <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
         </div>
         
+        <div class="form-group full-width" id="local-tax-arrears-detail" style="display: none;">
+          <label>지방세 체납 내역</label>
+          <input type="text" id="local-tax-arrears-description" placeholder="체납 금액, 기간 등 상세 내용">
+        </div>
+        
         <div class="form-group">
           <label>4대보험 미납/체납</label>
-          <select id="insurance-arrears">
+          <select id="insurance-arrears" onchange="toggleDisqualificationDetail('insurance-arrears', 'insurance-arrears-detail')">
             <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
+        </div>
+        
+        <div class="form-group full-width" id="insurance-arrears-detail" style="display: none;">
+          <label>4대보험 미납/체납 내역</label>
+          <input type="text" id="insurance-arrears-description" placeholder="미납 내역, 금액 등 상세 내용">
         </div>
         
         <div class="form-group">
@@ -1360,8 +1377,9 @@
         </div>
         
         <div class="form-group">
-          <label>R&D 투자액 (억원)</label>
-          <input type="number" id="rd-investment" placeholder="최근년도">
+          <label>R&D 투자액 (원)</label>
+          <input type="number" id="rd-investment" placeholder="최근년도 (예: 100000000)" step="1">
+          <span class="info-text">1억원 = 100,000,000</span>
         </div>
         
         <div class="form-group">
@@ -1841,7 +1859,7 @@
       <button class="btn btn-primary" onclick="analyzePrograms()" style="width: 100%; font-size: 1.1rem; padding: 1rem; margin-bottom: 0.75rem;">
         🔍 맞춤 지원사업 찾기
       </button>
-      <button class="btn btn-secondary" onclick="saveCompany()" style="width: 100%;">
+      <button class="btn btn-secondary" onclick="saveCompany(event)" style="width: 100%;">
         💾 저장
       </button>
     </div>
@@ -2736,7 +2754,12 @@
         companySize: document.getElementById('company-size').value,
         companyType: document.getElementById('company-type').value,
         ksicCode: document.getElementById('ksic-code').value,
-        productKeywords: document.getElementById('product-keywords').value,
+        productKeywords: [
+          document.getElementById('product-keyword-1')?.value || '',
+          document.getElementById('product-keyword-2')?.value || '',
+          document.getElementById('product-keyword-3')?.value || '',
+          document.getElementById('product-keyword-4')?.value || ''
+        ].filter(k => k.trim() !== '').join(', '),
         locationSido: document.getElementById('location-sido').value,
         locationSigungu: document.getElementById('location-sigungu').value,
         industrialComplex: document.getElementById('industrial-complex').value,
@@ -2936,34 +2959,107 @@
       console.log('✅ 고객사 정보 로드:', company.companyName);
     }
     
-    async function saveCompany() {
+    // 필수항목 검증 함수
+    function validateRequiredFields() {
+      const missingFields = [];
+      
+      // required 속성이 있는 모든 필드 검사
+      const requiredElements = document.querySelectorAll('[required]');
+      
+      requiredElements.forEach(element => {
+        let isEmpty = false;
+        let fieldName = '';
+        
+        // 필드명 추출 (label에서)
+        const label = element.closest('.form-group')?.querySelector('label');
+        if (label) {
+          fieldName = label.textContent.replace('*', '').trim();
+        } else {
+          fieldName = element.id || element.name || '알 수 없는 필드';
+        }
+        
+        // 값 검증
+        if (element.type === 'checkbox' || element.type === 'radio') {
+          // 체크박스나 라디오는 같은 name을 가진 것 중 하나라도 체크되어야 함
+          const name = element.name;
+          if (name) {
+            const checked = document.querySelector(`[name="${name}"]:checked`);
+            if (!checked) {
+              isEmpty = true;
+            }
+          } else if (!element.checked) {
+            isEmpty = true;
+          }
+        } else if (element.tagName === 'SELECT') {
+          isEmpty = !element.value || element.value === '';
+        } else {
+          isEmpty = !element.value || element.value.trim() === '';
+        }
+        
+        if (isEmpty) {
+          // 중복 체크 (라디오/체크박스 그룹)
+          if (!missingFields.includes(fieldName)) {
+            missingFields.push(fieldName);
+          }
+        }
+      });
+      
+      return missingFields;
+    }
+    
+    async function saveCompany(event) {
+      // Firebase 로그인 확인
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert('❌ 저장하려면 먼저 로그인해주세요.\n\n상단의 "로그인" 버튼을 클릭하세요.');
+        return;
+      }
+      
+      // 필수항목 검증
+      const missingFields = validateRequiredFields();
+      
+      if (missingFields.length > 0) {
+        const fieldList = missingFields.map((field, index) => `${index + 1}. ${field}`).join('\n');
+        alert(`❌ 다음 필수항목을 입력해주세요:\n\n${fieldList}`);
+        return;
+      }
+      
       const companyData = collectFormData();
       
-      if (!companyData.companyName) {
-        alert('회사명을 입력해주세요.');
-        return;
+      // 저장 진행 표시
+      let originalText = '';
+      if (event && event.target) {
+        originalText = event.target.textContent;
+        event.target.textContent = '💾 저장 중...';
+        event.target.disabled = true;
       }
       
-      if (!companyData.businessNumber) {
-        alert('사업자등록번호를 입력해주세요.');
-        return;
-      }
-      
-      const companyId = Date.now().toString();
-      savedCompanies[companyId] = {
-        ...companyData,
-        savedAt: new Date().toISOString()
-      };
-      
-      // Google Drive에 암호화하여 저장
-      const success = await saveToDrive(savedCompanies);
-      
-      if (success) {
-        updateCompanySelect();
-        alert(`✅ "${companyData.companyName}" 저장 완료!\n\n🔐 구글 드라이브에 AES-256 암호화로 안전하게 저장되었습니다.`);
-        console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
-      } else {
-        alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
+      try {
+        const companyId = Date.now().toString();
+        savedCompanies[companyId] = {
+          ...companyData,
+          savedAt: new Date().toISOString()
+        };
+        
+        // Google Drive에 암호화하여 저장
+        const success = await saveToDrive(savedCompanies);
+        
+        if (success) {
+          updateCompanySelect();
+          alert(`✅ "${companyData.companyName}" 저장 완료!\n\n🔐 구글 드라이브에 AES-256 암호화로 안전하게 저장되었습니다.\n\n저장 시간: ${new Date().toLocaleString('ko-KR')}`);
+          console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
+        } else {
+          alert('❌ 저장에 실패했습니다.\n\n가능한 원인:\n1. 구글 드라이브 연결 문제\n2. 인터넷 연결 불안정\n3. 브라우저 설정 문제\n\n다시 시도하거나 페이지를 새로고침해주세요.');
+        }
+      } catch (error) {
+        console.error('저장 오류:', error);
+        alert(`❌ 저장 중 오류가 발생했습니다.\n\n오류 내용: ${error.message}\n\n페이지를 새로고침하고 다시 시도해주세요.`);
+      } finally {
+        // 버튼 원상복구
+        if (event && event.target) {
+          event.target.textContent = originalText;
+          event.target.disabled = false;
+        }
       }
     }
     
@@ -3207,9 +3303,10 @@
       }
       
       try {
-        showLoadingOverlay('AI 분석 중...', '맞춤형 지원사업 추천 중');
+        showLoadingOverlay('지원사업 매칭 중...', '귀사에 적합한 프로그램 분석 중');
         
-        // 클라이언트 사이드 매칭 실행
+        // 클라이언트 사이드 매칭 실행 (규칙 기반 알고리즘)
+        // TODO: 향후 Gemini 2.5 Flash API 연동 예정
         const results = clientSideMatching(companyData);
         
         // 약간의 대기 시간 (로딩 효과)
@@ -4048,14 +4145,65 @@
       }, 800);
       
       try {
-        // 기업명 확인 (필수!)
+        // 기업 유형 확인
+        const companyType = document.querySelector('input[name="company-category"]:checked')?.value;
         const companyNameElem = document.getElementById('company-name');
-        const companyName = companyNameElem ? companyNameElem.value.trim() : '';
+        let companyName = companyNameElem ? companyNameElem.value.trim() : '';
         
-        // 회사명이 비어있으면 에러
-        if (!companyName) {
-          clearInterval(messageInterval);
-          throw new Error('회사명을 먼저 입력해주세요. (국세청 API는 회사명을 제공하지 않습니다)');
+        // 법인번호 확인
+        const corpNum1 = document.getElementById('corp-number-1')?.value || '';
+        const corpNum2 = document.getElementById('corp-number-2')?.value || '';
+        
+        // 기업 유형별 필수 입력 검증
+        if (companyType === 'corporation') {
+          // 법인: 법인번호 필수
+          if (!corpNum1 || !corpNum2) {
+            clearInterval(messageInterval);
+            throw new Error('법인사업자는 법인번호를 입력해주세요.');
+          }
+        } else {
+          // 개인: 회사명 필수
+          if (!companyName) {
+            clearInterval(messageInterval);
+            throw new Error('개인사업자는 회사명을 입력해주세요.');
+          }
+        }
+        
+        // 법인번호가 있으면 금융위원회에서 회사명 먼저 가져오기
+        let fscData = null;
+        if (corpNum1 && corpNum2) {
+          const corpNumber = `${corpNum1}-${corpNum2}`;
+          fscData = await getFSCInfo(corpNumber);
+          
+          if (fscData.success && fscData.companyName) {
+            // 법인의 경우 회사명 자동 입력
+            companyName = fscData.companyName;
+            if (companyNameElem) {
+              companyNameElem.value = companyName;
+            }
+            console.log(`✅ 금융위에서 회사명 자동 입력: ${companyName}`);
+            
+            // 자본금
+            const capitalElem = document.getElementById('capital');
+            if (capitalElem && fscData.capital) {
+              capitalElem.value = formatNumber(fscData.capital);
+              console.log(`✅ 자본금 입력: ${fscData.capital}`);
+            }
+            
+            // 업종 정보 로깅만
+            if (fscData.industry) {
+              console.log(`ℹ️ 업종 정보: ${fscData.industry} (수동 입력 필요)`);
+            }
+            
+            // 상장여부
+            if (fscData.listed === 'Y') {
+              const listedElem = document.getElementById('listed-yes');
+              if (listedElem) {
+                listedElem.checked = true;
+                console.log('✅ 상장여부: 예');
+              }
+            }
+          }
         }
         
         // 1단계: 국세청 API로 사업자 상태 확인
@@ -4067,7 +4215,7 @@
           throw new Error(`국세청 API 조회 실패: ${ntsData.message || '사업자번호를 확인해주세요.'}`);
         }
         
-        // 사업자 상태 정보 입력 (회사명은 사용자 입력값 유지)
+        // 2단계: 국세청 대표자 정보 입력
         const ceoNameElem = document.getElementById('ceo-name');
         if (ceoNameElem && ntsData.ceo) {
           ceoNameElem.value = ntsData.ceo;
@@ -4078,35 +4226,6 @@
           const dateStr = ntsData.startDate;
           const formattedDate = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
           establishDateElem.value = formattedDate;
-        }
-        
-        // 2단계: 법인번호가 있으면 금융위원회 API 호출
-        const corpNum1 = document.getElementById('corp-number-1')?.value || '';
-        const corpNum2 = document.getElementById('corp-number-2')?.value || '';
-        
-        if (corpNum1 && corpNum2) {
-          const corpNumber = `${corpNum1}-${corpNum2}`;
-          fscData = await getFSCInfo(corpNumber);
-          
-          if (fscData.success) {
-            // 자본금
-            const capitalElem = document.getElementById('capital');
-            if (capitalElem && fscData.capital) {
-              capitalElem.value = formatNumber(fscData.capital);
-            }
-            
-            // 업종
-            const industryElem = document.getElementById('industry');
-            if (industryElem && fscData.industry) {
-              industryElem.value = fscData.industry;
-            }
-            
-            // 상장여부
-            if (fscData.listed === 'Y') {
-              const listedElem = document.getElementById('listed-yes');
-              if (listedElem) listedElem.checked = true;
-            }
-          }
         }
         
         // 3단계: 특허 정보 조회
@@ -4379,7 +4498,66 @@
       initializeApp();
       // setupCompanySearch(); // 상단 검색 기능 제거됨
       setupAutoFill();
+      setupCompanyTypeToggle(); // 기업 유형 선택 설정
     });
+    
+    // 기업 유형 선택에 따른 동적 제어
+    function setupCompanyTypeToggle() {
+      const individualRadio = document.getElementById('type-individual');
+      const corporationRadio = document.getElementById('type-corporation');
+      const companyNameInput = document.getElementById('company-name');
+      const corpNum1 = document.getElementById('corp-number-1');
+      const corpNum2 = document.getElementById('corp-number-2');
+      const corpRequired = document.getElementById('corp-required');
+      const corpInfoText = document.getElementById('corp-info-text');
+      
+      function updateFields(type) {
+        if (type === 'corporation') {
+          // 법인 선택
+          corpNum1.required = true;
+          corpNum2.required = true;
+          corpRequired.style.display = 'inline';
+          corpInfoText.textContent = '필수 입력 (회사명 자동 입력)';
+          corpInfoText.style.color = '#FF8802';
+          companyNameInput.placeholder = '법인번호 입력 시 자동 입력';
+          companyNameInput.required = false;
+        } else {
+          // 개인 선택
+          corpNum1.required = false;
+          corpNum2.required = false;
+          corpRequired.style.display = 'none';
+          corpInfoText.textContent = '법인 선택 시 필수';
+          corpInfoText.style.color = 'rgba(255, 255, 255, 0.6)';
+          companyNameInput.placeholder = '상호명을 정확히 입력';
+          companyNameInput.required = true;
+        }
+      }
+      
+      individualRadio.addEventListener('change', () => updateFields('individual'));
+      corporationRadio.addEventListener('change', () => updateFields('corporation'));
+      
+      // 초기 상태 설정
+      updateFields('individual');
+    }
+    
+    // 결격사유 상세 입력 필드 토글
+    function toggleDisqualificationDetail(selectId, detailId) {
+      const selectElement = document.getElementById(selectId);
+      const detailElement = document.getElementById(detailId);
+      
+      if (selectElement && detailElement) {
+        if (selectElement.value === 'Y') {
+          detailElement.style.display = 'block';
+        } else {
+          detailElement.style.display = 'none';
+          // 숨길 때 입력값도 초기화
+          const input = detailElement.querySelector('input');
+          if (input) {
+            input.value = '';
+          }
+        }
+      }
+    }
     
   </script>
 </body>
