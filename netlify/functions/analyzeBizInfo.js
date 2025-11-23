@@ -2,7 +2,7 @@
 // Gemini 2.5 Flash API를 사용한 기업 지원사업 매칭 분석
 
 const fetch = require('node-fetch');
-const AbortController = require('abort-controller'); // ⭐ 추가
+const AbortController = require('abort-controller');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -25,15 +25,22 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { companyProfile, model = 'gemini-2.5-flash' } = JSON.parse(event.body);
+    // ✅ 수정: supportPrograms를 받도록 추가
+    const { companyProfile, supportPrograms, model = 'gemini-2.5-flash' } = JSON.parse(event.body);
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY가 설정되지 않았습니다.');
     }
 
-    // 지원사업 데이터 가져오기
-    const supportPrograms = await fetchSupportPrograms();
+    // ✅ 수정: 전달받은 supportPrograms 사용, 없으면 샘플 데이터
+    let programs = supportPrograms;
+    if (!programs || programs.length === 0) {
+      console.log('⚠️ supportPrograms 없음, 샘플 데이터 사용');
+      programs = getSamplePrograms();
+    } else {
+      console.log(`✅ HTML에서 전달받은 ${programs.length}개 지원사업 사용`);
+    }
 
     // Gemini 2.5 Flash 프롬프트 (심층 분석 버전)
     const analysisPrompt = `
@@ -44,7 +51,7 @@ exports.handler = async (event, context) => {
 ${JSON.stringify(companyProfile, null, 2)}
 
 # 지원사업 데이터 (상위 50개)
-${JSON.stringify(supportPrograms.slice(0, 50), null, 2)}
+${JSON.stringify(programs.slice(0, 50), null, 2)}
 
 # 심층 분석 요구사항
 
@@ -182,39 +189,6 @@ ${JSON.stringify(supportPrograms.slice(0, 50), null, 2)}
     };
   }
 };
-
-// ⭐ 수정: timeout 제대로 작동하도록 개선
-async function fetchSupportPrograms() {
-  const BIZINFO_API_KEY = process.env.BIZINFO_API_KEY;
-  
-  try {
-    // AbortController로 timeout 구현
-    const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 10000); // 10초
-
-    const response = await fetch(
-      `https://www.k-startup.go.kr/api/ssp/bizinfo?serviceKey=${BIZINFO_API_KEY}&numOfRows=500`,
-      { signal: controller.signal }
-    );
-    
-    clearTimeout(timeout);
-    
-    if (response.ok) {
-      const data = await response.json();
-      return data.items || getSamplePrograms();
-    }
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.log('API 타임아웃, 샘플 데이터 사용');
-    } else {
-      console.log('API 호출 실패, 샘플 데이터 사용:', error.message);
-    }
-  }
-  
-  return getSamplePrograms();
-}
 
 function getSamplePrograms() {
   return [
