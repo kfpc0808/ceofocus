@@ -4048,11 +4048,17 @@
       }, 800);
       
       try {
-        // 기존 기업명 저장 (문제 1 해결)
+        // 기업명 확인 (필수!)
         const companyNameElem = document.getElementById('company-name');
-        const existingCompanyName = companyNameElem ? companyNameElem.value.trim() : '';
+        const companyName = companyNameElem ? companyNameElem.value.trim() : '';
         
-        // 1단계: 국세청 API로 기본 정보 조회
+        // 회사명이 비어있으면 에러
+        if (!companyName) {
+          clearInterval(messageInterval);
+          throw new Error('회사명을 먼저 입력해주세요. (국세청 API는 회사명을 제공하지 않습니다)');
+        }
+        
+        // 1단계: 국세청 API로 사업자 상태 확인
         let ntsData = await getNTSInfo(businessNumber);
         
         // API 실패 시 명확한 에러 표시
@@ -4061,18 +4067,11 @@
           throw new Error(`국세청 API 조회 실패: ${ntsData.message || '사업자번호를 확인해주세요.'}`);
         }
         
-        // 기본 정보 입력
-        // 기업명: 기존 값이 있으면 유지, 없으면 API 값 사용 (문제 1 해결)
-        if (companyNameElem) {
-          if (!existingCompanyName && ntsData.companyName) {
-            companyNameElem.value = ntsData.companyName;
-          } else if (existingCompanyName) {
-            companyNameElem.value = existingCompanyName;
-          }
-        }
-        
+        // 사업자 상태 정보 입력 (회사명은 사용자 입력값 유지)
         const ceoNameElem = document.getElementById('ceo-name');
-        if (ceoNameElem) ceoNameElem.value = ntsData.ceo;
+        if (ceoNameElem && ntsData.ceo) {
+          ceoNameElem.value = ntsData.ceo;
+        }
         
         const establishDateElem = document.getElementById('establish-date');
         if (establishDateElem && ntsData.startDate) {
@@ -4111,7 +4110,7 @@
         }
         
         // 3단계: 특허 정보 조회
-        patentData = await getPatentInfo(ntsData.companyName);
+        patentData = await getPatentInfo(companyName);
         
         if (patentData.success && patentData.totalCount > 0) {
           const patentsElem = document.getElementById('patents-registered');
@@ -4121,7 +4120,7 @@
         }
         
         // 4단계: 벤처기업 인증 조회
-        ventureData = await getVentureInfo(ntsData.companyName, businessNumber);
+        ventureData = await getVentureInfo(companyName, businessNumber);
         
         if (ventureData.success) {
           const certVentureElem = document.getElementById('cert-venture');
@@ -4137,7 +4136,7 @@
         }
         
         // 5단계: 이노비즈 인증 조회
-        innobizData = await getInnobizInfo(ntsData.companyName);
+        innobizData = await getInnobizInfo(companyName);
         
         if (innobizData.success) {
           const certInnobizElem = document.getElementById('cert-innobiz');
@@ -4153,7 +4152,7 @@
         }
         
         // 6단계: 메인비즈 인증 조회
-        mainbizData = await getMainbizInfo(ntsData.companyName, businessNumber);
+        mainbizData = await getMainbizInfo(companyName, businessNumber);
         
         if (mainbizData.success) {
           const certMainbizElem = document.getElementById('cert-mainbiz');
@@ -4169,7 +4168,7 @@
         }
         
         // 7단계: 기업부설연구소 조회
-        researchLabData = await getResearchLabInfo(ntsData.companyName, businessNumber);
+        researchLabData = await getResearchLabInfo(companyName, businessNumber);
         
         if (researchLabData.success) {
           const researchOrgElem = document.getElementById('research-org');
@@ -4190,8 +4189,10 @@
         
         // 3대 인증 정보 추가
         let successMsg = `✅ 기업정보 자동입력 완료!\n\n`;
-        successMsg += `📌 ${ntsData.companyName}\n`;
-        successMsg += `👤 대표자: ${ntsData.ceo}\n`;
+        successMsg += `📌 ${companyName}\n`;
+        if (ntsData.ceo) {
+          successMsg += `👤 대표자: ${ntsData.ceo}\n`;
+        }
         successMsg += `📊 사업자상태: ${ntsData.businessStatus}\n`;
         
         if (patentData.success && patentData.totalCount > 0) {
@@ -4230,8 +4231,8 @@
         clearInterval(messageInterval);
         return {
           success: true,
-          companyName: ntsData.companyName,
-          ceo: ntsData.ceo,
+          companyName: companyName,
+          ceo: ntsData.ceo || null,
           startDate: ntsData.startDate ? `${ntsData.startDate.slice(0, 4)}-${ntsData.startDate.slice(4, 6)}-${ntsData.startDate.slice(6, 8)}` : null,
           businessStatus: ntsData.businessStatus,
           capital: fscData?.capital || null,
