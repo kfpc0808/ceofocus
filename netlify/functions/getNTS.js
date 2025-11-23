@@ -81,6 +81,12 @@ exports.handler = async (event, context) => {
     );
 
     const result = await response.json();
+    
+    // ⭐ 원본 응답 전체 로깅
+    console.log('━━━━━ 국세청 API 원본 응답 ━━━━━');
+    console.log('Status Code:', result.status_code);
+    console.log('Data:', JSON.stringify(result.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // 응답 처리
     if (result.status_code === 'OK' && result.data && result.data.length > 0) {
