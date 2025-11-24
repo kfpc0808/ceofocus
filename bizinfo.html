@@ -71,23 +71,7 @@
       padding: 0.75rem;
     }
     
-    .header {
-      position: relative;
-      text-align: center;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .header h1 {
-      font-size: 1.3rem;
-      margin-bottom: 0.25rem;
-    }
-    
     .btn-main {
-      position: absolute;
-      top: 0;
-      right: 0;
       padding: 0.5rem 0.75rem;
       border-radius: 8px;
       border: none;
@@ -100,8 +84,65 @@
       border: 1px solid rgba(255,255,255,0.3);
     }
     
+    .btn-main.btn-small {
+      padding: 0.35rem 0.5rem;
+      font-size: 0.6rem;
+    }
+    
     .btn-main:hover {
       background: rgba(255,255,255,0.3);
+    }
+    
+    .header-left {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    
+    .header {
+      position: relative;
+      text-align: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-top: 0.3rem;
+    }
+    
+    .header h1 {
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+      padding: 0 60px;
+    }
+    
+    .header .btn-main {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+    
+    /* 주력제품 그리드 */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.3rem;
+    }
+    
+    .product-grid input {
+      padding: 0.4rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.95);
+      color: #333;
+      font-size: 12px;
+    }
+    
+    @media (min-width: 600px) {
+      .product-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
     
     .required-notice {
@@ -710,12 +751,12 @@
 
   <div class="container" id="main-content" style="display: none;">
     <div class="header">
-      <h1>🏢 기업 지원사업 AI 매칭</h1>
-      <div style="display: flex; align-items: center; gap: 1rem;">
-        <div id="user-info" style="font-size: 0.9rem; color: #ddd;"></div>
-        <button class="btn-main" onclick="signOut()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">로그아웃</button>
-        <button class="btn-main" onclick="goHome()">메인</button>
+      <div class="header-left">
+        <button class="btn-main btn-small" onclick="signOut()">로그아웃</button>
+        <span id="user-info" style="font-size: 0.7rem; color: #ddd;"></span>
       </div>
+      <h1>🏢 기업 지원사업 AI 매칭</h1>
+      <button class="btn-main btn-small" onclick="goHome()">메인</button>
     </div>
 
     <div class="required-notice">
@@ -778,8 +819,10 @@
         
         <div class="form-group">
           <label>개업연월일(사업자등록증) <span class="required">*</span></label>
-          <input type="date" id="establish-date" required>
-          <span class="info-text">입력 시 업력 자동 계산됨</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="date" id="establish-date" required onchange="calculateBusinessAge()" style="flex: 1;">
+            <span id="business-age-display" style="font-size: 0.75rem; color: #ffd27f; white-space: nowrap;"></span>
+          </div>
         </div>
       </div>
       
@@ -823,67 +866,18 @@
         
         <div class="form-group">
           <label>업종(KSIC 코드) <span class="required">*</span></label>
-          <select id="ksic-code" required>
-            <option value="">선택하세요</option>
-            <optgroup label="제조업">
-              <option value="10">10 - 식료품 제조업</option>
-              <option value="11">11 - 음료 제조업</option>
-              <option value="13">13 - 섬유제품 제조업</option>
-              <option value="14">14 - 의복, 의복액세서리 및 모피제품 제조업</option>
-              <option value="15">15 - 가죽, 가방 및 신발 제조업</option>
-              <option value="16">16 - 목재 및 나무제품 제조업</option>
-              <option value="17">17 - 펄프, 종이 및 종이제품 제조업</option>
-              <option value="18">18 - 인쇄 및 기록매체 복제업</option>
-              <option value="19">19 - 코크스, 연탄 및 석유정제품 제조업</option>
-              <option value="20">20 - 화학물질 및 화학제품 제조업</option>
-              <option value="21">21 - 의료용 물질 및 의약품 제조업</option>
-              <option value="22">22 - 고무 및 플라스틱제품 제조업</option>
-              <option value="23">23 - 비금속 광물제품 제조업</option>
-              <option value="24">24 - 1차 금속 제조업</option>
-              <option value="25">25 - 금속가공제품 제조업</option>
-              <option value="26">26 - 전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업</option>
-              <option value="27">27 - 의료, 정밀, 광학기기 및 시계 제조업</option>
-              <option value="28">28 - 전기장비 제조업</option>
-              <option value="29">29 - 기타 기계 및 장비 제조업</option>
-              <option value="30">30 - 자동차 및 트레일러 제조업</option>
-              <option value="31">31 - 기타 운송장비 제조업</option>
-              <option value="32">32 - 가구 제조업</option>
-              <option value="33">33 - 기타 제품 제조업</option>
-            </optgroup>
-            <optgroup label="정보통신업">
-              <option value="58">58 - 출판업</option>
-              <option value="59">59 - 영상·오디오 기록물 제작 및 배급업</option>
-              <option value="60">60 - 방송업</option>
-              <option value="61">61 - 통신업</option>
-              <option value="62">62 - 컴퓨터 프로그래밍, 시스템 통합 및 관리업</option>
-              <option value="63">63 - 정보서비스업</option>
-            </optgroup>
-            <optgroup label="전문, 과학 및 기술 서비스업">
-              <option value="70">70 - 연구개발업</option>
-              <option value="71">71 - 전문서비스업</option>
-              <option value="72">72 - 건축기술, 엔지니어링 및 기타 과학기술 서비스업</option>
-              <option value="73">73 - 기타 전문, 과학 및 기술 서비스업</option>
-            </optgroup>
-            <optgroup label="기타">
-              <option value="46">46 - 도매 및 상품중개업</option>
-              <option value="47">47 - 소매업</option>
-              <option value="49">49 - 육상운송 및 파이프라인 운송업</option>
-              <option value="52">52 - 창고 및 운송관련 서비스업</option>
-              <option value="56">56 - 음식점 및 주점업</option>
-              <option value="64">64 - 금융업</option>
-              <option value="65">65 - 보험 및 연금업</option>
-              <option value="66">66 - 금융 및 보험 관련 서비스업</option>
-              <option value="85">85 - 교육 서비스업</option>
-              <option value="86">86 - 보건업</option>
-              <option value="87">87 - 사회복지 서비스업</option>
-            </optgroup>
-          </select>
-          <span class="info-text">표준산업분류 중분류 코드</span>
+          <input type="text" id="ksic-code" placeholder="5자리 (예: 62010)" maxlength="5" inputmode="numeric" required oninput="allowOnlyNumbers(this)">
+          <span class="info-text">표준산업분류 5자리 코드</span>
         </div>
         
         <div class="form-group full-width">
-          <label>주력 제품/서비스 키워드</label>
-          <input type="text" id="product-keywords" placeholder="키워드 3개 이내 (예: AI챗봇, 고객관리SW, 클라우드)">
+          <label>주력 제품/서비스 (최대 4개)</label>
+          <div class="product-grid">
+            <input type="text" id="product-1" placeholder="주력제품 1">
+            <input type="text" id="product-2" placeholder="주력제품 2">
+            <input type="text" id="product-3" placeholder="주력제품 3">
+            <input type="text" id="product-4" placeholder="주력제품 4">
+          </div>
         </div>
       </div>
       
@@ -976,12 +970,18 @@
         
         <div class="form-group">
           <label>영업이익 - 최근년도 (억원)</label>
-          <input type="number" id="profit-recent" placeholder="예: 2">
+          <div style="display: flex; align-items: center; gap: 0.3rem;">
+            <label class="loss-check" style="display: flex; align-items: center; gap: 0.2rem; cursor: pointer; font-size: 0.7rem; color: #ff6b6b;">
+              <input type="checkbox" id="profit-loss" onchange="toggleProfitSign()" style="width: 14px; height: 14px;">
+              손실
+            </label>
+            <input type="text" id="profit-recent" placeholder="예: 2" inputmode="decimal" style="flex: 1;" oninput="formatProfitInput(this)">
+          </div>
         </div>
         
         <div class="form-group">
           <label>부채비율 (%)</label>
-          <input type="number" id="debt-ratio" placeholder="예: 87.5">
+          <input type="text" id="debt-ratio" placeholder="예: 87.5" inputmode="decimal" oninput="formatDecimalInput(this)">
         </div>
       </div>
       
@@ -1291,14 +1291,6 @@
     }
     
     /**
-     * 숫자 포맷팅 (천단위 쉼표)
-     */
-    function formatNumber(num) {
-      if (!num) return '';
-      return parseInt(num).toLocaleString('ko-KR');
-    }
-    
-    /**
      * 최대 길이 도달 시 자동 포커스 이동
      */
     function moveFocusOnMaxLength(current, nextId, maxLength) {
@@ -1306,6 +1298,97 @@
         const nextElement = document.getElementById(nextId);
         if (nextElement) nextElement.focus();
       }
+    }
+    
+    /**
+     * 업력 계산 및 표시
+     */
+    function calculateBusinessAge() {
+      const dateInput = document.getElementById('establish-date');
+      const displaySpan = document.getElementById('business-age-display');
+      
+      if (!dateInput || !dateInput.value || !displaySpan) return;
+      
+      const foundedDate = new Date(dateInput.value);
+      const today = new Date();
+      
+      let years = today.getFullYear() - foundedDate.getFullYear();
+      let months = today.getMonth() - foundedDate.getMonth();
+      
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      
+      if (years < 0) {
+        displaySpan.textContent = '';
+        return;
+      }
+      
+      if (years === 0) {
+        displaySpan.textContent = `(${months}개월)`;
+      } else if (months === 0) {
+        displaySpan.textContent = `(${years}년)`;
+      } else {
+        displaySpan.textContent = `(${years}년 ${months}개월)`;
+      }
+    }
+    
+    /**
+     * 손실 체크 토글
+     */
+    function toggleProfitSign() {
+      const checkbox = document.getElementById('profit-loss');
+      const input = document.getElementById('profit-recent');
+      
+      if (!input) return;
+      
+      let value = input.value.replace(/[^0-9.]/g, '');
+      
+      if (checkbox && checkbox.checked && value) {
+        input.value = '-' + value;
+        input.style.color = '#ff6b6b';
+      } else if (value) {
+        input.value = value;
+        input.style.color = '#333';
+      }
+    }
+    
+    /**
+     * 영업이익 입력 포맷
+     */
+    function formatProfitInput(input) {
+      const checkbox = document.getElementById('profit-loss');
+      let value = input.value.replace(/[^0-9.]/g, '');
+      
+      // 소수점 하나만 허용
+      const parts = value.split('.');
+      if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      if (checkbox && checkbox.checked && value) {
+        input.value = '-' + value;
+        input.style.color = '#ff6b6b';
+      } else {
+        input.value = value;
+        input.style.color = '#333';
+      }
+    }
+    
+    /**
+     * 소수점 입력 포맷 (부채비율 등)
+     */
+    function formatDecimalInput(input) {
+      let value = input.value.replace(/[^0-9.]/g, '');
+      
+      // 소수점 하나만 허용
+      const parts = value.split('.');
+      if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      input.value = value;
     }
     
     // ==================== 테스트 데이터 (Phase 1) ====================
@@ -2055,20 +2138,6 @@
       }
     }
     
-    // ==================== 등록번호 입력 자동 포커스 ====================
-    function moveFocusOnMaxLength(currentInput, nextInputId, maxLength) {
-      // 숫자만 입력되도록 필터링
-      currentInput.value = currentInput.value.replace(/[^\d]/g, '');
-      
-      // 최대 길이에 도달하면 다음 input으로 포커스 이동
-      if (currentInput.value.length >= maxLength) {
-        const nextInput = document.getElementById(nextInputId);
-        if (nextInput) {
-          nextInput.focus();
-        }
-      }
-    }
-    
     // ==================== 숫자 포맷팅 ====================
     function formatNumber(value) {
       if (!value) return '';
@@ -2087,10 +2156,10 @@
     }
     
     function attachNumberFormatting() {
-      // 모든 숫자 입력 필드 ID 목록
+      // 모든 숫자 입력 필드 ID 목록 (소수점 필드 제외)
       const numberFields = [
         // Section 3: 재무 정보
-        'revenue-recent', 'profit-recent', 'debt-ratio',
+        'revenue-recent',
         // Section 4: 고용 정보
         'employees-total', 'employees-youth', 
         'employees-female', 'employees-disabled', 'employment-growth',
@@ -2218,7 +2287,7 @@
         companyType: getVal('company-type'),
         businessStatus: getVal('business-status'),
         ksicCode: getVal('ksic-code'),
-        productKeywords: getVal('product-keywords'),
+        productKeywords: [getVal('product-1'), getVal('product-2'), getVal('product-3'), getVal('product-4')].filter(Boolean).join(', '),
         locationSido: getVal('location-sido'),
         locationSigungu: getVal('location-sigungu'),
         industrialComplex: getVal('industrial-complex'),
@@ -2431,6 +2500,20 @@
         }
       });
       
+      // 주력제품 분리 로드
+      if (company.productKeywords) {
+        const products = company.productKeywords.split(',').map(p => p.trim());
+        for (let i = 0; i < 4; i++) {
+          const el = document.getElementById('product-' + (i + 1));
+          if (el) el.value = products[i] || '';
+        }
+      }
+      
+      // 업력 계산 표시
+      if (company.establishDate) {
+        calculateBusinessAge();
+      }
+      
       console.log('✅ 고객사 정보 로드:', company.companyName);
     }
     
@@ -2510,9 +2593,9 @@
     // ==================== 클라이언트 사이드 매칭 엔진 ====================
     
     /**
-     * 업력 계산 (년)
+     * 업력 계산 (년) - AI 분석용
      */
-    function calculateBusinessAge(establishDate) {
+    function getBusinessAgeYears(establishDate) {
       if (!establishDate) return 0;
       const today = new Date();
       const established = new Date(establishDate);
@@ -2538,7 +2621,7 @@
     function clientSideMatching(companyData) {
       console.log('🎯 클라이언트 매칭 시작:', companyData.companyName);
       
-      const businessAge = calculateBusinessAge(companyData.establishDate);
+      const businessAge = getBusinessAgeYears(companyData.establishDate);
       const ceoAge = calculateAge(companyData.ceoBirth);
       
       console.log(`📊 기업 정보 - 업력: ${businessAge}년, CEO 나이: ${ceoAge}세`);
@@ -2750,13 +2833,39 @@
         <div class="loader"></div>
         <h2>${title}</h2>
         <p>${subtitle}</p>
+        <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin-top: 1rem; overflow: hidden;">
+          <div id="progress-bar" style="width: 0%; height: 100%; background: #FF8802; border-radius: 3px; transition: width 0.3s;"></div>
+        </div>
+        <p id="progress-text" style="font-size: 0.8rem; margin-top: 0.5rem;">0%</p>
       `;
       document.body.appendChild(overlay);
+      
+      // 진행율 애니메이션
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        updateProgress(progress);
+        if (progress >= 90) clearInterval(progressInterval);
+      }, 200);
+      
+      overlay.progressInterval = progressInterval;
+    }
+    
+    function updateProgress(percent) {
+      const bar = document.getElementById('progress-bar');
+      const text = document.getElementById('progress-text');
+      if (bar) bar.style.width = percent + '%';
+      if (text) text.textContent = Math.round(percent) + '%';
     }
     
     function hideLoadingOverlay() {
       const overlay = document.getElementById('loading-overlay');
-      if (overlay) overlay.remove();
+      if (overlay) {
+        if (overlay.progressInterval) clearInterval(overlay.progressInterval);
+        updateProgress(100);
+        setTimeout(() => overlay.remove(), 300);
+      }
     }
     
     function displayResults(result) {
