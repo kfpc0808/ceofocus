@@ -145,6 +145,61 @@
       }
     }
     
+    /* 미니 버튼 */
+    .btn-mini {
+      padding: 0.4rem 0.5rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    
+    .btn-mini:hover {
+      background: rgba(255,255,255,0.25);
+    }
+    
+    /* 손실 체크박스 */
+    .loss-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .loss-checkbox-label input {
+      display: none;
+    }
+    
+    .loss-checkbox-box {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ff6b6b;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: transparent;
+      transition: all 0.2s;
+    }
+    
+    .loss-checkbox-label input:checked + .loss-checkbox-box {
+      background: #ff6b6b;
+      color: white;
+    }
+    
+    .loss-checkbox-text {
+      font-size: 0.7rem;
+      color: #ff6b6b;
+      font-weight: 600;
+    }
+    
     .required-notice {
       background: rgba(255, 136, 2, 0.2);
       border: 1px solid #FF8802;
@@ -864,10 +919,49 @@
           </select>
         </div>
         
-        <div class="form-group">
+        <div class="form-group full-width">
           <label>업종(KSIC 코드) <span class="required">*</span></label>
-          <input type="text" id="ksic-code" placeholder="5자리 (예: 62010)" maxlength="5" inputmode="numeric" required oninput="allowOnlyNumbers(this)">
-          <span class="info-text">표준산업분류 5자리 코드</span>
+          <div style="display: flex; gap: 0.3rem; align-items: flex-start;">
+            <select id="ksic-select" onchange="updateKsicCode()" style="flex: 1;">
+              <option value="">대분류 선택</option>
+              <optgroup label="제조업 (C)">
+                <option value="10">10 - 식료품</option>
+                <option value="11">11 - 음료</option>
+                <option value="13">13 - 섬유제품</option>
+                <option value="14">14 - 의복/모피</option>
+                <option value="20">20 - 화학물질/제품</option>
+                <option value="21">21 - 의약품</option>
+                <option value="22">22 - 고무/플라스틱</option>
+                <option value="25">25 - 금속가공</option>
+                <option value="26">26 - 전자부품/통신장비</option>
+                <option value="27">27 - 의료/정밀기기</option>
+                <option value="28">28 - 전기장비</option>
+                <option value="29">29 - 기계/장비</option>
+                <option value="30">30 - 자동차</option>
+              </optgroup>
+              <optgroup label="정보통신업 (J)">
+                <option value="58">58 - 출판업</option>
+                <option value="61">61 - 통신업</option>
+                <option value="62">62 - SW개발/공급</option>
+                <option value="63">63 - 정보서비스</option>
+              </optgroup>
+              <optgroup label="전문/과학/기술 (M)">
+                <option value="70">70 - 연구개발</option>
+                <option value="71">71 - 전문서비스</option>
+                <option value="72">72 - 건축/엔지니어링</option>
+              </optgroup>
+              <optgroup label="도소매/서비스">
+                <option value="46">46 - 도매업</option>
+                <option value="47">47 - 소매업</option>
+                <option value="56">56 - 음식점/주점</option>
+                <option value="85">85 - 교육서비스</option>
+                <option value="86">86 - 보건업</option>
+              </optgroup>
+            </select>
+            <input type="text" id="ksic-code" placeholder="5자리" maxlength="5" style="width: 70px;" inputmode="numeric" required oninput="allowOnlyNumbers(this)">
+            <button type="button" onclick="openKsicSearch()" class="btn-mini">🔍</button>
+          </div>
+          <span class="info-text">대분류 선택 후 세부코드 입력, 또는 🔍로 검색</span>
         </div>
         
         <div class="form-group full-width">
@@ -940,8 +1034,8 @@
       <h2>Section 2. 대표자 정보</h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>생년월일 <span class="required">*</span></label>
-          <input type="date" id="ceo-birth" required>
+          <label>생년월일</label>
+          <input type="date" id="ceo-birth">
           <span class="info-text">청년(만39세↓) 판정</span>
         </div>
         
@@ -971,9 +1065,10 @@
         <div class="form-group">
           <label>영업이익 - 최근년도 (억원)</label>
           <div style="display: flex; align-items: center; gap: 0.3rem;">
-            <label class="loss-check" style="display: flex; align-items: center; gap: 0.2rem; cursor: pointer; font-size: 0.7rem; color: #ff6b6b;">
-              <input type="checkbox" id="profit-loss" onchange="toggleProfitSign()" style="width: 14px; height: 14px;">
-              손실
+            <label class="loss-checkbox-label">
+              <input type="checkbox" id="profit-loss" onchange="toggleProfitSign()">
+              <span class="loss-checkbox-box">✓</span>
+              <span class="loss-checkbox-text">손실</span>
             </label>
             <input type="text" id="profit-recent" placeholder="예: 2" inputmode="decimal" style="flex: 1;" oninput="formatProfitInput(this)">
           </div>
@@ -1282,6 +1377,26 @@
     const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
     
     // ==================== 유틸리티 함수 ====================
+    
+    /**
+     * KSIC 대분류 선택 시 코드 업데이트
+     */
+    function updateKsicCode() {
+      const select = document.getElementById('ksic-select');
+      const input = document.getElementById('ksic-code');
+      if (select && input && select.value) {
+        // 선택된 값이 2자리면 앞에 채우고 나머지 3자리는 사용자 입력
+        input.value = select.value;
+        input.focus();
+      }
+    }
+    
+    /**
+     * KSIC 검색 사이트 열기
+     */
+    function openKsicSearch() {
+      window.open('https://kssc.kostat.go.kr:8443/ksscNew_web/index.jsp', '_blank');
+    }
     
     /**
      * 숫자만 입력 허용
@@ -2008,7 +2123,8 @@
           fields: 'files(id, name)',
         });
         
-        const files = searchResponse.result.files;
+        // 안전한 null 체크
+        const files = searchResponse?.result?.files || [];
         const fileContent = JSON.stringify({ encryptedData, timestamp: new Date().toISOString() });
         const file = new Blob([fileContent], { type: 'application/json' });
         
@@ -2081,6 +2197,12 @@
           spaces: 'appDataFolder',
           fields: 'files(id, name)',
         });
+        
+        // 안전한 null 체크
+        if (!searchResponse || !searchResponse.result) {
+          console.log('📁 Drive 응답 없음');
+          return false;
+        }
         
         const files = searchResponse.result.files;
         if (!files || files.length === 0) {
@@ -2795,19 +2917,40 @@
     async function analyzePrograms() {
       const companyData = collectFormData();
       
-      // 필수 필드 검증
-      if (!companyData.companyName || !companyData.businessNumber || !companyData.establishDate ||
-          !companyData.companySize || !companyData.companyType || !companyData.ksicCode ||
-          !companyData.locationSido || !companyData.capitalArea ||
-          !companyData.ceoBirth || !companyData.ceoGender || !companyData.revenueRecent ||
-          !companyData.taxArrears || !companyData.localTaxArrears || !companyData.employeesTotal ||
-          !companyData.supportNeeds.length) {
-        alert('필수 항목(*)을 모두 입력해주세요.');
+      // 필수 필드 검증 (항목명 포함)
+      const requiredFields = [
+        { key: 'companyName', name: '기업명' },
+        { key: 'businessNumber', name: '사업자등록번호' },
+        { key: 'establishDate', name: '개업연월일' },
+        { key: 'companySize', name: '기업 규모' },
+        { key: 'companyType', name: '기업 형태' },
+        { key: 'ksicCode', name: '업종(KSIC)' },
+        { key: 'locationSido', name: '소재지(시도)' },
+        { key: 'capitalArea', name: '수도권 여부' },
+        { key: 'revenueRecent', name: '최근 매출액' },
+        { key: 'taxArrears', name: '국세 체납 여부' },
+        { key: 'localTaxArrears', name: '지방세 체납 여부' },
+        { key: 'employeesTotal', name: '상시근로자 수' }
+      ];
+      
+      const missingFields = requiredFields.filter(f => {
+        const val = companyData[f.key];
+        return val === '' || val === null || val === undefined || val === 0;
+      });
+      
+      // 희망 지원분야 체크
+      if (!companyData.supportNeeds || companyData.supportNeeds.length === 0) {
+        missingFields.push({ key: 'supportNeeds', name: '희망 지원분야' });
+      }
+      
+      if (missingFields.length > 0) {
+        const fieldNames = missingFields.map(f => '• ' + f.name).join('\n');
+        alert('다음 필수 항목을 입력해주세요:\n\n' + fieldNames);
         return;
       }
       
       try {
-        showLoadingOverlay('AI 분석 중...', '맞춤형 지원사업 추천 중');
+        showLoadingOverlay('AI 분석 중...', '지원사업 데이터 로딩 중...');
         
         // 클라이언트 사이드 매칭 실행
         const results = clientSideMatching(companyData);
@@ -2826,6 +2969,7 @@
     }
     
     function showLoadingOverlay(title, subtitle) {
+      const totalPrograms = typeof MOCK_PROGRAMS !== 'undefined' ? MOCK_PROGRAMS.length : 0;
       const overlay = document.createElement('div');
       overlay.className = 'loading-overlay';
       overlay.id = 'loading-overlay';
@@ -2833,7 +2977,8 @@
         <div class="loader"></div>
         <h2>${title}</h2>
         <p>${subtitle}</p>
-        <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin-top: 1rem; overflow: hidden;">
+        <p id="program-count" style="font-size: 0.75rem; color: #ffd27f; margin-top: 0.5rem;">📋 ${totalPrograms}개 공고 분석 중...</p>
+        <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin-top: 0.5rem; overflow: hidden;">
           <div id="progress-bar" style="width: 0%; height: 100%; background: #FF8802; border-radius: 3px; transition: width 0.3s;"></div>
         </div>
         <p id="progress-text" style="font-size: 0.8rem; margin-top: 0.5rem;">0%</p>
@@ -2842,28 +2987,35 @@
       
       // 진행율 애니메이션
       let progress = 0;
+      let analyzed = 0;
       const progressInterval = setInterval(() => {
         progress += Math.random() * 15;
+        analyzed = Math.min(Math.floor(progress / 100 * totalPrograms), totalPrograms);
         if (progress > 90) progress = 90;
-        updateProgress(progress);
+        updateProgress(progress, analyzed, totalPrograms);
         if (progress >= 90) clearInterval(progressInterval);
       }, 200);
       
       overlay.progressInterval = progressInterval;
     }
     
-    function updateProgress(percent) {
+    function updateProgress(percent, analyzed, total) {
       const bar = document.getElementById('progress-bar');
       const text = document.getElementById('progress-text');
+      const countText = document.getElementById('program-count');
       if (bar) bar.style.width = percent + '%';
       if (text) text.textContent = Math.round(percent) + '%';
+      if (countText && analyzed !== undefined) {
+        countText.textContent = `📋 ${analyzed || 0}/${total || 0}개 공고 분석 완료`;
+      }
     }
     
     function hideLoadingOverlay() {
       const overlay = document.getElementById('loading-overlay');
       if (overlay) {
         if (overlay.progressInterval) clearInterval(overlay.progressInterval);
-        updateProgress(100);
+        const totalPrograms = typeof MOCK_PROGRAMS !== 'undefined' ? MOCK_PROGRAMS.length : 0;
+        updateProgress(100, totalPrograms, totalPrograms);
         setTimeout(() => overlay.remove(), 300);
       }
     }
