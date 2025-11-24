@@ -24,6 +24,7 @@
       color: #fff;
       min-height: 100vh;
       -webkit-overflow-scrolling: touch;
+      font-size: 14px;
     }
     
     .loading-screen {
@@ -47,9 +48,9 @@
     }
     
     .loader {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(255,255,255,0.3);
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.3);
       border-top-color: #FF8802;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -60,39 +61,39 @@
     }
     
     .loading-text {
-      margin-top: 1rem;
-      font-size: 1.1rem;
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
     }
     
     .container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 1.5rem;
+      padding: 0.75rem;
     }
     
     .header {
       position: relative;
       text-align: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 2px solid rgba(255,255,255,0.2);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
     }
     
     .header h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      font-size: 1.3rem;
+      margin-bottom: 0.25rem;
     }
     
     .btn-main {
       position: absolute;
       top: 0;
       right: 0;
-      padding: 0.75rem 1.25rem;
-      border-radius: 10px;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
       border: none;
       background: rgba(255,255,255,0.2);
       color: white;
-      font-size: 1rem;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
@@ -105,28 +106,28 @@
     
     .required-notice {
       background: rgba(255, 136, 2, 0.2);
-      border: 2px solid #FF8802;
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
-      margin-bottom: 2rem;
+      border: 1px solid #FF8802;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.75rem;
       text-align: center;
-      font-size: 1rem;
+      font-size: 0.8rem;
     }
     
     .required-notice strong {
       color: #FFD700;
-      font-size: 1.1rem;
+      font-size: 0.85rem;
     }
     
     .btn {
-      padding: 0.875rem 1.5rem;
-      border-radius: 12px;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
       border: none;
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
-      min-height: 48px;
+      min-height: 40px;
       user-select: none;
     }
     
@@ -137,7 +138,7 @@
     .btn-primary {
       background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
       color: white;
-      box-shadow: 0 4px 12px rgba(255,136,2,0.3);
+      box-shadow: 0 2px 8px rgba(255,136,2,0.3);
     }
     
     .btn-secondary {
@@ -146,24 +147,25 @@
       border: 1px solid rgba(255,255,255,0.3);
     }
     
+    /* 컴팩트 카드 */
     .card {
       background: rgba(255,255,255,0.12);
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
+      border-radius: 10px;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255,255,255,0.2);
     }
     
     .card h2 {
-      font-size: 1.3rem;
-      margin-bottom: 1.25rem;
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
       color: #ffd27f;
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid rgba(255,255,255,0.2);
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.3rem;
     }
     
     .section-info-icon {
@@ -171,52 +173,45 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
       background: rgba(255, 210, 127, 0.2);
-      border: 1.5px solid #ffd27f;
+      border: 1px solid #ffd27f;
       border-radius: 50%;
-      font-size: 0.85rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: #ffd27f;
       cursor: help;
-      transition: all 0.2s;
       flex-shrink: 0;
-    }
-    
-    .section-info-icon:hover {
-      background: rgba(255, 210, 127, 0.3);
-      transform: scale(1.1);
     }
     
     .section-info-tooltip {
       visibility: hidden;
       opacity: 0;
       position: absolute;
-      left: 30px;
-      top: -10px;
+      left: 25px;
+      top: -8px;
       background: rgba(20, 40, 70, 0.98);
       color: #fff;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 400;
-      line-height: 1.5;
+      line-height: 1.4;
       white-space: nowrap;
       z-index: 1000;
       border: 1px solid rgba(255, 210, 127, 0.3);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       pointer-events: none;
     }
     
     .section-info-tooltip::before {
       content: '';
       position: absolute;
-      left: -8px;
+      left: -6px;
       top: 50%;
       transform: translateY(-50%);
-      border-width: 6px;
+      border-width: 5px;
       border-style: solid;
       border-color: transparent rgba(20, 40, 70, 0.98) transparent transparent;
     }
@@ -224,48 +219,59 @@
     .section-info-icon:hover .section-info-tooltip {
       visibility: visible;
       opacity: 1;
-      left: 35px;
     }
     
     .card h3 {
-      font-size: 1.1rem;
-      margin: 1.5rem 0 1rem 0;
+      font-size: 0.85rem;
+      margin: 0.6rem 0 0.4rem 0;
       color: #ffd27f;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     
+    /* 컴팩트 폼 그리드 - 모바일에서도 2열 */
     .form-grid {
       display: grid;
-      gap: 1rem;
-      grid-template-columns: 1fr;
+      gap: 0.4rem;
+      grid-template-columns: repeat(2, 1fr);
     }
     
-    @media (min-width: 480px) {
-      .form-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .form-grid .full-width {
-        grid-column: 1 / -1;
-      }
+    .form-grid .full-width {
+      grid-column: 1 / -1;
     }
     
-    @media (min-width: 1024px) {
+    @media (min-width: 600px) {
       .form-grid {
         grid-template-columns: repeat(3, 1fr);
       }
     }
     
+    @media (min-width: 900px) {
+      .form-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    
+    @media (min-width: 1200px) {
+      .form-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+    
+    /* 컴팩트 폼 그룹 */
     .form-group {
       display: flex;
       flex-direction: column;
     }
     
     .form-group label {
-      font-size: 0.9rem;
+      font-size: 0.72rem;
       font-weight: 600;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.15rem;
       color: #ffd27f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .required {
@@ -273,40 +279,27 @@
       font-weight: 700;
     }
     
+    /* 컴팩트 인풋 */
     .form-group input,
     .form-group select,
     .form-group textarea {
       width: 100%;
-      padding: 0.875rem;
-      border-radius: 10px;
+      padding: 0.45rem 0.5rem;
+      border-radius: 6px;
       border: 1px solid rgba(255,255,255,0.3);
       background: rgba(255,255,255,0.95);
       color: #333;
-      font-size: 16px;
+      font-size: 13px;
       -webkit-appearance: none;
       appearance: none;
+      min-height: 32px;
     }
     
     .form-group select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 0.875rem center;
-      padding-right: 2.5rem;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    
-    .form-group select option {
-      background: white;
-      color: #333;
-      padding: 0.5rem;
-      font-weight: 500;
-    }
-    
-    .form-group select option:checked {
-      background: #FF8802;
-      color: white;
-      font-weight: 700;
+      background-position: right 0.5rem center;
+      padding-right: 1.8rem;
     }
     
     .form-group input:focus,
@@ -314,88 +307,43 @@
     .form-group textarea:focus {
       outline: none;
       border-color: #FF8802;
-      box-shadow: 0 0 0 3px rgba(255, 136, 2, 0.2);
+      box-shadow: 0 0 0 2px rgba(255, 136, 2, 0.2);
     }
     
     .form-group textarea {
-      min-height: 80px;
+      min-height: 50px;
       resize: vertical;
       font-family: inherit;
     }
     
+    /* 컴팩트 체크박스 그리드 */
     .checkbox-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 0.75rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.3rem;
     }
     
-    /* 라디오 버튼 스타일 완전 개선 */
-    input[type="radio"] {
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-      margin-right: 0.5rem;
-      -webkit-appearance: none;
-      appearance: none;
-      border: 3px solid #ddd;
-      border-radius: 50%;
-      background: white;
-      position: relative;
-      transition: all 0.2s;
-      flex-shrink: 0;
+    @media (min-width: 480px) {
+      .checkbox-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
     
-    input[type="radio"]:hover {
-      border-color: #FF8802;
-      transform: scale(1.05);
-      box-shadow: 0 0 8px rgba(255, 136, 2, 0.3);
-    }
-    
-    input[type="radio"]:checked {
-      border-color: #FF8802;
-      border-width: 3px;
-      background: white;
-    }
-    
-    input[type="radio"]:checked::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #FF8802;
-      animation: checkPop 0.2s ease;
-    }
-    
-    @keyframes checkPop {
-      0% { transform: translate(-50%, -50%) scale(0); }
-      50% { transform: translate(-50%, -50%) scale(1.2); }
-      100% { transform: translate(-50%, -50%) scale(1); }
-    }
-    
-    input[type="radio"]:checked + span {
-      font-weight: 700;
-      color: #FF8802;
-    }
-    
-    input[type="radio"] + span {
-      font-size: 1.05rem;
-      transition: all 0.2s;
-      user-select: none;
+    @media (min-width: 768px) {
+      .checkbox-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
     }
     
     .checkbox-item {
       display: flex;
       align-items: center;
-      padding: 0.75rem;
+      padding: 0.35rem 0.5rem;
       background: rgba(255,255,255,0.1);
-      border-radius: 10px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
-      min-height: 48px;
+      min-height: 32px;
     }
     
     .checkbox-item:active {
@@ -404,15 +352,15 @@
     
     .checkbox-item input[type="checkbox"],
     .checkbox-item input[type="radio"] {
-      width: 20px;
-      height: 20px;
-      margin-right: 0.5rem;
+      width: 16px;
+      height: 16px;
+      margin-right: 0.35rem;
       cursor: pointer;
       -webkit-appearance: none;
       appearance: none;
       background: rgba(255,255,255,0.9);
-      border: 2px solid rgba(255,255,255,0.5);
-      border-radius: 4px;
+      border: 1.5px solid rgba(255,255,255,0.5);
+      border-radius: 3px;
       position: relative;
       flex-shrink: 0;
     }
@@ -433,16 +381,18 @@
       left: 50%;
       transform: translate(-50%, -50%);
       color: white;
-      font-size: 14px;
+      font-size: 11px;
       font-weight: bold;
     }
     
     .checkbox-item label {
-      font-size: 0.85rem;
+      font-size: 0.72rem;
       cursor: pointer;
       margin: 0;
       color: #fff;
-      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .loading-overlay {
@@ -460,46 +410,46 @@
     }
     
     .loading-overlay .loader {
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
     }
     
     .loading-overlay h2 {
-      margin-top: 1.5rem;
-      font-size: 1.3rem;
+      margin-top: 1rem;
+      font-size: 1.1rem;
     }
     
     .loading-overlay p {
-      margin-top: 0.5rem;
-      font-size: 1rem;
+      margin-top: 0.3rem;
+      font-size: 0.85rem;
       opacity: 0.8;
     }
     
     .result-card {
       background: rgba(255,255,255,0.95);
       color: #333;
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .result-card .rank {
       display: inline-block;
       background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
       color: white;
-      padding: 0.3rem 0.875rem;
-      border-radius: 20px;
-      font-size: 0.9rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
       font-weight: 700;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.4rem;
     }
     
     .result-card h3 {
-      font-size: 1.2rem;
+      font-size: 1rem;
       color: #0c2c54;
-      margin-bottom: 0.5rem;
-      line-height: 1.4;
+      margin-bottom: 0.3rem;
+      line-height: 1.3;
       border: none;
       padding: 0;
     }
@@ -508,45 +458,66 @@
       display: inline-block;
       background: #4CAF50;
       color: white;
-      padding: 0.4rem 0.95rem;
-      border-radius: 20px;
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
       font-weight: 700;
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
     }
     
+    /* 컴팩트 info-text */
     .info-text {
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.7);
-      margin-top: 0.25rem;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.1rem;
       font-style: italic;
+      line-height: 1.2;
     }
     
+    /* 모바일 추가 최적화 */
     @media (max-width: 479px) {
+      .container {
+        padding: 0.5rem;
+      }
+      .header h1 {
+        font-size: 1.1rem;
+        padding-right: 70px;
+      }
+      .card {
+        padding: 0.5rem;
+        border-radius: 8px;
+      }
+      .card h2 {
+        font-size: 0.9rem;
+      }
+    }
+    
+    /* PC 최적화 */
+    @media (min-width: 1024px) {
       .container {
         padding: 1rem;
       }
-      .header h1 {
-        font-size: 1.6rem;
-        padding-right: 80px;
-      }
-      .btn-main {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
-      }
       .card {
-        padding: 1.25rem;
+        padding: 0.85rem;
       }
-      
-      /* 자동입력 버튼 모바일 최적화 */
-      .auto-fill-btn {
-        padding: 1.2rem;
-        font-size: 1.1rem;
-        min-height: 56px; /* 터치하기 쉬운 크기 */
+      .form-grid {
+        gap: 0.5rem;
       }
-      
-      .auto-fill-btn span {
-        font-size: 1.1rem;
+      .form-group label {
+        font-size: 0.78rem;
+      }
+      .form-group input,
+      .form-group select {
+        padding: 0.5rem 0.6rem;
+        font-size: 14px;
+        min-height: 36px;
+      }
+      .checkbox-item {
+        padding: 0.45rem 0.6rem;
+        min-height: 36px;
+      }
+      .checkbox-item label {
+        font-size: 0.78rem;
       }
     }
     
@@ -557,123 +528,131 @@
       text-overflow: ellipsis;
     }
     
-    /* 회사명 검색 자동완성 스타일 */
-    .company-search-section {
-      background: rgba(255,184,77,0.1);
-      border: 2px solid #FFB84D;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-    
-    .company-search-section h3 {
-      font-size: 1.2rem;
-      color: #FFB84D;
+    /* 고객사 목록 스타일 */
+    .company-list-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
       margin-bottom: 0.5rem;
     }
     
-    .company-search-section .hint {
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 1rem;
+    .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.95);
+      color: #333;
+      font-size: 13px;
     }
     
-    .search-input-wrapper {
-      position: relative;
+    .sort-buttons {
+      display: flex;
+      gap: 0.3rem;
     }
     
-    .search-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      max-height: 300px;
-      overflow-y: auto;
-      z-index: 1000;
-      margin-top: 0.5rem;
-    }
-    
-    .search-result-item {
-      padding: 1rem;
-      border-bottom: 1px solid #eee;
+    .sort-btn {
+      flex: 1;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.72rem;
       cursor: pointer;
       transition: all 0.2s;
     }
     
-    .search-result-item:last-child {
+    .sort-btn.active {
+      background: #FF8802;
+      border-color: #FF8802;
+    }
+    
+    .company-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 0.5rem;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.1);
+    }
+    
+    .company-list-empty {
+      padding: 1rem;
+      text-align: center;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.8rem;
+    }
+    
+    .company-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .company-item:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .company-item.selected {
+      background: rgba(255,136,2,0.3);
+      border-left: 3px solid #FF8802;
+    }
+    
+    .company-item:last-child {
       border-bottom: none;
     }
     
-    .search-result-item:hover {
-      background: #f8f9fa;
+    .company-item-info {
+      flex: 1;
+      min-width: 0;
     }
     
-    .search-result-item .company-name {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 0.25rem;
-    }
-    
-    .search-result-item .company-info {
+    .company-item-name {
       font-size: 0.85rem;
-      color: #666;
-      display: flex;
-      gap: 1rem;
-    }
-    
-    .search-loading,
-    .search-error,
-    .no-results {
-      padding: 1.5rem;
-      text-align: center;
-      color: #666;
-    }
-    
-    .search-loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .search-loading .spinner {
-      width: 30px;
-      height: 30px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #FF8802;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    .auto-fill-btn {
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.05rem;
       font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      transition: all 0.3s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .company-item-meta {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.1rem;
+    }
+    
+    .company-item-date {
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.4);
       white-space: nowrap;
     }
     
-    .auto-fill-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(76,175,80,0.4);
+    .company-action-buttons {
+      display: flex;
+      gap: 0.3rem;
     }
     
-    .auto-fill-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .company-action-buttons .btn {
+      flex: 1;
+      font-size: 0.8rem;
+      padding: 0.5rem;
+    }
+    
+    @media (min-width: 480px) {
+      .company-list-controls {
+        flex-direction: row;
+        align-items: center;
+      }
+      .search-box {
+        flex: 1;
+      }
+      .sort-buttons {
+        flex: 0 0 auto;
+      }
     }
     
     .hidden {
@@ -745,82 +724,41 @@
 
     <!-- 1. 고객사 선택 -->
     <div class="card">
-      <h2>1. 고객사 선택</h2>
-      <div class="form-grid">
-        <div class="form-group full-width">
-          <label>저장된 고객사</label>
-          <select id="company-select" onchange="loadSelectedCompany()">
-            <option value="">-- 새로 입력 --</option>
-          </select>
+      <h2>1. 고객사 관리</h2>
+      
+      <!-- 검색 및 정렬 -->
+      <div class="company-list-controls">
+        <div class="search-box">
+          <input type="text" id="company-search" placeholder="🔍 기업명 검색..." oninput="filterCompanyList()">
+        </div>
+        <div class="sort-buttons">
+          <button class="sort-btn active" onclick="sortCompanyList('name')" id="sort-name">가나다순</button>
+          <button class="sort-btn" onclick="sortCompanyList('date')" id="sort-date">최신순</button>
         </div>
       </div>
-      <button class="btn btn-secondary" onclick="clearForm()" style="margin-top: 1rem;">
-        🔄 새로 입력
-      </button>
-    </div>
-
-    <!-- 사용 안내 섹션 -->
-    <div class="company-search-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-      <h3 style="color: white; margin-bottom: 1rem;">💡 사용 안내</h3>
-      <div style="background: rgba(255,255,255,0.95); padding: 1.5rem; border-radius: 15px;">
-        <div style="display: grid; gap: 1rem;">
-          <div style="display: flex; align-items: start; gap: 1rem;">
-            <div style="background: #4CAF50; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
-            <div>
-              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Section 1에서 사업자번호 입력</h4>
-              <p style="color: #666; margin: 0; font-size: 0.95rem;">기업 식별정보 → 사업자등록번호 3개 칸 모두 입력</p>
-            </div>
-          </div>
-          
-          <div style="display: flex; align-items: start; gap: 1rem;">
-            <div style="background: #FF8802; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
-            <div>
-              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🤖 가져오기 버튼 클릭</h4>
-              <p style="color: #666; margin: 0; font-size: 0.95rem;">국세청, 금융위원회 등 실제 API로 <strong>전국 모든 사업자</strong> 조회 가능</p>
-            </div>
-          </div>
-          
-          <div style="display: flex; align-items: start; gap: 1rem;">
-            <div style="background: #2196F3; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
-            <div>
-              <h4 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">자동으로 모든 정보 입력 완료</h4>
-              <p style="color: #666; margin: 0; font-size: 0.95rem;">기업명, 대표자, 업종, 소재지 등 자동 입력 (3~5초 소요)</p>
-            </div>
-          </div>
-        </div>
-        
-        <div style="margin-top: 1.5rem; padding: 1rem; background: #FFF3E0; border-left: 4px solid #FF8802; border-radius: 8px;">
-          <p style="margin: 0; color: #E65100; font-weight: 600;">
-            ⚡ <strong>전국 모든 사업자 조회 가능!</strong> 사업자번호만 입력하면 즉시 조회됩니다.
-          </p>
-        </div>
+      
+      <!-- 기업 목록 -->
+      <div class="company-list" id="company-list">
+        <div class="company-list-empty">저장된 고객사가 없습니다</div>
+      </div>
+      
+      <!-- 숨김 드롭다운 (호환성) -->
+      <select id="company-select" style="display:none;" onchange="loadSelectedCompany()">
+        <option value="">-- 새로 입력 --</option>
+      </select>
+      
+      <div class="company-action-buttons">
+        <button class="btn btn-secondary" onclick="clearForm()">
+          ➕ 새로 입력
+        </button>
       </div>
     </div>
-
 
     <!-- Section 1: 기업 기본정보 -->
     <div class="card">
       <h2>Section 1. 기업 기본정보</h2>
       
       <h3>1-1. 기업 식별정보</h3>
-      
-      <!-- 기업 유형 선택 -->
-      <div class="form-grid">
-        <div class="form-group full-width">
-          <label>기업 유형 <span class="required">*</span></label>
-          <div style="display: flex; gap: 2rem; padding: 1rem 0;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="radio" name="company-category" value="individual" id="type-individual" checked>
-              <span style="font-size: 1rem;">개인사업자</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="radio" name="company-category" value="corporation" id="type-corporation">
-              <span style="font-size: 1rem;">법인사업자</span>
-            </label>
-          </div>
-        </div>
-      </div>
-      
       <div class="form-grid">
         <div class="form-group full-width">
           <label>기업명 <span class="required">*</span></label>
@@ -836,17 +774,6 @@
             <span style="color: #ddd;">-</span>
             <input type="text" id="business-number-3" placeholder="00000" maxlength="5" style="width: 100px;" inputmode="numeric" required oninput="allowOnlyNumbers(this)">
           </div>
-          <span class="info-text">API 자동조회 키</span>
-        </div>
-        
-        <div class="form-group" id="corp-number-group">
-          <label>법인등록번호 <span class="required" id="corp-required" style="display: none;">*</span></label>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="text" id="corp-number-1" placeholder="000000" maxlength="6" style="width: 100px;" inputmode="numeric" oninput="allowOnlyNumbers(this); moveFocusOnMaxLength(this, 'corp-number-2', 6)">
-            <span style="color: #ddd;">-</span>
-            <input type="text" id="corp-number-2" placeholder="0000000" maxlength="7" style="width: 120px;" inputmode="numeric" oninput="allowOnlyNumbers(this)">
-          </div>
-          <span class="info-text" id="corp-info-text">법인 선택 시 필수</span>
         </div>
         
         <div class="form-group">
@@ -854,21 +781,6 @@
           <input type="date" id="establish-date" required>
           <span class="info-text">입력 시 업력 자동 계산됨</span>
         </div>
-      </div>
-      
-      <!-- 기업정보 자동입력 버튼 -->
-      <div style="margin-top: 1.5rem;">
-        <button type="button" id="auto-fill-btn" class="auto-fill-btn" disabled>
-          <span>🤖</span>
-          <span>가져오기</span>
-        </button>
-        <p style="text-align: center; margin-top: 0.75rem; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
-          💡 기업 유형 선택 후 필수 정보를 입력하세요<br>
-          <span style="font-size: 0.85rem;">
-            • 개인사업자: 회사명 + 사업자번호<br>
-            • 법인사업자: 사업자번호 + 법인번호 (회사명 자동)
-          </span>
-        </p>
       </div>
       
       <h3>1-2. 기업 분류</h3>
@@ -901,33 +813,77 @@
         </div>
         
         <div class="form-group">
+          <label>사업 상태 <span class="required">*</span></label>
+          <select id="business-status" required>
+            <option value="운영중">운영중</option>
+            <option value="휴업">휴업</option>
+            <option value="폐업">폐업</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
           <label>업종(KSIC 코드) <span class="required">*</span></label>
-          <input type="text" id="ksic-code" placeholder="" maxlength="5" required pattern="[0-9]{2,5}">
-          <span class="info-text">
-            표준산업분류 코드 2~5자리 입력<br>
-            예시: 62 (중분류), 620 (소분류), 6201 (세분류), 62010 (세세분류)<br>
-            <a href="https://kssc.kostat.go.kr:8443/ksscNew_web/index.jsp" target="_blank" style="color: #FF8802;">📋 코드 찾기 (통계청)</a>
-          </span>
+          <select id="ksic-code" required>
+            <option value="">선택하세요</option>
+            <optgroup label="제조업">
+              <option value="10">10 - 식료품 제조업</option>
+              <option value="11">11 - 음료 제조업</option>
+              <option value="13">13 - 섬유제품 제조업</option>
+              <option value="14">14 - 의복, 의복액세서리 및 모피제품 제조업</option>
+              <option value="15">15 - 가죽, 가방 및 신발 제조업</option>
+              <option value="16">16 - 목재 및 나무제품 제조업</option>
+              <option value="17">17 - 펄프, 종이 및 종이제품 제조업</option>
+              <option value="18">18 - 인쇄 및 기록매체 복제업</option>
+              <option value="19">19 - 코크스, 연탄 및 석유정제품 제조업</option>
+              <option value="20">20 - 화학물질 및 화학제품 제조업</option>
+              <option value="21">21 - 의료용 물질 및 의약품 제조업</option>
+              <option value="22">22 - 고무 및 플라스틱제품 제조업</option>
+              <option value="23">23 - 비금속 광물제품 제조업</option>
+              <option value="24">24 - 1차 금속 제조업</option>
+              <option value="25">25 - 금속가공제품 제조업</option>
+              <option value="26">26 - 전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업</option>
+              <option value="27">27 - 의료, 정밀, 광학기기 및 시계 제조업</option>
+              <option value="28">28 - 전기장비 제조업</option>
+              <option value="29">29 - 기타 기계 및 장비 제조업</option>
+              <option value="30">30 - 자동차 및 트레일러 제조업</option>
+              <option value="31">31 - 기타 운송장비 제조업</option>
+              <option value="32">32 - 가구 제조업</option>
+              <option value="33">33 - 기타 제품 제조업</option>
+            </optgroup>
+            <optgroup label="정보통신업">
+              <option value="58">58 - 출판업</option>
+              <option value="59">59 - 영상·오디오 기록물 제작 및 배급업</option>
+              <option value="60">60 - 방송업</option>
+              <option value="61">61 - 통신업</option>
+              <option value="62">62 - 컴퓨터 프로그래밍, 시스템 통합 및 관리업</option>
+              <option value="63">63 - 정보서비스업</option>
+            </optgroup>
+            <optgroup label="전문, 과학 및 기술 서비스업">
+              <option value="70">70 - 연구개발업</option>
+              <option value="71">71 - 전문서비스업</option>
+              <option value="72">72 - 건축기술, 엔지니어링 및 기타 과학기술 서비스업</option>
+              <option value="73">73 - 기타 전문, 과학 및 기술 서비스업</option>
+            </optgroup>
+            <optgroup label="기타">
+              <option value="46">46 - 도매 및 상품중개업</option>
+              <option value="47">47 - 소매업</option>
+              <option value="49">49 - 육상운송 및 파이프라인 운송업</option>
+              <option value="52">52 - 창고 및 운송관련 서비스업</option>
+              <option value="56">56 - 음식점 및 주점업</option>
+              <option value="64">64 - 금융업</option>
+              <option value="65">65 - 보험 및 연금업</option>
+              <option value="66">66 - 금융 및 보험 관련 서비스업</option>
+              <option value="85">85 - 교육 서비스업</option>
+              <option value="86">86 - 보건업</option>
+              <option value="87">87 - 사회복지 서비스업</option>
+            </optgroup>
+          </select>
+          <span class="info-text">표준산업분류 중분류 코드</span>
         </div>
         
-        <div class="form-group">
-          <label>주력 제품/서비스 키워드 1</label>
-          <input type="text" id="product-keyword-1" placeholder="">
-        </div>
-        
-        <div class="form-group">
-          <label>주력 제품/서비스 키워드 2</label>
-          <input type="text" id="product-keyword-2" placeholder="">
-        </div>
-        
-        <div class="form-group">
-          <label>주력 제품/서비스 키워드 3</label>
-          <input type="text" id="product-keyword-3" placeholder="">
-        </div>
-        
-        <div class="form-group">
-          <label>주력 제품/서비스 키워드 4</label>
-          <input type="text" id="product-keyword-4" placeholder="추가 키워드 (선택)">
+        <div class="form-group full-width">
+          <label>주력 제품/서비스 키워드</label>
+          <input type="text" id="product-keywords" placeholder="키워드 3개 이내 (예: AI챗봇, 고객관리SW, 클라우드)">
         </div>
       </div>
       
@@ -990,14 +946,9 @@
       <h2>Section 2. 대표자 정보</h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>대표자 성명 <span class="required">*</span></label>
-          <input type="text" id="ceo-name" required>
-        </div>
-        
-        <div class="form-group">
-          <label>생년월일</label>
-          <input type="date" id="ceo-birth">
-          <span class="info-text">청년(만39세↓) 판정 - 알 수 없으면 비워두기</span>
+          <label>생년월일 <span class="required">*</span></label>
+          <input type="date" id="ceo-birth" required>
+          <span class="info-text">청년(만39세↓) 판정</span>
         </div>
         
         <div class="form-group">
@@ -1009,46 +960,6 @@
           </select>
           <span class="info-text">여성기업 전용 트랙</span>
         </div>
-        
-        <div class="form-group">
-          <label>장애인 여부</label>
-          <select id="ceo-disabled">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>국가보훈대상자</label>
-          <select id="ceo-veteran">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>북한이탈주민</label>
-          <select id="ceo-defector">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>재창업 여부</label>
-          <select id="ceo-restart">
-            <option value="초창업">초창업</option>
-            <option value="재창업">재창업</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>연대보증 면제 대상</label>
-          <select id="guarantee-exempt">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
       </div>
     </div>
 
@@ -1056,59 +967,21 @@
     <div class="card">
       <h2>Section 3. 재무 및 신용정보</h2>
       
-      <h3>3-1. 재무 현황 (최근 3개년)</h3>
+      <h3>3-1. 재무 현황</h3>
       <div class="form-grid">
         <div class="form-group">
-          <label>매출액 - 최근년도 (원) <span class="required">*</span></label>
-          <input type="number" id="revenue-recent" placeholder="" step="1" required>
-          <span class="info-text">15억원 = 1,500,000,000</span>
+          <label>매출액 - 최근년도 (억원) <span class="required">*</span></label>
+          <input type="number" id="revenue-recent" placeholder="예: 15" required>
         </div>
         
         <div class="form-group">
-          <label>매출액 - 전년도 (원)</label>
-          <input type="number" id="revenue-prev1" placeholder="" step="1">
-        </div>
-        
-        <div class="form-group">
-          <label>매출액 - 전전년도 (원)</label>
-          <input type="number" id="revenue-prev2" placeholder="" step="1">
-        </div>
-        
-        <div class="form-group">
-          <label>영업이익 - 최근년도 (원)</label>
-          <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="radio" name="profit-type" value="positive" checked>
-              <span>흑자</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="radio" name="profit-type" value="negative">
-              <span>적자</span>
-            </label>
-          </div>
-          <input type="number" id="profit-recent" placeholder="금액만 입력 (음수 기호 없이)" step="1" min="0">
-          <span class="info-text">위에서 흑자/적자 선택 후 금액만 입력</span>
-        </div>
-        
-        <div class="form-group">
-          <label>자본금 (원)</label>
-          <input type="number" id="capital" placeholder="" step="1">
-          <span class="info-text">1천만원 = 10,000,000</span>
-        </div>
-        
-        <div class="form-group">
-          <label>자본총계 (원)</label>
-          <input type="number" id="total-equity" placeholder="" step="1">
-        </div>
-        
-        <div class="form-group">
-          <label>부채총계 (원)</label>
-          <input type="number" id="total-debt" placeholder="" step="1">
+          <label>영업이익 - 최근년도 (억원)</label>
+          <input type="number" id="profit-recent" placeholder="예: 2">
         </div>
         
         <div class="form-group">
           <label>부채비율 (%)</label>
-          <input type="number" id="debt-ratio" placeholder="">
+          <input type="number" id="debt-ratio" placeholder="예: 87.5">
         </div>
       </div>
       
@@ -1116,41 +989,26 @@
       <div class="form-grid">
         <div class="form-group">
           <label>국세 체납 <span class="required">*</span></label>
-          <select id="tax-arrears" required onchange="toggleDisqualificationDetail('tax-arrears', 'tax-arrears-detail')">
-            <option value="N" selected>없음</option>
+          <select id="tax-arrears" required>
+            <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
-        </div>
-        
-        <div class="form-group full-width" id="tax-arrears-detail" style="display: none;">
-          <label>국세 체납 내역</label>
-          <input type="text" id="tax-arrears-description" placeholder="체납 금액, 기간 등 상세 내용">
         </div>
         
         <div class="form-group">
           <label>지방세 체납 <span class="required">*</span></label>
-          <select id="local-tax-arrears" required onchange="toggleDisqualificationDetail('local-tax-arrears', 'local-tax-arrears-detail')">
-            <option value="N" selected>없음</option>
+          <select id="local-tax-arrears" required>
+            <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
-        </div>
-        
-        <div class="form-group full-width" id="local-tax-arrears-detail" style="display: none;">
-          <label>지방세 체납 내역</label>
-          <input type="text" id="local-tax-arrears-description" placeholder="체납 금액, 기간 등 상세 내용">
         </div>
         
         <div class="form-group">
           <label>4대보험 미납/체납</label>
-          <select id="insurance-arrears" onchange="toggleDisqualificationDetail('insurance-arrears', 'insurance-arrears-detail')">
-            <option value="N" selected>없음</option>
+          <select id="insurance-arrears">
+            <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
-        </div>
-        
-        <div class="form-group full-width" id="insurance-arrears-detail" style="display: none;">
-          <label>4대보험 미납/체납 내역</label>
-          <input type="text" id="insurance-arrears-description" placeholder="미납 내역, 금액 등 상세 내용">
         </div>
         
         <div class="form-group">
@@ -1173,24 +1031,6 @@
       <h3>3-3. 신용정보</h3>
       <div class="form-grid">
         <div class="form-group">
-          <label>기업신용등급</label>
-          <select id="credit-rating">
-            <option value="">선택하세요</option>
-            <option value="AAA">AAA</option>
-            <option value="AA">AA</option>
-            <option value="A">A</option>
-            <option value="BBB">BBB</option>
-            <option value="BB">BB</option>
-            <option value="B">B</option>
-            <option value="CCC">CCC</option>
-            <option value="CC">CC</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-          </select>
-          <span class="info-text">나이스/KIS 기준</span>
-        </div>
-        
-        <div class="form-group">
           <label>기술신용평가(TCB) 등급</label>
           <select id="tcb-rating">
             <option value="">선택하세요</option>
@@ -1211,26 +1051,13 @@
 
     <!-- Section 4: 고용 정보 -->
     <div class="card">
-      <h2>
-        Section 4. 고용 정보
-        <span class="section-info-icon">
-          i
-          <span class="section-info-tooltip">
-            ⚠️ 개인정보보호법으로 인해 자동 조회가 불가능합니다. 수동으로 입력해주세요.
-          </span>
-        </span>
-      </h2>
+      <h2>Section 4. 고용 정보</h2>
       
       <h3>4-1. 인력 현황</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>상시근로자 수 (명) <span class="required">*</span></label>
           <input type="number" id="employees-total" placeholder="대표자 제외" required>
-        </div>
-        
-        <div class="form-group">
-          <label>전년도 근로자 수 (명)</label>
-          <input type="number" id="employees-prev" placeholder="전년도">
         </div>
         
         <div class="form-group">
@@ -1251,104 +1078,9 @@
         </div>
         
         <div class="form-group">
-          <label>고령자 고용 (만60세 이상)</label>
-          <input type="number" id="employees-senior" placeholder="고령자 인원">
-        </div>
-        
-        <div class="form-group">
-          <label>비정규직 비율 (%)</label>
-          <input type="number" id="irregular-ratio" placeholder="">
-        </div>
-      </div>
-      
-      <h3>4-2. 채용 계획</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>향후 6개월 채용 계획 (명)</label>
-          <input type="number" id="hiring-plan" placeholder="예정 인원">
-        </div>
-        
-        <div class="form-group full-width">
-          <label>우선 채용 분야</label>
-          <input type="text" id="hiring-field" placeholder="">
-        </div>
-      </div>
-      
-      <h3>4-3. 고용 안정성 (고용지원금 필수)</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>최근 신규 채용일 <span style="color: #FFB84D;">★</span></label>
-          <input type="date" id="recent-hire-date">
-          <span class="info-text">최근 6개월 내 채용 시 필수</span>
-        </div>
-        
-        <div class="form-group">
-          <label>근로계약 형태 <span style="color: #FFB84D;">★</span></label>
-          <select id="contract-type">
-            <option value="">선택</option>
-            <option value="정규직">정규직</option>
-            <option value="계약직">계약직 (기간제)</option>
-            <option value="파트타임">파트타임</option>
-            <option value="계약직전환">계약직→정규직 전환</option>
-          </select>
-          <span class="info-text">정규직 전환 시 별도 지원금</span>
-        </div>
-        
-        <div class="form-group">
-          <label>최근 6개월 감원 여부 <span style="color: #ff6b6b;">⚠️</span></label>
-          <select id="layoff-recent">
-            <option value="없음">없음</option>
-            <option value="권고사직">있음 (권고사직)</option>
-            <option value="정리해고">있음 (정리해고)</option>
-            <option value="자연퇴사">자연 퇴사만 있음</option>
-          </select>
-          <span class="info-text" style="color: #ff6b6b;">
-            ⚠️ 감원 시 대부분 지원금 제외
-          </span>
-        </div>
-        
-        <div class="form-group">
-          <label>평균 월 임금 (만원) <span style="color: #FFB84D;">★</span></label>
-          <input type="number" id="avg-monthly-wage" placeholder="">
-          <span class="info-text">최저임금 이상 필수</span>
-        </div>
-        
-        <div class="form-group">
-          <label>대표자 가족 고용 여부</label>
-          <select id="family-employee">
-            <option value="없음">없음</option>
-            <option value="배우자">배우자 고용</option>
-            <option value="직계존비속">직계 존비속 고용</option>
-            <option value="기타친인척">기타 친인척</option>
-          </select>
-          <span class="info-text">가족 고용 시 일부 지원금 제외</span>
-        </div>
-        
-        <div class="form-group">
-          <label>경력단절 여성 고용 (명)</label>
-          <input type="number" id="career-break-women" placeholder="인원">
-          <span class="info-text">워라밸 일자리 지원금 가점</span>
-        </div>
-        
-        <div class="form-group">
-          <label>휴업/휴직 실시 여부</label>
-          <select id="leave-status">
-            <option value="없음">없음</option>
-            <option value="휴업">휴업 실시 중</option>
-            <option value="휴직">휴직자 있음</option>
-          </select>
-          <span class="info-text">고용유지지원금 신청 가능</span>
-        </div>
-        
-        <div class="form-group">
-          <label>임금 체불 여부 <span style="color: #ff6b6b;">⚠️</span></label>
-          <select id="wage-unpaid">
-            <option value="없음">없음</option>
-            <option value="있음">있음</option>
-          </select>
-          <span class="info-text" style="color: #ff6b6b;">
-            ⚠️ 체불 시 모든 지원금 제외
-          </span>
+          <label>고용 증가율 (%)</label>
+          <input type="number" id="employment-growth" placeholder="전년 대비 증가율" step="0.1">
+          <span class="info-text">고용창출 우대</span>
         </div>
       </div>
     </div>
@@ -1357,7 +1089,7 @@
     <div class="card">
       <h2>Section 5. 기술 및 인증 정보</h2>
       
-      <h3>5-1. 기업 인증 (유효기간 확인 필수)</h3>
+      <h3>5-1. 기업 인증</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>벤처기업 인증</label>
@@ -1365,11 +1097,6 @@
             <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
-        </div>
-        
-        <div class="form-group">
-          <label>벤처기업 만료일</label>
-          <input type="date" id="cert-venture-expire">
         </div>
         
         <div class="form-group">
@@ -1381,11 +1108,6 @@
         </div>
         
         <div class="form-group">
-          <label>이노비즈 만료일</label>
-          <input type="date" id="cert-innobiz-expire">
-        </div>
-        
-        <div class="form-group">
           <label>메인비즈(경영혁신)</label>
           <select id="cert-mainbiz">
             <option value="N">없음</option>
@@ -1394,40 +1116,37 @@
         </div>
         
         <div class="form-group">
-          <label>메인비즈 만료일</label>
-          <input type="date" id="cert-mainbiz-expire">
+          <label>여성기업 인증</label>
+          <select id="cert-woman">
+            <option value="N">없음</option>
+            <option value="Y">있음</option>
+          </select>
+          <span class="info-text">여성기업 전용 지원</span>
         </div>
         
         <div class="form-group">
-          <label>녹색인증기업</label>
-          <select id="cert-green">
+          <label>장애인기업 인증</label>
+          <select id="cert-disabled">
             <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
         </div>
         
         <div class="form-group">
-          <label>소재부품장비 전문기업</label>
-          <select id="cert-materials">
+          <label>사회적기업 인증</label>
+          <select id="cert-social">
             <option value="N">없음</option>
             <option value="Y">있음</option>
           </select>
         </div>
         
         <div class="form-group">
-          <label>뿌리기업</label>
-          <select id="cert-root">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
+          <label>ESG 추진 여부</label>
+          <select id="esg-status">
+            <option value="N">아니오</option>
+            <option value="Y">예</option>
           </select>
-        </div>
-        
-        <div class="form-group">
-          <label>World Class 300</label>
-          <select id="cert-worldclass">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
+          <span class="info-text">ESG 관련 사업 가점</span>
         </div>
       </div>
       
@@ -1444,123 +1163,8 @@
         </div>
         
         <div class="form-group">
-          <label>전담 연구원 (명)</label>
-          <input type="number" id="researchers" placeholder="연구인력">
-        </div>
-        
-        <div class="form-group">
-          <label>R&D 투자액 (원)</label>
-          <input type="number" id="rd-investment" placeholder="최근년도 (예: 100000000)" step="1">
-          <span class="info-text">1억원 = 100,000,000</span>
-        </div>
-        
-        <div class="form-group">
-          <label>R&D 투자 비율 (%)</label>
-          <input type="number" id="rd-ratio" placeholder="매출 대비">
-        </div>
-        
-        <div class="form-group">
           <label>특허 등록 (건)</label>
           <input type="number" id="patents-registered" placeholder="등록">
-        </div>
-        
-        <div class="form-group">
-          <label>특허 출원 (건)</label>
-          <input type="number" id="patents-applied" placeholder="출원">
-        </div>
-        
-        <div class="form-group">
-          <label>상표권 등록 (건)</label>
-          <input type="number" id="trademarks" placeholder="상표권">
-        </div>
-        
-        <div class="form-group">
-          <label>기술이전 경험</label>
-          <select id="tech-transfer">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
-        </div>
-      </div>
-      
-      <h3>5-3. 생산 및 품질 인증</h3>
-      <div class="checkbox-grid">
-        <div class="checkbox-item">
-          <input type="checkbox" id="iso-9001" value="ISO9001">
-          <label for="iso-9001">ISO 9001 (품질)</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="iso-14001" value="ISO14001">
-          <label for="iso-14001">ISO 14001 (환경)</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="iso-45001" value="ISO45001">
-          <label for="iso-45001">ISO 45001 (안전)</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="cert-gmp" value="GMP">
-          <label for="cert-gmp">GMP</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="cert-kc" value="KC/KS">
-          <label for="cert-kc">KC/KS 인증</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="cert-haccp" value="HACCP">
-          <label for="cert-haccp">HACCP</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="cert-fda" value="FDA">
-          <label for="cert-fda">FDA</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="cert-ce" value="CE">
-          <label for="cert-ce">CE</label>
-        </div>
-      </div>
-      
-      <h3>5-4. ESG 및 스마트화</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>ESG 평가등급</label>
-          <select id="esg-rating">
-            <option value="미평가">미평가</option>
-            <option value="S">S</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>탄소중립 선언/이행</label>
-          <select id="carbon-neutral">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>스마트공장 수준</label>
-          <select id="smart-factory">
-            <option value="Level0">Level 0 (미구축)</option>
-            <option value="Level1">Level 1 (기초)</option>
-            <option value="Level2">Level 2 (중간1)</option>
-            <option value="Level3">Level 3 (중간2)</option>
-            <option value="Level4">Level 4 (고도화)</option>
-            <option value="Level5">Level 5 (최고)</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>디지털전환(DX) 단계</label>
-          <select id="digital-transform">
-            <option value="관심">관심</option>
-            <option value="도입">도입</option>
-            <option value="확산">확산</option>
-            <option value="고도화">고도화</option>
-          </select>
         </div>
       </div>
     </div>
@@ -1571,166 +1175,12 @@
       <div class="form-grid">
         <div class="form-group">
           <label>수출 실적 - 최근년도 ($)</label>
-          <input type="number" id="export-recent" placeholder="">
-        </div>
-        
-        <div class="form-group">
-          <label>수출 실적 - 전년도 ($)</label>
-          <input type="number" id="export-prev" placeholder="">
+          <input type="number" id="export-recent" placeholder="예: 100000">
         </div>
         
         <div class="form-group full-width">
           <label>주요 수출국</label>
           <input type="text" id="export-countries" placeholder="매출비중 상위 3개국 (예: 미국, 중국, 일본)">
-        </div>
-        
-        <div class="form-group">
-          <label>HS CODE (주력 수출품목)</label>
-          <input type="text" id="hs-code" placeholder="6~10자리">
-        </div>
-        
-        <div class="form-group full-width">
-          <label>해외 인증</label>
-          <input type="text" id="overseas-cert" placeholder="">
-        </div>
-        
-        <div class="form-group">
-          <label>해외 법인/지사</label>
-          <select id="overseas-office">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>해외 법인 국가</label>
-          <input type="text" id="overseas-country" placeholder="국가명">
-        </div>
-        
-        <div class="form-group">
-          <label>FTA 활용</label>
-          <select id="fta-use">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>수출바우처 이용 경험</label>
-          <select id="export-voucher">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>해외전시회 참가 (최근 3년)</label>
-          <input type="number" id="overseas-exhibition" placeholder="참가 횟수">
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 7: 정부지원 이력 -->
-    <div class="card">
-      <h2>Section 7. 정부지원 이력</h2>
-      
-      <h3>7-1. 최근 3년 지원사업 이력</h3>
-      <div class="form-grid">
-        <div class="form-group full-width">
-          <label>2024년 지원사업</label>
-          <textarea id="support-2024" placeholder="사업명, 지원기관, 금액 (예: 기술개발사업, 중소벤처기업부, 5천만원)"></textarea>
-        </div>
-        
-        <div class="form-group full-width">
-          <label>2023년 지원사업</label>
-          <textarea id="support-2023" placeholder="사업명, 지원기관, 금액"></textarea>
-        </div>
-        
-        <div class="form-group full-width">
-          <label>2022년 지원사업</label>
-          <textarea id="support-2022" placeholder="사업명, 지원기관, 금액"></textarea>
-        </div>
-      </div>
-      
-      <h3>7-2. 제재/불이익 이력</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>정부사업 중도포기</label>
-          <select id="project-abandon">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>정부사업 환수 조치</label>
-          <select id="subsidy-return">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>참여제한 조치</label>
-          <select id="participation-ban">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>부정수급 이력</label>
-          <select id="fraud-history">
-            <option value="N">없음</option>
-            <option value="Y">있음</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 8: 특화 기업 분류 -->
-    <div class="card">
-      <h2>Section 8. 특화 기업 분류</h2>
-      <div class="checkbox-grid">
-        <div class="checkbox-item">
-          <input type="checkbox" id="social-enterprise" value="사회적기업">
-          <label for="social-enterprise">사회적기업</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="social-venture" value="소셜벤처">
-          <label for="social-venture">소셜벤처</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="preliminary-social" value="예비사회적기업">
-          <label for="preliminary-social">예비사회적기업</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="village-enterprise" value="마을기업">
-          <label for="village-enterprise">마을기업</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="cooperative" value="협동조합">
-          <label for="cooperative">협동조합</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="agri-enterprise" value="농공상융합">
-          <label for="agri-enterprise">농공상융합기업</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="strong-small" value="강소기업">
-          <label for="strong-small">강소기업</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="hidden-champion" value="히든챔피언">
-          <label for="hidden-champion">히든챔피언</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="family-friendly" value="가족친화기업">
-          <label for="family-friendly">가족친화 인증기업</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="youth-friendly" value="청년친화강소기업">
-          <label for="youth-friendly">청년친화 강소기업</label>
         </div>
       </div>
     </div>
@@ -1782,158 +1232,21 @@
           <label for="support-esg">ESG/탄소중립</label>
         </div>
       </div>
-      
-      <h3>9-2. 현재 기업 발전 단계 <span class="required">*</span></h3>
-      <div class="checkbox-grid">
-        <div class="checkbox-item">
-          <input type="radio" name="stage" id="stage-idea" value="아이템구상">
-          <label for="stage-idea">아이템 구상/검증</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="radio" name="stage" id="stage-prototype" value="시제품개발">
-          <label for="stage-prototype">시제품 개발</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="radio" name="stage" id="stage-production" value="양산준비">
-          <label for="stage-production">양산 준비/초기</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="radio" name="stage" id="stage-growth" value="성장단계">
-          <label for="stage-growth">성장 단계</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="radio" name="stage" id="stage-leap" value="도약단계">
-          <label for="stage-leap">도약 단계</label>
-        </div>
-      </div>
-      
-      <h3>9-3. 시급도 <span class="required">*</span></h3>
-      <div class="checkbox-grid">
-        <div class="checkbox-item">
-          <input type="radio" name="urgency" id="urgent-high" value="긴급">
-          <label for="urgent-high">긴급 (1개월 내)</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="radio" name="urgency" id="urgent-normal" value="보통">
-          <label for="urgent-normal">보통 (3개월 내)</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="radio" name="urgency" id="urgent-long" value="장기">
-          <label for="urgent-long">장기 (6개월~1년)</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 10: 추가 특이사항 -->
-    <div class="card">
-      <h2>Section 10. 추가 특이사항</h2>
-      
-      <h3>10-1. 상생협력 관련</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>대기업 협력사</label>
-          <select id="large-partner">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>주요 거래처명</label>
-          <input type="text" id="main-client" placeholder="대기업명">
-        </div>
-        
-        <div class="form-group">
-          <label>중소기업 간 협업</label>
-          <select id="sme-cooperation">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>산학연 협력</label>
-          <select id="industry-academia">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group full-width">
-          <label>협력 대학/연구소</label>
-          <input type="text" id="partner-institute" placeholder="">
-        </div>
-      </div>
-      
-      <h3>10-2. 특수 상황</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>폐업 후 재창업</label>
-          <select id="reopen-after-close">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>폐업일자</label>
-          <input type="date" id="close-date">
-        </div>
-        
-        <div class="form-group">
-          <label>가업승계</label>
-          <select id="family-succession">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>승계연도</label>
-          <input type="number" id="succession-year" placeholder="YYYY">
-        </div>
-        
-        <div class="form-group">
-          <label>M&A/인수합병</label>
-          <select id="merger">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>합병일자</label>
-          <input type="date" id="merger-date">
-        </div>
-      </div>
-      
-      <h3>10-3. 자유 기술 항목</h3>
-      <div class="form-grid">
-        <div class="form-group full-width">
-          <label>기업 특장점 (100자 이내)</label>
-          <textarea id="company-strength" maxlength="100" placeholder="우리 기업만의 강점, 특화 기술 등"></textarea>
-        </div>
-        
-        <div class="form-group full-width">
-          <label>주요 애로사항</label>
-          <textarea id="main-difficulty" placeholder="현재 겪고 있는 주요 어려움"></textarea>
-        </div>
-        
-        <div class="form-group full-width">
-          <label>관심 정책 키워드</label>
-          <input type="text" id="policy-keywords" placeholder="">
-        </div>
-      </div>
     </div>
 
     <!-- 실행 버튼 -->
     <div class="card">
-      <button class="btn btn-primary" onclick="analyzePrograms()" style="width: 100%; font-size: 1.1rem; padding: 1rem; margin-bottom: 0.75rem;">
+      <button class="btn btn-primary" onclick="analyzePrograms()" style="width: 100%; font-size: 1rem; padding: 0.8rem; margin-bottom: 0.5rem;">
         🔍 맞춤 지원사업 찾기
       </button>
-      <button class="btn btn-secondary" onclick="saveCompany(event)" style="width: 100%;">
-        💾 저장
-      </button>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1;">
+          💾 저장
+        </button>
+        <button class="btn btn-secondary" onclick="deleteCompany()" style="flex: 0 0 auto; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
+          🗑️ 삭제
+        </button>
+      </div>
     </div>
 
     <!-- 결과 표시 영역 -->
@@ -1996,6 +1309,87 @@
     }
     
     // ==================== 테스트 데이터 (Phase 1) ====================
+    const MOCK_COMPANIES = [
+      {
+        name: '삼성전자(주)',
+        businessNumber: '124-81-00998',
+        ceo: '한종희',
+        openingDate: '1969-01-13',
+        industryCode: 'C26',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '수원시',
+        revenue: '300000000000',
+        employeeCount: '120000'
+      },
+      {
+        name: 'LG전자(주)',
+        businessNumber: '107-86-14075',
+        ceo: '조주완',
+        openingDate: '1958-10-01',
+        industryCode: 'C26',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '서울',
+        locationSigungu: '영등포구',
+        revenue: '70000000000',
+        employeeCount: '70000'
+      },
+      {
+        name: '현대자동차(주)',
+        businessNumber: '101-81-42555',
+        ceo: '장재훈',
+        openingDate: '1967-12-29',
+        industryCode: 'C30',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '서울',
+        locationSigungu: '서초구',
+        revenue: '130000000000',
+        employeeCount: '75000'
+      },
+      {
+        name: 'SK하이닉스(주)',
+        businessNumber: '120-81-62902',
+        ceo: '곽노정',
+        openingDate: '1983-02-15',
+        industryCode: 'C26',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '이천시',
+        revenue: '40000000000',
+        employeeCount: '35000'
+      },
+      {
+        name: '네이버(주)',
+        businessNumber: '220-81-62517',
+        ceo: '최수연',
+        openingDate: '1999-06-02',
+        industryCode: 'J63',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '성남시',
+        revenue: '8000000000',
+        employeeCount: '4000'
+      },
+      {
+        name: '카카오(주)',
+        businessNumber: '120-81-47521',
+        ceo: '홍은택',
+        openingDate: '2006-02-16',
+        industryCode: 'J63',
+        companySize: '대기업',
+        companyType: '법인',
+        locationSido: '경기',
+        locationSigungu: '성남시',
+        revenue: '6000000000',
+        employeeCount: '3500'
+      }
+    ];
+    
     // ==================== 테스트 지원사업 데이터 ====================
     /**
      * 실제 지원사업 데이터 (2025년 기준)
@@ -2696,18 +2090,14 @@
       // 모든 숫자 입력 필드 ID 목록
       const numberFields = [
         // Section 3: 재무 정보
-        'revenue-recent', 'revenue-prev1', 'revenue-prev2',
-        'profit-recent', 'capital', 'total-equity', 'total-debt', 'debt-ratio',
-        'tax-arrears', 'local-tax-arrears', 'insurance-arrears',
+        'revenue-recent', 'profit-recent', 'debt-ratio',
         // Section 4: 고용 정보
-        'employees-total', 'employees-prev', 'employees-youth', 
-        'employees-female', 'employees-disabled', 'employees-senior',
-        'irregular-ratio', 'hiring-plan',
+        'employees-total', 'employees-youth', 
+        'employees-female', 'employees-disabled', 'employment-growth',
         // Section 5: 기술 정보
-        'researchers', 'rd-investment', 'rd-ratio',
-        'patents-registered', 'patents-applied', 'trademarks',
+        'patents-registered',
         // Section 6: 수출 정보
-        'export-recent', 'export-prev'
+        'export-recent'
       ];
       
       numberFields.forEach(fieldId => {
@@ -2804,154 +2194,83 @@
     }
     
     function collectFormData() {
-      // 사업자등록번호 3개 input 합치기
-      const bizNum1 = document.getElementById('business-number-1').value;
-      const bizNum2 = document.getElementById('business-number-2').value;
-      const bizNum3 = document.getElementById('business-number-3').value;
-      const businessNumber = bizNum1 && bizNum2 && bizNum3 ? `${bizNum1}-${bizNum2}-${bizNum3}` : '';
+      // 안전한 값 가져오기 헬퍼 함수
+      const getVal = (id) => document.getElementById(id)?.value || '';
+      const getNumVal = (id) => unformatNumber(document.getElementById(id)?.value || '');
+      const getChecked = (selector) => {
+        const elements = document.querySelectorAll(selector);
+        return elements ? Array.from(elements).filter(el => el.checked).map(el => el.value) : [];
+      };
       
-      // 법인등록번호 2개 input 합치기
-      const corpNum1 = document.getElementById('corp-number-1').value;
-      const corpNum2 = document.getElementById('corp-number-2').value;
-      const corpNumber = corpNum1 && corpNum2 ? `${corpNum1}-${corpNum2}` : '';
+      // 사업자등록번호 3개 input 합치기
+      const bizNum1 = getVal('business-number-1');
+      const bizNum2 = getVal('business-number-2');
+      const bizNum3 = getVal('business-number-3');
+      const businessNumber = bizNum1 && bizNum2 && bizNum3 ? `${bizNum1}-${bizNum2}-${bizNum3}` : '';
       
       // 모든 입력 필드 데이터 수집
       const data = {
-        // Section 1
-        companyName: document.getElementById('company-name').value,
+        // Section 1: 기업 기본정보
+        companyName: getVal('company-name'),
         businessNumber: businessNumber,
-        corpNumber: corpNumber,
-        establishDate: document.getElementById('establish-date').value,
-        businessAge: document.getElementById('business-age')?.value || '',
-        companySize: document.getElementById('company-size').value,
-        companyType: document.getElementById('company-type').value,
-        ksicCode: document.getElementById('ksic-code').value,
-        productKeywords: [
-          document.getElementById('product-keyword-1')?.value || '',
-          document.getElementById('product-keyword-2')?.value || '',
-          document.getElementById('product-keyword-3')?.value || '',
-          document.getElementById('product-keyword-4')?.value || ''
-        ].filter(k => k.trim() !== '').join(', '),
-        locationSido: document.getElementById('location-sido').value,
-        locationSigungu: document.getElementById('location-sigungu').value,
-        industrialComplex: document.getElementById('industrial-complex').value,
-        capitalArea: document.getElementById('capital-area').value,
+        establishDate: getVal('establish-date'),
+        companySize: getVal('company-size'),
+        companyType: getVal('company-type'),
+        businessStatus: getVal('business-status'),
+        ksicCode: getVal('ksic-code'),
+        productKeywords: getVal('product-keywords'),
+        locationSido: getVal('location-sido'),
+        locationSigungu: getVal('location-sigungu'),
+        industrialComplex: getVal('industrial-complex'),
+        capitalArea: getVal('capital-area'),
         
-        // Section 2
-        ceoName: document.getElementById('ceo-name').value,
-        ceoBirth: document.getElementById('ceo-birth').value,
-        ceoGender: document.getElementById('ceo-gender').value,
-        ceoDisabled: document.getElementById('ceo-disabled').value,
-        ceoVeteran: document.getElementById('ceo-veteran').value,
-        ceoDefector: document.getElementById('ceo-defector').value,
-        ceoRestart: document.getElementById('ceo-restart').value,
-        guaranteeExempt: document.getElementById('guarantee-exempt').value,
+        // Section 2: 대표자 정보
+        ceoBirth: getVal('ceo-birth'),
+        ceoGender: getVal('ceo-gender'),
         
-        // Section 3 (숫자 필드는 콤마 제거)
-        revenueRecent: unformatNumber(document.getElementById('revenue-recent').value),
-        revenuePrev1: unformatNumber(document.getElementById('revenue-prev1').value),
-        revenuePrev2: unformatNumber(document.getElementById('revenue-prev2').value),
-        profitRecent: (() => {
-          const profitValue = unformatNumber(document.getElementById('profit-recent').value);
-          const profitType = document.querySelector('input[name="profit-type"]:checked').value;
-          return profitType === 'negative' ? -Math.abs(profitValue) : Math.abs(profitValue);
-        })(),
-        capital: unformatNumber(document.getElementById('capital').value),
-        totalEquity: unformatNumber(document.getElementById('total-equity').value),
-        totalDebt: unformatNumber(document.getElementById('total-debt').value),
-        debtRatio: unformatNumber(document.getElementById('debt-ratio').value),
-        taxArrears: unformatNumber(document.getElementById('tax-arrears').value),
-        localTaxArrears: unformatNumber(document.getElementById('local-tax-arrears').value),
-        insuranceArrears: unformatNumber(document.getElementById('insurance-arrears').value),
-        capitalErosion: document.getElementById('capital-erosion').value,
-        bankruptcyHistory: document.getElementById('bankruptcy-history').value,
-        creditRating: document.getElementById('credit-rating').value,
-        tcbRating: document.getElementById('tcb-rating').value,
+        // Section 3: 재무 및 신용정보
+        revenueRecent: getNumVal('revenue-recent'),
+        profitRecent: getNumVal('profit-recent'),
+        debtRatio: getNumVal('debt-ratio'),
+        taxArrears: getVal('tax-arrears'),
+        localTaxArrears: getVal('local-tax-arrears'),
+        insuranceArrears: getVal('insurance-arrears'),
+        capitalErosion: getVal('capital-erosion'),
+        bankruptcyHistory: getVal('bankruptcy-history'),
+        tcbRating: getVal('tcb-rating'),
         
-        // Section 4 (숫자 필드는 콤마 제거)
-        employeesTotal: unformatNumber(document.getElementById('employees-total').value),
-        employeesPrev: unformatNumber(document.getElementById('employees-prev').value),
-        employeesYouth: unformatNumber(document.getElementById('employees-youth').value),
-        employeesFemale: unformatNumber(document.getElementById('employees-female').value),
-        employeesDisabled: unformatNumber(document.getElementById('employees-disabled').value),
-        employeesSenior: unformatNumber(document.getElementById('employees-senior').value),
-        irregularRatio: unformatNumber(document.getElementById('irregular-ratio').value),
-        hiringPlan: unformatNumber(document.getElementById('hiring-plan').value),
-        hiringField: document.getElementById('hiring-field').value,
+        // Section 4: 고용 정보
+        employeesTotal: getNumVal('employees-total'),
+        employeesYouth: getNumVal('employees-youth'),
+        employeesFemale: getNumVal('employees-female'),
+        employeesDisabled: getNumVal('employees-disabled'),
+        employmentGrowth: getNumVal('employment-growth'),
         
-        // Section 5
-        certVenture: document.getElementById('cert-venture').value,
-        certVentureExpire: document.getElementById('cert-venture-expire').value,
-        certInnobiz: document.getElementById('cert-innobiz').value,
-        certInnobizExpire: document.getElementById('cert-innobiz-expire').value,
-        certMainbiz: document.getElementById('cert-mainbiz').value,
-        certMainbizExpire: document.getElementById('cert-mainbiz-expire').value,
-        certGreen: document.getElementById('cert-green').value,
-        certMaterials: document.getElementById('cert-materials').value,
-        certRoot: document.getElementById('cert-root').value,
-        certWorldclass: document.getElementById('cert-worldclass').value,
-        researchOrg: document.getElementById('research-org').value,
-        researchers: unformatNumber(document.getElementById('researchers').value),
-        rdInvestment: unformatNumber(document.getElementById('rd-investment').value),
-        rdRatio: unformatNumber(document.getElementById('rd-ratio').value),
-        patentsRegistered: unformatNumber(document.getElementById('patents-registered').value),
-        patentsApplied: unformatNumber(document.getElementById('patents-applied').value),
-        trademarks: unformatNumber(document.getElementById('trademarks').value),
-        techTransfer: document.getElementById('tech-transfer').value,
-        qualityCerts: Array.from(document.querySelectorAll('#iso-9001, #iso-14001, #iso-45001, #cert-gmp, #cert-kc, #cert-haccp, #cert-fda, #cert-ce')).filter(el => el.checked).map(el => el.value),
-        esgRating: document.getElementById('esg-rating').value,
-        carbonNeutral: document.getElementById('carbon-neutral').value,
-        smartFactory: document.getElementById('smart-factory').value,
-        digitalTransform: document.getElementById('digital-transform').value,
+        // Section 5: 기술 및 인증 정보
+        certVenture: getVal('cert-venture'),
+        certInnobiz: getVal('cert-innobiz'),
+        certMainbiz: getVal('cert-mainbiz'),
+        certWoman: getVal('cert-woman'),
+        certDisabled: getVal('cert-disabled'),
+        certSocial: getVal('cert-social'),
+        esgStatus: getVal('esg-status'),
+        researchOrg: getVal('research-org'),
+        patentsRegistered: getNumVal('patents-registered'),
         
-        // Section 6
-        exportRecent: unformatNumber(document.getElementById('export-recent').value),
-        exportPrev: unformatNumber(document.getElementById('export-prev').value),
-        exportCountries: document.getElementById('export-countries').value,
-        hsCode: document.getElementById('hs-code').value,
-        overseasCert: document.getElementById('overseas-cert').value,
-        overseasOffice: document.getElementById('overseas-office').value,
-        overseasCountry: document.getElementById('overseas-country').value,
-        ftaUse: document.getElementById('fta-use').value,
-        exportVoucher: document.getElementById('export-voucher').value,
-        overseasExhibition: document.getElementById('overseas-exhibition').value,
+        // Section 6: 수출 정보
+        exportRecent: getNumVal('export-recent'),
+        exportCountries: getVal('export-countries'),
         
-        // Section 7
-        support2024: document.getElementById('support-2024').value,
-        support2023: document.getElementById('support-2023').value,
-        support2022: document.getElementById('support-2022').value,
-        projectAbandon: document.getElementById('project-abandon').value,
-        subsidyReturn: document.getElementById('subsidy-return').value,
-        participationBan: document.getElementById('participation-ban').value,
-        fraudHistory: document.getElementById('fraud-history').value,
-        
-        // Section 8
-        specialTypes: Array.from(document.querySelectorAll('#social-enterprise, #social-venture, #preliminary-social, #village-enterprise, #cooperative, #agri-enterprise, #strong-small, #hidden-champion, #family-friendly, #youth-friendly')).filter(el => el.checked).map(el => el.value),
-        
-        // Section 9
-        supportNeeds: Array.from(document.querySelectorAll('#support-funding, #support-rd, #support-commercialize, #support-marketing, #support-export, #support-hr, #support-facility, #support-consulting, #support-startup, #support-esg')).filter(el => el.checked).map(el => el.value),
-        companyStage: document.querySelector('input[name="stage"]:checked')?.value || '',
-        urgency: document.querySelector('input[name="urgency"]:checked')?.value || '',
-        
-        // Section 10
-        largePartner: document.getElementById('large-partner').value,
-        mainClient: document.getElementById('main-client').value,
-        smeCooperation: document.getElementById('sme-cooperation').value,
-        industryAcademia: document.getElementById('industry-academia').value,
-        partnerInstitute: document.getElementById('partner-institute').value,
-        reopenAfterClose: document.getElementById('reopen-after-close').value,
-        closeDate: document.getElementById('close-date').value,
-        familySuccession: document.getElementById('family-succession').value,
-        successionYear: document.getElementById('succession-year').value,
-        merger: document.getElementById('merger').value,
-        mergerDate: document.getElementById('merger-date').value,
-        companyStrength: document.getElementById('company-strength').value,
-        mainDifficulty: document.getElementById('main-difficulty').value,
-        policyKeywords: document.getElementById('policy-keywords').value
+        // Section 9: 희망 지원분야
+        supportNeeds: getChecked('#support-funding, #support-rd, #support-commercialize, #support-marketing, #support-export, #support-hr, #support-facility, #support-consulting, #support-startup, #support-esg')
       };
       
       return data;
     }
+    
+    // 현재 정렬 상태
+    let currentSortType = 'name';
+    let selectedCompanyId = null;
     
     function updateCompanySelect() {
       const select = document.getElementById('company-select');
@@ -2964,11 +2283,105 @@
         option.textContent = `${company.companyName} (${company.companySize})`;
         select.appendChild(option);
       });
+      
+      // 목록도 함께 업데이트
+      updateCompanyList();
+    }
+    
+    function updateCompanyList() {
+      const listContainer = document.getElementById('company-list');
+      const searchTerm = document.getElementById('company-search')?.value?.toLowerCase() || '';
+      
+      // 기업 목록 배열로 변환
+      let companies = Object.keys(savedCompanies).map(id => ({
+        id: id,
+        ...savedCompanies[id]
+      }));
+      
+      // 검색 필터
+      if (searchTerm) {
+        companies = companies.filter(c => 
+          c.companyName?.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // 정렬
+      if (currentSortType === 'name') {
+        companies.sort((a, b) => (a.companyName || '').localeCompare(b.companyName || '', 'ko'));
+      } else if (currentSortType === 'date') {
+        companies.sort((a, b) => {
+          const dateA = a.savedAt ? new Date(a.savedAt) : new Date(0);
+          const dateB = b.savedAt ? new Date(b.savedAt) : new Date(0);
+          return dateB - dateA;
+        });
+      }
+      
+      // 목록이 비어있으면
+      if (companies.length === 0) {
+        listContainer.innerHTML = '<div class="company-list-empty">' + 
+          (searchTerm ? '검색 결과가 없습니다' : '저장된 고객사가 없습니다') + 
+          '</div>';
+        return;
+      }
+      
+      // 목록 렌더링
+      listContainer.innerHTML = companies.map(company => {
+        const isSelected = selectedCompanyId === company.id;
+        const savedDate = company.savedAt ? formatDate(company.savedAt) : '';
+        const meta = [company.companySize, company.ksicCode].filter(Boolean).join(' · ');
+        
+        return `
+          <div class="company-item ${isSelected ? 'selected' : ''}" onclick="selectCompanyFromList('${company.id}')">
+            <div class="company-item-info">
+              <div class="company-item-name">${company.companyName || '(이름없음)'}</div>
+              <div class="company-item-meta">${meta}</div>
+            </div>
+            <div class="company-item-date">${savedDate}</div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function formatDate(dateStr) {
+      try {
+        const date = new Date(dateStr);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${month}.${day}`;
+      } catch {
+        return '';
+      }
+    }
+    
+    function filterCompanyList() {
+      updateCompanyList();
+    }
+    
+    function sortCompanyList(type) {
+      currentSortType = type;
+      
+      // 버튼 활성화 상태 변경
+      document.getElementById('sort-name').classList.toggle('active', type === 'name');
+      document.getElementById('sort-date').classList.toggle('active', type === 'date');
+      
+      updateCompanyList();
+    }
+    
+    function selectCompanyFromList(companyId) {
+      selectedCompanyId = companyId;
+      
+      // 드롭다운도 동기화
+      document.getElementById('company-select').value = companyId;
+      
+      // 목록 UI 업데이트
+      updateCompanyList();
+      
+      // 폼에 데이터 로드
+      loadSelectedCompany();
     }
     
     function loadSelectedCompany() {
-      const select = document.getElementById('company-select');
-      const companyId = select.value;
+      const companyId = selectedCompanyId || document.getElementById('company-select').value;
       
       if (!companyId) {
         clearForm();
@@ -2988,31 +2401,17 @@
         }
       }
       
-      // 법인등록번호 분리 (123456-1234567 → 2개 input)
-      if (company.corpNumber) {
-        const corpParts = company.corpNumber.split('-');
-        if (corpParts.length === 2) {
-          document.getElementById('corp-number-1').value = corpParts[0];
-          document.getElementById('corp-number-2').value = corpParts[1];
-        }
-      }
-      
       // 숫자 필드 목록
       const numberFieldKeys = [
-        'revenueRecent', 'revenuePrev1', 'revenuePrev2', 'profitRecent',
-        'capital', 'totalEquity', 'totalDebt', 'debtRatio',
-        'taxArrears', 'localTaxArrears', 'insuranceArrears',
-        'employeesTotal', 'employeesPrev', 'employeesYouth', 
-        'employeesFemale', 'employeesDisabled', 'employeesSenior',
-        'irregularRatio', 'hiringPlan',
-        'researchers', 'rdInvestment', 'rdRatio',
-        'patentsRegistered', 'patentsApplied', 'trademarks',
-        'exportRecent', 'exportPrev'
+        'revenueRecent', 'profitRecent', 'debtRatio',
+        'employeesTotal', 'employeesYouth', 
+        'employeesFemale', 'employeesDisabled', 'employmentGrowth',
+        'patentsRegistered', 'exportRecent'
       ];
       
       // 모든 필드에 데이터 로드
       Object.keys(company).forEach(key => {
-        // businessNumber, corpNumber는 이미 처리했으므로 스킵
+        // businessNumber는 이미 처리, corpNumber는 삭제된 필드이므로 스킵
         if (key === 'businessNumber' || key === 'corpNumber') return;
         
         const element = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
@@ -3035,107 +2434,63 @@
       console.log('✅ 고객사 정보 로드:', company.companyName);
     }
     
-    // 필수항목 검증 함수
-    function validateRequiredFields() {
-      const missingFields = [];
-      
-      // required 속성이 있는 모든 필드 검사
-      const requiredElements = document.querySelectorAll('[required]');
-      
-      requiredElements.forEach(element => {
-        let isEmpty = false;
-        let fieldName = '';
-        
-        // 필드명 추출 (label에서)
-        const label = element.closest('.form-group')?.querySelector('label');
-        if (label) {
-          fieldName = label.textContent.replace('*', '').trim();
-        } else {
-          fieldName = element.id || element.name || '알 수 없는 필드';
-        }
-        
-        // 값 검증
-        if (element.type === 'checkbox' || element.type === 'radio') {
-          // 체크박스나 라디오는 같은 name을 가진 것 중 하나라도 체크되어야 함
-          const name = element.name;
-          if (name) {
-            const checked = document.querySelector(`[name="${name}"]:checked`);
-            if (!checked) {
-              isEmpty = true;
-            }
-          } else if (!element.checked) {
-            isEmpty = true;
-          }
-        } else if (element.tagName === 'SELECT') {
-          isEmpty = !element.value || element.value === '';
-        } else {
-          isEmpty = !element.value || element.value.trim() === '';
-        }
-        
-        if (isEmpty) {
-          // 중복 체크 (라디오/체크박스 그룹)
-          if (!missingFields.includes(fieldName)) {
-            missingFields.push(fieldName);
-          }
-        }
-      });
-      
-      return missingFields;
-    }
-    
-    async function saveCompany(event) {
-      // Firebase 로그인 확인
-      const user = firebase.auth().currentUser;
-      if (!user) {
-        alert('❌ 저장하려면 먼저 로그인해주세요.\n\n상단의 "로그인" 버튼을 클릭하세요.');
-        return;
-      }
-      
-      // 필수항목 검증
-      const missingFields = validateRequiredFields();
-      
-      if (missingFields.length > 0) {
-        const fieldList = missingFields.map((field, index) => `${index + 1}. ${field}`).join('\n');
-        alert(`❌ 다음 필수항목을 입력해주세요:\n\n${fieldList}`);
-        return;
-      }
-      
+    async function saveCompany() {
       const companyData = collectFormData();
       
-      // 저장 진행 표시
-      let originalText = '';
-      if (event && event.target) {
-        originalText = event.target.textContent;
-        event.target.textContent = '💾 저장 중...';
-        event.target.disabled = true;
+      if (!companyData.companyName) {
+        alert('회사명을 입력해주세요.');
+        return;
       }
       
-      try {
-        const companyId = Date.now().toString();
-        savedCompanies[companyId] = {
-          ...companyData,
-          savedAt: new Date().toISOString()
-        };
-        
-        // Google Drive에 암호화하여 저장
-        const success = await saveToDrive(savedCompanies);
-        
-        if (success) {
-          updateCompanySelect();
-          alert(`✅ "${companyData.companyName}" 저장 완료!\n\n🔐 구글 드라이브에 AES-256 암호화로 안전하게 저장되었습니다.\n\n저장 시간: ${new Date().toLocaleString('ko-KR')}`);
-          console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
-        } else {
-          alert('❌ 저장에 실패했습니다.\n\n가능한 원인:\n1. 구글 드라이브 연결 문제\n2. 인터넷 연결 불안정\n3. 브라우저 설정 문제\n\n다시 시도하거나 페이지를 새로고침해주세요.');
-        }
-      } catch (error) {
-        console.error('저장 오류:', error);
-        alert(`❌ 저장 중 오류가 발생했습니다.\n\n오류 내용: ${error.message}\n\n페이지를 새로고침하고 다시 시도해주세요.`);
-      } finally {
-        // 버튼 원상복구
-        if (event && event.target) {
-          event.target.textContent = originalText;
-          event.target.disabled = false;
-        }
+      if (!companyData.businessNumber) {
+        alert('사업자등록번호를 입력해주세요.');
+        return;
+      }
+      
+      // 기존 기업 수정인지 신규인지 확인
+      const companyId = selectedCompanyId || Date.now().toString();
+      savedCompanies[companyId] = {
+        ...companyData,
+        savedAt: new Date().toISOString()
+      };
+      
+      // Google Drive에 암호화하여 저장
+      const success = await saveToDrive(savedCompanies);
+      
+      if (success) {
+        selectedCompanyId = companyId;
+        updateCompanySelect();
+        alert(`✅ "${companyData.companyName}" 저장 완료!\n\n🔐 구글 드라이브에 AES-256 암호화로 안전하게 저장되었습니다.`);
+        console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
+      } else {
+        alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+    
+    async function deleteCompany() {
+      if (!selectedCompanyId) {
+        alert('삭제할 기업을 먼저 선택해주세요.');
+        return;
+      }
+      
+      const company = savedCompanies[selectedCompanyId];
+      if (!company) return;
+      
+      if (!confirm(`"${company.companyName}"을(를) 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`)) {
+        return;
+      }
+      
+      delete savedCompanies[selectedCompanyId];
+      
+      const success = await saveToDrive(savedCompanies);
+      
+      if (success) {
+        selectedCompanyId = null;
+        clearForm();
+        updateCompanySelect();
+        alert('🗑️ 삭제되었습니다.');
+      } else {
+        alert('❌ 삭제에 실패했습니다.');
       }
     }
     
@@ -3143,11 +2498,13 @@
       document.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.type === 'checkbox' || el.type === 'radio') {
           el.checked = false;
-        } else {
+        } else if (el.id !== 'company-search') {
           el.value = '';
         }
       });
       document.getElementById('company-select').value = '';
+      selectedCompanyId = null;
+      updateCompanyList();
     }
     
     // ==================== 클라이언트 사이드 매칭 엔진 ====================
@@ -3314,10 +2671,10 @@
           reasons.push(`🌏 수출실적 $${companyData.exportRecent.toLocaleString()}`);
         }
         
-        // R&D 투자 가산점 (최대 +10점)
-        if (program.prefersRnD && companyData.rdInvestment > 0) {
+        // 연구조직 가산점 (최대 +10점)
+        if (program.prefersRnD && companyData.researchOrg && companyData.researchOrg !== '없음') {
           score += 8;
-          reasons.push(`🔬 R&D 투자 ${companyData.rdInvestment.toLocaleString()}백만원`);
+          reasons.push(`🔬 ${companyData.researchOrg} 보유`);
         }
         
         // 지역 가산점 (최대 +10점)
@@ -3332,18 +2689,6 @@
         if (program.preferNonCapital && companyData.capitalArea === 'N') {
           score += 8;
           reasons.push('🏞️ 비수도권 우대사업');
-        }
-        
-        // 기업 단계별 가산점
-        if (companyData.companyStage === '창업준비' && program.maxBusinessAge === 0) {
-          score += 15;
-          reasons.push('🌱 예비창업자 대상 사업');
-        }
-        
-        // 긴급도 반영
-        if (companyData.urgency === 'urgent' && program.category === '금융') {
-          score += 5;
-          reasons.push('⚡ 긴급 자금 필요에 적합');
         }
         
         return {
@@ -3365,298 +2710,53 @@
     }
     
     async function analyzePrograms() {
-      // 필수항목 검증
-      const missingFields = validateRequiredFields();
+      const companyData = collectFormData();
       
-      if (missingFields.length > 0) {
-        const fieldList = missingFields.map((field, index) => `${index + 1}. ${field}`).join('\n');
-        alert(`❌ 다음 필수항목을 입력해주세요:\n\n${fieldList}`);
+      // 필수 필드 검증
+      if (!companyData.companyName || !companyData.businessNumber || !companyData.establishDate ||
+          !companyData.companySize || !companyData.companyType || !companyData.ksicCode ||
+          !companyData.locationSido || !companyData.capitalArea ||
+          !companyData.ceoBirth || !companyData.ceoGender || !companyData.revenueRecent ||
+          !companyData.taxArrears || !companyData.localTaxArrears || !companyData.employeesTotal ||
+          !companyData.supportNeeds.length) {
+        alert('필수 항목(*)을 모두 입력해주세요.');
         return;
       }
       
-      const companyData = collectFormData();
-      
       try {
-        // Step 1: 기업마당 실시간 지원사업 조회
-        showLoadingOverlay('🔍 기업마당 조회 중...', '귀사 조건에 맞는 지원사업 검색 중');
-        console.log('🎯 분석 시작:', companyData.companyName);
+        showLoadingOverlay('AI 분석 중...', '맞춤형 지원사업 추천 중');
         
-        // 필터 생성 (기업 정보 기반)
-        const filters = {
-          region: companyData.locationSido || '',
-          keyword: companyData.productKeywords || '',
-          category: companyData.supportNeeds?.[0] || '창업'
-        };
+        // 클라이언트 사이드 매칭 실행
+        const results = clientSideMatching(companyData);
         
-        console.log('📋 기업마당 필터:', filters);
-        
-        const bizinfoResponse = await fetch('/.netlify/functions/getBizinfoPrograms', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ filters })
-        });
-        
-        if (!bizinfoResponse.ok) {
-          console.warn('⚠️ 기업마당 API 실패, 샘플 데이터 사용');
-        }
-        
-        const bizinfoResult = await bizinfoResponse.json();
-        const supportPrograms = bizinfoResult.programs || [];
-        
-        console.log(`✅ 기업마당 조회 완료: ${supportPrograms.length}개 프로그램`);
-        
-        // Step 2: Gemini AI 심층 분석
-        showLoadingOverlay('🤖 Gemini AI 분석 중...', `${supportPrograms.length}개 지원사업 AI 분석 중`);
-        
-        const analysisResponse = await fetch('/.netlify/functions/analyzeBizInfo', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            companyProfile: companyData,
-            supportPrograms: supportPrograms,  // 기업마당 실시간 데이터 전달
-            model: 'gemini-2.5-flash'
-          })
-        });
-        
-        if (!analysisResponse.ok) {
-          const errorText = await analysisResponse.text();
-          throw new Error(`AI 분석 API 오류: ${analysisResponse.status} - ${errorText}`);
-        }
-        
-        const analysisResult = await analysisResponse.json();
-        
-        console.log('✅ AI 분석 완료:', analysisResult);
-        
-        // 분석 결과 검증
-        if (!analysisResult.recommendations || analysisResult.recommendations.length === 0) {
-          throw new Error('추천 결과가 없습니다. 입력 정보를 확인해주세요.');
-        }
+        // 약간의 대기 시간 (로딩 효과)
+        await new Promise(resolve => setTimeout(resolve, 800));
         
         hideLoadingOverlay();
-        displayAIResults(analysisResult);
+        displayResults({ recommendations: results });
         
       } catch (error) {
         hideLoadingOverlay();
         console.error('❌ 분석 실패:', error);
-        
-        // 사용자 친화적 에러 메시지
-        let errorMessage = '분석 중 오류가 발생했습니다.\n\n';
-        
-        if (error.message.includes('API 오류')) {
-          errorMessage += '서버 연결 문제가 발생했습니다.\n다시 시도해주세요.';
-        } else if (error.message.includes('추천 결과가 없습니다')) {
-          errorMessage += '현재 조건에 맞는 지원사업을 찾지 못했습니다.\n입력 정보를 확인하거나 담당자에게 문의하세요.';
-        } else {
-          errorMessage += error.message;
-        }
-        
-        alert(errorMessage);
+        alert('분석에 실패했습니다.\n\n' + error.message);
       }
     }
     
     function showLoadingOverlay(title, subtitle) {
-      let overlay = document.getElementById('loading-overlay');
-      
-      if (overlay) {
-        // 기존 overlay 업데이트
-        const h2 = overlay.querySelector('h2');
-        const p = overlay.querySelector('p');
-        if (h2) h2.textContent = title;
-        if (p) p.textContent = subtitle;
-      } else {
-        // 새 overlay 생성
-        overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
-        overlay.id = 'loading-overlay';
-        overlay.innerHTML = `
-          <div class="loader"></div>
-          <h2>${title}</h2>
-          <p>${subtitle}</p>
-        `;
-        document.body.appendChild(overlay);
-      }
+      const overlay = document.createElement('div');
+      overlay.className = 'loading-overlay';
+      overlay.id = 'loading-overlay';
+      overlay.innerHTML = `
+        <div class="loader"></div>
+        <h2>${title}</h2>
+        <p>${subtitle}</p>
+      `;
+      document.body.appendChild(overlay);
     }
     
     function hideLoadingOverlay() {
       const overlay = document.getElementById('loading-overlay');
       if (overlay) overlay.remove();
-    }
-    
-    // Gemini AI 분석 결과 표시
-    function displayAIResults(result) {
-      const section = document.getElementById('results-section');
-      
-      if (!result.recommendations || result.recommendations.length === 0) {
-        section.innerHTML = `
-          <div class="card">
-            <h2>📊 Gemini AI 분석 결과</h2>
-            <div style="text-align: center; padding: 3rem; color: #666;">
-              <p style="font-size: 1.2rem; margin-bottom: 1rem;">현재 조건에 맞는 지원사업을 찾지 못했습니다.</p>
-              <p>• 입력 정보를 다시 확인해주세요</p>
-              <p>• 또는 담당자에게 문의하세요</p>
-            </div>
-          </div>
-        `;
-        section.style.display = 'block';
-        section.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-      
-      // 전체 분석 결과 헤더
-      let html = `
-        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-          <h2 style="color: white; margin-bottom: 1rem;">🤖 Gemini AI 심층 분석 결과</h2>
-          <p style="font-size: 1.1rem; opacity: 0.9;">
-            ${result.modelVersion || 'Gemini 2.5 Flash'} · 
-            총 <strong>${result.recommendations.length}개</strong> 지원사업 추천
-          </p>
-        </div>
-      `;
-      
-      // 긴급 조치사항
-      if (result.urgentActions && result.urgentActions.length > 0) {
-        html += `
-          <div class="card" style="border-left: 4px solid #FF6B6B;">
-            <h2 style="color: #FF6B6B;">⚡ 즉시 조치 필요</h2>
-            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-              ${result.urgentActions.map(action => `<li style="margin: 0.5rem 0;">${action}</li>`).join('')}
-            </ul>
-          </div>
-        `;
-      }
-      
-      // SWOT 분석
-      if (result.overallAnalysis) {
-        const analysis = result.overallAnalysis;
-        html += `
-          <div class="card">
-            <h2>📈 기업 현황 종합 분석 (SWOT)</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
-              ${analysis.strengths ? `
-                <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px;">
-                  <h4 style="color: #2e7d32; margin-bottom: 0.5rem;">💪 강점 (Strengths)</h4>
-                  <ul style="margin: 0; padding-left: 1.2rem;">
-                    ${analysis.strengths.map(s => `<li style="margin: 0.3rem 0; color: #333;">${s}</li>`).join('')}
-                  </ul>
-                </div>
-              ` : ''}
-              ${analysis.weaknesses ? `
-                <div style="padding: 1rem; background: #ffebee; border-radius: 8px;">
-                  <h4 style="color: #c62828; margin-bottom: 0.5rem;">⚠️ 약점 (Weaknesses)</h4>
-                  <ul style="margin: 0; padding-left: 1.2rem;">
-                    ${analysis.weaknesses.map(w => `<li style="margin: 0.3rem 0; color: #333;">${w}</li>`).join('')}
-                  </ul>
-                </div>
-              ` : ''}
-              ${analysis.opportunities ? `
-                <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px;">
-                  <h4 style="color: #1565c0; margin-bottom: 0.5rem;">🎯 기회 (Opportunities)</h4>
-                  <ul style="margin: 0; padding-left: 1.2rem;">
-                    ${analysis.opportunities.map(o => `<li style="margin: 0.3rem 0; color: #333;">${o}</li>`).join('')}
-                  </ul>
-                </div>
-              ` : ''}
-              ${analysis.threats ? `
-                <div style="padding: 1rem; background: #fff3e0; border-radius: 8px;">
-                  <h4 style="color: #e65100; margin-bottom: 0.5rem;">⚡ 위험 (Threats)</h4>
-                  <ul style="margin: 0; padding-left: 1.2rem;">
-                    ${analysis.threats.map(t => `<li style="margin: 0.3rem 0; color: #333;">${t}</li>`).join('')}
-                  </ul>
-                </div>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }
-      
-      // 추천 지원사업
-      result.recommendations.forEach((rec, index) => {
-        const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-        const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '📌';
-        
-        html += `
-          <div class="card result-card ${rankClass}" style="border: 2px solid ${index < 3 ? '#FF8802' : '#ddd'};">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-              <div>
-                <h3 style="margin: 0; color: #0c2c54; font-size: 1.5rem;">
-                  ${rankEmoji} ${rec.programName || rec.name}
-                </h3>
-                <p style="color: #666; margin: 0.5rem 0 0 0;">
-                  ${rec.organization} ${rec.priority ? `· <span style="color: #FF8802; font-weight: 600;">${rec.priority}</span>` : ''}
-                </p>
-              </div>
-              <div style="text-align: right;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 1.2rem;">
-                  ${rec.matchScore}점
-                </div>
-                ${rec.estimatedProbability ? `
-                  <div style="margin-top: 0.5rem; color: #FF8802; font-weight: 600;">
-                    선정 확률 ${rec.estimatedProbability}
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-            
-            ${rec.reason ? `
-              <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                <div style="white-space: pre-wrap; line-height: 1.6;">${rec.reason.replace(/##/g, '<strong>').replace(/\n/g, '<br>')}</div>
-              </div>
-            ` : ''}
-            
-            ${rec.benefits ? `
-              <div style="background: #e8f5e9; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                <div style="white-space: pre-wrap; line-height: 1.6;">${rec.benefits.replace(/##/g, '<strong>').replace(/\n/g, '<br>')}</div>
-              </div>
-            ` : ''}
-            
-            ${rec.strategy ? `
-              <div style="background: #e3f2fd; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                <div style="white-space: pre-wrap; line-height: 1.6;">${rec.strategy.replace(/##/g, '<strong>').replace(/\n/g, '<br>')}</div>
-              </div>
-            ` : ''}
-            
-            ${rec.cautions ? `
-              <div style="background: #fff3e0; padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #ff9800;">
-                <div style="white-space: pre-wrap; line-height: 1.6;">${rec.cautions.replace(/\n/g, '<br>')}</div>
-              </div>
-            ` : ''}
-            
-            ${rec.timeline ? `
-              <div style="background: #f3e5f5; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                <div style="white-space: pre-wrap; line-height: 1.6;">${rec.timeline.replace(/\n/g, '<br>')}</div>
-              </div>
-            ` : ''}
-            
-            <div style="margin-top: 1rem; text-align: right;">
-              <a href="${rec.detailUrl || rec.website || 'https://www.bizinfo.go.kr'}" 
-                 target="_blank" 
-                 style="display: inline-block; padding: 0.75rem 1.5rem; background: #FF8802; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                상세정보 보기 →
-              </a>
-            </div>
-          </div>
-        `;
-      });
-      
-      // 장기 전략
-      if (result.longTermStrategy) {
-        html += `
-          <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-            <h2 style="color: white;">🗓️ 장기 전략 로드맵</h2>
-            <div style="white-space: pre-wrap; line-height: 1.8; font-size: 1.05rem;">
-              ${result.longTermStrategy.replace(/\n/g, '<br>')}
-            </div>
-          </div>
-        `;
-      }
-      
-      section.innerHTML = html;
-      section.style.display = 'block';
-      section.scrollIntoView({ behavior: 'smooth' });
     }
     
     function displayResults(result) {
@@ -3737,1021 +2837,9 @@
     }
     
     function goHome() {
-      window.location.href = 'index.html';
+      window.location.href = 'https://ceofocus123.netlify.app/index.html';
     }
     
-    // ==================== 회사명 검색 기능 ====================
-    let searchTimeout;
-    
-    function setupCompanySearch() {
-      const searchBtn = document.getElementById('search-company-btn');
-      const searchInput = document.getElementById('company-search-input');
-      const searchBiz1 = document.getElementById('search-biz-1');
-      const searchBiz2 = document.getElementById('search-biz-2');
-      const searchBiz3 = document.getElementById('search-biz-3');
-      const searchResults = document.getElementById('search-results');
-      
-      if (!searchBtn) return;
-      
-      // 조회 버튼 클릭
-      searchBtn.addEventListener('click', () => {
-        const companyName = searchInput.value.trim();
-        const bizNum = `${searchBiz1.value}-${searchBiz2.value}-${searchBiz3.value}`;
-        
-        // 회사명 또는 사업자번호 입력 확인
-        if (!companyName && bizNum.length < 12) {
-          alert('❌ 회사명 또는 사업자등록번호를 입력하세요');
-          return;
-        }
-        
-        // 검색 실행
-        if (companyName) {
-          searchCompanies(companyName, 'name');
-        } else {
-          searchCompanies(bizNum, 'biznum');
-        }
-      });
-      
-      // Enter 키 검색
-      [searchInput, searchBiz1, searchBiz2, searchBiz3].forEach(input => {
-        if (input) {
-          input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-              searchBtn.click();
-            }
-          });
-        }
-      });
-      
-      // 외부 클릭 시 검색 결과 숨기기
-      document.addEventListener('click', (e) => {
-        if (!searchResults.contains(e.target) && 
-            !searchBtn.contains(e.target) &&
-            !searchInput.contains(e.target)) {
-          hideSearchResults();
-        }
-      });
-    }
-    
-    function searchCompanies(query, type) {
-      const searchResults = document.getElementById('search-results');
-      
-      // 로딩 표시
-      searchResults.innerHTML = `
-        <div class="search-loading" style="padding: 2rem; text-align: center; background: white; border-radius: 10px;">
-          <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #FF8802; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-          <div style="margin-top: 1rem; color: #666; font-size: 1rem;">검색 중...</div>
-        </div>
-      `;
-      searchResults.style.display = 'block';
-      
-      // 검색 실행
-      setTimeout(() => {
-        let results;
-        if (type === 'name') {
-          results = MOCK_COMPANIES.filter(c => 
-            c.name.toLowerCase().includes(query.toLowerCase())
-          );
-        } else {
-          results = MOCK_COMPANIES.filter(c => 
-            c.businessNumber === query
-          );
-        }
-        
-        displaySearchResults(results);
-      }, 300);
-    }
-    
-    function displaySearchResults(companies) {
-      const searchResults = document.getElementById('search-results');
-      
-      if (companies.length === 0) {
-        searchResults.innerHTML = `
-          <div style="padding: 2rem; text-align: center; background: white; border-radius: 10px; color: #999;">
-            ❌ 검색 결과가 없습니다
-          </div>
-        `;
-        searchResults.style.display = 'block';
-        return;
-      }
-      
-      searchResults.innerHTML = companies.map(company => `
-        <div class="search-result-item" onclick="selectCompanyAndFill('${company.businessNumber}')" style="padding: 1.5rem; border-bottom: 1px solid #eee; cursor: pointer; transition: all 0.2s; background: white;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-          <div style="font-weight: 700; color: #333; margin-bottom: 0.5rem; font-size: 1.1rem;">${company.name}</div>
-          <div style="display: flex; gap: 1.5rem; color: #666; font-size: 0.9rem;">
-            <span>📋 ${company.businessNumber}</span>
-            <span>👤 ${company.ceo}</span>
-          </div>
-        </div>
-      `).join('');
-      searchResults.style.display = 'block';
-    }
-    
-    function hideSearchResults() {
-      const searchResults = document.getElementById('search-results');
-      if (searchResults) {
-        searchResults.style.display = 'none';
-      }
-    }
-    
-    // 회사 선택 후 바로 자동입력
-    async function selectCompanyAndFill(businessNumber) {
-      // 사업자번호 입력
-      const parts = businessNumber.split('-');
-      const bn1 = document.getElementById('business-number-1');
-      const bn2 = document.getElementById('business-number-2');
-      const bn3 = document.getElementById('business-number-3');
-      
-      if (bn1) bn1.value = parts[0];
-      if (bn2) bn2.value = parts[1];
-      if (bn3) bn3.value = parts[2];
-      
-      // 검색 결과 숨기기
-      hideSearchResults();
-      
-      // 검색 입력창 초기화
-      const searchInput = document.getElementById('company-search-input');
-      const searchBiz1 = document.getElementById('search-biz-1');
-      const searchBiz2 = document.getElementById('search-biz-2');
-      const searchBiz3 = document.getElementById('search-biz-3');
-      if (searchInput) searchInput.value = '';
-      if (searchBiz1) searchBiz1.value = '';
-      if (searchBiz2) searchBiz2.value = '';
-      if (searchBiz3) searchBiz3.value = '';
-      
-      // 로딩 표시
-      const loadingOverlay = document.createElement('div');
-      loadingOverlay.id = 'auto-fill-loading';
-      loadingOverlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(12, 44, 84, 0.95); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;';
-      loadingOverlay.innerHTML = `
-        <div style="text-align: center; width: 90%; max-width: 500px;">
-          <div style="width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid #FF8802; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 2rem;"></div>
-          <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">🔍 기업정보 조회 중...</h2>
-          <p id="loading-message" style="font-size: 1.1rem; color: rgba(255,255,255,0.8); margin-bottom: 2rem;">국세청 API 호출 중...</p>
-          
-          <!-- 진행률 바 -->
-          <div style="width: 100%; background: rgba(255,255,255,0.2); height: 30px; border-radius: 15px; overflow: hidden; margin-bottom: 1rem;">
-            <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%); transition: width 0.3s ease; display: flex; align-items: center; justify-content: center;">
-              <span id="progress-text" style="font-weight: bold; font-size: 0.9rem; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);"></span>
-            </div>
-          </div>
-          
-          <p style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">잠시만 기다려주세요...</p>
-        </div>
-      `;
-      document.body.appendChild(loadingOverlay);
-      
-      // 진행률 업데이트 함수
-      let progress = 0;
-      const progressBar = document.getElementById('progress-bar');
-      const progressText = document.getElementById('progress-text');
-      
-      const progressInterval = setInterval(() => {
-        if (progress < 95) {
-          progress += Math.random() * 10;
-          if (progress > 95) progress = 95;
-          
-          if (progressBar) {
-            progressBar.style.width = progress + '%';
-          }
-          if (progressText) {
-            progressText.textContent = Math.floor(progress) + '%';
-          }
-        }
-      }, 300);
-      
-      // 자동입력 실행
-      try {
-        const result = await autoFillCompanyInfo(businessNumber);
-        
-        // 진행률 100% 완료
-        clearInterval(progressInterval);
-        if (progressBar) progressBar.style.width = '100%';
-        if (progressText) progressText.textContent = '100%';
-        
-        // 잠깐 대기 (100% 보여주기)
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // 로딩 제거
-        document.body.removeChild(loadingOverlay);
-        
-        // 성공 팝업 표시
-        showSuccessPopup(result);
-        
-      } catch (error) {
-        clearInterval(progressInterval);
-        document.body.removeChild(loadingOverlay);
-        console.error('자동입력 오류:', error);
-        alert('❌ 자동입력에 실패했습니다.\n\n' + error.message + '\n\n수동으로 입력해주세요.');
-      }
-    }
-    
-    // 자동입력 성공 팝업
-    function showSuccessPopup(data) {
-      const popup = document.createElement('div');
-      popup.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 2rem;';
-      
-      popup.innerHTML = `
-        <div style="background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-          <div style="background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); color: white; padding: 2rem; border-radius: 20px 20px 0 0;">
-            <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">✅ 자동입력 완료!</h2>
-            <p style="opacity: 0.9; font-size: 1rem;">기업정보가 성공적으로 입력되었습니다</p>
-          </div>
-          
-          <div style="padding: 2rem;">
-            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #f0f0f0;">
-              <h3 style="color: #0c2c54; font-size: 1.3rem; margin-bottom: 1rem;">📊 입력된 정보</h3>
-              
-              <div style="display: grid; gap: 1rem;">
-                ${data.companyName ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">기업명</div>
-                    <div style="color: #333; font-weight: 500;">${data.companyName}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.ceo ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">대표자</div>
-                    <div style="color: #333; font-weight: 500;">${data.ceo}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.startDate ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">개업일</div>
-                    <div style="color: #333; font-weight: 500;">${data.startDate}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.businessStatus ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">사업자상태</div>
-                    <div style="color: ${data.businessStatus === '계속사업자' ? '#10b981' : '#f59e0b'}; font-weight: 700;">${data.businessStatus}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.capital ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">자본금</div>
-                    <div style="color: #333; font-weight: 500;">${formatNumber(data.capital)}원</div>
-                  </div>
-                ` : ''}
-                
-                ${data.industry ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">업종</div>
-                    <div style="color: #333; font-weight: 500;">${data.industry}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.patents ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">특허</div>
-                    <div style="color: #333; font-weight: 500;">${data.patents}건</div>
-                  </div>
-                ` : ''}
-                
-                ${data.venture ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">벤처인증</div>
-                    <div style="color: ${data.venture === '있음' ? '#10b981' : '#999'}; font-weight: 700;">${data.venture}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.innobiz ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">이노비즈</div>
-                    <div style="color: ${data.innobiz === '있음' ? '#10b981' : '#999'}; font-weight: 700;">${data.innobiz}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.mainbiz ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">메인비즈</div>
-                    <div style="color: ${data.mainbiz === 'Y' ? '#10b981' : '#999'}; font-weight: 700;">${data.mainbiz === 'Y' ? '있음' : '없음'}</div>
-                  </div>
-                ` : ''}
-                
-                ${data.researchLab ? `
-                  <div style="display: flex; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-weight: 600; color: #666; width: 120px;">연구조직</div>
-                    <div style="color: #10b981; font-weight: 700;">${data.researchLab}</div>
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-            
-            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #FF8802 0%, #FF6B02 100%); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-              확인
-            </button>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(popup);
-      
-      // 클릭 시 닫기
-      popup.addEventListener('click', (e) => {
-        if (e.target === popup) {
-          popup.remove();
-        }
-      });
-    }
-    
-    function selectCompany(businessNumber) {
-      // 사업자번호 자동입력
-      const parts = businessNumber.split('-');
-      const bn1 = document.getElementById('business-number-1');
-      const bn2 = document.getElementById('business-number-2');
-      const bn3 = document.getElementById('business-number-3');
-      
-      if (bn1) bn1.value = parts[0];
-      if (bn2) bn2.value = parts[1];
-      if (bn3) bn3.value = parts[2];
-      
-      // 검색 결과 숨기기
-      hideSearchResults();
-      
-      // 검색 입력창 초기화
-      const searchInput = document.getElementById('company-search-input');
-      if (searchInput) {
-        searchInput.value = '';
-      }
-      
-      // 자동으로 API 호출 (팝업 없이!)
-      setTimeout(async () => {
-        try {
-          await autoFillCompanyInfo(businessNumber);
-        } catch (error) {
-          console.error('자동입력 오류:', error);
-          alert('❌ 자동입력에 실패했습니다.\n수동으로 입력해주세요.');
-        }
-      }, 300);
-    }
-    
-    // ==================== 기업정보 자동입력 ====================
-    function setupAutoFill() {
-      const autoFillBtn = document.getElementById('auto-fill-btn');
-      if (!autoFillBtn) return;
-      
-      const businessNum1 = document.getElementById('business-number-1');
-      const businessNum2 = document.getElementById('business-number-2');
-      const businessNum3 = document.getElementById('business-number-3');
-      
-      // 사업자번호 입력 시 자동입력 버튼 활성화
-      [businessNum1, businessNum2, businessNum3].forEach(input => {
-        if (input) {
-          input.addEventListener('input', () => {
-            const hasAllNumbers = 
-              businessNum1 && businessNum1.value.length === 3 &&
-              businessNum2 && businessNum2.value.length === 2 &&
-              businessNum3 && businessNum3.value.length === 5;
-            
-            if (autoFillBtn) {
-              autoFillBtn.disabled = !hasAllNumbers;
-            }
-          });
-        }
-      });
-      
-      // 자동입력 버튼 클릭
-      autoFillBtn.addEventListener('click', async () => {
-        const businessNumber = `${businessNum1.value}-${businessNum2.value}-${businessNum3.value}`;
-        
-        autoFillBtn.disabled = true;
-        autoFillBtn.innerHTML = '<span>⏳</span><span>조회 중...</span>';
-        
-        try {
-          await autoFillCompanyInfo(businessNumber);
-        } catch (error) {
-          console.error('자동입력 오류:', error);
-          
-          // 에러 유형에 따른 명확한 안내
-          let errorMsg = '❌ 기업정보 자동입력 실패\n\n';
-          
-          if (error.message.includes('API') || error.message.includes('Failed to fetch')) {
-            errorMsg += '📡 API 연결 오류\n';
-            errorMsg += '• 네트워크 연결을 확인해주세요\n';
-            errorMsg += '• 방화벽 설정을 확인해주세요\n';
-            errorMsg += '• HTTPS로 접속했는지 확인해주세요\n\n';
-          } else if (error.message.includes('찾을 수 없습니다')) {
-            errorMsg += '🔍 사업자 정보 없음\n';
-            errorMsg += '• 사업자번호를 다시 확인해주세요\n';
-            errorMsg += '• 폐업된 사업자일 수 있습니다\n\n';
-          } else {
-            errorMsg += '⚠️ ' + error.message + '\n\n';
-          }
-          
-          errorMsg += '💡 수동으로 입력을 진행해주세요';
-          
-          alert(errorMsg);
-        } finally {
-          autoFillBtn.disabled = false;
-          autoFillBtn.innerHTML = '<span>🤖</span><span>가져오기</span>';
-        }
-      });
-    }
-    
-    // ============================================
-    // 🔥 실제 API 설정 및 호출 함수들
-    // ============================================
-    
-    // ⚠️ 보안상의 이유로 API Key를 제거했습니다.
-    // Phase 2에서 백엔드 서버(Netlify Functions)로 이동 예정
-    /*
-    const API_CONFIG = {
-      // 공통 인증키 (모든 API 사용)
-      API_KEY: '76d690873af0a9d983453b22529a6e313625867da9f460d7cb72f7ab9e654de1',
-      
-      // API 엔드포인트
-      NTS_BASE_URL: 'https://api.odcloud.kr/api/nts-businessman/v1',
-      FSC_BASE_URL: 'https://apis.data.go.kr/1160100/service/GetCorpBasicInfoService_V2',
-      PATENT_BASE_URL: 'https://kipo-api.kipi.or.kr/openapi/service/patUtiModInfoSearchSevice',
-      
-      // 3대 인증 API
-      VENTURE_BASE_URL: 'https://api.odcloud.kr/api/15084581/v1/uddi:41944402-8249-4e45-9e9d-a03027ccf595',
-      INNOBIZ_BASE_URL: 'https://api.odcloud.kr/api/15134641/v1/uddi:56633b5d-548b-45e5-a295-f0b0b1933c0f'
-    };
-    */
-    
-    /**
-     * 🏢 국세청 API - 사업자등록 상태조회
-     */
-    async function getNTSInfo(businessNumber) {
-      try {
-        console.log(`🔍 국세청 조회 시작: ${businessNumber}`);
-        
-        // Netlify Function 호출
-        const response = await fetch('/.netlify/functions/getNTS', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            businessNumber: businessNumber
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log(`✅ 국세청 조회 성공: ${result.companyName}`);
-        } else {
-          console.log(`❌ 국세청 조회 실패: ${result.message}`);
-        }
-        
-        return result;
-        
-      } catch (error) {
-        console.error('❌ 국세청 API 오류:', error);
-        return { success: false, message: 'API 호출 실패: ' + error.message };
-      }
-    }
-    
-    /**
-     * 🏛️ 금융위원회 API - 기업개요조회
-     */
-    async function getFSCInfo(corpNumber) {
-      try {
-        console.log(`🏛️ 금융위 조회 시작: ${corpNumber}`);
-        
-        // Netlify Function 호출
-        const response = await fetch('/.netlify/functions/getFSC', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            corpNumber: corpNumber
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log(`✅ 금융위 조회 성공: ${result.companyName}`);
-        } else {
-          console.log(`❌ 금융위 조회 실패: ${result.message}`);
-        }
-        
-        return result;
-        
-      } catch (error) {
-        console.error('❌ 금융위 API 오류:', error);
-        return { success: false, message: 'API 호출 실패: ' + error.message };
-      }
-    }
-    
-    /**
-     * 📜 특허청 API - 특허 검색
-     * Netlify Function으로 호출
-     */
-    async function getPatentInfo(companyName) {
-      try {
-        console.log(`📜 특허청 조회 시작: ${companyName}`);
-        
-        // Netlify Function 호출
-        const response = await fetch('/.netlify/functions/getPatent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            companyName: companyName
-          })
-        });
-        
-        if (!response.ok) {
-          console.error(`특허청 API HTTP 오류: ${response.status}`);
-          return {
-            success: false,
-            message: `특허청 API 호출 실패 (HTTP ${response.status})`,
-            totalCount: 0,
-            patents: []
-          };
-        }
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log(`✅ 특허청 조회 성공: ${result.totalCount}건`);
-        } else {
-          console.log(`⚠️ 특허청 조회: ${result.message}`);
-        }
-        
-        return result;
-        
-      } catch (error) {
-        console.error('❌ 특허청 API 오류:', error);
-        // API 오류 시에도 계속 진행할 수 있도록 success: false 반환
-        return { 
-          success: false, 
-          message: 'API 호출 실패: ' + error.message, 
-          totalCount: 0,
-          patents: []
-        };
-      }
-    }
-    
-    /**
-     * 🚀 벤처기업 인증 조회
-     */
-    async function getVentureInfo(companyName, businessNumber) {
-      try {
-        console.log(`🚀 벤처인증 조회 시작: ${companyName}`);
-        
-        // Netlify Function 호출
-        const response = await fetch('/.netlify/functions/getVenture', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            companyName: companyName,
-            businessNumber: businessNumber
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log(`✅ 벤처인증 조회 성공: ${result.companyName}`);
-        } else {
-          console.log(`❌ 벤처인증 조회 실패: ${result.message}`);
-        }
-        
-        return result;
-        
-      } catch (error) {
-        console.error('❌ 벤처기업 API 오류:', error);
-        return { success: false, message: 'API 호출 실패: ' + error.message };
-      }
-    }
-    
-    /**
-     * 💡 이노비즈 인증 조회
-     */
-    async function getInnobizInfo(companyName) {
-      try {
-        console.log(`💡 이노비즈 조회 시작: ${companyName}`);
-        
-        // Netlify Function 호출
-        const response = await fetch('/.netlify/functions/getInnobiz', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            companyName: companyName
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log(`✅ 이노비즈 조회 성공: ${result.companyName}`);
-        } else {
-          console.log(`❌ 이노비즈 조회 실패: ${result.message}`);
-        }
-        
-        return result;
-        
-      } catch (error) {
-        console.error('❌ 이노비즈 API 오류:', error);
-        return { success: false, message: 'API 호출 실패: ' + error.message };
-      }
-    }
-    
-    /**
-     * 🏆 메인비즈 인증 조회
-     */
-    async function getMainbizInfo(companyName, businessNumber) {
-      try {
-        console.log(`🏆 메인비즈 조회 시작: ${companyName}`);
-        
-        // Netlify Function 호출
-        const response = await fetch('/.netlify/functions/getMainbiz', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            companyName: companyName,
-            businessNumber: businessNumber
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log(`✅ 메인비즈 조회 성공: ${result.companyName}`);
-        } else {
-          console.log(`❌ 메인비즈 조회 실패: ${result.message}`);
-        }
-        
-        return result;
-        
-      } catch (error) {
-        console.error('❌ 메인비즈 API 오류:', error);
-        return { success: false, message: 'API 호출 실패: ' + error.message };
-      }
-    }
-    
-    /**
-     * 🔬 기업부설연구소 조회
-     */
-    async function getResearchLabInfo(companyName, businessNumber) {
-      try {
-        console.log(`🔬 부설연구소 조회 시작: ${companyName}`);
-        
-        // Netlify Function 호출
-        const response = await fetch('/.netlify/functions/getResearchLab', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            companyName: companyName,
-            businessNumber: businessNumber
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log(`✅ 부설연구소 조회 성공: ${result.labType || '보유'}`);
-        } else {
-          console.log(`❌ 부설연구소 조회 실패: ${result.message}`);
-        }
-        
-        return result;
-        
-      } catch (error) {
-        console.error('❌ 부설연구소 API 오류:', error);
-        return { success: false, message: 'API 호출 실패: ' + error.message };
-      }
-    }
-    
-    /**
-     * 🤖 통합 자동입력 함수 (실제 API 호출)
-     */
-    async function autoFillCompanyInfo(businessNumber) {
-      const loadingMessages = [
-        '🔍 국세청에서 기업정보 조회 중...',
-        '🏛️ 금융위원회에서 법인정보 확인 중...',
-        '📜 특허청에서 특허정보 검색 중...',
-        '🚀 벤처기업 인증 확인 중...',
-        '💡 이노비즈 인증 확인 중...',
-        '🏆 메인비즈 인증 확인 중...',
-        '🔬 기업부설연구소 확인 중...',
-        '✨ 데이터 통합 중...'
-      ];
-      
-      let messageIndex = 0;
-      let fscData = null;
-      let patentData = null;
-      let ventureData = null;
-      let innobizData = null;
-      let mainbizData = null;
-      let researchLabData = null;
-      
-      const messageInterval = setInterval(() => {
-        const loadingMsg = document.getElementById('loading-message');
-        if (loadingMsg && messageIndex < loadingMessages.length) {
-          loadingMsg.textContent = loadingMessages[messageIndex];
-          messageIndex++;
-        }
-      }, 800);
-      
-      try {
-        // 기업 유형 확인
-        const companyType = document.querySelector('input[name="company-category"]:checked')?.value;
-        const companyNameElem = document.getElementById('company-name');
-        let companyName = companyNameElem ? companyNameElem.value.trim() : '';
-        
-        // 법인번호 확인
-        const corpNum1 = document.getElementById('corp-number-1')?.value || '';
-        const corpNum2 = document.getElementById('corp-number-2')?.value || '';
-        
-        // 기업 유형별 필수 입력 검증
-        if (companyType === 'corporation') {
-          // 법인: 법인번호 필수
-          if (!corpNum1 || !corpNum2) {
-            clearInterval(messageInterval);
-            throw new Error('법인사업자는 법인번호를 입력해주세요.');
-          }
-        } else {
-          // 개인: 회사명 필수
-          if (!companyName) {
-            clearInterval(messageInterval);
-            throw new Error('개인사업자는 회사명을 입력해주세요.');
-          }
-        }
-        
-        // 법인번호가 있으면 금융위원회에서 회사명 먼저 가져오기
-        let fscData = null;
-        if (corpNum1 && corpNum2) {
-          const corpNumber = `${corpNum1}-${corpNum2}`;
-          fscData = await getFSCInfo(corpNumber);
-          
-          if (fscData.success && fscData.companyName) {
-            // 법인의 경우 회사명 자동 입력
-            companyName = fscData.companyName;
-            if (companyNameElem) {
-              companyNameElem.value = companyName;
-            }
-            console.log(`✅ 금융위에서 회사명 자동 입력: ${companyName}`);
-            
-            // 자본금
-            const capitalElem = document.getElementById('capital');
-            if (capitalElem && fscData.capital) {
-              capitalElem.value = formatNumber(fscData.capital);
-              console.log(`✅ 자본금 입력: ${fscData.capital}`);
-            }
-            
-            // 업종 정보 로깅만
-            if (fscData.industry) {
-              console.log(`ℹ️ 업종 정보: ${fscData.industry} (수동 입력 필요)`);
-            }
-            
-            // 상장여부
-            if (fscData.listed === 'Y') {
-              const listedElem = document.getElementById('listed-yes');
-              if (listedElem) {
-                listedElem.checked = true;
-                console.log('✅ 상장여부: 예');
-              }
-            }
-          }
-        }
-        
-        // 1단계: 국세청 API로 사업자 상태 확인
-        let ntsData = await getNTSInfo(businessNumber);
-        
-        // API 실패 시 명확한 에러 표시
-        if (!ntsData.success) {
-          clearInterval(messageInterval);
-          throw new Error(`국세청 API 조회 실패: ${ntsData.message || '사업자번호를 확인해주세요.'}`);
-        }
-        
-        // 2단계: 국세청 대표자 정보 입력
-        const ceoNameElem = document.getElementById('ceo-name');
-        if (ceoNameElem && ntsData.ceo) {
-          ceoNameElem.value = ntsData.ceo;
-        }
-        
-        const establishDateElem = document.getElementById('establish-date');
-        if (establishDateElem && ntsData.startDate) {
-          const dateStr = ntsData.startDate;
-          const formattedDate = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
-          establishDateElem.value = formattedDate;
-        }
-        
-        // 3단계: 특허 정보 조회
-        patentData = await getPatentInfo(companyName);
-        
-        if (patentData.success && patentData.totalCount > 0) {
-          const patentsElem = document.getElementById('patents-registered');
-          if (patentsElem) {
-            patentsElem.value = patentData.totalCount.toString();
-          }
-        }
-        
-        // 4단계: 벤처기업 인증 조회
-        ventureData = await getVentureInfo(companyName, businessNumber);
-        
-        if (ventureData.success) {
-          const certVentureElem = document.getElementById('cert-venture');
-          const certVentureExpireElem = document.getElementById('cert-venture-expire');
-          
-          if (certVentureElem) {
-            certVentureElem.value = ventureData.isValid ? '있음' : '만료';
-          }
-          
-          if (certVentureExpireElem && ventureData.endDate) {
-            certVentureExpireElem.value = ventureData.endDate;
-          }
-        }
-        
-        // 5단계: 이노비즈 인증 조회
-        innobizData = await getInnobizInfo(companyName);
-        
-        if (innobizData.success) {
-          const certInnobizElem = document.getElementById('cert-innobiz');
-          const certInnobizExpireElem = document.getElementById('cert-innobiz-expire');
-          
-          if (certInnobizElem) {
-            certInnobizElem.value = innobizData.isValid ? '있음' : '만료';
-          }
-          
-          if (certInnobizExpireElem && innobizData.endDate) {
-            certInnobizExpireElem.value = innobizData.endDate;
-          }
-        }
-        
-        // 6단계: 메인비즈 인증 조회
-        mainbizData = await getMainbizInfo(companyName, businessNumber);
-        
-        if (mainbizData.success) {
-          const certMainbizElem = document.getElementById('cert-mainbiz');
-          const certMainbizExpireElem = document.getElementById('cert-mainbiz-expire');
-          
-          if (certMainbizElem) {
-            certMainbizElem.value = mainbizData.isValid ? 'Y' : 'N';
-          }
-          
-          if (certMainbizExpireElem && mainbizData.endDate) {
-            certMainbizExpireElem.value = mainbizData.endDate;
-          }
-        }
-        
-        // 7단계: 기업부설연구소 조회
-        researchLabData = await getResearchLabInfo(companyName, businessNumber);
-        
-        if (researchLabData.success) {
-          const researchOrgElem = document.getElementById('research-org');
-          
-          if (researchOrgElem && researchLabData.labType) {
-            // labType에 따라 선택
-            if (researchLabData.labType.includes('연구소')) {
-              researchOrgElem.value = '기업부설연구소';
-            } else if (researchLabData.labType.includes('전담부서')) {
-              researchOrgElem.value = '연구개발전담부서';
-            } else {
-              researchOrgElem.value = '기업부설연구소'; // 기본값
-            }
-          }
-        }
-        
-        clearInterval(messageInterval);
-        
-        // 3대 인증 정보 추가
-        let successMsg = `✅ 기업정보 자동입력 완료!\n\n`;
-        successMsg += `📌 ${companyName}\n`;
-        if (ntsData.ceo) {
-          successMsg += `👤 대표자: ${ntsData.ceo}\n`;
-        }
-        successMsg += `📊 사업자상태: ${ntsData.businessStatus}\n`;
-        
-        if (patentData.success && patentData.totalCount > 0) {
-          successMsg += `📜 특허 보유: ${patentData.totalCount}건\n`;
-        }
-        
-        // 3대 인증 정보 추가
-        if (ventureData.success || innobizData.success || mainbizData.success) {
-          successMsg += `\n🎯 3대 인증 현황:\n`;
-          
-          if (ventureData.success) {
-            successMsg += `🚀 벤처기업: ${ventureData.isValid ? '✅ 유효' : '❌ 만료'} (${ventureData.endDate}까지)\n`;
-          }
-          
-          if (innobizData.success) {
-            successMsg += `💡 이노비즈: ${innobizData.isValid ? '✅ 유효' : '❌ 만료'} (${innobizData.endDate}까지)\n`;
-          }
-          
-          if (mainbizData.success) {
-            successMsg += `🏆 메인비즈: ${mainbizData.isValid ? '✅ 유효' : '❌ 만료'} (${mainbizData.endDate}까지)\n`;
-          }
-        }
-        
-        // 부설연구소 정보 추가
-        if (researchLabData.success) {
-          successMsg += `\n🔬 기업부설연구소:\n`;
-          successMsg += `✅ ${researchLabData.labType || '기업부설연구소'} 보유\n`;
-          if (researchLabData.labName) {
-            successMsg += `   연구소명: ${researchLabData.labName}\n`;
-          }
-        }
-        
-        successMsg += `\n나머지 항목은 수동으로 입력해주세요.`;
-        
-        // 결과 반환
-        clearInterval(messageInterval);
-        return {
-          success: true,
-          companyName: companyName,
-          ceo: ntsData.ceo || null,
-          startDate: ntsData.startDate ? `${ntsData.startDate.slice(0, 4)}-${ntsData.startDate.slice(4, 6)}-${ntsData.startDate.slice(6, 8)}` : null,
-          businessStatus: ntsData.businessStatus,
-          capital: fscData?.capital || null,
-          industry: fscData?.industry || null,
-          patents: patentData?.totalCount || null,
-          venture: ventureData?.isValid ? '있음' : ventureData?.success ? '만료' : null,
-          innobiz: innobizData?.isValid ? '있음' : innobizData?.success ? '만료' : null,
-          mainbiz: mainbizData?.isValid ? 'Y' : mainbizData?.success ? 'N' : null,
-          researchLab: researchLabData?.success ? researchLabData.labType : null
-        };
-        
-      } catch (error) {
-        clearInterval(messageInterval);
-        console.error('자동입력 오류:', error);
-        throw error;
-      }
-    }
-    
-    function fillCompanyData(data) {
-      // 기업명
-      const companyName = document.getElementById('company-name');
-      if (companyName) companyName.value = data.name;
-      
-      // 대표자명
-      const ceoName = document.getElementById('ceo-name');
-      if (ceoName && data.ceo) ceoName.value = data.ceo;
-      
-      // 개업일
-      const openingDate = document.getElementById('opening-date');
-      if (openingDate && data.openingDate) openingDate.value = data.openingDate;
-      
-      // 기업규모
-      const companySize = document.getElementById('company-size');
-      if (companySize && data.companySize) companySize.value = data.companySize;
-      
-      // 기업형태
-      const companyType = document.getElementById('company-type');
-      if (companyType && data.companyType) companyType.value = data.companyType;
-      
-      // 매출액
-      const revenue = document.getElementById('revenue');
-      if (revenue && data.revenue) {
-        revenue.value = parseInt(data.revenue).toLocaleString('ko-KR');
-      }
-      
-      // 직원수
-      const employeeCount = document.getElementById('total-employees');
-      if (employeeCount && data.employeeCount) employeeCount.value = data.employeeCount;
-      
-      // 체납 정보 초기화 (일반적으로 0)
-      const taxArrears = document.getElementById('tax-arrears');
-      if (taxArrears) taxArrears.value = '0';
-      
-      const localTaxArrears = document.getElementById('local-tax-arrears');
-      if (localTaxArrears) localTaxArrears.value = '0';
-      
-      // 업종코드 (KSIC 코드)
-      const ksicCode = document.getElementById('ksic-code');
-      if (ksicCode && data.industryCode) {
-        ksicCode.value = data.industryCode;
-      }
-      
-      // 소재지 (시도 + 시군구)
-      const locationSido = document.getElementById('location-sido');
-      if (locationSido && data.locationSido) {
-        locationSido.value = data.locationSido;
-        // 시군구 옵션 업데이트 (수도권 여부도 자동 설정됨)
-        updateSigunguOptions();
-        
-        // 시군구 설정 (DOM 업데이트 대기)
-        setTimeout(() => {
-          const locationSigungu = document.getElementById('location-sigungu');
-          if (locationSigungu && data.locationSigungu) {
-            locationSigungu.value = data.locationSigungu;
-          }
-        }, 100);
-      }
-      
-      console.log('✅ 자동입력 완료:', data.name);
-    }
     
     // ==================== 시군구 및 수도권 자동 설정 ====================
     
@@ -4816,75 +2904,382 @@
     const originalInit = window.addEventListener;
     window.addEventListener('load', function(event) {
       initializeApp();
-      // setupCompanySearch(); // 상단 검색 기능 제거됨
-      setupAutoFill();
-      setupCompanyTypeToggle(); // 기업 유형 선택 설정
     });
     
-    // 기업 유형 선택에 따른 동적 제어
-    function setupCompanyTypeToggle() {
-      const individualRadio = document.getElementById('type-individual');
-      const corporationRadio = document.getElementById('type-corporation');
-      const companyNameInput = document.getElementById('company-name');
-      const corpNum1 = document.getElementById('corp-number-1');
-      const corpNum2 = document.getElementById('corp-number-2');
-      const corpRequired = document.getElementById('corp-required');
-      const corpInfoText = document.getElementById('corp-info-text');
-      
-      function updateFields(type) {
-        if (type === 'corporation') {
-          // 법인 선택
-          corpNum1.required = true;
-          corpNum2.required = true;
-          corpRequired.style.display = 'inline';
-          corpInfoText.textContent = '필수 입력 (회사명 자동 입력)';
-          corpInfoText.style.color = '#FF8802';
-          companyNameInput.placeholder = '법인번호 입력 시 자동 입력';
-          companyNameInput.required = false;
-        } else {
-          // 개인 선택
-          corpNum1.required = false;
-          corpNum2.required = false;
-          corpRequired.style.display = 'none';
-          corpInfoText.textContent = '법인 선택 시 필수';
-          corpInfoText.style.color = 'rgba(255, 255, 255, 0.6)';
-          companyNameInput.placeholder = '상호명을 정확히 입력';
-          companyNameInput.required = true;
-        }
-      }
-      
-      individualRadio.addEventListener('change', () => updateFields('individual'));
-      corporationRadio.addEventListener('change', () => updateFields('corporation'));
-      
-      // 초기 상태 설정
-      updateFields('individual');
-    }
-    
-    // 결격사유 상세 입력 필드 토글
-    function toggleDisqualificationDetail(selectId, detailId) {
-      const selectElement = document.getElementById(selectId);
-      const detailElement = document.getElementById(detailId);
-      
-      if (selectElement && detailElement) {
-        const selectedValue = selectElement.value;
-        
-        // 강제 초기화
-        detailElement.style.display = 'none';
-        detailElement.style.visibility = 'hidden';
-        
-        if (selectedValue === 'Y' || selectedValue === 'y' || selectedValue === '있음') {
-          detailElement.style.display = 'block';
-          detailElement.style.visibility = 'visible';
-        } else {
-          // 숨길 때 입력값도 초기화
-          const input = detailElement.querySelector('input, textarea');
-          if (input) {
-            input.value = '';
-          }
-        }
-      }
-    }
-    
   </script>
+
+  <!-- ============================================ -->
+  <!-- AI 분석 섹션 추가 (기존 코드 유지, 추가만 함) -->
+  <!-- ============================================ -->
+  
+  <div class="card" id="aiAnalysisSection" style="margin-top: 2rem;">
+    <h2 style="color: #FFD700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+      🤖 AI 지원사업 매칭 분석
+      <span style="font-size: 0.7em; color: rgba(255,255,255,0.7); font-weight: normal;">
+        (기업마당 500개 공고 × Gemini AI)
+      </span>
+    </h2>
+    
+    <div class="info-notice" style="background: rgba(255, 136, 2, 0.2); border: 2px solid #FF8802; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+      <p style="margin: 0; font-size: 0.95rem;">
+        💡 <strong>안내:</strong> 위에 입력한 기업 정보를 바탕으로 기업마당 500개 공고를 AI가 자동 분석합니다. 
+        약 15초 소요됩니다.
+      </p>
+    </div>
+    
+    <button 
+      id="aiAnalyzeBtn"
+      onclick="startAIAnalysis()" 
+      class="btn btn-primary" 
+      style="width: 100%; font-size: 1.2rem; padding: 1.2rem;">
+      🚀 AI 분석 시작 (500개 공고 분석)
+    </button>
+    
+    <!-- 로딩 표시 -->
+    <div id="aiLoadingSection" style="display: none; text-align: center; padding: 2rem;">
+      <div class="loader" style="margin: 0 auto;"></div>
+      <p id="aiLoadingText" style="margin-top: 1rem; font-size: 1.1rem;">기업마당 API 조회 중...</p>
+      <p id="aiLoadingDetail" style="margin-top: 0.5rem; color: rgba(255,255,255,0.7); font-size: 0.9rem;"></p>
+    </div>
+    
+    <!-- 결과 표시 -->
+    <div id="aiResultsSection" style="display: none; margin-top: 2rem;">
+      <h3 style="color: #FFD700; margin-bottom: 1rem; font-size: 1.5rem;">
+        🎯 AI 분석 결과 (상위 20개)
+      </h3>
+      <div id="aiResultsList"></div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // AI 분석 메인 함수
+    // ============================================
+    async function startAIAnalysis() {
+      try {
+        const btn = document.getElementById('aiAnalyzeBtn');
+        const loadingSection = document.getElementById('aiLoadingSection');
+        const resultsSection = document.getElementById('aiResultsSection');
+        
+        // 버튼 비활성화
+        btn.disabled = true;
+        btn.textContent = '분석 중...';
+        
+        // 로딩 표시
+        loadingSection.style.display = 'block';
+        resultsSection.style.display = 'none';
+        
+        // 기업 데이터 수집
+        const companyData = collectCompanyDataForAI();
+        
+        // 필수 필드 검증
+        if (!validateCompanyData(companyData)) {
+          alert('필수 항목(*)을 모두 입력해주세요.\n\n특히 다음 항목을 확인하세요:\n- 기업명\n- 사업자등록번호\n- 개업연월일\n- 기업 규모\n- 상시근로자 수\n- 최근 매출액');
+          btn.disabled = false;
+          btn.textContent = '🚀 AI 분석 시작 (500개 공고 분석)';
+          loadingSection.style.display = 'none';
+          return;
+        }
+        
+        updateAILoading('기업마당 API 조회 중...', '500개 공고 불러오는 중...');
+        
+        // Step 1: 기업마당 API 조회
+        const response1 = await fetch('/.netlify/functions/getBizinfoPrograms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filters: {} })
+        });
+        
+        if (!response1.ok) {
+          throw new Error('기업마당 API 조회 실패');
+        }
+        
+        const data1 = await response1.json();
+        const programs = data1.programs || [];
+        
+        updateAILoading('Gemini AI 분석 중...', `${programs.length}개 공고와 기업 정보 매칭 중...`);
+        
+        // Step 2: AI 매칭 분석
+        const response2 = await fetch('/.netlify/functions/analyzeCompanyMatch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyData: companyData,
+            programs: programs
+          })
+        });
+        
+        if (!response2.ok) {
+          throw new Error('AI 분석 실패');
+        }
+        
+        const data2 = await response2.json();
+        const matchedPrograms = data2.matchedPrograms || [];
+        
+        // 결과 표시
+        displayAIResults(matchedPrograms);
+        
+        // 복구
+        btn.disabled = false;
+        btn.textContent = '🚀 AI 분석 시작 (500개 공고 분석)';
+        loadingSection.style.display = 'none';
+        
+        // 스크롤
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+      } catch (error) {
+        console.error('AI 분석 오류:', error);
+        alert('AI 분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n네트워크 연결을 확인하거나 잠시 후 다시 시도해주세요.');
+        
+        document.getElementById('aiAnalyzeBtn').disabled = false;
+        document.getElementById('aiAnalyzeBtn').textContent = '🚀 AI 분석 시작 (500개 공고 분석)';
+        document.getElementById('aiLoadingSection').style.display = 'none';
+      }
+    }
+    
+    // ============================================
+    // 기업 데이터 수집 (기존 폼의 모든 필드)
+    // ============================================
+    function collectCompanyDataForAI() {
+      // 개업연월일에서 업력 계산
+      const foundedDateStr = document.getElementById('establish-date')?.value || '';
+      let businessAge = 0;
+      let foundedYear = 0;
+      
+      if (foundedDateStr) {
+        const foundedDate = new Date(foundedDateStr);
+        foundedYear = foundedDate.getFullYear();
+        const today = new Date();
+        businessAge = today.getFullYear() - foundedYear;
+      }
+      
+      // 직원수 계산
+      const employees = parseInt(document.getElementById('employees-total')?.value) || 0;
+      const youthEmployees = parseInt(document.getElementById('employees-youth')?.value) || 0;
+      const femaleEmployees = parseInt(document.getElementById('employees-female')?.value) || 0;
+      
+      const youthRatio = employees > 0 ? (youthEmployees / employees * 100).toFixed(1) : 0;
+      const femaleRatio = employees > 0 ? (femaleEmployees / employees * 100).toFixed(1) : 0;
+      
+      // 매출액 (억원 → 원)
+      const revenue = (parseFloat(document.getElementById('revenue-recent')?.value) || 0) * 100000000;
+      
+      // 사업자번호 조합
+      const bizNum1 = document.getElementById('business-number-1')?.value || '';
+      const bizNum2 = document.getElementById('business-number-2')?.value || '';
+      const bizNum3 = document.getElementById('business-number-3')?.value || '';
+      const businessNumber = bizNum1 && bizNum2 && bizNum3 ? `${bizNum1}-${bizNum2}-${bizNum3}` : '';
+      
+      return {
+        // 기본 정보
+        companyName: document.getElementById('company-name')?.value || '',
+        businessNumber: businessNumber,
+        foundedYear: foundedYear,
+        businessAge: businessAge,
+        
+        // 분류
+        companySize: document.getElementById('company-size')?.value || '',
+        companyType: document.getElementById('company-type')?.value || '',
+        businessStatus: document.getElementById('business-status')?.value || '운영중',
+        industry: document.getElementById('ksic-code')?.value || '',
+        
+        // 소재지
+        region: document.getElementById('location-sido')?.value || '',
+        sigungu: document.getElementById('location-sigungu')?.value || '',
+        isMetro: document.getElementById('capital-area')?.value === 'Y',
+        
+        // 대표자
+        ceoGender: document.getElementById('ceo-gender')?.value || '',
+        ceoBirthYear: document.getElementById('ceo-birth')?.value || '',
+        
+        // 재무
+        revenue: revenue,
+        debtRatio: parseFloat(document.getElementById('debt-ratio')?.value) || 0,
+        
+        // 결격사유
+        hasTaxArrears: document.getElementById('tax-arrears')?.value === 'Y',
+        hasLocalTaxArrears: document.getElementById('local-tax-arrears')?.value === 'Y',
+        hasCapitalErosion: document.getElementById('capital-erosion')?.value === 'Y',
+        
+        // 고용
+        employees: employees,
+        youthEmployees: youthEmployees,
+        femaleEmployees: femaleEmployees,
+        disabledEmployees: parseInt(document.getElementById('employees-disabled')?.value) || 0,
+        youthRatio: parseFloat(youthRatio),
+        femaleRatio: parseFloat(femaleRatio),
+        employmentGrowth: parseFloat(document.getElementById('employment-growth')?.value) || 0,
+        
+        // 인증
+        hasVenture: document.getElementById('cert-venture')?.value === 'Y',
+        hasInnobiz: document.getElementById('cert-innobiz')?.value === 'Y',
+        hasMainbiz: document.getElementById('cert-mainbiz')?.value === 'Y',
+        hasWomanCert: document.getElementById('cert-woman')?.value === 'Y',
+        hasDisabledCert: document.getElementById('cert-disabled')?.value === 'Y',
+        hasSocialCert: document.getElementById('cert-social')?.value === 'Y',
+        hasESG: document.getElementById('esg-status')?.value === 'Y',
+        
+        // 기술
+        patentCount: parseInt(document.getElementById('patents-registered')?.value) || 0,
+        researchOrg: document.getElementById('research-org')?.value || '',
+        tcbRating: document.getElementById('tcb-rating')?.value || '',
+        
+        // 수출
+        exportAmount: parseFloat(document.getElementById('export-recent')?.value) || 0,
+        exportCountries: document.getElementById('export-countries')?.value || '',
+        
+        // 희망 지원분야
+        desiredSupports: getDesiredSupports()
+      };
+    }
+    
+    // ============================================
+    // 희망 지원분야 수집
+    // ============================================
+    function getDesiredSupports() {
+      const supports = [];
+      const checkboxes = document.querySelectorAll('input[name="desiredSupport"]:checked');
+      checkboxes.forEach(cb => {
+        supports.push(cb.value);
+      });
+      return supports;
+    }
+    
+    // ============================================
+    // 필수 필드 검증
+    // ============================================
+    function validateCompanyData(data) {
+      if (!data.companyName) return false;
+      if (!data.businessNumber) return false;
+      if (!data.foundedYear || data.foundedYear === 0) return false;
+      if (!data.companySize) return false;
+      if (!data.employees || data.employees === 0) return false;
+      if (data.revenue === 0) return false;
+      return true;
+    }
+    
+    // ============================================
+    // 로딩 업데이트
+    // ============================================
+    function updateAILoading(text, detail) {
+      document.getElementById('aiLoadingText').textContent = text;
+      document.getElementById('aiLoadingDetail').textContent = detail;
+    }
+    
+    // ============================================
+    // 결과 표시
+    // ============================================
+    function displayAIResults(programs) {
+      const resultsSection = document.getElementById('aiResultsSection');
+      const resultsList = document.getElementById('aiResultsList');
+      
+      resultsList.innerHTML = '';
+      
+      if (programs.length === 0) {
+        resultsList.innerHTML = `
+          <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 12px;">
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">😔</p>
+            <p style="font-size: 1.1rem;">매칭되는 지원사업이 없습니다.</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: rgba(255,255,255,0.7);">
+              입력 정보를 확인하시거나 다른 조건으로 시도해보세요.
+            </p>
+          </div>
+        `;
+        resultsSection.style.display = 'block';
+        return;
+      }
+      
+      const top20 = programs.slice(0, 20);
+      
+      top20.forEach((program, index) => {
+        const item = document.createElement('div');
+        item.className = 'card';
+        item.style.cssText = 'background: rgba(255,255,255,0.15); margin-bottom: 1rem; border-left: 5px solid #FF8802; transition: all 0.3s;';
+        
+        item.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="flex: 1; min-width: 200px;">
+              <h4 style="color: #FFD700; font-size: 1.3rem; margin-bottom: 0.5rem;">
+                ${index + 1}. ${program.name || '제목 없음'}
+              </h4>
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+                <span>🏢 ${program.organization || '미상'}</span>
+                <span>📂 ${program.category || '기타'}</span>
+                <span>📅 ${program.reqstPeriod || '상시'}</span>
+              </div>
+            </div>
+            <div style="background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%); color: white; padding: 0.5rem 1.5rem; border-radius: 20px; font-weight: bold; font-size: 1.2rem; white-space: nowrap;">
+              ${program.matchScore || 0}점
+            </div>
+          </div>
+          
+          ${program.description ? `
+            <p style="margin-bottom: 1rem; line-height: 1.6; color: rgba(255,255,255,0.9);">
+              ${program.description.substring(0, 200)}...
+            </p>
+          ` : ''}
+          
+          ${program.matchReasons && program.matchReasons.length > 0 ? `
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+              <strong style="color: #FFD700; display: block; margin-bottom: 0.5rem;">✅ 매칭 근거:</strong>
+              <ul style="margin-left: 1.5rem; line-height: 1.8;">
+                ${program.matchReasons.map(r => `<li>${r}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          ${program.strengths && program.strengths.length > 0 ? `
+            <div style="background: rgba(52, 211, 153, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid #34d399;">
+              <strong style="color: #34d399; display: block; margin-bottom: 0.5rem;">💪 강점:</strong>
+              <ul style="margin-left: 1.5rem; line-height: 1.8;">
+                ${program.strengths.map(s => `<li>${s}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          ${program.weaknesses && program.weaknesses.length > 0 ? `
+            <div style="background: rgba(251, 191, 36, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid #fbbf24;">
+              <strong style="color: #fbbf24; display: block; margin-bottom: 0.5rem;">⚠️ 약점/주의사항:</strong>
+              <ul style="margin-left: 1.5rem; line-height: 1.8;">
+                ${program.weaknesses.map(w => `<li>${w}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button 
+              onclick="window.open('${program.website}', '_blank')" 
+              class="btn btn-secondary"
+              style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+              📄 공고문 보기
+            </button>
+            ${program.applicationUrl ? `
+              <button 
+                onclick="window.open('${program.applicationUrl}', '_blank')" 
+                class="btn btn-secondary"
+                style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+                ✍️ 신청하기
+              </button>
+            ` : ''}
+          </div>
+        `;
+        
+        // 호버 효과
+        item.addEventListener('mouseenter', function() {
+          this.style.background = 'rgba(255,255,255,0.2)';
+          this.style.transform = 'translateX(5px)';
+        });
+        item.addEventListener('mouseleave', function() {
+          this.style.background = 'rgba(255,255,255,0.15)';
+          this.style.transform = 'translateX(0)';
+        });
+        
+        resultsList.appendChild(item);
+      });
+      
+      resultsSection.style.display = 'block';
+    }
+  </script>
+
 </body>
 </html>
