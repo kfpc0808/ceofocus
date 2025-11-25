@@ -3542,12 +3542,6 @@
       }
     }
     
-    // 기존 analyzePrograms 함수는 analyzeProgramsSummary로 대체됨
-        console.error('❌ 분석 실패:', error);
-        alert('분석에 실패했습니다.\n\n' + error.message);
-      }
-    }
-    
     function showLoadingOverlay(title, subtitle) {
       const totalPrograms = typeof MOCK_PROGRAMS !== 'undefined' ? MOCK_PROGRAMS.length : 0;
       const overlay = document.createElement('div');
