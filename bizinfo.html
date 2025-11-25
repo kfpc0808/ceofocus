@@ -2066,10 +2066,18 @@
         provider.addScope('https://www.googleapis.com/auth/drive.appdata');
         
         const result = await auth.signInWithPopup(provider);
-        const credential = result.credential;
-        accessToken = credential.accessToken;
+        // Firebase 10.x 올바른 방식
+        const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+        accessToken = credential?.accessToken;
         
         console.log('✅ 로그인 성공:', result.user.email);
+        console.log('🔑 Access Token 획득:', accessToken ? '성공' : '실패');
+        
+        if (!accessToken) {
+          console.error('❌ Access Token을 획득하지 못했습니다');
+          alert('Google Drive 권한을 획득하지 못했습니다. 다시 로그인해주세요.');
+          return;
+        }
         
         // Google API 클라이언트 설정
         gapi.client.setToken({ access_token: accessToken });
@@ -2344,13 +2352,26 @@
             // 사용자 정보 표시
             document.getElementById('user-info').textContent = user.email;
             
-            // 토큰 갱신
-            const credential = await user.getIdTokenResult();
-            accessToken = credential.token;
-            
-            // Google API 클라이언트 설정
-            if (gapiInited) {
-              gapi.client.setToken({ access_token: accessToken });
+            // Access Token이 없으면 재인증 필요
+            if (!accessToken) {
+              console.log('🔄 Drive 권한 재인증 필요...');
+              try {
+                // 조용히 재인증하여 Access Token 획득
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('https://www.googleapis.com/auth/drive.file');
+                provider.addScope('https://www.googleapis.com/auth/drive.appdata');
+                
+                const result = await auth.signInWithPopup(provider);
+                const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+                accessToken = credential?.accessToken;
+                
+                if (gapiInited && accessToken) {
+                  gapi.client.setToken({ access_token: accessToken });
+                }
+                console.log('✅ Drive 권한 획득:', accessToken ? '성공' : '실패');
+              } catch (reAuthError) {
+                console.error('⚠️ Drive 재인증 실패:', reAuthError);
+              }
             }
             
             // 로그인 화면 숨기고 메인 화면 표시
@@ -2358,7 +2379,9 @@
             document.getElementById('main-content').style.display = 'block';
             
             // Google Drive에서 데이터 로드
-            await loadFromDrive();
+            if (accessToken) {
+              await loadFromDrive();
+            }
             
             // 숫자 포맷팅 활성화
             attachNumberFormatting();
