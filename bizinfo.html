@@ -2079,6 +2079,9 @@
           return;
         }
         
+        // 사용자 정보 표시
+        document.getElementById('user-info').textContent = result.user.email;
+        
         // Google API 클라이언트 설정
         gapi.client.setToken({ access_token: accessToken });
         
@@ -2088,6 +2091,9 @@
         
         // Google Drive에서 데이터 로드
         await loadFromDrive();
+        
+        // 숫자 포맷팅 활성화
+        attachNumberFormatting();
         
       } catch (error) {
         console.error('❌ 로그인 실패:', error);
@@ -2346,32 +2352,16 @@
         
         // Firebase 인증 상태 확인
         auth.onAuthStateChanged(async (user) => {
-          if (user) {
+          if (user && accessToken) {
+            // 이미 로그인되어 있고 Access Token도 있음
             console.log('✅ 로그인 상태:', user.email);
             
             // 사용자 정보 표시
             document.getElementById('user-info').textContent = user.email;
             
-            // Access Token이 없으면 재인증 필요
-            if (!accessToken) {
-              console.log('🔄 Drive 권한 재인증 필요...');
-              try {
-                // 조용히 재인증하여 Access Token 획득
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.addScope('https://www.googleapis.com/auth/drive.file');
-                provider.addScope('https://www.googleapis.com/auth/drive.appdata');
-                
-                const result = await auth.signInWithPopup(provider);
-                const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-                accessToken = credential?.accessToken;
-                
-                if (gapiInited && accessToken) {
-                  gapi.client.setToken({ access_token: accessToken });
-                }
-                console.log('✅ Drive 권한 획득:', accessToken ? '성공' : '실패');
-              } catch (reAuthError) {
-                console.error('⚠️ Drive 재인증 실패:', reAuthError);
-              }
+            // Google API 클라이언트 설정
+            if (gapiInited) {
+              gapi.client.setToken({ access_token: accessToken });
             }
             
             // 로그인 화면 숨기고 메인 화면 표시
@@ -2379,18 +2369,24 @@
             document.getElementById('main-content').style.display = 'block';
             
             // Google Drive에서 데이터 로드
-            if (accessToken) {
-              await loadFromDrive();
-            }
+            await loadFromDrive();
             
             // 숫자 포맷팅 활성화
             attachNumberFormatting();
             
             hideLoading();
+          } else if (user && !accessToken) {
+            // Firebase 로그인은 되어있지만 Drive 권한(Access Token)이 없음
+            // 로그인 화면을 보여주고 사용자가 다시 로그인하도록 유도
+            console.log('⚠️ Drive 권한 없음, 다시 로그인 필요:', user.email);
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'none';
+            hideLoading();
           } else {
             console.log('⚠️ 로그인 필요');
             // 로그인 화면 표시
             document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'none';
             hideLoading();
           }
         });
