@@ -15,6 +15,9 @@
   <!-- Google API for Drive -->
   <script src="https://apis.google.com/js/api.js"></script>
   
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client"></script>
+  
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     
@@ -1368,10 +1371,12 @@
     const auth = firebase.auth();
     
     // Google API 클라이언트 초기화
+    const CLIENT_ID = '1012609333373-5d223e3cqp6fo28i8bi85i9ae0p7ohen.apps.googleusercontent.com';
     let gapiInited = false;
     let gisInited = false;
-    let tokenClient;
+    let tokenClient = null;
     let accessToken = null;
+    let currentUser = null;
     
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
@@ -2054,67 +2059,98 @@
         discoveryDocs: [DISCOVERY_DOC],
       });
       gapiInited = true;
+      console.log('✅ GAPI 클라이언트 초기화 완료');
+      maybeEnableButtons();
+    }
+    
+    // Google Identity Services 초기화
+    function gisLoaded() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: handleTokenResponse,
+      });
+      gisInited = true;
+      console.log('✅ GIS 토큰 클라이언트 초기화 완료');
+      maybeEnableButtons();
+    }
+    
+    function maybeEnableButtons() {
+      if (gapiInited && gisInited) {
+        console.log('✅ Google API 준비 완료');
+      }
+    }
+    
+    // 토큰 응답 처리
+    async function handleTokenResponse(resp) {
+      if (resp.error !== undefined) {
+        console.error('❌ 토큰 획득 실패:', resp);
+        alert('Google 인증에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
+      
+      accessToken = resp.access_token;
+      console.log('🔑 Access Token 획득 성공');
+      
+      // Google API 클라이언트에 토큰 설정
+      gapi.client.setToken({ access_token: accessToken });
+      
+      // 사용자 정보 가져오기
+      try {
+        const userInfo = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }).then(res => res.json());
+        
+        currentUser = userInfo;
+        document.getElementById('user-info').textContent = userInfo.email;
+        console.log('✅ 로그인 성공:', userInfo.email);
+      } catch (e) {
+        console.error('사용자 정보 가져오기 실패:', e);
+      }
+      
+      // 로그인 화면 숨기고 메인 화면 표시
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+      
+      // Google Drive에서 데이터 로드
+      await loadFromDrive();
+      
+      // 숫자 포맷팅 활성화
+      attachNumberFormatting();
     }
     
     // Google 로그인
-    async function signInWithGoogle() {
-      try {
-        console.log('🔐 Google 로그인 시작...');
-        
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('https://www.googleapis.com/auth/drive.file');
-        provider.addScope('https://www.googleapis.com/auth/drive.appdata');
-        
-        const result = await auth.signInWithPopup(provider);
-        // Firebase 10.x 올바른 방식
-        const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-        accessToken = credential?.accessToken;
-        
-        console.log('✅ 로그인 성공:', result.user.email);
-        console.log('🔑 Access Token 획득:', accessToken ? '성공' : '실패');
-        
-        if (!accessToken) {
-          console.error('❌ Access Token을 획득하지 못했습니다');
-          alert('Google Drive 권한을 획득하지 못했습니다. 다시 로그인해주세요.');
-          return;
-        }
-        
-        // 사용자 정보 표시
-        document.getElementById('user-info').textContent = result.user.email;
-        
-        // Google API 클라이언트 설정
-        gapi.client.setToken({ access_token: accessToken });
-        
-        // 로그인 화면 숨기고 메인 화면 표시
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        
-        // Google Drive에서 데이터 로드
-        await loadFromDrive();
-        
-        // 숫자 포맷팅 활성화
-        attachNumberFormatting();
-        
-      } catch (error) {
-        console.error('❌ 로그인 실패:', error);
-        alert('로그인에 실패했습니다. 다시 시도해주세요.');
+    function signInWithGoogle() {
+      if (!gisInited) {
+        console.error('❌ GIS가 아직 초기화되지 않았습니다');
+        alert('잠시 후 다시 시도해주세요.');
+        return;
       }
+      
+      console.log('🔐 Google 로그인 시작...');
+      
+      // 토큰 요청 (팝업)
+      tokenClient.requestAccessToken({ prompt: 'consent' });
     }
     
     // Google 로그아웃
-    async function signOut() {
-      try {
-        await auth.signOut();
-        accessToken = null;
-        savedCompanies = {};
-        
-        document.getElementById('main-content').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'flex';
-        
-        console.log('✅ 로그아웃 완료');
-      } catch (error) {
-        console.error('❌ 로그아웃 실패:', error);
+    function signOut() {
+      if (accessToken) {
+        google.accounts.oauth2.revoke(accessToken, () => {
+          console.log('✅ 토큰 취소 완료');
+        });
       }
+      
+      accessToken = null;
+      currentUser = null;
+      savedCompanies = {};
+      
+      gapi.client.setToken(null);
+      
+      document.getElementById('main-content').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      
+      console.log('✅ 로그아웃 완료');
     }
     
     // Google Drive에 저장
@@ -2347,49 +2383,17 @@
       try {
         console.log('🚀 앱 초기화');
         
-        // Google API 로드
-        gapi.load('client', gapiLoaded);
+        // GAPI 로드
+        gapiLoaded();
         
-        // Firebase 인증 상태 확인
-        auth.onAuthStateChanged(async (user) => {
-          if (user && accessToken) {
-            // 이미 로그인되어 있고 Access Token도 있음
-            console.log('✅ 로그인 상태:', user.email);
-            
-            // 사용자 정보 표시
-            document.getElementById('user-info').textContent = user.email;
-            
-            // Google API 클라이언트 설정
-            if (gapiInited) {
-              gapi.client.setToken({ access_token: accessToken });
-            }
-            
-            // 로그인 화면 숨기고 메인 화면 표시
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            
-            // Google Drive에서 데이터 로드
-            await loadFromDrive();
-            
-            // 숫자 포맷팅 활성화
-            attachNumberFormatting();
-            
-            hideLoading();
-          } else if (user && !accessToken) {
-            // Firebase 로그인은 되어있지만 Drive 권한(Access Token)이 없음
-            // 로그인 화면을 보여주고 사용자가 다시 로그인하도록 유도
-            console.log('⚠️ Drive 권한 없음, 다시 로그인 필요:', user.email);
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('main-content').style.display = 'none';
-            hideLoading();
-          } else {
-            console.log('⚠️ 로그인 필요');
-            // 로그인 화면 표시
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('main-content').style.display = 'none';
-            hideLoading();
-          }
-        });
+        // GIS 로드
+        gisLoaded();
+        
+        // 로그인 화면 표시 (GIS는 자동 로그인 없음)
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('main-content').style.display = 'none';
+        
+        hideLoading();
         
       } catch (error) {
         console.error('❌ 초기화 실패:', error);
