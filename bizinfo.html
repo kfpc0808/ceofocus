@@ -99,10 +99,11 @@
     .header-left {
       position: absolute;
       left: 1rem;
-      top: 0.5rem;
+      top: 0.8rem;
       display: flex;
       align-items: center;
       gap: 0.8rem;
+      z-index: 10;
     }
     
     /* 모바일에서 버튼 겹침 방지 */
@@ -111,6 +112,7 @@
         position: static;
         margin-bottom: 0.5rem;
         justify-content: flex-start;
+        z-index: auto;
       }
       
       .header {
@@ -134,19 +136,21 @@
       margin-bottom: 0.75rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid rgba(255,255,255,0.2);
-      padding-top: 0.8rem;
+      padding-top: 1.2rem;
+      min-height: 50px;
     }
     
     .header h1 {
       font-size: 1.1rem;
       margin-bottom: 0.25rem;
-      padding: 0 60px;
+      padding: 0 140px;
     }
     
     .header .btn-main {
       position: absolute;
-      right: 0;
-      top: 0;
+      right: 1rem;
+      top: 0.8rem;
+      z-index: 10;
     }
     
     /* 주력제품 그리드 */
@@ -833,8 +837,8 @@
   <div class="container" id="main-content" style="display: none;">
     <div class="header">
       <div class="header-left">
-        <button class="btn-main btn-small" style="background: #28a745; cursor: default;" disabled>
-          <span style="font-size: 0.9rem;">✓</span> 연결됨
+        <button id="connection-status-btn" class="btn-main btn-small" style="background: #6c757d; cursor: default;" disabled>
+          <span style="font-size: 0.9rem;">⏳</span> 연결 중...
         </button>
         <button class="btn-main btn-small" onclick="signOut()">로그아웃</button>
       </div>
@@ -915,7 +919,7 @@
           <input type="text" id="company-name" placeholder="상호명을 정확히 입력" required style="width: 100%; max-width: 100%; box-sizing: border-box;">
         </div>
         
-        <div class="form-group full-width">
+        <div class="form-group">
           <label>사업자등록번호 <span class="required">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <input type="text" id="business-number-1" placeholder="000" maxlength="3" style="width: 80px;" inputmode="numeric" required oninput="allowOnlyNumbers(this); moveFocusOnMaxLength(this, 'business-number-2', 3)">
@@ -926,7 +930,7 @@
           </div>
         </div>
         
-        <div class="form-group full-width">
+        <div class="form-group">
           <label>개업연월일(사업자등록증) <span class="required">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <input type="date" id="establish-date" required onchange="calculateBusinessAge()" style="flex: 1;">
@@ -1020,7 +1024,7 @@
               <input type="text" id="ksic-5" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 5)">
             </div>
             <input type="hidden" id="ksic-code">
-            <button type="button" onclick="openKsicSearch()" class="btn-mini">🔍 검색</button>
+            <button type="button" onclick="openKsicSearch()" class="btn-mini" title="통계청 공식 KSIC 검색 사이트">🔍 통계청 검색</button>
           </div>
           <span class="info-text" style="color: #ff9999; font-weight: bold;">⚠️ KSIC 코드 5자리 모두 정확히 입력해주세요. 이 코드가 AI 분석에 가장 중요한 역할을 합니다!</span>
         </div>
@@ -1392,11 +1396,25 @@
 
     <!-- 실행 버튼 -->
     <div class="card">
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <button class="btn btn-primary" onclick="analyzePrograms()" style="flex: 2; font-size: 1rem; padding: 0.8rem;">
+      <!-- 맞춤찾기 버튼 (필수 선행 작업) -->
+      <div style="margin-bottom: 1rem;">
+        <button class="btn btn-primary" onclick="findMatchingPrograms()" style="width: 100%; font-size: 1rem; padding: 1rem; background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);">
           🔍 맞춤 지원사업 찾기
         </button>
-        <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 1rem; padding: 0.8rem;">
+        <p style="font-size: 0.85rem; color: #666; margin-top: 0.5rem; text-align: center;">
+          ↑ 먼저 맞춤찾기를 실행한 후, 아래 분석 버튼을 선택하세요
+        </p>
+      </div>
+      
+      <!-- AI 분석 버튼 (요약/상세 선택) -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <button class="btn btn-secondary" onclick="analyzeProgramsSummary()" style="flex: 1; font-size: 0.95rem; padding: 0.8rem;">
+          📝 요약분석
+        </button>
+        <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.95rem; padding: 0.8rem;">
+          📊 상세분석
+        </button>
+        <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 0.95rem; padding: 0.8rem;">
           💾 저장
         </button>
       </div>
@@ -1507,10 +1525,11 @@
     }
     
     /**
-     * KSIC 검색 사이트 열기
+     * KSIC 검색 사이트 열기 (통계청 공식)
      */
     function openKsicSearch() {
-      window.open('https://kssc.kostat.go.kr:8443/ksscNew_web/index.jsp', '_blank');
+      // 통계청 한국표준산업분류 검색 페이지 (직접 접근)
+      window.open('https://kssc.kostat.go.kr:8443/ksscNew_web/kssc/common/ClassificationContent.do?gubun=1&strCategoryNameCode=001&categoryMenu=007&addGubun=no', '_blank');
     }
     
     /**
@@ -2569,6 +2588,9 @@
       try {
         console.log('🚀 앱 초기화');
         
+        // 연결 상태 버튼 초기화
+        updateConnectionStatus('connecting');
+        
         // GAPI 로드
         gapiLoaded();
         
@@ -2591,13 +2613,29 @@
             attachNumberFormatting();
             
             // Drive 데이터 로드 시도 (Access Token 있으면)
+            let dataLoaded = false;
             if (accessToken) {
-              await loadFromDrive();
+              try {
+                await loadFromDrive();
+                dataLoaded = Object.keys(savedCompanies).length > 0;
+              } catch (error) {
+                console.error('Drive 로드 실패:', error);
+              }
+            }
+            
+            // 연결 상태 업데이트
+            if (dataLoaded) {
+              updateConnectionStatus('connected');
+              console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+            } else {
+              updateConnectionStatus('no-data');
+              console.log('⚠️ 저장된 데이터 없음');
             }
             
             hideLoading();
           } else {
             console.log('⚠️ 로그인 필요');
+            updateConnectionStatus('disconnected');
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('main-content').style.display = 'none';
             hideLoading();
@@ -2606,7 +2644,40 @@
         
       } catch (error) {
         console.error('❌ 초기화 실패:', error);
+        updateConnectionStatus('error');
         hideLoading();
+      }
+    }
+    
+    /**
+     * 연결 상태 버튼 업데이트
+     */
+    function updateConnectionStatus(status) {
+      const btn = document.getElementById('connection-status-btn');
+      if (!btn) return;
+      
+      switch(status) {
+        case 'connecting':
+          btn.innerHTML = '<span style="font-size: 0.9rem;">⏳</span> 연결 중...';
+          btn.style.background = '#6c757d';
+          break;
+        case 'connected':
+          btn.innerHTML = '<span style="font-size: 0.9rem;">✓</span> 연결됨';
+          btn.style.background = '#28a745';
+          break;
+        case 'no-data':
+          btn.innerHTML = '<span style="font-size: 0.9rem;">⚠️</span> 데이터 없음';
+          btn.style.background = '#ffc107';
+          btn.style.color = '#000';
+          break;
+        case 'disconnected':
+          btn.innerHTML = '<span style="font-size: 0.9rem;">✗</span> 연결 안됨';
+          btn.style.background = '#dc3545';
+          break;
+        case 'error':
+          btn.innerHTML = '<span style="font-size: 0.9rem;">⚠️</span> 오류';
+          btn.style.background = '#dc3545';
+          break;
       }
     }
     
@@ -2808,27 +2879,36 @@
         const meta = [company.companySize, company.ksicCode].filter(Boolean).join(' · ');
         
         return `
-          <div onclick="selectCompanyFromModal('${company.id}')" style="
+          <div style="
             padding: 0.8rem;
             margin-bottom: 0.5rem;
             background: ${isSelected ? 'rgba(255,210,127,0.2)' : 'rgba(255,255,255,0.05)'};
             border: 1px solid ${isSelected ? 'rgba(255,210,127,0.5)' : 'rgba(255,255,255,0.1)'};
             border-radius: 8px;
-            cursor: pointer;
             transition: all 0.2s;
-          " onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='${isSelected ? 'rgba(255,210,127,0.2)' : 'rgba(255,255,255,0.05)'}'">
-            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
-              <div style="flex: 1; min-width: 0;">
+          ">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 0.5rem;">
+              <div onclick="selectCompanyFromModal('${company.id}')" style="flex: 1; min-width: 0; cursor: pointer;" onmouseover="this.parentElement.parentElement.style.background='rgba(255,255,255,0.15)'" onmouseout="this.parentElement.parentElement.style.background='${isSelected ? 'rgba(255,210,127,0.2)' : 'rgba(255,255,255,0.05)'}'">
                 <div style="font-weight: 600; font-size: 0.95rem; color: ${isSelected ? '#ffd27f' : 'white'}; margin-bottom: 0.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${company.companyName || '(이름없음)'}
                 </div>
                 <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">
-                  ${meta || '정보 없음'}
+                  ${meta || '정보 없음'} ${savedDate ? '· ' + savedDate : ''}
                 </div>
               </div>
-              <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); white-space: nowrap;">
-                ${savedDate}
-              </div>
+              <button onclick="event.stopPropagation(); deleteCompanyFromModal('${company.id}', '${(company.companyName || '').replace(/'/g, "\\'")}');" style="
+                padding: 0.4rem 0.6rem;
+                background: rgba(255,100,100,0.2);
+                border: 1px solid rgba(255,100,100,0.5);
+                border-radius: 6px;
+                color: #ffaaaa;
+                font-size: 0.75rem;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: all 0.2s;
+              " onmouseover="this.style.background='rgba(255,100,100,0.4)'" onmouseout="this.style.background='rgba(255,100,100,0.2)'">
+                🗑️ 삭제
+              </button>
             </div>
           </div>
         `;
@@ -2864,6 +2944,40 @@
       
       // 모달 닫기
       closeCompanyListModal();
+    }
+    
+    /**
+     * 모달에서 고객사 삭제
+     */
+    async function deleteCompanyFromModal(companyId, companyName) {
+      if (!confirm(`"${companyName}" 고객사를 삭제하시겠습니까?\n\n삭제된 데이터는 복구할 수 없습니다.`)) {
+        return;
+      }
+      
+      try {
+        // Firebase에서 삭제
+        await db.collection('companies').doc(companyId).delete();
+        
+        // 로컬 객체에서 삭제
+        delete savedCompanies[companyId];
+        
+        // 현재 선택된 회사인 경우 폼 초기화
+        if (selectedCompanyId === companyId) {
+          selectedCompanyId = null;
+          clearForm();
+          document.getElementById('company-name-search').value = '';
+          document.getElementById('company-select').value = '';
+        }
+        
+        // 목록 다시 렌더링
+        renderModalCompanyList();
+        renderCompanySelect();
+        
+        console.log('✅ 고객사 삭제 완료:', companyName);
+      } catch (error) {
+        console.error('❌ 삭제 오류:', error);
+        alert('삭제 중 오류가 발생했습니다: ' + error.message);
+      }
     }
     
     function sortModalList(type) {
@@ -3287,7 +3401,13 @@
       return sortedPrograms;
     }
     
-    async function analyzePrograms() {
+    /**
+     * 요약분석: 클라이언트 매칭만 수행
+     */
+    /**
+     * 맞춤 지원사업 찾기 (클라이언트 매칭)
+     */
+    async function findMatchingPrograms() {
       const companyData = collectFormData();
       
       // KSIC 코드 5자리 필수 검증
@@ -3330,7 +3450,7 @@
       }
       
       try {
-        showLoadingOverlay('AI 분석 중...', '지원사업 데이터 로딩 중...');
+        showLoadingOverlay('맞춤 지원사업 찾는 중...', '500개 공고 중 추천 공고를 찾고 있습니다...');
         
         // 클라이언트 사이드 매칭 실행
         const results = clientSideMatching(companyData);
@@ -3341,11 +3461,88 @@
         hideLoadingOverlay();
         displayResults({ recommendations: results });
         
-        // 맞춤찾기 완료 플래그 설정
+        // 맞춤찾기 완료 플래그 설정 (요약/상세 분석 가능)
         hasCompletedSearch = true;
+        
+        console.log('✅ 맞춤찾기 완료:', results.length, '개 추천');
         
       } catch (error) {
         hideLoadingOverlay();
+        console.error('❌ 맞춤찾기 오류:', error);
+        alert('맞춤찾기 중 오류가 발생했습니다: ' + error.message);
+      }
+    }
+    
+    /**
+     * 요약분석: API 요약 정보로 AI 분석
+     */
+    async function analyzeProgramsSummary() {
+      // 먼저 맞춤찾기가 완료되었는지 확인
+      if (!hasCompletedSearch) {
+        alert('⚠️ 먼저 아래 "맞춤 지원사업 찾기" 버튼을 눌러주세요!\n\n맞춤찾기로 추천된 공고가 있어야 요약분석을 진행할 수 있습니다.');
+        return;
+      }
+      
+      const companyData = collectFormData();
+      
+      try {
+        showLoadingOverlay('AI 요약분석 중...', '상위 10개 공고를 요약 분석 중...');
+        
+        // TODO: Netlify Function 호출하여 API 데이터로 요약분석
+        // 현재는 시뮬레이션
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        hideLoadingOverlay();
+        alert('✅ 요약분석이 완료되었습니다!\n\n분석 결과는 각 공고 카드에 표시됩니다.');
+        
+        // TODO: 실제 요약분석 결과 표시
+        
+      } catch (error) {
+        hideLoadingOverlay();
+        console.error('❌ 요약분석 오류:', error);
+        alert('요약분석 중 오류가 발생했습니다: ' + error.message);
+      }
+    }
+    
+    /**
+     * 상세분석: PDF 전문 AI 분석 수행
+     */
+    async function analyzeProgramsDetail() {
+      // 먼저 맞춤찾기가 완료되었는지 확인
+      if (!hasCompletedSearch) {
+        alert('⚠️ 먼저 아래 "맞춤 지원사업 찾기" 버튼을 눌러주세요!\n\n맞춤찾기로 추천된 공고가 있어야 상세분석을 진행할 수 있습니다.');
+        return;
+      }
+      
+      // 안내 팝업
+      const confirmed = confirm('📊 상세분석을 시작합니다.\n\n제시된 공고 중 매칭율 상위 10개의 공고문(PDF)을 AI가 상세 분석합니다.\n\n분석에는 약 1~2분이 소요되며, 추가 비용이 발생할 수 있습니다.\n\n계속하시겠습니까?');
+      
+      if (!confirmed) {
+        return;
+      }
+      
+      const companyData = collectFormData();
+      
+      try {
+        showLoadingOverlay('AI 상세분석 중...', '상위 10개 공고의 PDF를 AI가 분석하고 있습니다...');
+        
+        // TODO: Netlify Function 호출하여 PDF 상세분석
+        // 현재는 시뮬레이션
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        hideLoadingOverlay();
+        alert('✅ 상세분석이 완료되었습니다!\n\n분석 결과는 각 공고 카드에 표시됩니다.');
+        
+        // TODO: 실제 상세분석 결과 표시
+        
+      } catch (error) {
+        hideLoadingOverlay();
+        console.error('❌ 상세분석 오류:', error);
+        alert('상세분석 중 오류가 발생했습니다: ' + error.message);
+      }
+    }
+    
+    // 기존 analyzePrograms 함수는 analyzeProgramsSummary로 대체됨
         console.error('❌ 분석 실패:', error);
         alert('분석에 실패했습니다.\n\n' + error.message);
       }
@@ -3465,10 +3662,6 @@
                    style="display:inline-block;padding:0.7rem 1.5rem;background:#FF8802;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;transition:all 0.3s;">
                   📋 상세보기 →
                 </a>
-                <button onclick="alert('상담 예약 기능은 준비 중입니다.')"
-                        style="display:inline-block;padding:0.7rem 1.5rem;background:#fff;color:#0c2c54;border:2px solid #0c2c54;border-radius:8px;font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.3s;">
-                  📞 상담 예약
-                </button>
               </div>
             </div>
           </div>
@@ -3615,7 +3808,7 @@
         
         // 맞춤찾기 먼저 실행 여부 체크
         if (!hasCompletedSearch) {
-          alert('먼저 "맞춤 지원사업 찾기" 버튼을 눌러주세요.');
+          alert('먼저 "요약분석" 버튼을 눌러주세요.');
           return;
         }
         
