@@ -2626,63 +2626,6 @@
         option.textContent = `${company.companyName} (${company.companySize})`;
         select.appendChild(option);
       });
-      
-      // 목록도 함께 업데이트
-      updateCompanyList();
-    }
-    
-    function updateCompanyList() {
-      const listContainer = document.getElementById('company-list');
-      const searchTerm = document.getElementById('company-search')?.value?.toLowerCase() || '';
-      
-      // 기업 목록 배열로 변환
-      let companies = Object.keys(savedCompanies).map(id => ({
-        id: id,
-        ...savedCompanies[id]
-      }));
-      
-      // 검색 필터
-      if (searchTerm) {
-        companies = companies.filter(c => 
-          c.companyName?.toLowerCase().includes(searchTerm)
-        );
-      }
-      
-      // 정렬
-      if (currentSortType === 'name') {
-        companies.sort((a, b) => (a.companyName || '').localeCompare(b.companyName || '', 'ko'));
-      } else if (currentSortType === 'date') {
-        companies.sort((a, b) => {
-          const dateA = a.savedAt ? new Date(a.savedAt) : new Date(0);
-          const dateB = b.savedAt ? new Date(b.savedAt) : new Date(0);
-          return dateB - dateA;
-        });
-      }
-      
-      // 목록이 비어있으면
-      if (companies.length === 0) {
-        listContainer.innerHTML = '<div class="company-list-empty">' + 
-          (searchTerm ? '검색 결과가 없습니다' : '저장된 고객사가 없습니다') + 
-          '</div>';
-        return;
-      }
-      
-      // 목록 렌더링
-      listContainer.innerHTML = companies.map(company => {
-        const isSelected = selectedCompanyId === company.id;
-        const savedDate = company.savedAt ? formatDate(company.savedAt) : '';
-        const meta = [company.companySize, company.ksicCode].filter(Boolean).join(' · ');
-        
-        return `
-          <div class="company-item ${isSelected ? 'selected' : ''}" onclick="selectCompanyFromList('${company.id}')">
-            <div class="company-item-info">
-              <div class="company-item-name">${company.companyName || '(이름없음)'}</div>
-              <div class="company-item-meta">${meta}</div>
-            </div>
-            <div class="company-item-date">${savedDate}</div>
-          </div>
-        `;
-      }).join('');
     }
     
     function formatDate(dateStr) {
@@ -2696,28 +2639,11 @@
       }
     }
     
-    function filterCompanyList() {
-      updateCompanyList();
-    }
-    
-    function sortCompanyList(type) {
-      currentSortType = type;
-      
-      // 버튼 활성화 상태 변경
-      document.getElementById('sort-name').classList.toggle('active', type === 'name');
-      document.getElementById('sort-date').classList.toggle('active', type === 'date');
-      
-      updateCompanyList();
-    }
-    
     function selectCompanyFromList(companyId) {
       selectedCompanyId = companyId;
       
       // 드롭다운도 동기화
       document.getElementById('company-select').value = companyId;
-      
-      // 목록 UI 업데이트
-      updateCompanyList();
       
       // 폼에 데이터 로드
       loadSelectedCompany();
@@ -3065,7 +2991,6 @@
       document.getElementById('company-select').value = '';
       document.getElementById('company-name-search').value = '';
       selectedCompanyId = null;
-      updateCompanyList();
     }
     
     // ==================== 클라이언트 사이드 매칭 엔진 ====================
