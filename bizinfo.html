@@ -1298,43 +1298,43 @@
       <h3>9-1. 지원 필요 분야 (중복선택 가능)</h3>
       <div class="checkbox-grid">
         <div class="checkbox-item">
-          <input type="checkbox" id="support-funding" value="정책자금">
+          <input type="checkbox" id="support-funding" name="desiredSupport" value="정책자금">
           <label for="support-funding">정책자금</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-rd" value="기술개발">
+          <input type="checkbox" id="support-rd" name="desiredSupport" value="기술개발">
           <label for="support-rd">기술개발(R&D)</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-commercialize" value="사업화">
+          <input type="checkbox" id="support-commercialize" name="desiredSupport" value="사업화">
           <label for="support-commercialize">사업화</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-marketing" value="판로마케팅">
+          <input type="checkbox" id="support-marketing" name="desiredSupport" value="판로마케팅">
           <label for="support-marketing">판로/마케팅</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-export" value="수출지원">
+          <input type="checkbox" id="support-export" name="desiredSupport" value="수출지원">
           <label for="support-export">수출지원</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-hr" value="인력교육">
+          <input type="checkbox" id="support-hr" name="desiredSupport" value="인력교육">
           <label for="support-hr">인력/교육</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-facility" value="시설공간">
+          <input type="checkbox" id="support-facility" name="desiredSupport" value="시설공간">
           <label for="support-facility">시설/공간</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-consulting" value="컨설팅">
+          <input type="checkbox" id="support-consulting" name="desiredSupport" value="컨설팅">
           <label for="support-consulting">컨설팅</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-startup" value="창업">
+          <input type="checkbox" id="support-startup" name="desiredSupport" value="창업">
           <label for="support-startup">창업</label>
         </div>
         <div class="checkbox-item">
-          <input type="checkbox" id="support-esg" value="ESG탄소중립">
+          <input type="checkbox" id="support-esg" name="desiredSupport" value="ESG탄소중립">
           <label for="support-esg">ESG/탄소중립</label>
         </div>
       </div>
@@ -2094,11 +2094,21 @@
       if (resp.error !== undefined) {
         console.error('❌ 토큰 획득 실패:', resp);
         alert('Google 인증에 실패했습니다. 다시 시도해주세요.');
+        
+        // Promise 거부 (requestDriveAccess에서 catch 가능)
+        if (window._tokenPromiseReject) {
+          window._tokenPromiseReject(resp.error);
+        }
         return;
       }
       
       accessToken = resp.access_token;
       console.log('🔑 Access Token 획득 성공');
+      
+      // Promise 이행 (requestDriveAccess에서 await 가능)
+      if (window._tokenPromiseResolve) {
+        window._tokenPromiseResolve(accessToken);
+      }
       
       // Google API 클라이언트에 토큰 설정
       gapi.client.setToken({ access_token: accessToken });
@@ -2128,45 +2138,100 @@
     }
     
     // Google 로그인
-    function signInWithGoogle() {
-      if (!gisInited) {
-        console.error('❌ GIS가 아직 초기화되지 않았습니다');
-        alert('잠시 후 다시 시도해주세요.');
-        return;
+    async function signInWithGoogle() {
+      try {
+        console.log('🔐 Google 로그인 시작...');
+        
+        // 1. Firebase Auth 로그인 (세션 유지용)
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/drive');
+        
+        const result = await auth.signInWithPopup(provider);
+        console.log('✅ Firebase 로그인 성공:', result.user.email);
+        
+        currentUser = { email: result.user.email };
+        
+        // 2. GIS로 Drive Access Token 발급 (팝업)
+        if (!gisInited) {
+          console.error('❌ GIS가 아직 초기화되지 않았습니다');
+          alert('Drive 권한을 받을 수 없습니다. 새로고침 후 다시 시도해주세요.');
+          return;
+        }
+        
+        // GIS 팝업으로 Drive 권한 획득
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+        
+        // 화면은 handleTokenResponse에서 처리됨
+        
+      } catch (error) {
+        console.error('❌ 로그인 실패:', error);
+        alert('로그인에 실패했습니다. 다시 시도해주세요.');
       }
-      
-      console.log('🔐 Google 로그인 시작...');
-      
-      // 토큰 요청 (팝업)
-      tokenClient.requestAccessToken({ prompt: 'consent' });
     }
     
     // Google 로그아웃
-    function signOut() {
+    async function signOut() {
+      try {
+        // GIS 토큰 취소
+        if (accessToken) {
+          google.accounts.oauth2.revoke(accessToken, () => {
+            console.log('✅ GIS 토큰 취소 완료');
+          });
+        }
+        
+        // Firebase 로그아웃
+        await auth.signOut();
+        
+        accessToken = null;
+        currentUser = null;
+        savedCompanies = {};
+        
+        gapi.client.setToken(null);
+        
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        
+        console.log('✅ 로그아웃 완료');
+      } catch (error) {
+        console.error('❌ 로그아웃 실패:', error);
+      }
+    }
+    
+    // Drive 권한 요청 (필요시 팝업)
+    async function requestDriveAccess() {
       if (accessToken) {
-        google.accounts.oauth2.revoke(accessToken, () => {
-          console.log('✅ 토큰 취소 완료');
-        });
+        return accessToken; // 이미 토큰 있음
       }
       
-      accessToken = null;
-      currentUser = null;
-      savedCompanies = {};
+      if (!gisInited) {
+        throw new Error('GIS가 초기화되지 않았습니다');
+      }
       
-      gapi.client.setToken(null);
+      console.log('🔐 Drive 권한 요청 중...');
       
-      document.getElementById('main-content').style.display = 'none';
-      document.getElementById('login-screen').style.display = 'flex';
-      
-      console.log('✅ 로그아웃 완료');
+      // Promise로 감싸기
+      return new Promise((resolve, reject) => {
+        window._tokenPromiseResolve = resolve;
+        window._tokenPromiseReject = reject;
+        
+        // GIS 팝업 띄우기
+        tokenClient.requestAccessToken({ prompt: '' }); // prompt: '' = 자동 (이전 선택 기억)
+      });
     }
     
     // Google Drive에 저장
     async function saveToDrive(data) {
       try {
+        // Access Token 없으면 자동으로 요청
         if (!accessToken) {
-          console.error('❌ Access token이 없습니다');
-          return false;
+          console.log('🔐 Drive 권한이 필요합니다...');
+          try {
+            await requestDriveAccess();
+          } catch (error) {
+            console.error('❌ Drive 권한 획득 실패:', error);
+            alert('Google Drive 권한이 필요합니다. 다시 시도해주세요.');
+            return false;
+          }
         }
         
         console.log('💾 Google Drive에 저장 중...');
@@ -2241,8 +2306,9 @@
     // Google Drive에서 불러오기
     async function loadFromDrive() {
       try {
+        // Access Token 없으면 조용히 스킵 (최초 로그인 시)
         if (!accessToken) {
-          console.error('❌ Access token이 없습니다');
+          console.log('ℹ️ Drive 권한 없음 (나중에 저장 시 요청됨)');
           return false;
         }
         
@@ -2394,11 +2460,34 @@
         // GIS 로드
         gisLoaded();
         
-        // 로그인 화면 표시 (GIS는 자동 로그인 없음)
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('main-content').style.display = 'none';
-        
-        hideLoading();
+        // Firebase 인증 상태 확인 (자동 로그인)
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            console.log('✅ Firebase 세션 유지:', user.email);
+            
+            // 사용자 정보 표시
+            currentUser = { email: user.email };
+            
+            // 메인 화면 표시
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            
+            // 숫자 포맷팅 활성화
+            attachNumberFormatting();
+            
+            // Drive 데이터 로드 시도 (Access Token 있으면)
+            if (accessToken) {
+              await loadFromDrive();
+            }
+            
+            hideLoading();
+          } else {
+            console.log('⚠️ 로그인 필요');
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'none';
+            hideLoading();
+          }
+        });
         
       } catch (error) {
         console.error('❌ 초기화 실패:', error);
@@ -2693,7 +2782,7 @@
       if (success) {
         selectedCompanyId = companyId;
         updateCompanySelect();
-        alert(`✅ "${companyData.companyName}" 저장 완료!\n\n🔐 구글 드라이브에 AES-256 암호화로 안전하게 저장되었습니다.`);
+        alert('저장되었습니다.');
         console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
       } else {
         alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
@@ -3206,13 +3295,13 @@
     <h2 style="color: #FFD700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
       🤖 AI 지원사업 매칭 분석
       <span style="font-size: 0.7em; color: rgba(255,255,255,0.7); font-weight: normal;">
-        (기업마당 500개 공고 × Gemini AI)
+        (기업마당 공고 × Gemini AI)
       </span>
     </h2>
     
     <div class="info-notice" style="background: rgba(255, 136, 2, 0.2); border: 2px solid #FF8802; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
       <p style="margin: 0; font-size: 0.95rem;">
-        💡 <strong>안내:</strong> 위에 입력한 기업 정보를 바탕으로 기업마당 500개 공고를 AI가 자동 분석합니다. 
+        💡 <strong>안내:</strong> 위에 입력한 기업 정보를 바탕으로 기업마당 공고를 AI가 자동 분석합니다. 
         약 15초 소요됩니다.
       </p>
     </div>
@@ -3222,7 +3311,7 @@
       onclick="startAIAnalysis()" 
       class="btn btn-primary" 
       style="width: 100%; font-size: 1.2rem; padding: 1.2rem;">
-      🚀 AI 분석 시작 (500개 공고 분석)
+      🚀 AI 분석 시작
     </button>
     
     <!-- 로딩 표시 -->
@@ -3267,12 +3356,12 @@
         if (!validateCompanyData(companyData)) {
           alert('필수 항목(*)을 모두 입력해주세요.\n\n특히 다음 항목을 확인하세요:\n- 기업명\n- 사업자등록번호\n- 개업연월일\n- 기업 규모\n- 상시근로자 수\n- 최근 매출액');
           btn.disabled = false;
-          btn.textContent = '🚀 AI 분석 시작 (500개 공고 분석)';
+          btn.textContent = '🚀 AI 분석 시작';
           loadingSection.style.display = 'none';
           return;
         }
         
-        updateAILoading('기업마당 API 조회 중...', '500개 공고 불러오는 중...');
+        updateAILoading('기업마당 API 조회 중...', '공고 불러오는 중...');
         
         // Step 1: 기업마당 API 조회
         const response1 = await fetch('/.netlify/functions/getBizinfoPrograms', {
@@ -3312,7 +3401,7 @@
         
         // 복구
         btn.disabled = false;
-        btn.textContent = '🚀 AI 분석 시작 (500개 공고 분석)';
+        btn.textContent = '🚀 AI 분석 시작';
         loadingSection.style.display = 'none';
         
         // 스크롤
@@ -3323,7 +3412,7 @@
         alert('AI 분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n네트워크 연결을 확인하거나 잠시 후 다시 시도해주세요.');
         
         document.getElementById('aiAnalyzeBtn').disabled = false;
-        document.getElementById('aiAnalyzeBtn').textContent = '🚀 AI 분석 시작 (500개 공고 분석)';
+        document.getElementById('aiAnalyzeBtn').textContent = '🚀 AI 분석 시작';
         document.getElementById('aiLoadingSection').style.display = 'none';
       }
     }
