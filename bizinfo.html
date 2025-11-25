@@ -102,7 +102,7 @@
       top: 0;
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.5rem;
     }
     
     .header {
@@ -829,24 +829,19 @@
       
       <div style="background: rgba(255,210,127,0.15); border: 1px solid rgba(255,210,127,0.3); border-radius: 8px; padding: 0.6rem; margin-bottom: 0.6rem;">
         <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.9);">
-          💡 <strong>안내:</strong> 아래에서 저장된 고객사를 선택하거나, "새로 입력" 버튼으로 신규 고객사를 등록하세요.
+          💡 <strong>안내:</strong> 아래에 저장된 고객사명을 선택하거나, "새로 입력" 버튼으로 신규 고객사를 등록하세요.
         </p>
       </div>
       
-      <!-- 검색 및 정렬 -->
-      <div class="company-list-controls">
-        <div class="search-box">
-          <input type="text" id="company-search" placeholder="🔍 기업명 검색..." oninput="filterCompanyList()">
-        </div>
-        <div class="sort-buttons">
-          <button class="sort-btn active" onclick="sortCompanyList('name')" id="sort-name">가나다순</button>
-          <button class="sort-btn" onclick="sortCompanyList('date')" id="sort-date">최신순</button>
-        </div>
-      </div>
-      
-      <!-- 기업 목록 -->
-      <div class="company-list" id="company-list">
-        <div class="company-list-empty">저장된 고객사가 없습니다</div>
+      <!-- 회사명 입력 및 버튼 -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.6rem; align-items: center;">
+        <input type="text" id="company-name-search" placeholder="회사명 입력 또는 선택..." style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+        <button class="btn btn-secondary" onclick="searchCompany()" style="padding: 0.6rem 1rem; white-space: nowrap;">
+          🔍 조회
+        </button>
+        <button class="btn btn-secondary" onclick="openCompanyListModal()" style="padding: 0.6rem 1rem; white-space: nowrap;">
+          📋 목록
+        </button>
       </div>
       
       <!-- 숨김 드롭다운 (호환성) -->
@@ -858,6 +853,31 @@
         <button class="btn btn-secondary" onclick="clearForm()">
           ➕ 새로 입력
         </button>
+      </div>
+    </div>
+
+    <!-- 고객사 목록 모달 -->
+    <div id="company-list-modal" onclick="event.target.id === 'company-list-modal' && closeCompanyListModal()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; padding: 1rem; overflow-y: auto;">
+      <div style="max-width: 800px; margin: 2rem auto; background: linear-gradient(135deg, #1a3a5c 0%, #2a5a8a 100%); border-radius: 15px; padding: 1.5rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        
+        <!-- 모달 헤더 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid rgba(255,255,255,0.2);">
+          <h3 style="margin: 0; color: #ffd27f; font-size: 1.3rem;">📋 저장된 고객사 목록</h3>
+          <button onclick="closeCompanyListModal()" style="background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; padding: 0; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">×</button>
+        </div>
+        
+        <!-- 검색 및 정렬 -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+          <input type="text" id="modal-company-search" placeholder="🔍 회사명 검색..." oninput="filterModalList()" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+          <button class="sort-btn active" onclick="sortModalList('name')" id="modal-sort-name" style="padding: 0.6rem 1rem; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">가나다순</button>
+          <button class="sort-btn" onclick="sortModalList('date')" id="modal-sort-date" style="padding: 0.6rem 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">최신순</button>
+        </div>
+        
+        <!-- 고객사 리스트 -->
+        <div id="modal-company-list" style="max-height: 400px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 0.5rem;">
+          <div style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.6);">저장된 고객사가 없습니다</div>
+        </div>
+        
       </div>
     </div>
 
@@ -970,9 +990,9 @@
               </optgroup>
             </select>
             <input type="text" id="ksic-code" placeholder="5자리" maxlength="5" style="width: 70px;" inputmode="numeric" required oninput="allowOnlyNumbers(this)">
-            <button type="button" onclick="openKsicSearch()" class="btn-mini">🔍</button>
+            <button type="button" onclick="openKsicSearch()" class="btn-mini">🔍 검색</button>
           </div>
-          <span class="info-text">대분류 선택 후 세부코드 입력, 또는 🔍로 검색</span>
+          <span class="info-text">대분류 선택 후 세부코드 입력, 또는 🔍검색으로 찾기</span>
         </div>
         
         <div class="form-group full-width">
@@ -1069,19 +1089,19 @@
       <h3>3-1. 재무 현황</h3>
       <div class="form-grid">
         <div class="form-group">
-          <label>매출액 - 최근년도 (억원) <span class="required">*</span></label>
-          <input type="number" id="revenue-recent" placeholder="예: 15" required>
+          <label>매출액 - 최근년도 (원) <span class="required">*</span></label>
+          <input type="text" id="revenue-recent" placeholder="예: 1500000000" required>
         </div>
         
         <div class="form-group">
-          <label>영업이익 - 최근년도 (억원)</label>
+          <label>영업이익 - 최근년도 (원)</label>
           <div style="display: flex; align-items: center; gap: 0.3rem;">
             <label class="loss-checkbox-label">
               <input type="checkbox" id="profit-loss" onchange="toggleProfitSign()">
               <span class="loss-checkbox-box">✓</span>
               <span class="loss-checkbox-text">손실</span>
             </label>
-            <input type="text" id="profit-recent" placeholder="예: 2" inputmode="decimal" style="flex: 1;" oninput="formatProfitInput(this)">
+            <input type="text" id="profit-recent" placeholder="예: 200000000" inputmode="numeric" style="flex: 1;" oninput="formatProfitInput(this)">
           </div>
         </div>
         
@@ -1383,6 +1403,7 @@
     let gapiInited = false;
     let gisInited = false;
     let tokenClient = null;
+    let hasCompletedSearch = false; // 맞춤찾기 완료 플래그
     let accessToken = null;
     let currentUser = null;
     
@@ -1471,8 +1492,15 @@
       
       if (!input) return;
       
-      let value = input.value.replace(/[^0-9.]/g, '');
+      // 숫자만 추출 (콤마, 마이너스 제거)
+      let value = input.value.replace(/[^0-9]/g, '');
       
+      // 콤마 포맷팅
+      if (value) {
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+      
+      // 손실 체크 시 마이너스 추가
       if (checkbox && checkbox.checked && value) {
         input.value = '-' + value;
         input.style.color = '#ff6b6b';
@@ -1487,12 +1515,11 @@
      */
     function formatProfitInput(input) {
       const checkbox = document.getElementById('profit-loss');
-      let value = input.value.replace(/[^0-9.]/g, '');
+      let value = input.value.replace(/[^0-9]/g, ''); // 숫자만 추출
       
-      // 소수점 하나만 허용
-      const parts = value.split('.');
-      if (parts.length > 2) {
-        value = parts[0] + '.' + parts.slice(1).join('');
+      // 콤마 포맷팅
+      if (value) {
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       }
       
       if (checkbox && checkbox.checked && value) {
@@ -2384,12 +2411,19 @@
     // ==================== 숫자 포맷팅 ====================
     function formatNumber(value) {
       if (!value) return '';
-      // 숫자가 아닌 문자 제거
+      
+      // 마이너스 부호 확인
+      const isNegative = String(value).trim().startsWith('-');
+      
+      // 숫자만 추출
       const numStr = String(value).replace(/[^\d]/g, '');
       if (!numStr) return '';
       
-      // 숫자를 천 단위로 콤마 추가
-      return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      // 콤마 추가
+      const formatted = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      
+      // 마이너스 복원
+      return isNegative ? '-' + formatted : formatted;
     }
     
     function unformatNumber(value) {
@@ -2578,6 +2612,7 @@
     
     // 현재 정렬 상태
     let currentSortType = 'name';
+    let currentModalSortType = 'name'; // 모달 정렬 타입
     let selectedCompanyId = null;
     
     function updateCompanySelect() {
@@ -2688,6 +2723,190 @@
       loadSelectedCompany();
     }
     
+    // ==================== 모달 관련 함수 ====================
+    
+    function openCompanyListModal() {
+      const modal = document.getElementById('company-list-modal');
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden'; // 스크롤 방지
+      
+      // ESC 키 이벤트 추가
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeCompanyListModal();
+        }
+      };
+      document.addEventListener('keydown', escHandler);
+      modal._escHandler = escHandler; // 나중에 제거하기 위해 저장
+      
+      // 모달 리스트 렌더링
+      renderModalCompanyList();
+    }
+    
+    function closeCompanyListModal() {
+      const modal = document.getElementById('company-list-modal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto'; // 스크롤 복원
+      
+      // ESC 키 이벤트 제거
+      if (modal._escHandler) {
+        document.removeEventListener('keydown', modal._escHandler);
+        modal._escHandler = null;
+      }
+      
+      // 검색어 초기화
+      document.getElementById('modal-company-search').value = '';
+    }
+    
+    function renderModalCompanyList() {
+      const listContainer = document.getElementById('modal-company-list');
+      const searchTerm = document.getElementById('modal-company-search')?.value?.toLowerCase() || '';
+      
+      // 기업 목록 배열로 변환
+      let companies = Object.keys(savedCompanies).map(id => ({
+        id: id,
+        ...savedCompanies[id]
+      }));
+      
+      // 검색 필터
+      if (searchTerm) {
+        companies = companies.filter(c => 
+          c.companyName?.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // 정렬
+      if (currentModalSortType === 'name') {
+        companies.sort((a, b) => (a.companyName || '').localeCompare(b.companyName || '', 'ko'));
+      } else if (currentModalSortType === 'date') {
+        companies.sort((a, b) => {
+          const dateA = a.savedAt ? new Date(a.savedAt) : new Date(0);
+          const dateB = b.savedAt ? new Date(b.savedAt) : new Date(0);
+          return dateB - dateA;
+        });
+      }
+      
+      // 목록이 비어있으면
+      if (companies.length === 0) {
+        listContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.6);">' + 
+          (searchTerm ? '검색 결과가 없습니다' : '저장된 고객사가 없습니다') + 
+          '</div>';
+        return;
+      }
+      
+      // 목록 렌더링
+      listContainer.innerHTML = companies.map(company => {
+        const isSelected = selectedCompanyId === company.id;
+        const savedDate = company.savedAt ? formatDateFull(company.savedAt) : '';
+        const meta = [company.companySize, company.ksicCode].filter(Boolean).join(' · ');
+        
+        return `
+          <div onclick="selectCompanyFromModal('${company.id}')" style="
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: ${isSelected ? 'rgba(255,210,127,0.2)' : 'rgba(255,255,255,0.05)'};
+            border: 1px solid ${isSelected ? 'rgba(255,210,127,0.5)' : 'rgba(255,255,255,0.1)'};
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+          " onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='${isSelected ? 'rgba(255,210,127,0.2)' : 'rgba(255,255,255,0.05)'}'">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 0.95rem; color: ${isSelected ? '#ffd27f' : 'white'}; margin-bottom: 0.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${company.companyName || '(이름없음)'}
+                </div>
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">
+                  ${meta || '정보 없음'}
+                </div>
+              </div>
+              <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); white-space: nowrap;">
+                ${savedDate}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function formatDateFull(dateStr) {
+      try {
+        const date = new Date(dateStr);
+        const year = date.getFullYear().toString().slice(2);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}.${month}.${day}`;
+      } catch {
+        return '';
+      }
+    }
+    
+    function selectCompanyFromModal(companyId) {
+      selectedCompanyId = companyId;
+      
+      // 회사명 표시
+      const company = savedCompanies[companyId];
+      if (company) {
+        document.getElementById('company-name-search').value = company.companyName;
+      }
+      
+      // 드롭다운도 동기화
+      document.getElementById('company-select').value = companyId;
+      
+      // 폼에 데이터 로드
+      loadSelectedCompany();
+      
+      // 모달 닫기
+      closeCompanyListModal();
+    }
+    
+    function sortModalList(type) {
+      currentModalSortType = type;
+      
+      // 버튼 활성화 상태 변경
+      const nameBtn = document.getElementById('modal-sort-name');
+      const dateBtn = document.getElementById('modal-sort-date');
+      
+      if (type === 'name') {
+        nameBtn.classList.add('active');
+        dateBtn.classList.remove('active');
+        nameBtn.style.background = 'rgba(255,255,255,0.2)';
+        dateBtn.style.background = 'rgba(255,255,255,0.1)';
+      } else {
+        nameBtn.classList.remove('active');
+        dateBtn.classList.add('active');
+        nameBtn.style.background = 'rgba(255,255,255,0.1)';
+        dateBtn.style.background = 'rgba(255,255,255,0.2)';
+      }
+      
+      renderModalCompanyList();
+    }
+    
+    function filterModalList() {
+      renderModalCompanyList();
+    }
+    
+    function searchCompany() {
+      const searchInput = document.getElementById('company-name-search').value.trim();
+      
+      if (!searchInput) {
+        alert('회사명을 입력해주세요.');
+        return;
+      }
+      
+      // 저장된 고객사 중 검색
+      const found = Object.keys(savedCompanies).find(id => 
+        savedCompanies[id].companyName?.toLowerCase() === searchInput.toLowerCase()
+      );
+      
+      if (found) {
+        selectCompanyFromModal(found);
+      } else {
+        alert(`"${searchInput}"를 찾을 수 없습니다.\n목록 버튼을 눌러 저장된 고객사를 확인하세요.`);
+      }
+    }
+    
+    // ==================== 기존 함수 ====================
+    
     function loadSelectedCompany() {
       const companyId = selectedCompanyId || document.getElementById('company-select').value;
       
@@ -2748,6 +2967,21 @@
         }
       }
       
+      // 영업이익 손실 체크박스 설정
+      if (company.profitRecent) {
+        const profitCheckbox = document.getElementById('profit-loss');
+        const profitInput = document.getElementById('profit-recent');
+        if (profitCheckbox && profitInput) {
+          const isLoss = String(company.profitRecent).startsWith('-');
+          profitCheckbox.checked = isLoss;
+          if (isLoss) {
+            profitInput.style.color = '#ff6b6b';
+          } else {
+            profitInput.style.color = '#333';
+          }
+        }
+      }
+      
       // 업력 계산 표시
       if (company.establishDate) {
         calculateBusinessAge();
@@ -2782,6 +3016,10 @@
       if (success) {
         selectedCompanyId = companyId;
         updateCompanySelect();
+        
+        // 회사명 입력창 업데이트
+        document.getElementById('company-name-search').value = companyData.companyName;
+        
         alert('저장되었습니다.');
         console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
       } else {
@@ -2820,11 +3058,12 @@
       document.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.type === 'checkbox' || el.type === 'radio') {
           el.checked = false;
-        } else if (el.id !== 'company-search') {
+        } else if (el.id !== 'company-search' && el.id !== 'modal-company-search') {
           el.value = '';
         }
       });
       document.getElementById('company-select').value = '';
+      document.getElementById('company-name-search').value = '';
       selectedCompanyId = null;
       updateCompanyList();
     }
@@ -3078,6 +3317,9 @@
         hideLoadingOverlay();
         displayResults({ recommendations: results });
         
+        // 맞춤찾기 완료 플래그 설정
+        hasCompletedSearch = true;
+        
       } catch (error) {
         hideLoadingOverlay();
         console.error('❌ 분석 실패:', error);
@@ -3319,6 +3561,12 @@
       <div class="loader" style="margin: 0 auto;"></div>
       <p id="aiLoadingText" style="margin-top: 1rem; font-size: 1.1rem;">기업마당 API 조회 중...</p>
       <p id="aiLoadingDetail" style="margin-top: 0.5rem; color: rgba(255,255,255,0.7); font-size: 0.9rem;"></p>
+      
+      <!-- 진행율 표시 -->
+      <div style="width: 300px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 1rem auto 0.5rem; overflow: hidden;">
+        <div id="aiProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #FF8802, #FFD700); border-radius: 4px; transition: width 0.5s;"></div>
+      </div>
+      <p id="aiProgressText" style="font-size: 0.9rem; color: #FFD700; margin-top: 0.5rem;">0%</p>
     </div>
     
     <!-- 결과 표시 -->
@@ -3341,6 +3589,12 @@
         const loadingSection = document.getElementById('aiLoadingSection');
         const resultsSection = document.getElementById('aiResultsSection');
         
+        // 맞춤찾기 먼저 실행 여부 체크
+        if (!hasCompletedSearch) {
+          alert('먼저 "맞춤 지원사업 찾기" 버튼을 눌러주세요.');
+          return;
+        }
+        
         // 버튼 비활성화
         btn.disabled = true;
         btn.textContent = '분석 중...';
@@ -3361,6 +3615,13 @@
           return;
         }
         
+        // 진행율 업데이트 함수
+        const updateAIProgress = (percent) => {
+          document.getElementById('aiProgressBar').style.width = percent + '%';
+          document.getElementById('aiProgressText').textContent = Math.round(percent) + '%';
+        };
+        
+        updateAIProgress(10);
         updateAILoading('기업마당 API 조회 중...', '공고 불러오는 중...');
         
         // Step 1: 기업마당 API 조회
@@ -3377,6 +3638,7 @@
         const data1 = await response1.json();
         const programs = data1.programs || [];
         
+        updateAIProgress(50);
         updateAILoading('Gemini AI 분석 중...', `${programs.length}개 공고와 기업 정보 매칭 중...`);
         
         // Step 2: AI 매칭 분석
@@ -3396,6 +3658,8 @@
         const data2 = await response2.json();
         const matchedPrograms = data2.matchedPrograms || [];
         
+        updateAIProgress(100);
+        
         // 결과 표시
         displayAIResults(matchedPrograms);
         
@@ -3403,6 +3667,9 @@
         btn.disabled = false;
         btn.textContent = '🚀 AI 분석 시작';
         loadingSection.style.display = 'none';
+        
+        // 진행율 초기화
+        updateAIProgress(0);
         
         // 스크롤
         resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3414,6 +3681,10 @@
         document.getElementById('aiAnalyzeBtn').disabled = false;
         document.getElementById('aiAnalyzeBtn').textContent = '🚀 AI 분석 시작';
         document.getElementById('aiLoadingSection').style.display = 'none';
+        
+        // 진행율 초기화
+        document.getElementById('aiProgressBar').style.width = '0%';
+        document.getElementById('aiProgressText').textContent = '0%';
       }
     }
     
@@ -3441,8 +3712,8 @@
       const youthRatio = employees > 0 ? (youthEmployees / employees * 100).toFixed(1) : 0;
       const femaleRatio = employees > 0 ? (femaleEmployees / employees * 100).toFixed(1) : 0;
       
-      // 매출액 (억원 → 원)
-      const revenue = (parseFloat(document.getElementById('revenue-recent')?.value) || 0) * 100000000;
+      // 매출액 (원 단위)
+      const revenue = parseFloat(unformatNumber(document.getElementById('revenue-recent')?.value)) || 0;
       
       // 사업자번호 조합
       const bizNum1 = document.getElementById('business-number-1')?.value || '';
