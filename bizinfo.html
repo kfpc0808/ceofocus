@@ -105,6 +105,29 @@
       gap: 0.8rem;
     }
     
+    /* 모바일에서 버튼 겹침 방지 */
+    @media (max-width: 768px) {
+      .header-left {
+        position: static;
+        margin-bottom: 0.5rem;
+        justify-content: flex-start;
+      }
+      
+      .header {
+        padding-top: 0.5rem;
+      }
+      
+      .header h1 {
+        padding: 0.5rem 0 0 0;
+      }
+      
+      .header .btn-main {
+        position: static;
+        margin: 0.5rem auto 0;
+        display: block;
+      }
+    }
+    
     .header {
       position: relative;
       text-align: center;
@@ -889,10 +912,10 @@
       <div class="form-grid">
         <div class="form-group full-width">
           <label>기업명 <span class="required">*</span></label>
-          <input type="text" id="company-name" placeholder="상호명을 정확히 입력" required>
+          <input type="text" id="company-name" placeholder="상호명을 정확히 입력" required style="width: 100%; max-width: 100%; box-sizing: border-box;">
         </div>
         
-        <div class="form-group">
+        <div class="form-group full-width">
           <label>사업자등록번호 <span class="required">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <input type="text" id="business-number-1" placeholder="000" maxlength="3" style="width: 80px;" inputmode="numeric" required oninput="allowOnlyNumbers(this); moveFocusOnMaxLength(this, 'business-number-2', 3)">
@@ -903,7 +926,7 @@
           </div>
         </div>
         
-        <div class="form-group">
+        <div class="form-group full-width">
           <label>개업연월일(사업자등록증) <span class="required">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <input type="date" id="establish-date" required onchange="calculateBusinessAge()" style="flex: 1;">
@@ -952,8 +975,8 @@
         
         <div class="form-group full-width">
           <label>업종(KSIC 코드) <span class="required">*</span></label>
-          <div style="display: flex; gap: 0.3rem; align-items: flex-start;">
-            <select id="ksic-select" onchange="updateKsicCode()" style="flex: 1;">
+          <div style="display: flex; gap: 0.3rem; align-items: flex-start; flex-wrap: wrap;">
+            <select id="ksic-select" onchange="updateKsicCode()" style="flex: 1; min-width: 150px;">
               <option value="">대분류 선택</option>
               <optgroup label="제조업 (C)">
                 <option value="10">10 - 식료품</option>
@@ -989,10 +1012,17 @@
                 <option value="86">86 - 보건업</option>
               </optgroup>
             </select>
-            <input type="text" id="ksic-code" placeholder="5자리" maxlength="5" style="width: 70px;" inputmode="numeric" required oninput="allowOnlyNumbers(this)">
+            <div style="display: flex; gap: 0.2rem; align-items: center;">
+              <input type="text" id="ksic-1" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 1)">
+              <input type="text" id="ksic-2" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 2)">
+              <input type="text" id="ksic-3" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 3)">
+              <input type="text" id="ksic-4" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 4)">
+              <input type="text" id="ksic-5" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 5)">
+            </div>
+            <input type="hidden" id="ksic-code">
             <button type="button" onclick="openKsicSearch()" class="btn-mini">🔍 검색</button>
           </div>
-          <span class="info-text">대분류 선택 후 세부코드 입력, 또는 🔍검색으로 찾기</span>
+          <span class="info-text" style="color: #ff9999; font-weight: bold;">⚠️ KSIC 코드 5자리 모두 정확히 입력해주세요. 이 코드가 AI 분석에 가장 중요한 역할을 합니다!</span>
         </div>
         
         <div class="form-group full-width">
@@ -1363,7 +1393,7 @@
     <!-- 실행 버튼 -->
     <div class="card">
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <button class="btn btn-primary" onclick="analyzePrograms()" style="flex: 1; font-size: 1rem; padding: 0.8rem;">
+        <button class="btn btn-primary" onclick="analyzePrograms()" style="flex: 2; font-size: 1rem; padding: 0.8rem;">
           🔍 맞춤 지원사업 찾기
         </button>
         <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 1rem; padding: 0.8rem;">
@@ -1417,12 +1447,63 @@
      */
     function updateKsicCode() {
       const select = document.getElementById('ksic-select');
-      const input = document.getElementById('ksic-code');
-      if (select && input && select.value) {
-        // 선택된 값이 2자리면 앞에 채우고 나머지 3자리는 사용자 입력
-        input.value = select.value;
-        input.focus();
+      const ksic1 = document.getElementById('ksic-1');
+      const ksic2 = document.getElementById('ksic-2');
+      
+      if (select && select.value && ksic1 && ksic2) {
+        // 선택된 값을 첫 2자리에 자동 입력
+        const code = select.value;
+        ksic1.value = code[0] || '';
+        ksic2.value = code[1] || '';
+        
+        // hidden 필드도 업데이트
+        updateKsicHiddenField();
+        
+        // 3번째 입력창으로 포커스
+        document.getElementById('ksic-3').focus();
       }
+    }
+    
+    /**
+     * KSIC 코드 5자리 개별 입력 처리
+     */
+    function handleKsicInput(input, position) {
+      // 숫자만 허용
+      input.value = input.value.replace(/[^0-9]/g, '');
+      
+      // 첫 번째 숫자 입력 시 경고 메시지
+      if (position === 1 && input.value) {
+        const hasShownWarning = sessionStorage.getItem('ksicWarningShown');
+        if (!hasShownWarning) {
+          alert('⚠️ KSIC 코드는 AI 분석에 가장 중요한 역할을 합니다!\n\n해당 기업의 정확한 업종 코드 5자리를 모두 입력해주세요.\n\n정확한 코드를 모르시면 🔍 검색 버튼을 눌러 확인하세요.');
+          sessionStorage.setItem('ksicWarningShown', 'true');
+        }
+      }
+      
+      // 값이 입력되면 다음 칸으로 자동 이동
+      if (input.value && position < 5) {
+        const nextInput = document.getElementById(`ksic-${position + 1}`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }
+      
+      // hidden 필드 업데이트
+      updateKsicHiddenField();
+    }
+    
+    /**
+     * KSIC hidden 필드 업데이트
+     */
+    function updateKsicHiddenField() {
+      const ksic1 = document.getElementById('ksic-1').value;
+      const ksic2 = document.getElementById('ksic-2').value;
+      const ksic3 = document.getElementById('ksic-3').value;
+      const ksic4 = document.getElementById('ksic-4').value;
+      const ksic5 = document.getElementById('ksic-5').value;
+      
+      const fullCode = ksic1 + ksic2 + ksic3 + ksic4 + ksic5;
+      document.getElementById('ksic-code').value = fullCode;
     }
     
     /**
@@ -2913,6 +2994,17 @@
         calculateBusinessAge();
       }
       
+      // KSIC 코드 5자리 개별 입력창에 로드
+      if (company.ksicCode) {
+        const code = String(company.ksicCode).padStart(5, '0');
+        document.getElementById('ksic-1').value = code[0] || '';
+        document.getElementById('ksic-2').value = code[1] || '';
+        document.getElementById('ksic-3').value = code[2] || '';
+        document.getElementById('ksic-4').value = code[3] || '';
+        document.getElementById('ksic-5').value = code[4] || '';
+        updateKsicHiddenField();
+      }
+      
       console.log('✅ 고객사 정보 로드:', company.companyName);
     }
     
@@ -3197,6 +3289,13 @@
     
     async function analyzePrograms() {
       const companyData = collectFormData();
+      
+      // KSIC 코드 5자리 필수 검증
+      if (!companyData.ksicCode || companyData.ksicCode.length !== 5) {
+        alert('⚠️ KSIC 코드 5자리를 모두 입력해주세요!\n\nKSIC 코드는 AI 분석에 가장 중요한 역할을 합니다.\n정확한 업종 코드 5자리를 입력해야 정확한 매칭 결과를 받을 수 있습니다.\n\n🔍 검색 버튼을 눌러 정확한 코드를 확인하세요.');
+        document.getElementById('ksic-1').focus();
+        return;
+      }
       
       // 필수 필드 검증 (항목명 포함)
       const requiredFields = [
