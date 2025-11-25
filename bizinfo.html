@@ -235,9 +235,9 @@
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
+      background: linear-gradient(135deg, #FF9933 0%, #FF8020 100%);
       color: white;
-      box-shadow: 0 2px 8px rgba(255,136,2,0.3);
+      box-shadow: 0 2px 8px rgba(255,136,2,0.25);
     }
     
     .btn-secondary {
@@ -810,8 +810,10 @@
   <div class="container" id="main-content" style="display: none;">
     <div class="header">
       <div class="header-left">
+        <button class="btn-main btn-small" style="background: #28a745; cursor: default;" disabled>
+          <span style="font-size: 0.9rem;">✓</span> 연결됨
+        </button>
         <button class="btn-main btn-small" onclick="signOut()">로그아웃</button>
-        <span id="user-info" style="font-size: 0.7rem; color: #ddd;"></span>
       </div>
       <h1>🏢 기업 지원사업 AI 매칭</h1>
       <button class="btn-main btn-small" onclick="goHome()">메인</button>
@@ -824,6 +826,12 @@
     <!-- 1. 고객사 선택 -->
     <div class="card">
       <h2>1. 고객사 관리</h2>
+      
+      <div style="background: rgba(255,210,127,0.15); border: 1px solid rgba(255,210,127,0.3); border-radius: 8px; padding: 0.6rem; margin-bottom: 0.6rem;">
+        <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.9);">
+          💡 <strong>안내:</strong> 아래에서 저장된 고객사를 선택하거나, "새로 입력" 버튼으로 신규 고객사를 등록하세요.
+        </p>
+      </div>
       
       <!-- 검색 및 정렬 -->
       <div class="company-list-controls">
@@ -1334,17 +1342,17 @@
 
     <!-- 실행 버튼 -->
     <div class="card">
-      <button class="btn btn-primary" onclick="analyzePrograms()" style="width: 100%; font-size: 1rem; padding: 0.8rem; margin-bottom: 0.5rem;">
-        🔍 맞춤 지원사업 찾기
-      </button>
-      <div style="display: flex; gap: 0.5rem;">
-        <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1;">
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <button class="btn btn-primary" onclick="analyzePrograms()" style="flex: 1; font-size: 1rem; padding: 0.8rem;">
+          🔍 맞춤 지원사업 찾기
+        </button>
+        <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 1rem; padding: 0.8rem;">
           💾 저장
         </button>
-        <button class="btn btn-secondary" onclick="deleteCompany()" style="flex: 0 0 auto; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
-          🗑️ 삭제
-        </button>
       </div>
+      <button class="btn btn-secondary" onclick="deleteCompany()" style="width: 100%; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
+        🗑️ 삭제
+      </button>
     </div>
 
     <!-- 결과 표시 영역 -->
@@ -3193,6 +3201,7 @@
   <!-- AI 분석 섹션 추가 (기존 코드 유지, 추가만 함) -->
   <!-- ============================================ -->
   
+  <div class="container">
   <div class="card" id="aiAnalysisSection" style="margin-top: 2rem;">
     <h2 style="color: #FFD700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
       🤖 AI 지원사업 매칭 분석
@@ -3230,6 +3239,7 @@
       </h3>
       <div id="aiResultsList"></div>
     </div>
+  </div>
   </div>
 
   <script>
