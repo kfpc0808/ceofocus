@@ -1900,461 +1900,50 @@
       }
     ];
     
-    // ==================== 테스트 지원사업 데이터 ====================
+    // ==================== 기업마당 API 연동 ====================
     /**
-     * 실제 지원사업 데이터 (2025년 기준)
-     * 클라이언트 사이드 매칭에 사용
+     * 실제 지원사업 데이터를 기업마당 API에서 가져옴
      */
-    const MOCK_PROGRAMS = [
-      // 1. 창업 지원
-      {
-        id: 'startup-001',
-        name: '예비창업패키지',
-        organization: '중소벤처기업부',
-        category: '창업',
-        budget: '최대 1억원',
-        description: '우수한 사업 아이디어를 보유한 예비창업자에게 사업화 자금, 멘토링, 교육 등을 종합 지원',
-        
-        // 자격 조건
-        requiresNoArrears: true,
-        minBusinessAge: null,
-        maxBusinessAge: 0, // 창업 전
-        targetCompanySize: [],
-        maxCeoAge: 39,
-        
-        // 선호 조건
-        targetIndustry: [], // 전 업종
-        targetRegion: [],
-        prefersYouthEmployment: true,
-        
-        website: 'https://www.k-startup.go.kr'
-      },
-      
-      {
-        id: 'startup-002',
-        name: '초기창업패키지',
-        organization: '중소벤처기업부',
-        category: '창업',
-        budget: '최대 1억원',
-        description: '업력 3년 이하 초기창업기업의 성장 지원 (사업화 자금, 멘토링, 마케팅 등)',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: 3,
-        targetCompanySize: ['소기업', '중소기업'],
-        maxCeoAge: null,
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        website: 'https://www.k-startup.go.kr'
-      },
-      
-      {
-        id: 'startup-003',
-        name: '청년창업사관학교',
-        organization: '중소벤처기업부',
-        category: '창업',
-        budget: '최대 1억원 + 입주공간',
-        description: '만 39세 이하 청년 창업자 대상 창업 교육, 자금, 공간 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: 3,
-        targetCompanySize: ['소기업', '중소기업'],
-        maxCeoAge: 39,
-        
-        targetIndustry: [],
-        targetRegion: [],
-        prefersYouthEmployment: true,
-        
-        website: 'https://www.k-startup.go.kr'
-      },
-      
-      // 2. R&D 지원
-      {
-        id: 'rnd-001',
-        name: '중소기업 기술개발사업',
-        organization: '중소벤처기업부',
-        category: 'R&D',
-        budget: '최대 5억원',
-        description: '중소기업의 기술경쟁력 강화를 위한 R&D 과제 지원 (제품개발, 공정개선 등)',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: ['10', '20', '21', '26', '27', '28', '29', '62', '70'],
-        targetRegion: [],
-        
-        prefersPatent: true,
-        prefersRnD: true,
-        prefersVenture: true,
-        prefersInnobiz: true,
-        
-        website: 'https://www.smtech.go.kr'
-      },
-      
-      {
-        id: 'rnd-002',
-        name: '산업기술 R&D (알키미스트)',
-        organization: '산업통상자원부',
-        category: 'R&D',
-        budget: '최대 20억원',
-        description: '소재·부품·장비(소부장) 핵심기술 개발 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 3,
-        maxBusinessAge: null,
-        targetCompanySize: ['중소기업', '중견기업'],
-        
-        targetIndustry: ['20', '21', '26', '27', '28'], // 화학, 전자부품, 반도체
-        targetRegion: [],
-        
-        prefersPatent: true,
-        prefersRnD: true,
-        prefersVenture: true,
-        
-        website: 'https://www.motie.go.kr'
-      },
-      
-      {
-        id: 'rnd-003',
-        name: '산학연협력 기술개발',
-        organization: '중소벤처기업부',
-        category: 'R&D',
-        budget: '최대 3억원',
-        description: '중소기업과 대학/연구소 간 공동 R&D 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersPatent: true,
-        prefersRnD: true,
-        
-        website: 'https://www.smtech.go.kr'
-      },
-      
-      // 3. 금융 지원
-      {
-        id: 'finance-001',
-        name: '정책자금융자',
-        organization: '중소벤처기업진흥공단',
-        category: '금융',
-        budget: '최대 30억원',
-        description: '중소기업 운영자금 및 시설자금 저리 융자 (연 2~3% 금리)',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        website: 'https://www.kosmes.or.kr'
-      },
-      
-      {
-        id: 'finance-002',
-        name: '벤처기업 투융자',
-        organization: '중소벤처기업진흥공단',
-        category: '금융',
-        budget: '최대 50억원',
-        description: '벤처기업 성장 지원 투융자 (투자+융자 패키지)',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: 7,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersVenture: true,
-        prefersPatent: true,
-        
-        website: 'https://www.kosmes.or.kr'
-      },
-      
-      {
-        id: 'finance-003',
-        name: '소상공인 정책자금',
-        organization: '소상공인시장진흥공단',
-        category: '금융',
-        budget: '최대 7천만원',
-        description: '소상공인 운영자금 및 시설개선 자금 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업'],
-        
-        targetIndustry: ['46', '47', '56'], // 도소매, 음식점
-        targetRegion: [],
-        
-        website: 'https://www.semas.or.kr'
-      },
-      
-      // 4. 수출 지원
-      {
-        id: 'export-001',
-        name: '수출바우처',
-        organization: '중소벤처기업부',
-        category: '수출',
-        budget: '최대 2천만원',
-        description: '중소기업 해외 전시회 참가, 마케팅, 인증획득 등 수출 역량 강화 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersExport: true,
-        
-        website: 'https://www.exportvoucher.com'
-      },
-      
-      {
-        id: 'export-002',
-        name: 'K-스타트업 글로벌 진출',
-        organization: '중소벤처기업부',
-        category: '수출',
-        budget: '최대 5천만원',
-        description: '유망 스타트업 해외시장 진출 지원 (현지화, 마케팅, IR 등)',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: 7,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: ['58', '62', '63', '70'],
-        targetRegion: [],
-        
-        prefersVenture: true,
-        prefersPatent: true,
-        
-        website: 'https://www.k-startup.go.kr'
-      },
-      
-      {
-        id: 'export-003',
-        name: '글로벌 강소기업 육성',
-        organization: '산업통상자원부',
-        category: '수출',
-        budget: '최대 10억원',
-        description: '수출 유망 중소기업의 글로벌 시장 진출 종합 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 3,
-        maxBusinessAge: null,
-        targetCompanySize: ['중소기업', '중견기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersExport: true,
-        prefersPatent: true,
-        
-        website: 'https://www.motie.go.kr'
-      },
-      
-      // 5. 고용 지원
-      {
-        id: 'employment-001',
-        name: '청년추가고용장려금',
-        organization: '고용노동부',
-        category: '고용',
-        budget: '1인당 최대 900만원',
-        description: '만 15~34세 청년 정규직 신규 채용 시 인건비 지원 (3년간)',
-        
-        requiresNoArrears: false,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업', '중견기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersYouthEmployment: true,
-        
-        website: 'https://www.work.go.kr'
-      },
-      
-      {
-        id: 'employment-002',
-        name: '일자리 안정자금',
-        organization: '고용노동부',
-        category: '고용',
-        budget: '1인당 월 최대 9만원',
-        description: '최저임금 인상에 따른 소상공인·영세중소기업 지원',
-        
-        requiresNoArrears: false,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        website: 'https://www.work.go.kr'
-      },
-      
-      {
-        id: 'employment-003',
-        name: '여성고용 우수기업 지원',
-        organization: '여성가족부',
-        category: '고용',
-        budget: '최대 5천만원',
-        description: '여성 고용 비율이 높은 기업에 대한 인센티브 및 지원',
-        
-        requiresNoArrears: false,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersFemaleEmployment: true,
-        
-        website: 'https://www.mogef.go.kr'
-      },
-      
-      // 6. 지역 특화
-      {
-        id: 'region-001',
-        name: '지역주력산업 육성사업',
-        organization: '산업통상자원부',
-        category: '지역특화',
-        budget: '최대 10억원',
-        description: '지역별 주력산업(자동차, 조선, 섬유 등) 육성 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: ['부산', '대구', '울산', '경북', '경남', '전북', '전남'],
-        
-        preferNonCapital: true,
-        
-        website: 'https://www.motie.go.kr'
-      },
-      
-      {
-        id: 'region-002',
-        name: '지역산업 맞춤형 일자리창출',
-        organization: '고용노동부',
-        category: '지역특화',
-        budget: '최대 3억원',
-        description: '지역 특성에 맞는 일자리 창출 기업 지원',
-        
-        requiresNoArrears: false,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: ['강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'],
-        
-        preferNonCapital: true,
-        
-        website: 'https://www.work.go.kr'
-      },
-      
-      // 7. 디지털전환
-      {
-        id: 'digital-001',
-        name: '스마트공장 구축 지원',
-        organization: '중소벤처기업부',
-        category: '디지털전환',
-        budget: '최대 1억원',
-        description: '제조업 스마트공장 구축 및 고도화 지원 (설비, SW, 컨설팅)',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: ['10', '11', '13', '14', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31'],
-        targetRegion: [],
-        
-        website: 'https://www.smart-factory.kr'
-      },
-      
-      {
-        id: 'digital-002',
-        name: '중소기업 AI·빅데이터 바우처',
-        organization: '과학기술정보통신부',
-        category: '디지털전환',
-        budget: '최대 7천만원',
-        description: 'AI·빅데이터 기술 도입 및 활용 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersRnD: true,
-        
-        website: 'https://www.msit.go.kr'
-      },
-      
-      // 8. 기타
-      {
-        id: 'etc-001',
-        name: '소상공인 희망리턴패키지',
-        organization: '소상공인시장진흥공단',
-        category: '재기지원',
-        budget: '최대 5천만원',
-        description: '폐업 후 재창업하는 소상공인 지원 (교육, 자금, 컨설팅)',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: 1,
-        targetCompanySize: ['소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        website: 'https://www.semas.or.kr'
-      },
-      
-      {
-        id: 'etc-002',
-        name: '여성기업 지원사업',
-        organization: '중소벤처기업부',
-        category: '여성기업',
-        budget: '최대 3억원',
-        description: '여성기업 및 여성 CEO 기업 대상 자금, 판로, 교육 지원',
-        
-        requiresNoArrears: true,
-        minBusinessAge: 0,
-        maxBusinessAge: null,
-        targetCompanySize: ['소기업', '중소기업'],
-        
-        targetIndustry: [],
-        targetRegion: [],
-        
-        prefersFemaleEmployment: true,
-        
-        website: 'https://www.smba.go.kr'
+    let bizInfoPrograms = []; // API에서 가져온 실제 데이터
+    let bizInfoLoaded = false;
+    
+    /**
+     * 기업마당 API에서 지원사업 목록 가져오기
+     */
+    async function fetchBizInfoPrograms() {
+      if (bizInfoLoaded && bizInfoPrograms.length > 0) {
+        console.log('📦 캐시된 데이터 사용:', bizInfoPrograms.length, '개');
+        return bizInfoPrograms;
       }
-    ];
+      
+      try {
+        console.log('📡 기업마당 API 호출 중...');
+        const response = await fetch('/.netlify/functions/getBizInfoPrograms');
+        
+        if (!response.ok) {
+          throw new Error(`API 오류: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.programs) {
+          bizInfoPrograms = data.programs;
+          bizInfoLoaded = true;
+          console.log('✅ 기업마당 데이터 로드 완료:', bizInfoPrograms.length, '개 공고');
+          console.log('📊 분야별:', data.stats?.byCategory);
+          return bizInfoPrograms;
+        } else {
+          throw new Error(data.error || '데이터 로드 실패');
+        }
+      } catch (error) {
+        console.error('❌ 기업마당 API 오류:', error);
+        throw error;
+      }
+    }
+    
+    // ==================== 삭제된 MOCK_PROGRAMS ====================
+    // 기존 하드코딩 데이터는 삭제되었습니다.
+    // 이제 fetchBizInfoPrograms()로 실제 데이터를 사용합니다.
     
     // ==================== Google API 초기화 ====================
     function gapiLoaded() {
@@ -3632,173 +3221,109 @@
     
     /**
      * 클라이언트 사이드 매칭 엔진
-     * 백엔드 없이 작동하는 지원사업 추천 알고리즘
+     * 기업마당 API 데이터 기반 지원사업 추천
      */
-    function clientSideMatching(companyData) {
-      console.log('🎯 클라이언트 매칭 시작:', companyData.companyName);
+    async function clientSideMatching(companyData) {
+      console.log('🎯 매칭 시작:', companyData.companyName);
+      
+      // 1. 기업마당 API에서 실제 데이터 가져오기
+      const programs = await fetchBizInfoPrograms();
+      
+      if (!programs || programs.length === 0) {
+        console.log('⚠️ 가져온 공고가 없습니다.');
+        return [];
+      }
+      
+      console.log(`📦 ${programs.length}개 공고 분석 중...`);
       
       const businessAge = getBusinessAgeYears(companyData.establishDate);
       const ceoAge = calculateAge(companyData.ceoBirth);
       
       console.log(`📊 기업 정보 - 업력: ${businessAge}년, CEO 나이: ${ceoAge}세`);
       
-      // Step 1: Kill-Out 필터 (즉시 탈락)
-      let eligiblePrograms = MOCK_PROGRAMS.filter(program => {
-        // 체납 체크
-        if (program.requiresNoArrears) {
-          if (companyData.taxArrears === 'Y' || companyData.localTaxArrears === 'Y') {
-            console.log(`❌ ${program.name}: 체납으로 제외`);
-            return false;
-          }
-        }
-        
-        // 업력 최소 요건
-        if (program.minBusinessAge !== null && program.minBusinessAge !== undefined) {
-          if (businessAge < program.minBusinessAge) {
-            console.log(`❌ ${program.name}: 최소 업력 미달 (필요: ${program.minBusinessAge}년, 현재: ${businessAge}년)`);
-            return false;
-          }
-        }
-        
-        // 업력 최대 제한
-        if (program.maxBusinessAge !== null && program.maxBusinessAge !== undefined) {
-          if (businessAge > program.maxBusinessAge) {
-            console.log(`❌ ${program.name}: 업력 초과 (최대: ${program.maxBusinessAge}년, 현재: ${businessAge}년)`);
-            return false;
-          }
-        }
-        
-        // 기업규모 체크
-        if (program.targetCompanySize && program.targetCompanySize.length > 0) {
-          if (!program.targetCompanySize.includes(companyData.companySize)) {
-            console.log(`❌ ${program.name}: 기업규모 불일치`);
-            return false;
-          }
-        }
-        
-        // CEO 나이 제한
-        if (program.maxCeoAge !== null && program.maxCeoAge !== undefined) {
-          if (ceoAge > program.maxCeoAge) {
-            console.log(`❌ ${program.name}: CEO 나이 초과 (최대: ${program.maxCeoAge}세, 현재: ${ceoAge}세)`);
-            return false;
-          }
-        }
-        
-        return true;
-      });
+      // 2. 희망 지원분야와 매칭
+      const desiredCategories = companyData.supportNeeds || [];
+      const hasAllCategory = desiredCategories.includes('전체');
       
-      console.log(`✅ Kill-Out 통과: ${eligiblePrograms.length}개 프로그램`);
+      // 3. 지역 매칭 준비
+      const companyRegion = companyData.locationSido || '';
       
-      // Step 2: 매칭 점수 계산 (Scoring)
-      const scoredPrograms = eligiblePrograms.map(program => {
-        let score = 50; // 기본 점수
+      // 4. 매칭 점수 계산
+      const scoredPrograms = programs.map(program => {
+        let score = 30; // 기본 점수
         let reasons = [];
         
-        // 업종 매칭 (최대 +30점)
-        if (program.targetIndustry && program.targetIndustry.length > 0) {
-          if (program.targetIndustry.includes(companyData.ksicCode)) {
+        // 분야 매칭 (+30점)
+        if (hasAllCategory) {
+          score += 20;
+          reasons.push('✅ 전체 분야 관심');
+        } else if (desiredCategories.length > 0) {
+          const programCategory = program.category || '';
+          if (desiredCategories.some(cat => programCategory.includes(cat))) {
             score += 30;
-            reasons.push('✅ 업종이 정확히 일치합니다');
-          } else if (program.targetIndustry.some(code => 
-            companyData.ksicCode.startsWith(code.substring(0, 2)))) {
-            score += 15;
-            reasons.push('✅ 관련 업종입니다');
+            reasons.push(`✅ ${programCategory} 분야 일치`);
           }
-        } else {
-          // 전 업종 대상
-          score += 10;
-          reasons.push('✅ 모든 업종 지원 가능');
         }
         
-        // 인증 가산점 (최대 +20점)
-        if (program.prefersVenture && companyData.certVenture === 'Y') {
+        // 지역 매칭 (+20점)
+        const hashTags = program.hashTags || '';
+        if (hashTags.includes(companyRegion) || hashTags.includes('전국') || !hashTags) {
+          score += 20;
+          reasons.push(`✅ ${companyRegion || '전국'} 지역 해당`);
+        }
+        
+        // 지원대상 키워드 매칭 (+15점)
+        const target = (program.target || '').toLowerCase();
+        const description = (program.description || '').toLowerCase();
+        const combinedText = target + ' ' + description;
+        
+        // 기업 규모 매칭
+        if (combinedText.includes('중소기업') || combinedText.includes('소기업')) {
+          if (companyData.companySize === '소기업' || companyData.companySize === '중기업' || companyData.companySize === '중소기업') {
+            score += 15;
+            reasons.push('✅ 중소기업 대상');
+          }
+        }
+        
+        // 벤처/이노비즈 우대 (+10점)
+        if (combinedText.includes('벤처') && companyData.hasVenture === 'Y') {
           score += 10;
-          reasons.push('🚀 벤처기업 인증 보유');
+          reasons.push('✅ 벤처기업 우대');
         }
-        if (program.prefersInnobiz && companyData.certInnobiz === 'Y') {
-          score += 8;
-          reasons.push('💡 이노비즈 인증 보유');
+        if (combinedText.includes('이노비즈') && companyData.hasInnobiz === 'Y') {
+          score += 10;
+          reasons.push('✅ 이노비즈 우대');
         }
-        if (program.prefersMainbiz && companyData.certMainbiz === 'Y') {
+        
+        // 신청 가능 여부 (+5점)
+        if (program.isOpen) {
           score += 5;
-          reasons.push('⭐ 메인비즈 인증 보유');
+          reasons.push('✅ 현재 신청 가능');
         }
         
-        // 특허 가산점 (최대 +15점)
-        if (program.prefersPatent) {
-          const patents = parseInt(companyData.patentRegistered) || 0;
-          if (patents >= 10) {
-            score += 15;
-            reasons.push(`📜 특허 ${patents}건 보유 (기술력 우수)`);
-          } else if (patents >= 5) {
-            score += 10;
-            reasons.push(`📜 특허 ${patents}건 보유`);
-          } else if (patents >= 1) {
-            score += 5;
-            reasons.push(`📜 특허 ${patents}건 보유`);
-          }
-        }
-        
-        // 고용 가산점 (최대 +20점)
-        if (program.prefersYouthEmployment && companyData.employeesTotal > 0) {
-          const youthRatio = companyData.employeesYouth / companyData.employeesTotal;
-          if (youthRatio >= 0.3) {
-            score += 10;
-            reasons.push(`👥 청년고용 비율 ${Math.round(youthRatio * 100)}%`);
-          } else if (youthRatio >= 0.2) {
-            score += 5;
-            reasons.push(`👥 청년고용 비율 ${Math.round(youthRatio * 100)}%`);
-          }
-        }
-        
-        if (program.prefersFemaleEmployment && companyData.employeesTotal > 0) {
-          const femaleRatio = companyData.employeesFemale / companyData.employeesTotal;
-          if (femaleRatio >= 0.3) {
-            score += 8;
-            reasons.push(`👩 여성고용 비율 ${Math.round(femaleRatio * 100)}%`);
-          }
-        }
-        
-        if (companyData.employeesDisabled > 0) {
-          score += 12;
-          reasons.push(`♿ 장애인 고용 ${companyData.employeesDisabled}명`);
-        }
-        
-        // 수출 가산점 (최대 +10점)
-        if (program.prefersExport && companyData.exportRecent > 0) {
+        // 업종 키워드 매칭 (+10점)
+        const ksicCategory = getKsicCategory(companyData.ksicCode);
+        if (ksicCategory && combinedText.includes(ksicCategory)) {
           score += 10;
-          reasons.push(`🌏 수출실적 $${companyData.exportRecent.toLocaleString()}`);
+          reasons.push(`✅ ${ksicCategory} 업종 관련`);
         }
         
-        // 연구조직 가산점 (최대 +10점)
-        if (program.prefersRnD && companyData.researchOrg && companyData.researchOrg !== '없음') {
-          score += 8;
-          reasons.push(`🔬 ${companyData.researchOrg} 보유`);
-        }
-        
-        // 지역 가산점 (최대 +10점)
-        if (program.targetRegion && program.targetRegion.length > 0) {
-          if (program.targetRegion.includes(companyData.locationSido)) {
-            score += 10;
-            reasons.push(`📍 ${companyData.locationSido} 지역 우대`);
-          }
-        }
-        
-        // 수도권 여부
-        if (program.preferNonCapital && companyData.capitalArea === 'N') {
-          score += 8;
-          reasons.push('🏞️ 비수도권 우대사업');
+        // 기본 이유 추가
+        if (reasons.length === 0) {
+          reasons.push('기본 요건 충족 가능');
         }
         
         return {
           ...program,
-          matchScore: Math.min(score, 100), // 최대 100점
-          matchReasons: reasons.length > 0 ? reasons : ['기본 요건 충족']
+          matchScore: Math.min(score, 100),
+          matchReasons: reasons
         };
       });
       
-      // Step 3: 점수순 정렬
-      const sortedPrograms = scoredPrograms.sort((a, b) => b.matchScore - a.matchScore);
+      // 5. 점수순 정렬 및 상위 50개 반환
+      const sortedPrograms = scoredPrograms
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 50);
       
       console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램`);
       sortedPrograms.slice(0, 5).forEach((p, i) => {
@@ -3806,6 +3331,30 @@
       });
       
       return sortedPrograms;
+    }
+    
+    /**
+     * KSIC 코드로 업종 카테고리 반환
+     */
+    function getKsicCategory(ksicCode) {
+      if (!ksicCode) return '';
+      const code = ksicCode.substring(0, 2);
+      const categories = {
+        '01': '농업', '02': '임업', '03': '어업',
+        '10': '식품', '11': '음료', '13': '섬유', '14': '의복',
+        '20': '화학', '21': '의약품', '22': '고무플라스틱',
+        '24': '금속', '25': '금속가공', '26': '전자', '27': '의료기기',
+        '28': '전기장비', '29': '기계', '30': '자동차', '31': '운송장비',
+        '41': '건설', '42': '토목',
+        '46': '도매', '47': '소매',
+        '49': '운송', '52': '물류',
+        '58': '출판', '59': '영상', '60': '방송', '61': '통신', '62': 'IT', '63': '정보서비스',
+        '64': '금융', '65': '보험',
+        '70': '연구개발', '71': '전문서비스', '72': '건축설계',
+        '73': '광고', '74': '디자인',
+        '85': '교육', '86': '보건', '87': '복지'
+      };
+      return categories[code] || '';
     }
     
     /**
@@ -3857,13 +3406,13 @@
       }
       
       try {
-        showLoadingOverlay('맞춤 지원사업 찾는 중...', '500개 공고 중 추천 공고를 찾고 있습니다...');
+        showLoadingOverlay('맞춤 지원사업 찾는 중...', '기업마당에서 공고를 가져오고 있습니다...');
         
         // 클라이언트 사이드 매칭 실행
-        const results = clientSideMatching(companyData);
+        const results = await clientSideMatching(companyData);
         
         // 약간의 대기 시간 (로딩 효과)
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         hideLoadingOverlay();
         displayResults({ recommendations: results });
@@ -4099,7 +3648,7 @@ ${i + 1}. ${p.name}
     }
     
     function showLoadingOverlay(title, subtitle) {
-      const totalPrograms = typeof MOCK_PROGRAMS !== 'undefined' ? MOCK_PROGRAMS.length : 0;
+      const totalPrograms = bizInfoPrograms.length || 500;
       const overlay = document.createElement('div');
       overlay.className = 'loading-overlay';
       overlay.id = 'loading-overlay';
@@ -4144,7 +3693,7 @@ ${i + 1}. ${p.name}
       const overlay = document.getElementById('loading-overlay');
       if (overlay) {
         if (overlay.progressInterval) clearInterval(overlay.progressInterval);
-        const totalPrograms = typeof MOCK_PROGRAMS !== 'undefined' ? MOCK_PROGRAMS.length : 0;
+        const totalPrograms = bizInfoPrograms.length || 500;
         updateProgress(100, totalPrograms, totalPrograms);
         setTimeout(() => overlay.remove(), 300);
       }
