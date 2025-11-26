@@ -3418,6 +3418,7 @@
       // 저장된 맞춤지원정보가 있으면 표시
       if (company.matchedPrograms && company.matchedPrograms.length > 0) {
         lastMatchedPrograms = company.matchedPrograms;
+        lastCompanyData = collectFormData(); // 현재 폼 데이터로 설정
         displayResults({ recommendations: company.matchedPrograms });
         hasCompletedSearch = true;
         console.log('✅ 저장된 맞춤지원정보 로드:', company.matchedPrograms.length, '개');
