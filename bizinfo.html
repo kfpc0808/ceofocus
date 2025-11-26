@@ -1595,7 +1595,7 @@
     let hasCompletedSearch = false; // 맞춤찾기 완료 플래그
     let lastMatchedPrograms = []; // 맞춤찾기 결과 저장 (요약/상세분석에 사용)
     let lastCompanyData = null; // 마지막 검색 기업 데이터
-    let accessToken = null;
+    let accessToken = sessionStorage.getItem('driveAccessToken') || null;
     let currentUser = null;
     
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
@@ -2402,7 +2402,8 @@
       }
       
       accessToken = resp.access_token;
-      console.log('🔑 Access Token 획득 성공');
+      sessionStorage.setItem('driveAccessToken', accessToken);
+      console.log('🔑 Access Token 획득 및 저장 성공');
       
       // Promise 이행 (requestDriveAccess에서 await 가능)
       if (window._tokenPromiseResolve) {
@@ -2489,6 +2490,7 @@
         await auth.signOut();
         
         accessToken = null;
+        sessionStorage.removeItem('driveAccessToken');
         currentUser = null;
         savedCompanies = {};
         
@@ -2792,6 +2794,24 @@
             attachNumberFormatting();
             
             // Drive 연결 시도
+            // 저장된 Access Token이 있으면 gapi.client에 설정
+            if (accessToken) {
+              console.log('🔑 저장된 토큰으로 연결 시도...');
+              gapi.client.setToken({ access_token: accessToken });
+              
+              try {
+                await loadFromDrive();
+                updateConnectionStatus('connected');
+                console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+                hideLoading();
+                return;
+              } catch (error) {
+                console.log('⚠️ 저장된 토큰 만료 - 재인증 필요');
+                accessToken = null;
+                sessionStorage.removeItem('driveAccessToken');
+              }
+            }
+            
             // Access Token이 없으면 자동으로 요청
             if (!accessToken && gisInited) {
               console.log('🔑 Drive 토큰 자동 요청 중...');
@@ -3394,6 +3414,23 @@
       
       // 로딩 완료 플래그 해제
       isLoadingCompany = false;
+      
+      // 저장된 맞춤지원정보가 있으면 표시
+      if (company.matchedPrograms && company.matchedPrograms.length > 0) {
+        lastMatchedPrograms = company.matchedPrograms;
+        displayResults({ recommendations: company.matchedPrograms });
+        hasCompletedSearch = true;
+        console.log('✅ 저장된 맞춤지원정보 로드:', company.matchedPrograms.length, '개');
+      } else {
+        // 맞춤지원정보 없으면 초기화
+        const resultsSection = document.getElementById('results-section');
+        if (resultsSection) {
+          resultsSection.innerHTML = '';
+          resultsSection.style.display = 'none';
+        }
+        lastMatchedPrograms = [];
+        hasCompletedSearch = false;
+      }
     }
     
     async function saveCompany() {
@@ -3557,6 +3594,15 @@
       document.getElementById('company-select').value = '';
       document.getElementById('company-name-search').value = '';
       selectedCompanyId = null;
+      
+      // 맞춤지원정보 결과 초기화
+      const resultsSection = document.getElementById('results-section');
+      if (resultsSection) {
+        resultsSection.innerHTML = '';
+        resultsSection.style.display = 'none';
+      }
+      lastMatchedPrograms = [];
+      hasCompletedSearch = false;
     }
     
     // ==================== 클라이언트 사이드 매칭 엔진 ====================
