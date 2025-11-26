@@ -1437,46 +1437,69 @@
       <h2>Section 9. 희망 지원분야 <span class="required">*</span></h2>
       
       <h3>9-1. 지원 필요 분야 (중복선택 가능)</h3>
-      <div class="checkbox-grid">
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-funding" name="desiredSupport" value="정책자금">
-          <label for="support-funding">정책자금</label>
+      <div class="checkbox-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-finance" name="desiredSupport" value="금융">
+            <label for="support-finance" style="font-weight: bold;">금융</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">정책자금, 융자, 보증, 투자</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-rd" name="desiredSupport" value="기술개발">
-          <label for="support-rd">기술개발(R&D)</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-tech" name="desiredSupport" value="기술">
+            <label for="support-tech" style="font-weight: bold;">기술</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">R&D, 기술개발, 특허, 인증</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-commercialize" name="desiredSupport" value="사업화">
-          <label for="support-commercialize">사업화</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-manpower" name="desiredSupport" value="인력">
+            <label for="support-manpower" style="font-weight: bold;">인력</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">고용지원, 채용, 교육훈련, 인건비</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-marketing" name="desiredSupport" value="판로마케팅">
-          <label for="support-marketing">판로/마케팅</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-export" name="desiredSupport" value="수출">
+            <label for="support-export" style="font-weight: bold;">수출</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">해외진출, 수출바우처, 무역</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-export" name="desiredSupport" value="수출지원">
-          <label for="support-export">수출지원</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-domestic" name="desiredSupport" value="내수">
+            <label for="support-domestic" style="font-weight: bold;">내수</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">판로개척, 마케팅, 홍보, 전시회</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-hr" name="desiredSupport" value="인력교육">
-          <label for="support-hr">인력/교육</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-startup" name="desiredSupport" value="창업">
+            <label for="support-startup" style="font-weight: bold;">창업</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">창업지원, 액셀러레이팅, 초기기업</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-facility" name="desiredSupport" value="시설공간">
-          <label for="support-facility">시설/공간</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-management" name="desiredSupport" value="경영">
+            <label for="support-management" style="font-weight: bold;">경영</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">컨설팅, 경영혁신, 스마트공장</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-consulting" name="desiredSupport" value="컨설팅">
-          <label for="support-consulting">컨설팅</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-etc" name="desiredSupport" value="기타">
+            <label for="support-etc" style="font-weight: bold;">기타</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">ESG, 탄소중립, 시설, 공간</span>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-startup" name="desiredSupport" value="창업">
-          <label for="support-startup">창업</label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="support-esg" name="desiredSupport" value="ESG탄소중립">
-          <label for="support-esg">ESG/탄소중립</label>
+        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="support-all" name="desiredSupport" value="전체">
+            <label for="support-all" style="font-weight: bold;">전체</label>
+          </div>
+          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">분야 무관, 모든 지원사업</span>
         </div>
       </div>
     </div>
@@ -2871,7 +2894,7 @@
         exportCountries: getVal('export-countries'),
         
         // Section 9: 희망 지원분야
-        supportNeeds: getChecked('#support-funding, #support-rd, #support-commercialize, #support-marketing, #support-export, #support-hr, #support-facility, #support-consulting, #support-startup, #support-esg')
+        supportNeeds: getChecked('#support-finance, #support-tech, #support-manpower, #support-export, #support-domestic, #support-startup, #support-management, #support-etc, #support-all')
       };
       
       return data;
@@ -3091,6 +3114,13 @@
         renderModalCompanyList();
         updateCompanySelect();
         
+        // 연결 상태 업데이트 (데이터 유무에 따라)
+        if (Object.keys(savedCompanies).length > 0) {
+          updateConnectionStatus('connected');
+        } else {
+          updateConnectionStatus('no-data');
+        }
+        
         console.log('✅ 고객사 삭제 완료:', companyName);
       } catch (error) {
         console.error('❌ 삭제 오류:', error);
@@ -3235,6 +3265,10 @@
         document.getElementById('ksic-4').value = code[3] || '';
         document.getElementById('ksic-5').value = code[4] || '';
         updateKsicHiddenField();
+        
+        // KSIC 대분류 선택 설정
+        const categoryCode = code.substring(0, 2);
+        document.getElementById('ksic-select').value = categoryCode;
       }
       
       // 시도 선택 후 시군구 옵션 업데이트
@@ -3244,6 +3278,36 @@
         if (company.locationSigungu) {
           document.getElementById('location-sigungu').value = company.locationSigungu;
         }
+      }
+      
+      // 희망 지원분야 체크박스 로드
+      if (company.supportNeeds && Array.isArray(company.supportNeeds)) {
+        const checkboxMap = {
+          '금융': 'support-finance',
+          '기술': 'support-tech',
+          '인력': 'support-manpower',
+          '수출': 'support-export',
+          '내수': 'support-domestic',
+          '창업': 'support-startup',
+          '경영': 'support-management',
+          '기타': 'support-etc',
+          '전체': 'support-all'
+        };
+        
+        // 먼저 모든 체크박스 해제
+        Object.values(checkboxMap).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.checked = false;
+        });
+        
+        // 저장된 값에 해당하는 체크박스 체크
+        company.supportNeeds.forEach(need => {
+          const checkboxId = checkboxMap[need];
+          if (checkboxId) {
+            const el = document.getElementById(checkboxId);
+            if (el) el.checked = true;
+          }
+        });
       }
       
       console.log('✅ 고객사 정보 로드:', company.companyName);
@@ -3275,6 +3339,9 @@
       if (success) {
         selectedCompanyId = companyId;
         updateCompanySelect();
+        
+        // 연결 상태 업데이트
+        updateConnectionStatus('connected');
         
         // 회사명 입력창 업데이트
         document.getElementById('company-name-search').value = companyData.companyName;
@@ -3350,6 +3417,9 @@
       if (success) {
         selectedCompanyId = companyId;
         updateCompanySelect();
+        
+        // 연결 상태 업데이트
+        updateConnectionStatus('connected');
         
         document.getElementById('company-name-search').value = companyData.companyName;
         
