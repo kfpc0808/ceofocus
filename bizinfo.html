@@ -1496,7 +1496,7 @@
         </div>
         <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="checkbox" id="support-all" name="desiredSupport" value="전체">
+            <input type="checkbox" id="support-all" name="desiredSupport" value="전체" onchange="toggleAllSupport(this.checked)">
             <label for="support-all" style="font-weight: bold;">전체</label>
           </div>
           <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">분야 무관, 모든 지원사업</span>
@@ -1518,6 +1518,19 @@
       <p style="font-size: 0.85rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem; text-align: center;">
         ↑ 먼저 맞춤찾기를 실행한 후, 아래 분석 버튼을 선택하세요
       </p>
+      
+      <!-- AI 지원사업 매칭 분석 안내 -->
+      <div style="background: rgba(255, 136, 2, 0.15); border: 2px solid #FF8802; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+        <h3 style="color: #FFD700; margin: 0 0 0.5rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          🤖 AI 지원사업 매칭 분석
+          <span style="font-size: 0.8em; color: rgba(255,255,255,0.6); font-weight: normal;">
+            (기업마당 공고 × Gemini AI)
+          </span>
+        </h3>
+        <p style="margin: 0; font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+          💡 위에 입력한 기업 정보를 바탕으로 기업마당 공고를 AI가 자동 분석합니다. 약 15초 소요됩니다.
+        </p>
+      </div>
       
       <!-- AI 분석 버튼 (요약/상세 선택) + 저장(분석포함) -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
@@ -1622,9 +1635,36 @@
     }
     
     /**
-     * KSIC 첫 번째 입력칸 포커스 시 안내 메시지
+     * 희망 지원분야 "전체" 선택 시 모든 항목 체크/해제
      */
+    function toggleAllSupport(isChecked) {
+      const supportIds = [
+        'support-finance',
+        'support-tech', 
+        'support-manpower',
+        'support-export',
+        'support-domestic',
+        'support-startup',
+        'support-management',
+        'support-etc'
+      ];
+      
+      supportIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = isChecked;
+      });
+    }
+    
+    /**
+     * KSIC 첫 번째 입력칸 포커스 시 안내 메시지
+     * (고객사 로드 중에는 표시하지 않음)
+     */
+    let isLoadingCompany = false;
+    
     function showKsicWarning() {
+      // 고객사 로드 중이면 경고 표시 안 함
+      if (isLoadingCompany) return;
+      
       const hasShownWarning = sessionStorage.getItem('ksicWarningShown');
       if (!hasShownWarning) {
         alert('⚠️ KSIC 코드는 AI 분석에 가장 중요한 역할을 합니다!\n\n해당 기업의 정확한 업종 코드 5자리를 모두 입력해주세요.\n\n정확한 코드를 모르시면 🔍 검색 버튼을 눌러 확인하세요.');
@@ -2382,6 +2422,15 @@
       // Google Drive에서 데이터 로드
       await loadFromDrive();
       
+      // 연결 상태 업데이트
+      if (Object.keys(savedCompanies).length > 0) {
+        updateConnectionStatus('connected');
+        console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+      } else {
+        updateConnectionStatus('no-data');
+        console.log('⚠️ 저장된 데이터 없음');
+      }
+      
       // 숫자 포맷팅 활성화
       attachNumberFormatting();
     }
@@ -2737,21 +2786,7 @@
             // Drive 데이터 로드 시도
             let dataLoaded = false;
             
-            // Access Token이 없으면 자동으로 요청 (조용히)
-            if (!accessToken && gisInited) {
-              console.log('🔑 Drive 토큰 자동 요청 중...');
-              try {
-                // 조용히 토큰 요청 (이전에 동의했으면 팝업 없이 진행)
-                tokenClient.requestAccessToken({ prompt: '' });
-                // 토큰 획득 후 handleTokenResponse에서 loadFromDrive 호출됨
-                // 여기서는 잠시 대기
-                await new Promise(resolve => setTimeout(resolve, 2000));
-              } catch (e) {
-                console.log('토큰 자동 요청 실패 (수동 로그인 필요)');
-              }
-            }
-            
-            // Access Token이 있으면 Drive 로드
+            // Access Token이 이미 있으면 Drive 로드
             if (accessToken) {
               try {
                 await loadFromDrive();
@@ -3187,6 +3222,9 @@
       const company = savedCompanies[companyId];
       if (!company) return;
       
+      // 로딩 중 플래그 설정 (KSIC 경고 방지)
+      isLoadingCompany = true;
+      
       // 사업자등록번호 분리 (123-45-67890 → 3개 input)
       if (company.businessNumber) {
         const bizParts = company.businessNumber.split('-');
@@ -3311,6 +3349,9 @@
       }
       
       console.log('✅ 고객사 정보 로드:', company.companyName);
+      
+      // 로딩 완료 플래그 해제
+      isLoadingCompany = false;
     }
     
     async function saveCompany() {
@@ -4328,36 +4369,6 @@ ${i + 1}. ${p.name}
     });
     
   </script>
-
-  <!-- ============================================ -->
-  <!-- AI 분석 섹션 추가 (기존 코드 유지, 추가만 함) -->
-  <!-- ============================================ -->
-  
-  <div class="container">
-  <div class="card" id="aiAnalysisSection" style="margin-top: 2rem;">
-    <h2 style="color: #FFD700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-      🤖 AI 지원사업 매칭 분석
-      <span style="font-size: 0.7em; color: rgba(255,255,255,0.7); font-weight: normal;">
-        (기업마당 공고 × Gemini AI)
-      </span>
-    </h2>
-    
-    <div class="info-notice" style="background: rgba(255, 136, 2, 0.2); border: 2px solid #FF8802; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
-      <p style="margin: 0; font-size: 0.95rem;">
-        💡 <strong>안내:</strong> 위에 입력한 기업 정보를 바탕으로 기업마당 공고를 AI가 자동 분석합니다. 
-        약 15초 소요됩니다.
-      </p>
-    </div>
-    
-    <!-- 결과 표시 -->
-    <div id="aiResultsSection" style="display: none; margin-top: 2rem;">
-      <h3 style="color: #FFD700; margin-bottom: 1rem; font-size: 1.5rem;">
-        🎯 AI 분석 결과 (상위 20개)
-      </h3>
-      <div id="aiResultsList"></div>
-    </div>
-  </div>
-  </div>
 
   <script>
     // ============================================
