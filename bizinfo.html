@@ -2430,15 +2430,13 @@
       document.getElementById('main-content').style.display = 'block';
       
       // Google Drive에서 데이터 로드
-      await loadFromDrive();
-      
-      // 연결 상태 업데이트
-      if (Object.keys(savedCompanies).length > 0) {
+      try {
+        await loadFromDrive();
         updateConnectionStatus('connected');
         console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-      } else {
-        updateConnectionStatus('no-data');
-        console.log('⚠️ 저장된 데이터 없음');
+      } catch (error) {
+        console.error('Drive 로드 실패:', error);
+        updateConnectionStatus('disconnected');
       }
       
       // 숫자 포맷팅 활성화
@@ -2793,26 +2791,23 @@
             // 숫자 포맷팅 활성화
             attachNumberFormatting();
             
-            // Drive 데이터 로드 시도
-            let dataLoaded = false;
-            
-            // Access Token이 이미 있으면 Drive 로드
-            if (accessToken) {
-              try {
-                await loadFromDrive();
-                dataLoaded = Object.keys(savedCompanies).length > 0;
-              } catch (error) {
-                console.error('Drive 로드 실패:', error);
-              }
+            // Drive 연결 상태 확인
+            // Access Token이 없으면 미연결 상태
+            if (!accessToken) {
+              console.log('⚠️ Drive 토큰 없음 - 미연결 상태');
+              updateConnectionStatus('disconnected');
+              hideLoading();
+              return;
             }
             
-            // 연결 상태 업데이트
-            if (dataLoaded) {
+            // Access Token이 있으면 Drive 로드 시도
+            try {
+              await loadFromDrive();
               updateConnectionStatus('connected');
               console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-            } else {
-              updateConnectionStatus('no-data');
-              console.log('⚠️ 저장된 데이터 없음');
+            } catch (error) {
+              console.error('Drive 로드 실패:', error);
+              updateConnectionStatus('disconnected');
             }
             
             hideLoading();
@@ -2843,23 +2838,19 @@
         case 'connecting':
           btn.innerHTML = '<span style="font-size: 0.9rem;">⏳</span> 연결 중...';
           btn.style.background = '#6c757d';
+          btn.style.color = '#fff';
           break;
         case 'connected':
           btn.innerHTML = '<span style="font-size: 0.9rem;">✓</span> 연결됨';
           btn.style.background = '#28a745';
-          break;
-        case 'no-data':
-          btn.innerHTML = '<span style="font-size: 0.9rem;">⚠️</span> 데이터 없음';
-          btn.style.background = '#ffc107';
-          btn.style.color = '#000';
+          btn.style.color = '#fff';
           break;
         case 'disconnected':
-          btn.innerHTML = '<span style="font-size: 0.9rem;">✗</span> 연결 안됨';
-          btn.style.background = '#dc3545';
-          break;
+        case 'no-data':
         case 'error':
-          btn.innerHTML = '<span style="font-size: 0.9rem;">⚠️</span> 오류';
+          btn.innerHTML = '<span style="font-size: 0.9rem;">✗</span> 미연결';
           btn.style.background = '#dc3545';
+          btn.style.color = '#fff';
           break;
       }
     }
@@ -3159,12 +3150,8 @@
         renderModalCompanyList();
         updateCompanySelect();
         
-        // 연결 상태 업데이트 (데이터 유무에 따라)
-        if (Object.keys(savedCompanies).length > 0) {
-          updateConnectionStatus('connected');
-        } else {
-          updateConnectionStatus('no-data');
-        }
+        // 연결 상태는 항상 connected (Drive 연결 유지)
+        updateConnectionStatus('connected');
         
         console.log('✅ 고객사 삭제 완료:', companyName);
       } catch (error) {
