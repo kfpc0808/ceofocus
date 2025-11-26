@@ -839,7 +839,7 @@
   <div class="container" id="main-content" style="display: none;">
     <div class="header">
       <div class="header-left">
-        <button id="connection-status-btn" class="btn-main btn-small" style="background: #6c757d; cursor: default;" disabled>
+        <button id="connection-status-btn" class="btn-main btn-small" style="background: #6c757d;" onclick="connectDrive()">
           <span style="font-size: 0.9rem;">⏳</span> 연결 중...
         </button>
         <button class="btn-main btn-small" onclick="signOut()">로그아웃</button>
@@ -2791,22 +2791,31 @@
             // 숫자 포맷팅 활성화
             attachNumberFormatting();
             
-            // Drive 연결 상태 확인
-            // Access Token이 없으면 미연결 상태
-            if (!accessToken) {
-              console.log('⚠️ Drive 토큰 없음 - 미연결 상태');
-              updateConnectionStatus('disconnected');
-              hideLoading();
-              return;
+            // Drive 연결 시도
+            // Access Token이 없으면 자동으로 요청
+            if (!accessToken && gisInited) {
+              console.log('🔑 Drive 토큰 자동 요청 중...');
+              try {
+                await requestDriveAccess();
+              } catch (error) {
+                console.log('⚠️ Drive 토큰 요청 실패 - 미연결 상태');
+                updateConnectionStatus('disconnected');
+                hideLoading();
+                return;
+              }
             }
             
             // Access Token이 있으면 Drive 로드 시도
-            try {
-              await loadFromDrive();
-              updateConnectionStatus('connected');
-              console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-            } catch (error) {
-              console.error('Drive 로드 실패:', error);
+            if (accessToken) {
+              try {
+                await loadFromDrive();
+                updateConnectionStatus('connected');
+                console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+              } catch (error) {
+                console.error('Drive 로드 실패:', error);
+                updateConnectionStatus('disconnected');
+              }
+            } else {
               updateConnectionStatus('disconnected');
             }
             
@@ -2839,11 +2848,13 @@
           btn.innerHTML = '<span style="font-size: 0.9rem;">⏳</span> 연결 중...';
           btn.style.background = '#6c757d';
           btn.style.color = '#fff';
+          btn.style.cursor = 'default';
           break;
         case 'connected':
           btn.innerHTML = '<span style="font-size: 0.9rem;">✓</span> 연결됨';
           btn.style.background = '#28a745';
           btn.style.color = '#fff';
+          btn.style.cursor = 'default';
           break;
         case 'disconnected':
         case 'no-data':
@@ -2851,7 +2862,41 @@
           btn.innerHTML = '<span style="font-size: 0.9rem;">✗</span> 미연결';
           btn.style.background = '#dc3545';
           btn.style.color = '#fff';
+          btn.style.cursor = 'pointer';
           break;
+      }
+    }
+    
+    /**
+     * Drive 연결 (미연결 버튼 클릭 시)
+     */
+    async function connectDrive() {
+      const btn = document.getElementById('connection-status-btn');
+      
+      // 이미 연결된 상태면 무시
+      if (accessToken) {
+        console.log('✅ 이미 연결됨');
+        return;
+      }
+      
+      // 연결 중 상태로 변경
+      updateConnectionStatus('connecting');
+      
+      try {
+        // Drive 권한 요청
+        await requestDriveAccess();
+        
+        // Drive 데이터 로드
+        await loadFromDrive();
+        
+        // 연결 성공
+        updateConnectionStatus('connected');
+        console.log('✅ Drive 연결 성공:', Object.keys(savedCompanies).length, '개 기업');
+        
+      } catch (error) {
+        console.error('❌ Drive 연결 실패:', error);
+        updateConnectionStatus('disconnected');
+        alert('Drive 연결에 실패했습니다. 다시 시도해주세요.');
       }
     }
     
