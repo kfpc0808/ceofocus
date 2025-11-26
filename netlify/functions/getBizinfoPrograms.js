@@ -2,24 +2,7 @@
  * 기업마당 API 연동 - 실제 지원사업 공고 데이터 가져오기
  * 
  * API URL: https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
- * 
- * 제공 정보:
- * - pblancNm: 공고명
- * - pblancId: 공고ID
- * - pblancUrl: 공고URL
- * - jrsdInsttNm: 소관기관명
- * - excInsttNm: 수행기관명
- * - bsnsSumryCn: 사업개요내용
- * - reqstMthPapersCn: 사업신청방법
- * - trgetNm: 지원대상
- * - pldirSportRealmLclasCodeNm: 지원분야 대분류
- * - reqstBeginEndDe: 신청기간
- * - hashTags: 해시태그
- * - flpthNm: 첨부파일경로 (PDF 공고문)
- * - fileNm: 첨부파일명
  */
-
-const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
   const headers = {
@@ -51,73 +34,73 @@ exports.handler = async (event) => {
     }
 
     const {
-      category = '',      // 분야 코드 (01:금융, 02:기술, 03:인력, 04:수출, 05:내수, 06:창업, 07:경영, 09:기타)
-      region = '',        // 지역 해시태그
-      searchCnt = '500',  // 조회 건수 (기본 500개)
-      pageUnit = '100',   // 페이지당 개수
-      pageIndex = '1'     // 페이지 번호
+      category = '',
+      region = '',
+      searchCnt = '500',
+      pageUnit = '100',
+      pageIndex = '1'
     } = params;
 
     console.log('📡 기업마당 API 호출 시작...');
-    console.log(`   - 분야: ${category || '전체'}`);
-    console.log(`   - 지역: ${region || '전국'}`);
-    console.log(`   - 조회건수: ${searchCnt}`);
 
     // 기업마당 API URL 구성
     let apiUrl = `https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do?crtfcKey=${BIZINFO_API_KEY}&dataType=json`;
-    
-    // 조회 건수 (전체 데이터)
     apiUrl += `&searchCnt=${searchCnt}`;
     
-    // 분야 필터
     if (category) {
       apiUrl += `&searchLclasId=${category}`;
     }
-    
-    // 해시태그 (지역 등)
     if (region) {
       apiUrl += `&hashtags=${encodeURIComponent(region)}`;
     }
-    
-    // 페이징
     apiUrl += `&pageUnit=${pageUnit}&pageIndex=${pageIndex}`;
 
     console.log('🔗 API URL:', apiUrl.replace(BIZINFO_API_KEY, '***'));
 
-    // API 호출
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Charset': 'utf-8'
-      }
-    });
+    // Node.js 18+ 내장 fetch 사용
+    const response = await fetch(apiUrl);
 
     if (!response.ok) {
       throw new Error(`기업마당 API 오류: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-
-    // 응답 데이터 파싱
-    let programs = [];
-    let totalCount = 0;
-
-    // JSON 응답 구조 확인 (기업마당 API는 jsonArray 형태로 반환)
-    if (data && data.jsonArray) {
-      programs = data.jsonArray;
-      totalCount = programs.length;
-    } else if (data && Array.isArray(data)) {
-      programs = data;
-      totalCount = programs.length;
-    } else if (data && data.items) {
-      programs = data.items;
-      totalCount = data.totalCount || programs.length;
+    const text = await response.text();
+    console.log('📥 응답 길이:', text.length);
+    
+    // JSON 파싱 시도
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseError) {
+      console.error('JSON 파싱 실패, 응답 시작:', text.substring(0, 200));
+      throw new Error('기업마당 API 응답이 JSON 형식이 아닙니다.');
     }
 
-    console.log(`✅ 기업마당 API 응답: ${totalCount}개 공고`);
+    // 응답 데이터 파싱
+    // 기업마당 API 응답 구조: { jsonArray: { item: [...] } }
+    let programs = [];
 
-    // 데이터 정규화 (필드명 통일)
+    if (data && data.jsonArray && data.jsonArray.item) {
+      // 올바른 구조: jsonArray.item 배열
+      programs = Array.isArray(data.jsonArray.item) ? data.jsonArray.item : [data.jsonArray.item];
+      console.log('📦 jsonArray.item 구조 확인');
+    } else if (data && data.jsonArray && Array.isArray(data.jsonArray)) {
+      // jsonArray가 배열인 경우
+      programs = data.jsonArray;
+      console.log('📦 jsonArray 배열 구조 확인');
+    } else if (data && Array.isArray(data)) {
+      programs = data;
+      console.log('📦 배열 구조 확인');
+    } else if (data && data.items) {
+      programs = data.items;
+      console.log('📦 items 구조 확인');
+    } else {
+      console.log('⚠️ 알 수 없는 응답 구조:', Object.keys(data || {}));
+    }
+
+    console.log(`✅ 기업마당 API 응답: ${programs.length}개 공고`);
+
+    // 데이터 정규화
     const normalizedPrograms = programs.map((item, index) => ({
       id: item.pblancId || item.seq || `bizinfo-${index}`,
       name: item.pblancNm || item.title || '',
@@ -134,15 +117,13 @@ exports.handler = async (event) => {
       registeredDate: item.creatPnttm || item.pubDate || '',
       hashTags: item.hashTags || '',
       views: parseInt(item.inqireCo) || 0,
-      // 첨부파일 (PDF 공고문)
       attachmentUrl: item.flpthNm || '',
       attachmentName: item.fileNm || '',
-      // 본문 출력 파일
       printFileUrl: item.printFlpthNm || '',
       printFileName: item.printFileNm || ''
     }));
 
-    // 신청기간 파싱 (시작일, 종료일 분리)
+    // 신청기간 파싱
     normalizedPrograms.forEach(program => {
       if (program.applicationPeriod) {
         const periods = program.applicationPeriod.split('~').map(s => s.trim());
@@ -150,7 +131,6 @@ exports.handler = async (event) => {
           program.applicationStart = periods[0];
           program.applicationEnd = periods[1];
           
-          // 신청 가능 여부 확인
           const today = new Date();
           const endDate = new Date(
             periods[1].substring(0, 4) + '-' + 
@@ -175,7 +155,6 @@ exports.handler = async (event) => {
     });
 
     console.log('📊 분야별 통계:', stats.byCategory);
-    console.log(`📊 신청 가능: ${stats.openCount}개`);
 
     return {
       statusCode: 200,
