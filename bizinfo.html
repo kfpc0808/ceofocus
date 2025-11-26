@@ -1104,7 +1104,7 @@
               </optgroup>
             </select>
             <div style="display: flex; gap: 0.2rem; align-items: center;">
-              <input type="text" id="ksic-1" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 1)">
+              <input type="text" id="ksic-1" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 1)" onfocus="showKsicWarning()">
               <input type="text" id="ksic-2" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 2)">
               <input type="text" id="ksic-3" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 3)">
               <input type="text" id="ksic-4" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 4)">
@@ -1586,15 +1586,6 @@
       // 숫자만 허용
       input.value = input.value.replace(/[^0-9]/g, '');
       
-      // 첫 번째 숫자 입력 시 경고 메시지
-      if (position === 1 && input.value) {
-        const hasShownWarning = sessionStorage.getItem('ksicWarningShown');
-        if (!hasShownWarning) {
-          alert('⚠️ KSIC 코드는 AI 분석에 가장 중요한 역할을 합니다!\n\n해당 기업의 정확한 업종 코드 5자리를 모두 입력해주세요.\n\n정확한 코드를 모르시면 🔍 검색 버튼을 눌러 확인하세요.');
-          sessionStorage.setItem('ksicWarningShown', 'true');
-        }
-      }
-      
       // 값이 입력되면 다음 칸으로 자동 이동
       if (input.value && position < 5) {
         const nextInput = document.getElementById(`ksic-${position + 1}`);
@@ -1605,6 +1596,17 @@
       
       // hidden 필드 업데이트
       updateKsicHiddenField();
+    }
+    
+    /**
+     * KSIC 첫 번째 입력칸 포커스 시 안내 메시지
+     */
+    function showKsicWarning() {
+      const hasShownWarning = sessionStorage.getItem('ksicWarningShown');
+      if (!hasShownWarning) {
+        alert('⚠️ KSIC 코드는 AI 분석에 가장 중요한 역할을 합니다!\n\n해당 기업의 정확한 업종 코드 5자리를 모두 입력해주세요.\n\n정확한 코드를 모르시면 🔍 검색 버튼을 눌러 확인하세요.');
+        sessionStorage.setItem('ksicWarningShown', 'true');
+      }
     }
     
     /**
@@ -3068,23 +3070,26 @@
       }
       
       try {
-        // Firebase에서 삭제
-        await db.collection('companies').doc(companyId).delete();
-        
         // 로컬 객체에서 삭제
         delete savedCompanies[companyId];
+        
+        // Google Drive에 저장 (삭제 반영)
+        const success = await saveToDrive(savedCompanies);
+        
+        if (!success) {
+          throw new Error('Google Drive 저장 실패');
+        }
         
         // 현재 선택된 회사인 경우 폼 초기화
         if (selectedCompanyId === companyId) {
           selectedCompanyId = null;
           clearForm();
           document.getElementById('company-name-search').value = '';
-          document.getElementById('company-select').value = '';
         }
         
         // 목록 다시 렌더링
         renderModalCompanyList();
-        renderCompanySelect();
+        updateCompanySelect();
         
         console.log('✅ 고객사 삭제 완료:', companyName);
       } catch (error) {
@@ -3230,6 +3235,15 @@
         document.getElementById('ksic-4').value = code[3] || '';
         document.getElementById('ksic-5').value = code[4] || '';
         updateKsicHiddenField();
+      }
+      
+      // 시도 선택 후 시군구 옵션 업데이트
+      if (company.locationSido) {
+        updateSigunguOptions();
+        // 시군구 값 설정 (옵션 생성 후)
+        if (company.locationSigungu) {
+          document.getElementById('location-sigungu').value = company.locationSigungu;
+        }
       }
       
       console.log('✅ 고객사 정보 로드:', company.companyName);
