@@ -1506,16 +1506,16 @@
 
     <!-- 실행 버튼 -->
     <div class="card">
-      <!-- 맞춤찾기 + 기업정보저장 버튼 -->
+      <!-- 기업정보저장 + 맞춤찾기 버튼 -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-        <button class="btn btn-primary" onclick="findMatchingPrograms()" style="flex: 2; font-size: 1rem; padding: 1rem; background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);">
-          🔍 맞춤 지원사업 찾기
-        </button>
         <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 0.95rem; padding: 1rem;">
           💾 기업정보 저장
         </button>
+        <button class="btn btn-primary" onclick="findMatchingPrograms()" style="flex: 2; font-size: 1rem; padding: 1rem; background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);">
+          🔍 맞춤 지원사업 찾기
+        </button>
       </div>
-      <p style="font-size: 0.85rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem; text-align: center;">
+      <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: -0.5rem; margin-bottom: 1rem; text-align: center;">
         ↑ 먼저 맞춤찾기를 실행한 후, 아래 분석 버튼을 선택하세요
       </p>
       
@@ -1532,16 +1532,16 @@
         </p>
       </div>
       
-      <!-- AI 분석 버튼 (요약/상세 선택) + 저장(분석포함) -->
+      <!-- AI 분석 버튼 (요약/상세 선택) -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <button class="btn btn-secondary" onclick="analyzeProgramsSummary()" style="flex: 1; font-size: 0.95rem; padding: 0.8rem;">
-          📝 요약분석
+        <button class="btn btn-secondary" onclick="analyzeProgramsSummary()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
+          📝 요약분석(상위10개)
         </button>
-        <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.95rem; padding: 0.8rem;">
-          📊 상세분석
+        <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
+          📊 상세분석(상위10개)
         </button>
-        <button class="btn btn-secondary" onclick="saveWithAnalysis()" style="flex: 1; font-size: 0.95rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-          💾 저장(분석포함)
+        <button class="btn btn-secondary" onclick="saveWithPrograms()" style="flex: 1; font-size: 0.85rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+          💾 저장(기업정보+지원사업)
         </button>
       </div>
       <button class="btn btn-secondary" onclick="deleteCompany()" style="width: 100%; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
@@ -1595,7 +1595,7 @@
     let hasCompletedSearch = false; // 맞춤찾기 완료 플래그
     let lastMatchedPrograms = []; // 맞춤찾기 결과 저장 (요약/상세분석에 사용)
     let lastCompanyData = null; // 마지막 검색 기업 데이터
-    let accessToken = sessionStorage.getItem('driveAccessToken') || null;
+    let accessToken = localStorage.getItem('driveAccessToken') || null;
     let currentUser = null;
     
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
@@ -1991,7 +1991,7 @@
       }
       
       accessToken = resp.access_token;
-      sessionStorage.setItem('driveAccessToken', accessToken);
+      localStorage.setItem('driveAccessToken', accessToken);
       console.log('🔑 Access Token 획득 및 저장 성공');
       
       // Promise 이행 (requestDriveAccess에서 await 가능)
@@ -2038,26 +2038,46 @@
       try {
         console.log('🔐 Google 로그인 시작...');
         
-        // 1. Firebase Auth 로그인 (세션 유지용)
+        // Firebase Auth 로그인 (Drive 권한 포함)
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/drive');
+        provider.addScope('https://www.googleapis.com/auth/drive.file');
         
         const result = await auth.signInWithPopup(provider);
         console.log('✅ Firebase 로그인 성공:', result.user.email);
         
-        currentUser = { email: result.user.email };
-        
-        // 2. GIS로 Drive Access Token 발급 (팝업)
-        if (!gisInited) {
-          console.error('❌ GIS가 아직 초기화되지 않았습니다');
-          alert('Drive 권한을 받을 수 없습니다. 새로고침 후 다시 시도해주세요.');
-          return;
+        // Firebase credential에서 직접 access token 획득 (GIS 팝업 불필요!)
+        const credential = result.credential;
+        if (credential && credential.accessToken) {
+          accessToken = credential.accessToken;
+          localStorage.setItem('driveAccessToken', accessToken);
+          console.log('🔑 Firebase credential에서 Access Token 획득 성공');
+          
+          // GAPI 클라이언트에 토큰 설정
+          if (gapiInited) {
+            gapi.client.setToken({ access_token: accessToken });
+          }
         }
         
-        // GIS 팝업으로 Drive 권한 획득
-        tokenClient.requestAccessToken({ prompt: 'consent' });
+        currentUser = { email: result.user.email };
+        document.getElementById('user-info').textContent = result.user.email;
         
-        // 화면은 handleTokenResponse에서 처리됨
+        // 로그인 화면 숨기고 메인 화면 표시
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        
+        // Google Drive에서 데이터 로드
+        try {
+          await loadFromDrive();
+          updateConnectionStatus('connected');
+          console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+        } catch (error) {
+          console.error('Drive 로드 실패:', error);
+          updateConnectionStatus('disconnected');
+        }
+        
+        // 숫자 포맷팅 활성화
+        attachNumberFormatting();
         
       } catch (error) {
         console.error('❌ 로그인 실패:', error);
@@ -2079,7 +2099,7 @@
         await auth.signOut();
         
         accessToken = null;
-        sessionStorage.removeItem('driveAccessToken');
+        localStorage.removeItem('driveAccessToken');
         currentUser = null;
         savedCompanies = {};
         
@@ -2374,6 +2394,7 @@
             
             // 사용자 정보 표시
             currentUser = { email: user.email };
+            document.getElementById('user-info').textContent = user.email;
             
             // 메인 화면 표시
             document.getElementById('login-screen').style.display = 'none';
@@ -2382,53 +2403,69 @@
             // 숫자 포맷팅 활성화
             attachNumberFormatting();
             
-            // Drive 연결 시도
-            // 저장된 Access Token이 있으면 gapi.client에 설정
-            if (accessToken) {
-              console.log('🔑 저장된 토큰으로 연결 시도...');
-              gapi.client.setToken({ access_token: accessToken });
+            // ★ 핵심: Firebase에서 새로운 Access Token 자동 발급 (팝업 없음!)
+            try {
+              // Firebase Auth에서 credential 재발급 시도
+              const credential = firebase.auth.GoogleAuthProvider.credential(
+                await user.getIdToken(true)
+              );
               
-              try {
-                await loadFromDrive();
-                updateConnectionStatus('connected');
-                console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-                hideLoading();
-                return;
-              } catch (error) {
-                console.log('⚠️ 저장된 토큰 만료 - 재인증 필요');
-                accessToken = null;
-                sessionStorage.removeItem('driveAccessToken');
+              // reauthenticateWithCredential은 access token을 제공하지 않으므로
+              // 저장된 토큰으로 시도 후, 실패하면 조용히 재인증 요청
+              if (accessToken) {
+                console.log('🔑 저장된 토큰으로 연결 시도...');
+                gapi.client.setToken({ access_token: accessToken });
+                
+                try {
+                  await loadFromDrive();
+                  updateConnectionStatus('connected');
+                  console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+                  hideLoading();
+                  return;
+                } catch (error) {
+                  console.log('⚠️ 저장된 토큰 만료됨 - 재연결 필요');
+                  accessToken = null;
+                  localStorage.removeItem('driveAccessToken');
+                }
               }
-            }
-            
-            // Access Token이 없으면 자동으로 요청
-            if (!accessToken && gisInited) {
-              console.log('🔑 Drive 토큰 자동 요청 중...');
-              try {
-                await requestDriveAccess();
-              } catch (error) {
-                console.log('⚠️ Drive 토큰 요청 실패 - 미연결 상태');
-                updateConnectionStatus('disconnected');
-                hideLoading();
-                return;
+              
+              // 토큰이 만료되었으면 자동 재인증 시도 (백그라운드)
+              if (!accessToken && gisInited) {
+                console.log('🔑 Drive 토큰 자동 갱신 시도...');
+                
+                // GIS를 이용한 조용한 토큰 갱신 (prompt: '' = 이전 선택 기억)
+                return new Promise((resolve) => {
+                  window._tokenPromiseResolve = async () => {
+                    try {
+                      await loadFromDrive();
+                      updateConnectionStatus('connected');
+                      console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+                    } catch (error) {
+                      console.error('Drive 로드 실패:', error);
+                      updateConnectionStatus('disconnected');
+                    }
+                    hideLoading();
+                    resolve();
+                  };
+                  window._tokenPromiseReject = () => {
+                    console.log('⚠️ 토큰 갱신 실패 - 재로그인 필요');
+                    updateConnectionStatus('disconnected');
+                    hideLoading();
+                    resolve();
+                  };
+                  
+                  // 팝업 없이 토큰 요청 시도 (실패하면 팝업)
+                  tokenClient.requestAccessToken({ prompt: '' });
+                });
               }
-            }
-            
-            // Access Token이 있으면 Drive 로드 시도
-            if (accessToken) {
-              try {
-                await loadFromDrive();
-                updateConnectionStatus('connected');
-                console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-              } catch (error) {
-                console.error('Drive 로드 실패:', error);
-                updateConnectionStatus('disconnected');
-              }
-            } else {
+              
+              hideLoading();
+              
+            } catch (error) {
+              console.log('⚠️ 자동 토큰 발급 실패:', error.message);
               updateConnectionStatus('disconnected');
+              hideLoading();
             }
-            
-            hideLoading();
           } else {
             console.log('⚠️ 로그인 필요');
             updateConnectionStatus('disconnected');
@@ -3064,9 +3101,9 @@
     }
     
     /**
-     * 분석 결과 포함 저장
+     * 기업정보 + 지원사업 함께 저장
      */
-    async function saveWithAnalysis() {
+    async function saveWithPrograms() {
       const companyData = collectFormData();
       
       if (!companyData.companyName) {
@@ -3076,6 +3113,12 @@
       
       if (!companyData.businessNumber) {
         alert('사업자등록번호를 입력해주세요.');
+        return;
+      }
+      
+      // 맞춤찾기 결과 확인
+      if (!lastMatchedPrograms || lastMatchedPrograms.length === 0) {
+        alert('⚠️ 먼저 "맞춤 지원사업 찾기"를 실행해주세요!\n\n맞춤찾기 결과가 있어야 지원사업을 함께 저장할 수 있습니다.');
         return;
       }
       
@@ -3113,8 +3156,8 @@
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
         ...companyData,
-        // 맞춤찾기 결과 저장
-        matchedPrograms: lastMatchedPrograms.slice(0, 20),
+        // 맞춤찾기 결과 저장 (상위 50개까지)
+        matchedPrograms: lastMatchedPrograms.slice(0, 50),
         // AI 분석 결과 저장
         aiSummary: summaryResults.length > 0 ? summaryResults : null,
         aiDetail: detailResults.length > 0 ? detailResults : null,
@@ -3135,12 +3178,12 @@
         
         const savedItems = [];
         savedItems.push('기업정보');
-        if (lastMatchedPrograms.length > 0) savedItems.push('맞춤찾기 결과');
-        if (summaryResults.length > 0) savedItems.push('요약분석');
-        if (detailResults.length > 0) savedItems.push('상세분석');
+        savedItems.push(`맞춤 지원사업 ${lastMatchedPrograms.length}건`);
+        if (summaryResults.length > 0) savedItems.push('AI 요약분석');
+        if (detailResults.length > 0) savedItems.push('AI 상세분석');
         
         alert(`✅ 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
-        console.log('💾 분석 포함 저장 완료:', savedItems);
+        console.log('💾 기업정보+지원사업 저장 완료:', savedItems);
       } else {
         alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
       }
@@ -3449,46 +3492,55 @@
       }
       
       try {
-        showLoadingOverlay('🤖 AI 요약분석 중...', '상위 10개 공고를 Gemini AI로 분석하고 있습니다...');
+        showLoadingOverlay('🤖 AI 요약분석 중...', '⭐ 상위 10개 지원사업을 Gemini AI로 분석하고 있습니다...');
         
         // 상위 10개 프로그램 선택
         const top10 = lastMatchedPrograms.slice(0, 10);
         
         // Gemini API 호출 (전역 GEMINI_API_KEY 사용)
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
         
-        // 프롬프트 생성
+        // 프롬프트 생성 - 더 충실한 분석을 위해 개선
         const prompt = `
-당신은 기업 지원사업 전문 컨설턴트입니다.
+당신은 대한민국 정부 지원사업 전문 컨설턴트입니다. 기업에게 실질적으로 도움이 되는 분석을 제공해야 합니다.
 
-다음은 "${lastCompanyData.companyName}" 기업의 정보입니다:
-- 업종: ${lastCompanyData.ksicCode}
-- 기업 규모: ${lastCompanyData.companySize}
-- 직원 수: ${lastCompanyData.employeesTotal}명
+## 분석 대상 기업 정보
+- 기업명: ${lastCompanyData.companyName}
+- 업종코드(KSIC): ${lastCompanyData.ksicCode}
+- 기업규모: ${lastCompanyData.companySize}
+- 직원수: ${lastCompanyData.employeesTotal}명
 - 소재지: ${lastCompanyData.locationSido} ${lastCompanyData.locationSigungu || ''}
+- 수도권여부: ${lastCompanyData.capitalArea === 'Y' ? '수도권' : '비수도권'}
+- 매출액: ${lastCompanyData.revenueRecent ? (lastCompanyData.revenueRecent / 100000000).toFixed(1) + '억원' : '미입력'}
 
-다음은 이 기업에 추천된 상위 10개 지원사업 공고입니다:
+## 상위 10개 추천 지원사업
 
 ${top10.map((p, i) => `
-${i + 1}. ${p.name}
-   주관: ${p.organization}
-   분야: ${p.category}
-   설명: ${p.description}
-   예산: ${p.budget}
-   추천 이유: ${p.matchReasons?.join(', ') || '적합'}
+[${i + 1}번] ${p.name}
+- 주관기관: ${p.organization || '미상'}
+- 지원분야: ${p.category || '기타'}
+- 지원대상: ${p.target || '미상'}
+- 지원내용: ${p.description || '상세내용 확인 필요'}
+- 신청기간: ${p.applicationPeriod || '상시'}
+- 현재매칭점수: ${p.matchScore}점
+- 매칭이유: ${p.matchReasons?.join(', ') || '기본조건 충족'}
 `).join('\n')}
 
-각 공고에 대해 다음 형식의 JSON 배열로 응답해주세요:
+## 요청사항
+각 지원사업에 대해 해당 기업이 이해하기 쉽도록 다음 정보를 JSON 배열로 제공해주세요:
+
+1. summary: 이 지원사업이 무엇인지, 어떤 혜택을 받을 수 있는지 80자 이내로 구체적으로 설명
+2. recommendation: 왜 이 기업에 적합한지, 신청하면 어떤 이점이 있는지 50자 이내로 설명
+
 [
   {
     "index": 0,
-    "summary": "50자 이내의 핵심 요약",
-    "recommendation": "왜 이 기업에 적합한지 30자 이내로"
-  },
-  ...
+    "summary": "지원사업 내용과 혜택을 구체적으로 80자 이내로",
+    "recommendation": "이 기업에 적합한 이유를 50자 이내로"
+  }
 ]
 
-반드시 유효한 JSON 배열만 출력하세요. 다른 텍스트는 포함하지 마세요.
+반드시 유효한 JSON 배열만 출력하세요. 마크다운이나 다른 텍스트 없이 순수 JSON만 응답하세요.
 `;
 
         const response = await fetch(API_URL, {
@@ -3549,102 +3601,337 @@ ${i + 1}. ${p.name}
         return;
       }
       
-      // 안내 팝업
-      const confirmed = confirm('📊 AI 상세분석을 시작합니다.\n\n상위 10개 공고에 대해 AI가 더 깊이 분석합니다.\n\n분석에는 약 20-30초가 소요됩니다.\n\n계속하시겠습니까?');
+      // 안내 팝업 - PDF 분석 설명 추가
+      const confirmed = confirm('📄 AI 공고문 PDF 상세분석을 시작합니다.\n\n✅ 상위 10개 공고의 PDF 파일을 AI가 직접 읽고 분석합니다.\n✅ 자격요건, 평가기준, 제출서류, 선정규모 등을 정확히 추출합니다.\n✅ 귀사의 선정 가능성을 구체적으로 분석합니다.\n\n⏱️ 분석에는 약 30-60초가 소요됩니다.\n\n계속하시겠습니까?');
       
       if (!confirmed) {
         return;
       }
       
       try {
-        showLoadingOverlay('🤖 AI 상세분석 중...', '상위 10개 공고를 심층 분석하고 있습니다...');
-        
         // 상위 10개 프로그램 선택
         const top10 = lastMatchedPrograms.slice(0, 10);
         
-        // Gemini API 호출 (전역 GEMINI_API_KEY 사용)
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
+        // PDF URL이 있는 프로그램만 필터링
+        const programsWithPDF = top10.filter(p => p.printFileUrl || p.attachmentUrl);
         
-        // 더 상세한 프롬프트 생성
-        const prompt = `
-당신은 기업 지원사업 전문 컨설턴트입니다.
-
-다음은 "${lastCompanyData.companyName}" 기업의 정보입니다:
-- 업종(KSIC): ${lastCompanyData.ksicCode}
-- 기업 규모: ${lastCompanyData.companySize}
-- 직원 수: ${lastCompanyData.employeesTotal}명
-- 매출액: ${lastCompanyData.revenueRecent}원
-- 소재지: ${lastCompanyData.locationSido} ${lastCompanyData.locationSigungu || ''}
-- 희망 지원분야: ${lastCompanyData.supportNeeds?.join(', ') || '없음'}
-
-다음은 이 기업에 추천된 상위 10개 지원사업 공고입니다:
-
-${top10.map((p, i) => `
-${i + 1}. ${p.name}
-   주관기관: ${p.organization}
-   분야: ${p.category}
-   지원 규모: ${p.budget}
-   상세 설명: ${p.description}
-   추천 이유: ${p.matchReasons?.join(', ') || '적합'}
-   매칭도: ${p.matchScore}점
-`).join('\n')}
-
-각 공고에 대해 다음 형식의 JSON 배열로 응답해주세요:
-[
-  {
-    "index": 0,
-    "detailedAnalysis": "이 공고가 해당 기업에 적합한 이유를 100자 이내로 상세히 설명",
-    "applicationStrategy": "신청 시 주의사항이나 전략을 50자 이내로",
-    "expectedBenefit": "기대 효과를 30자 이내로",
-    "priority": "상/중/하 중 하나"
-  },
-  ...
-]
-
-반드시 유효한 JSON 배열만 출력하세요. 다른 텍스트는 포함하지 마세요.
-`;
-
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }]
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Gemini API 오류: ${response.status}`);
+        if (programsWithPDF.length === 0) {
+          alert('⚠️ PDF 공고문이 있는 지원사업이 없습니다.\n\n요약분석을 이용해주세요.');
+          return;
         }
         
-        const data = await response.json();
-        const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ ${programsWithPDF.length}개 공고문 PDF를 Gemini AI가 읽고 분석하고 있습니다...`);
         
-        // JSON 추출 (```json ``` 제거)
-        let jsonText = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const detailResults = [];
         
-        let detailResults;
-        try {
-          detailResults = JSON.parse(jsonText);
-        } catch (e) {
-          console.error('JSON 파싱 오류:', e);
-          console.log('AI 응답:', aiText);
-          throw new Error('AI 응답을 파싱할 수 없습니다');
+        // 각 프로그램의 PDF를 순차적으로 분석
+        for (let i = 0; i < Math.min(programsWithPDF.length, 10); i++) {
+          const program = programsWithPDF[i];
+          const pdfUrl = program.printFileUrl || program.attachmentUrl;
+          
+          console.log(`📄 [${i + 1}/${programsWithPDF.length}] PDF 분석 중: ${program.name}`);
+          
+          try {
+            // PDF 다운로드 및 Base64 변환
+            const pdfResponse = await fetch(pdfUrl);
+            if (!pdfResponse.ok) {
+              console.log(`⚠️ PDF 다운로드 실패: ${program.name}`);
+              continue;
+            }
+            
+            const pdfBuffer = await pdfResponse.arrayBuffer();
+            const pdfBase64 = btoa(
+              new Uint8Array(pdfBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+            );
+            
+            // Gemini API로 PDF 분석
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const prompt = `
+당신은 대한민국 정부지원사업 전문 컨설턴트입니다.
+첨부된 공고문 PDF를 꼼꼼히 읽고, 아래 기업이 이해하기 쉽게 핵심 정보를 추출해주세요.
+
+## 분석 대상 기업 정보
+- 기업명: ${lastCompanyData.companyName}
+- 업종코드(KSIC): ${lastCompanyData.ksicCode}
+- 기업규모: ${lastCompanyData.companySize}
+- 기업형태: ${lastCompanyData.companyType || '미입력'}
+- 직원수: ${lastCompanyData.employeesTotal}명
+- 매출액: ${lastCompanyData.revenueRecent ? (lastCompanyData.revenueRecent / 100000000).toFixed(1) + '억원' : '미입력'}
+- 소재지: ${lastCompanyData.locationSido} ${lastCompanyData.locationSigungu || ''}
+- 수도권여부: ${lastCompanyData.capitalArea === 'Y' ? '수도권' : '비수도권'}
+- 벤처인증: ${lastCompanyData.certVenture === 'Y' ? '있음' : '없음'}
+- 이노비즈: ${lastCompanyData.certInnobiz === 'Y' ? '있음' : '없음'}
+
+## 추출해야 할 정보 (PDF에서 정확히 읽어서)
+
+반드시 아래 JSON 형식으로만 응답하세요:
+
+{
+  "programSummary": "이 지원사업이 무엇인지 2-3문장으로 쉽게 설명 (100자 이내)",
+  
+  "eligibility": {
+    "companySize": "지원가능 기업규모 (예: 중소기업, 매출 100억 이하 등)",
+    "businessAge": "업력 조건 (예: 3년 이상, 7년 이하 등)",
+    "requiredCerts": ["필수 인증 목록"],
+    "regionLimit": "지역 제한 (예: 전국, 수도권 제외 등)",
+    "otherRequirements": ["기타 필수 조건들"]
+  },
+  
+  "evaluation": {
+    "totalPoints": 100,
+    "criteria": [
+      {"name": "평가항목명", "points": 배점, "description": "평가내용"}
+    ],
+    "bonusPoints": [
+      {"condition": "가점 조건", "points": 가점}
+    ]
+  },
+  
+  "documents": {
+    "required": ["필수 제출서류 목록"],
+    "optional": ["선택 제출서류 목록"]
+  },
+  
+  "budget": {
+    "totalBudget": "총 예산 (예: 100억원)",
+    "perCompany": "기업당 지원금 (예: 최대 1억원)",
+    "selectedCount": "선정 예정 기업수 (예: 50개사)",
+    "supportDetails": "지원 내용 상세 (자금, 기술, 인력 등)"
+  },
+  
+  "schedule": {
+    "applicationPeriod": "신청 기간",
+    "reviewPeriod": "심사 기간",
+    "selectionDate": "선정 발표일",
+    "executionPeriod": "사업 수행 기간"
+  },
+  
+  "companyFit": {
+    "eligible": true/false,
+    "fitScore": 0-100,
+    "strengths": ["이 기업의 강점 3개"],
+    "weaknesses": ["보완이 필요한 점 2개"],
+    "estimatedRank": "예상 순위 (상위 10%, 30% 등)",
+    "recommendation": "이 기업에게 드리는 신청 추천 의견 (150자 이내)",
+    "preparationTips": ["선정 가능성 높이는 준비 팁 3개"]
+  }
+}
+
+중요:
+1. PDF에 없는 정보는 "확인 필요"로 표시
+2. 숫자는 정확히 추출 (예: 50억원 → "50억원")
+3. 이 기업 입장에서 실질적으로 도움되는 분석 제공
+4. JSON 형식만 출력, 다른 텍스트 없이
+`;
+
+            const response = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [
+                    { text: prompt },
+                    {
+                      inline_data: {
+                        mime_type: "application/pdf",
+                        data: pdfBase64
+                      }
+                    }
+                  ]
+                }]
+              })
+            });
+            
+            if (!response.ok) {
+              console.log(`⚠️ Gemini API 오류: ${response.status}`);
+              continue;
+            }
+            
+            const data = await response.json();
+            const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            
+            // JSON 추출
+            let jsonText = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            
+            try {
+              const pdfAnalysis = JSON.parse(jsonText);
+              detailResults.push({
+                index: i,
+                programId: program.id,
+                programName: program.name,
+                ...pdfAnalysis
+              });
+              console.log(`✅ PDF 분석 완료: ${program.name}`);
+            } catch (e) {
+              console.error(`JSON 파싱 오류 (${program.name}):`, e);
+            }
+            
+          } catch (pdfError) {
+            console.error(`PDF 처리 오류 (${program.name}):`, pdfError);
+          }
         }
         
         hideLoadingOverlay();
         
-        // 결과를 화면에 표시
-        updateResultsWithDetail(detailResults);
+        if (detailResults.length === 0) {
+          alert('⚠️ PDF 분석에 실패했습니다.\n\nPDF 파일에 접근할 수 없거나 형식이 올바르지 않습니다.');
+          return;
+        }
         
-        alert('✅ AI 상세분석이 완료되었습니다!\n\n각 공고 카드에 상세 분석이 추가되었습니다.');
+        // 결과를 화면에 표시
+        updateResultsWithPDFDetail(detailResults);
+        
+        alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailResults.length}개 공고의 상세 분석이 추가되었습니다.`);
         
       } catch (error) {
         hideLoadingOverlay();
-        console.error('❌ 상세분석 오류:', error);
-        alert('상세분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n잠시 후 다시 시도해주세요.');
+        console.error('❌ PDF 상세분석 오류:', error);
+        alert('PDF 상세분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n잠시 후 다시 시도해주세요.');
       }
+    }
+    
+    /**
+     * PDF 상세분석 결과를 화면에 표시
+     */
+    function updateResultsWithPDFDetail(pdfResults) {
+      const resultCards = document.querySelectorAll('.result-card');
+      
+      pdfResults.forEach((result) => {
+        // 해당 프로그램의 카드 찾기
+        let targetCard = null;
+        resultCards.forEach((card, idx) => {
+          if (idx === result.index) {
+            targetCard = card;
+          }
+        });
+        
+        if (!targetCard) return;
+        
+        // 기존 상세분석 제거
+        const existingDetail = targetCard.querySelector('.ai-detail-box');
+        if (existingDetail) {
+          existingDetail.remove();
+        }
+        
+        // PDF 상세분석 결과 박스 생성
+        const detailBox = document.createElement('div');
+        detailBox.className = 'ai-detail-box';
+        detailBox.style.cssText = `
+          margin-top: 1.5rem;
+          padding: 1.5rem;
+          background: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+          border: 2px solid #28a745;
+        `;
+        
+        // 적합도 점수에 따른 색상
+        const fitScore = result.companyFit?.fitScore || 0;
+        const scoreColor = fitScore >= 80 ? '#28a745' : fitScore >= 60 ? '#ffc107' : '#dc3545';
+        const eligible = result.companyFit?.eligible;
+        
+        detailBox.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1.5rem;">📄</span>
+              <h5 style="color: #28a745; margin: 0; font-size: 1.1rem; font-weight: 700;">AI PDF 상세분석</h5>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="background: ${eligible ? '#d4edda' : '#f8d7da'}; color: ${eligible ? '#155724' : '#721c24'}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                ${eligible ? '✅ 지원 가능' : '⚠️ 자격 미달'}
+              </span>
+              <span style="background: ${scoreColor}; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                적합도 ${fitScore}점
+              </span>
+            </div>
+          </div>
+          
+          <!-- 사업 요약 -->
+          <div style="background: #f0fff4; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
+            <h6 style="color: #155724; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">📋 사업 요약</h6>
+            <p style="color: #333; margin: 0; line-height: 1.6; font-size: 0.95rem;">${result.programSummary || '정보 없음'}</p>
+          </div>
+          
+          <!-- 자격요건 -->
+          <div style="background: #fff8e6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
+            <h6 style="color: #856404; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">🎯 자격요건</h6>
+            <ul style="color: #333; margin: 0; padding-left: 1.2rem; line-height: 1.8; font-size: 0.9rem;">
+              <li><strong>기업규모:</strong> ${result.eligibility?.companySize || '확인 필요'}</li>
+              <li><strong>업력:</strong> ${result.eligibility?.businessAge || '확인 필요'}</li>
+              <li><strong>필수인증:</strong> ${result.eligibility?.requiredCerts?.join(', ') || '없음'}</li>
+              <li><strong>지역제한:</strong> ${result.eligibility?.regionLimit || '전국'}</li>
+              ${result.eligibility?.otherRequirements?.map(r => `<li>${r}</li>`).join('') || ''}
+            </ul>
+          </div>
+          
+          <!-- 지원규모 -->
+          <div style="background: #e3f2fd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #2196f3;">
+            <h6 style="color: #0d47a1; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">💰 지원규모</h6>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+              <div><strong>총 예산:</strong> ${result.budget?.totalBudget || '확인 필요'}</div>
+              <div><strong>기업당:</strong> ${result.budget?.perCompany || '확인 필요'}</div>
+              <div><strong>선정규모:</strong> ${result.budget?.selectedCount || '확인 필요'}</div>
+              <div><strong>지원내용:</strong> ${result.budget?.supportDetails || '확인 필요'}</div>
+            </div>
+          </div>
+          
+          <!-- 제출서류 -->
+          <div style="background: #f3e5f5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #9c27b0;">
+            <h6 style="color: #6a1b9a; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">📝 제출서류</h6>
+            <div style="font-size: 0.85rem; color: #333;">
+              <p style="margin: 0 0 0.3rem 0;"><strong>필수:</strong> ${result.documents?.required?.slice(0, 5).join(', ') || '확인 필요'}${result.documents?.required?.length > 5 ? ' 외 ' + (result.documents.required.length - 5) + '건' : ''}</p>
+              ${result.documents?.optional?.length > 0 ? `<p style="margin: 0;"><strong>선택:</strong> ${result.documents.optional.slice(0, 3).join(', ')}</p>` : ''}
+            </div>
+          </div>
+          
+          <!-- 일정 -->
+          <div style="background: #e8f5e9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #4caf50;">
+            <h6 style="color: #2e7d32; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">📅 주요 일정</h6>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem; color: #333;">
+              <div><strong>신청기간:</strong> ${result.schedule?.applicationPeriod || '확인 필요'}</div>
+              <div><strong>심사기간:</strong> ${result.schedule?.reviewPeriod || '확인 필요'}</div>
+              <div><strong>선정발표:</strong> ${result.schedule?.selectionDate || '확인 필요'}</div>
+              <div><strong>수행기간:</strong> ${result.schedule?.executionPeriod || '확인 필요'}</div>
+            </div>
+          </div>
+          
+          <!-- 귀사 분석 -->
+          <div style="background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%); padding: 1.2rem; border-radius: 10px; border: 2px solid #667eea;">
+            <h6 style="color: #667eea; margin: 0 0 0.8rem 0; font-size: 1rem; font-weight: 700;">🏢 ${lastCompanyData.companyName} 맞춤 분석</h6>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div>
+                <p style="color: #28a745; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">💪 강점</p>
+                <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
+                  ${result.companyFit?.strengths?.map(s => `<li>${s}</li>`).join('') || '<li>분석 중</li>'}
+                </ul>
+              </div>
+              <div>
+                <p style="color: #dc3545; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">⚠️ 보완점</p>
+                <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
+                  ${result.companyFit?.weaknesses?.map(w => `<li>${w}</li>`).join('') || '<li>없음</li>'}
+                </ul>
+              </div>
+            </div>
+            
+            <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem;">
+              <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
+                <strong style="color: #667eea;">💡 추천 의견:</strong> ${result.companyFit?.recommendation || '분석 결과를 확인해주세요.'}
+              </p>
+            </div>
+            
+            <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px;">
+              <p style="color: #856404; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.85rem;">📌 선정 가능성 높이는 팁</p>
+              <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
+                ${result.companyFit?.preparationTips?.map(t => `<li>${t}</li>`).join('') || '<li>공고문을 상세히 확인하세요</li>'}
+              </ul>
+            </div>
+          </div>
+        `;
+        
+        targetCard.appendChild(detailBox);
+      });
     }
     
     function showLoadingOverlay(title, subtitle) {
@@ -3756,11 +4043,31 @@ ${i + 1}. ${p.name}
                 <p style="color:#555;line-height:1.6;margin:0;">${rec.description}</p>
               </div>
               
-              <div style="display:flex;gap:0.75rem;margin-top:1rem;">
-                <a href="${rec.website}" target="_blank" 
+              <div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap;">
+                <a href="https://www.bizinfo.go.kr/web/lay1/bbs/S1T122C128/AS/74/view.do?pblancId=${rec.id}" target="_blank" 
                    style="display:inline-block;padding:0.7rem 1.5rem;background:#FF8802;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;transition:all 0.3s;">
                   📋 상세보기 →
                 </a>
+                ${rec.applicationUrl ? `
+                <a href="${rec.applicationUrl}" target="_blank" 
+                   style="display:inline-block;padding:0.7rem 1.5rem;background:#4A90E2;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;transition:all 0.3s;">
+                  ✍️ 신청하기 →
+                </a>
+                ` : ''}
+                ${rec.attachmentUrl ? `
+                <a href="${rec.attachmentUrl}" target="_blank" download
+                   style="display:inline-block;padding:0.7rem 1.5rem;background:#28a745;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;transition:all 0.3s;"
+                   title="${rec.attachmentName || '첨부파일'}">
+                  📎 첨부파일 ↓
+                </a>
+                ` : ''}
+                ${rec.printFileUrl ? `
+                <a href="${rec.printFileUrl}" target="_blank" download
+                   style="display:inline-block;padding:0.7rem 1.5rem;background:#dc3545;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;transition:all 0.3s;"
+                   title="${rec.printFileName || '공고문 PDF'}">
+                  📄 공고문PDF ↓
+                </a>
+                ` : ''}
               </div>
             </div>
           </div>
@@ -3788,31 +4095,32 @@ ${i + 1}. ${p.name}
             existingSummary.remove();
           }
           
-          // AI 요약 박스 생성
+          // AI 요약 박스 생성 - 흰색 배경으로 변경
           const summaryDiv = document.createElement('div');
           summaryDiv.className = 'ai-summary-box';
           summaryDiv.style.cssText = `
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffffff;
             padding: 1.2rem;
             border-radius: 12px;
             margin-top: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid #667eea;
             animation: slideIn 0.5s ease-out;
           `;
           
           summaryDiv.innerHTML = `
-            <div style="display: flex; align-items: center; margin-bottom: 0.8rem;">
+            <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
               <span style="font-size: 1.5rem; margin-right: 0.5rem;">🤖</span>
-              <h5 style="color: white; margin: 0; font-size: 1.1rem; font-weight: 600;">AI 요약분석</h5>
+              <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
             </div>
-            <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem;">
-              <p style="color: white; margin: 0; line-height: 1.6; font-size: 0.95rem;">
+            <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
+              <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
                 ${result.summary || '요약 정보가 없습니다.'}
               </p>
             </div>
-            <div style="background: rgba(255,255,255,0.1); padding: 0.8rem; border-radius: 8px;">
-              <p style="color: #ffd700; margin: 0; font-weight: 500; font-size: 0.9rem;">
-                💡 ${result.recommendation || '추천 정보가 없습니다.'}
+            <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #ffc107;">
+              <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
+                💡 <span style="color: #0c2c54;">${result.recommendation || '추천 정보가 없습니다.'}</span>
               </p>
             </div>
           `;
@@ -3862,43 +4170,44 @@ ${i + 1}. ${p.name}
           
           // 우선순위에 따른 색상
           const priorityColors = {
-            '상': { bg: '#ff6b6b', text: '최우선 신청' },
-            '중': { bg: '#feca57', text: '우선 고려' },
-            '하': { bg: '#48dbfb', text: '검토 필요' }
+            '상': { bg: '#dc3545', border: '#dc3545', text: '최우선 신청' },
+            '중': { bg: '#ffc107', border: '#ffc107', text: '우선 고려' },
+            '하': { bg: '#17a2b8', border: '#17a2b8', text: '검토 필요' }
           };
           
           const priority = result.priority || '중';
           const colorInfo = priorityColors[priority] || priorityColors['중'];
           
-          // AI 상세분석 박스 생성
+          // AI 상세분석 박스 생성 - 흰색 배경으로 변경
           const detailDiv = document.createElement('div');
           detailDiv.className = 'ai-detail-box';
           detailDiv.style.cssText = `
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: #ffffff;
             padding: 1.5rem;
             border-radius: 12px;
             margin-top: 1.5rem;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            border: 2px solid #f093fb;
             animation: slideIn 0.5s ease-out;
           `;
           
           detailDiv.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
               <div style="display: flex; align-items: center;">
                 <span style="font-size: 1.5rem; margin-right: 0.5rem;">🎯</span>
-                <h5 style="color: white; margin: 0; font-size: 1.1rem; font-weight: 600;">AI 상세분석</h5>
+                <h5 style="color: #f5576c; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 상세분석</h5>
               </div>
               <span style="background: ${colorInfo.bg}; color: white; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
                 ${colorInfo.text}
               </span>
             </div>
             
-            <div style="background: rgba(255,255,255,0.2); padding: 1.2rem; border-radius: 10px; margin-bottom: 1rem;">
-              <div style="display: flex; align-items: start; margin-bottom: 1rem;">
-                <span style="color: #ffd700; font-size: 1.2rem; margin-right: 0.5rem;">📋</span>
+            <div style="background: #fff5f5; padding: 1.2rem; border-radius: 10px; margin-bottom: 1rem; border-left: 4px solid #f5576c;">
+              <div style="display: flex; align-items: start;">
+                <span style="color: #f5576c; font-size: 1.2rem; margin-right: 0.5rem;">📋</span>
                 <div>
-                  <h6 style="color: #ffd700; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 600;">상세 분석</h6>
-                  <p style="color: white; margin: 0; line-height: 1.7; font-size: 0.95rem;">
+                  <h6 style="color: #f5576c; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">상세 분석</h6>
+                  <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
                     ${result.detailedAnalysis || '상세 분석 정보가 없습니다.'}
                   </p>
                 </div>
@@ -3906,22 +4215,22 @@ ${i + 1}. ${p.name}
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-              <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px;">
+              <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #ffc107;">
                 <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
                   <span style="font-size: 1.1rem; margin-right: 0.4rem;">💡</span>
-                  <h6 style="color: white; margin: 0; font-size: 0.85rem; font-weight: 600;">신청 전략</h6>
+                  <h6 style="color: #856404; margin: 0; font-size: 0.9rem; font-weight: 700;">신청 전략</h6>
                 </div>
-                <p style="color: rgba(255,255,255,0.95); margin: 0; line-height: 1.5; font-size: 0.85rem;">
+                <p style="color: #333; margin: 0; line-height: 1.5; font-size: 0.85rem;">
                   ${result.applicationStrategy || '전략 정보가 없습니다.'}
                 </p>
               </div>
               
-              <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px;">
+              <div style="background: #f0fff4; padding: 1rem; border-radius: 8px; border-left: 4px solid #28a745;">
                 <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
                   <span style="font-size: 1.1rem; margin-right: 0.4rem;">✨</span>
-                  <h6 style="color: white; margin: 0; font-size: 0.85rem; font-weight: 600;">기대 효과</h6>
+                  <h6 style="color: #155724; margin: 0; font-size: 0.9rem; font-weight: 700;">기대 효과</h6>
                 </div>
-                <p style="color: rgba(255,255,255,0.95); margin: 0; line-height: 1.5; font-size: 0.85rem;">
+                <p style="color: #333; margin: 0; line-height: 1.5; font-size: 0.85rem;">
                   ${result.expectedBenefit || '기대 효과 정보가 없습니다.'}
                 </p>
               </div>
