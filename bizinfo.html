@@ -983,138 +983,28 @@
         <div class="form-group full-width">
           <label>업종(KSIC 코드) <span class="required">*</span></label>
           <div style="display: flex; gap: 0.3rem; align-items: flex-start; flex-wrap: wrap;">
-            <select id="ksic-select" onchange="updateKsicCode()" style="flex: 1; min-width: 150px;">
-              <option value="">대분류 선택</option>
-              <optgroup label="농업, 임업 및 어업 (A)">
-                <option value="01">01 - 농업</option>
-                <option value="02">02 - 임업</option>
-                <option value="03">03 - 어업</option>
-              </optgroup>
-              <optgroup label="광업 (B)">
-                <option value="05">05 - 석탄, 원유 및 천연가스 광업</option>
-                <option value="06">06 - 금속 광업</option>
-                <option value="07">07 - 비금속광물 광업; 연료용 제외</option>
-                <option value="08">08 - 광업 지원 서비스업</option>
-              </optgroup>
-              <optgroup label="제조업 (C)">
-                <option value="10">10 - 식료품 제조업</option>
-                <option value="11">11 - 음료 제조업</option>
-                <option value="12">12 - 담배 제조업</option>
-                <option value="13">13 - 섬유제품 제조업; 의복 제외</option>
-                <option value="14">14 - 의복, 의복액세서리 및 모피제품 제조업</option>
-                <option value="15">15 - 가죽, 가방 및 신발 제조업</option>
-                <option value="16">16 - 목재 및 나무제품 제조업; 가구 제외</option>
-                <option value="17">17 - 펄프, 종이 및 종이제품 제조업</option>
-                <option value="18">18 - 인쇄 및 기록매체 복제업</option>
-                <option value="19">19 - 코크스, 연탄 및 석유정제품 제조업</option>
-                <option value="20">20 - 화학물질 및 화학제품 제조업; 의약품 제외</option>
-                <option value="21">21 - 의료용 물질 및 의약품 제조업</option>
-                <option value="22">22 - 고무제품 및 플라스틱제품 제조업</option>
-                <option value="23">23 - 비금속 광물제품 제조업</option>
-                <option value="24">24 - 1차 금속 제조업</option>
-                <option value="25">25 - 금속가공제품 제조업; 기계 및 가구 제외</option>
-                <option value="26">26 - 전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업</option>
-                <option value="27">27 - 의료, 정밀, 광학기기 및 시계 제조업</option>
-                <option value="28">28 - 전기장비 제조업</option>
-                <option value="29">29 - 기타 기계 및 장비 제조업</option>
-                <option value="30">30 - 자동차 및 트레일러 제조업</option>
-                <option value="31">31 - 기타 운송장비 제조업</option>
-                <option value="32">32 - 가구 제조업</option>
-                <option value="33">33 - 기타 제품 제조업</option>
-              </optgroup>
-              <optgroup label="전기, 가스, 증기 및 공기조절 공급업 (D)">
-                <option value="35">35 - 전기, 가스, 증기 및 공기조절 공급업</option>
-              </optgroup>
-              <optgroup label="수도, 하수 및 폐기물 처리, 원료 재생업 (E)">
-                <option value="36">36 - 수도업</option>
-                <option value="37">37 - 하수, 폐수 및 분뇨 처리업</option>
-                <option value="38">38 - 폐기물 수집운반, 처리 및 원료 재생업</option>
-                <option value="39">39 - 환경 정화 및 복원업</option>
-              </optgroup>
-              <optgroup label="건설업 (F)">
-                <option value="41">41 - 종합 건설업</option>
-                <option value="42">42 - 전문직별 공사업</option>
-              </optgroup>
-              <optgroup label="도매 및 소매업 (G)">
-                <option value="45">45 - 자동차 및 부품 판매업</option>
-                <option value="46">46 - 도매 및 상품중개업</option>
-                <option value="47">47 - 소매업; 자동차 제외</option>
-              </optgroup>
-              <optgroup label="운수 및 창고업 (H)">
-                <option value="49">49 - 육상운송 및 파이프라인 운송업</option>
-                <option value="50">50 - 수상 운송업</option>
-                <option value="51">51 - 항공 운송업</option>
-                <option value="52">52 - 창고 및 운송관련 서비스업</option>
-              </optgroup>
-              <optgroup label="숙박 및 음식점업 (I)">
-                <option value="55">55 - 숙박업</option>
-                <option value="56">56 - 음식점 및 주점업</option>
-              </optgroup>
-              <optgroup label="정보통신업 (J)">
-                <option value="58">58 - 출판업</option>
-                <option value="59">59 - 영상·오디오 기록물 제작 및 배급업</option>
-                <option value="60">60 - 방송업</option>
-                <option value="61">61 - 통신업</option>
-                <option value="62">62 - 컴퓨터 프로그래밍, 시스템 통합 및 관리업</option>
-                <option value="63">63 - 정보서비스업</option>
-              </optgroup>
-              <optgroup label="금융 및 보험업 (K)">
-                <option value="64">64 - 금융업</option>
-                <option value="65">65 - 보험 및 연금업</option>
-                <option value="66">66 - 금융 및 보험 관련 서비스업</option>
-              </optgroup>
-              <optgroup label="부동산업 (L)">
-                <option value="68">68 - 부동산업</option>
-              </optgroup>
-              <optgroup label="전문, 과학 및 기술 서비스업 (M)">
-                <option value="70">70 - 연구개발업</option>
-                <option value="71">71 - 전문서비스업</option>
-                <option value="72">72 - 건축기술, 엔지니어링 및 기타 과학기술 서비스업</option>
-                <option value="73">73 - 기타 전문, 과학 및 기술 서비스업</option>
-              </optgroup>
-              <optgroup label="사업시설 관리, 사업 지원 및 임대 서비스업 (N)">
-                <option value="74">74 - 사업시설 관리 및 조경 서비스업</option>
-                <option value="75">75 - 사업 지원 서비스업</option>
-                <option value="76">76 - 임대업; 부동산 제외</option>
-              </optgroup>
-              <optgroup label="공공행정, 국방 및 사회보장 행정 (O)">
-                <option value="84">84 - 공공행정, 국방 및 사회보장 행정</option>
-              </optgroup>
-              <optgroup label="교육 서비스업 (P)">
-                <option value="85">85 - 교육 서비스업</option>
-              </optgroup>
-              <optgroup label="보건업 및 사회복지 서비스업 (Q)">
-                <option value="86">86 - 보건업</option>
-                <option value="87">87 - 사회복지 서비스업</option>
-              </optgroup>
-              <optgroup label="예술, 스포츠 및 여가관련 서비스업 (R)">
-                <option value="90">90 - 창작, 예술 및 여가관련 서비스업</option>
-                <option value="91">91 - 스포츠 및 오락관련 서비스업</option>
-              </optgroup>
-              <optgroup label="협회 및 단체, 수리 및 기타 개인 서비스업 (S)">
-                <option value="94">94 - 협회 및 단체</option>
-                <option value="95">95 - 개인 및 소비용품 수리업</option>
-                <option value="96">96 - 기타 개인 서비스업</option>
-              </optgroup>
-              <optgroup label="가구 내 고용활동 및 달리 분류되지 않은 자가소비 생산활동 (T)">
-                <option value="97">97 - 가구 내 고용활동</option>
-                <option value="98">98 - 달리 분류되지 않은 자가소비를 위한 가구의 재화 및 서비스 생산활동</option>
-              </optgroup>
-              <optgroup label="국제 및 외국기관 (U)">
-                <option value="99">99 - 국제 및 외국기관</option>
-              </optgroup>
+            <!-- 계층형 KSIC 선택 -->
+            <select id="ksic-level-2" onchange="onKsicLevel2Change()" style="flex: 1; min-width: 150px;">
+              <option value="">중분류(2자리) 선택</option>
             </select>
-            <div style="display: flex; gap: 0.2rem; align-items: center;">
-              <input type="text" id="ksic-1" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 1)" onfocus="showKsicWarning()">
-              <input type="text" id="ksic-2" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 2)">
-              <input type="text" id="ksic-3" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 3)">
-              <input type="text" id="ksic-4" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 4)">
-              <input type="text" id="ksic-5" placeholder="0" maxlength="1" style="width: 35px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold;" inputmode="numeric" required oninput="handleKsicInput(this, 5)">
-            </div>
+            <select id="ksic-level-3" onchange="onKsicLevel3Change()" style="flex: 1; min-width: 150px;" disabled>
+              <option value="">소분류(3자리) 선택</option>
+            </select>
+            <select id="ksic-level-4" onchange="onKsicLevel4Change()" style="flex: 1; min-width: 150px;" disabled>
+              <option value="">세분류(4자리) 선택</option>
+            </select>
+            <select id="ksic-level-5" onchange="onKsicLevel5Change()" style="flex: 1; min-width: 150px;" disabled>
+              <option value="">세세분류(5자리) 선택</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 0.3rem; align-items: center; margin-top: 0.5rem;">
+            <span style="font-weight: bold; color: #4a90d9;">선택된 코드:</span>
+            <input type="text" id="ksic-display" readonly style="width: 80px; text-align: center; padding: 0.4rem; font-size: 1rem; font-weight: bold; background: #1a2a3a; border: 2px solid #4a90d9; color: #fff;" placeholder="00000">
+            <span id="ksic-name-display" style="color: #8ab4f8; font-size: 0.9rem;"></span>
             <input type="hidden" id="ksic-code">
             <button type="button" onclick="openKsicSearch()" class="btn-mini" title="통계청 공식 KSIC 검색 사이트">🔍 통계청 검색</button>
           </div>
-          <span class="info-text" style="color: #ff9999; font-weight: bold;">⚠️ KSIC 코드 5자리 모두 정확히 입력해주세요. 이 코드가 AI 분석에 가장 중요한 역할을 합니다!</span>
+          <span class="info-text" style="color: #ff9999; font-weight: bold;">⚠️ KSIC 코드 5자리까지 선택해주세요. 이 코드가 AI 분석에 가장 중요한 역할을 합니다!</span>
         </div>
         
         <div class="form-group full-width">
@@ -1598,6 +1488,263 @@
     let gisInited = false;
     let tokenClient = null;
     let hasCompletedSearch = false; // 맞춤찾기 완료 플래그
+    
+    // ==================== KSIC 데이터 및 계층형 드롭다운 ====================
+    let ksicData = [];
+    
+    // KSIC 데이터 로드
+    async function loadKsicData() {
+      try {
+        const response = await fetch('./ksic_data.json');
+        if (!response.ok) throw new Error('KSIC 데이터 로드 실패');
+        ksicData = await response.json();
+        console.log(`✅ KSIC 데이터 로드 완료: ${ksicData.length}개`);
+        initKsicLevel2();
+      } catch (error) {
+        console.error('KSIC 데이터 로드 오류:', error);
+        // 로드 실패 시 기본 데이터 사용
+        ksicData = [];
+      }
+    }
+    
+    // 코드 길이로 레벨 판단
+    function getCodeLevel(code) {
+      return code.length;
+    }
+    
+    // 특정 레벨의 코드 목록 가져오기
+    function getCodesByLevel(level) {
+      return ksicData.filter(item => item.code.length === level);
+    }
+    
+    // 부모 코드에 해당하는 자식 코드 목록 가져오기
+    function getChildCodes(parentCode) {
+      const parentLevel = parentCode.length;
+      const childLevel = parentLevel + 1;
+      return ksicData.filter(item => 
+        item.code.length === childLevel && item.code.startsWith(parentCode)
+      );
+    }
+    
+    // Level 2 (중분류) 초기화
+    function initKsicLevel2() {
+      const select = document.getElementById('ksic-level-2');
+      if (!select) return;
+      
+      select.innerHTML = '<option value="">중분류(2자리) 선택</option>';
+      const level2Codes = getCodesByLevel(2);
+      
+      level2Codes.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.code;
+        option.textContent = `${item.code} - ${item.name}`;
+        select.appendChild(option);
+      });
+    }
+    
+    // Level 2 선택 시
+    function onKsicLevel2Change() {
+      const select2 = document.getElementById('ksic-level-2');
+      const select3 = document.getElementById('ksic-level-3');
+      const select4 = document.getElementById('ksic-level-4');
+      const select5 = document.getElementById('ksic-level-5');
+      
+      const selectedCode = select2.value;
+      
+      // 하위 드롭다운 초기화
+      select3.innerHTML = '<option value="">소분류(3자리) 선택</option>';
+      select4.innerHTML = '<option value="">세분류(4자리) 선택</option>';
+      select5.innerHTML = '<option value="">세세분류(5자리) 선택</option>';
+      select3.disabled = true;
+      select4.disabled = true;
+      select5.disabled = true;
+      
+      if (!selectedCode) {
+        updateKsicDisplay('');
+        return;
+      }
+      
+      // Level 3 채우기
+      const children = getChildCodes(selectedCode);
+      if (children.length > 0) {
+        children.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.code;
+          option.textContent = `${item.code} - ${item.name}`;
+          select3.appendChild(option);
+        });
+        select3.disabled = false;
+      }
+      
+      updateKsicDisplay(selectedCode);
+    }
+    
+    // Level 3 선택 시
+    function onKsicLevel3Change() {
+      const select3 = document.getElementById('ksic-level-3');
+      const select4 = document.getElementById('ksic-level-4');
+      const select5 = document.getElementById('ksic-level-5');
+      
+      const selectedCode = select3.value;
+      
+      // 하위 드롭다운 초기화
+      select4.innerHTML = '<option value="">세분류(4자리) 선택</option>';
+      select5.innerHTML = '<option value="">세세분류(5자리) 선택</option>';
+      select4.disabled = true;
+      select5.disabled = true;
+      
+      if (!selectedCode) {
+        const parentCode = document.getElementById('ksic-level-2').value;
+        updateKsicDisplay(parentCode);
+        return;
+      }
+      
+      // Level 4 채우기
+      const children = getChildCodes(selectedCode);
+      if (children.length > 0) {
+        children.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.code;
+          option.textContent = `${item.code} - ${item.name}`;
+          select4.appendChild(option);
+        });
+        select4.disabled = false;
+      }
+      
+      updateKsicDisplay(selectedCode);
+    }
+    
+    // Level 4 선택 시
+    function onKsicLevel4Change() {
+      const select4 = document.getElementById('ksic-level-4');
+      const select5 = document.getElementById('ksic-level-5');
+      
+      const selectedCode = select4.value;
+      
+      // 하위 드롭다운 초기화
+      select5.innerHTML = '<option value="">세세분류(5자리) 선택</option>';
+      select5.disabled = true;
+      
+      if (!selectedCode) {
+        const parentCode = document.getElementById('ksic-level-3').value;
+        updateKsicDisplay(parentCode);
+        return;
+      }
+      
+      // Level 5 채우기
+      const children = getChildCodes(selectedCode);
+      if (children.length > 0) {
+        children.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.code;
+          option.textContent = `${item.code} - ${item.name}`;
+          select5.appendChild(option);
+        });
+        select5.disabled = false;
+      }
+      
+      updateKsicDisplay(selectedCode);
+    }
+    
+    // Level 5 선택 시
+    function onKsicLevel5Change() {
+      const select5 = document.getElementById('ksic-level-5');
+      const selectedCode = select5.value;
+      
+      if (!selectedCode) {
+        const parentCode = document.getElementById('ksic-level-4').value;
+        updateKsicDisplay(parentCode);
+        return;
+      }
+      
+      updateKsicDisplay(selectedCode);
+    }
+    
+    // KSIC 코드 표시 업데이트
+    function updateKsicDisplay(code) {
+      const display = document.getElementById('ksic-display');
+      const nameDisplay = document.getElementById('ksic-name-display');
+      const hiddenField = document.getElementById('ksic-code');
+      
+      if (!code) {
+        display.value = '';
+        nameDisplay.textContent = '';
+        hiddenField.value = '';
+        return;
+      }
+      
+      // 5자리로 패딩
+      const paddedCode = code.padEnd(5, '0');
+      display.value = paddedCode;
+      hiddenField.value = paddedCode;
+      
+      // 업종명 찾기
+      const item = ksicData.find(i => i.code === code);
+      if (item) {
+        nameDisplay.textContent = item.name;
+      } else {
+        nameDisplay.textContent = '';
+      }
+    }
+    
+    // 저장된 KSIC 코드로 드롭다운 설정
+    function setKsicFromCode(fullCode) {
+      if (!fullCode || fullCode.length < 2) return;
+      
+      // 2자리 코드 설정
+      const code2 = fullCode.substring(0, 2);
+      const select2 = document.getElementById('ksic-level-2');
+      if (select2) {
+        select2.value = code2;
+        onKsicLevel2Change();
+      }
+      
+      // 3자리 코드 설정
+      if (fullCode.length >= 3) {
+        const code3 = fullCode.substring(0, 3);
+        setTimeout(() => {
+          const select3 = document.getElementById('ksic-level-3');
+          if (select3 && !select3.disabled) {
+            // code3이 옵션에 있는지 확인
+            const hasOption = Array.from(select3.options).some(o => o.value === code3);
+            if (hasOption) {
+              select3.value = code3;
+              onKsicLevel3Change();
+            }
+          }
+          
+          // 4자리 코드 설정
+          if (fullCode.length >= 4) {
+            const code4 = fullCode.substring(0, 4);
+            setTimeout(() => {
+              const select4 = document.getElementById('ksic-level-4');
+              if (select4 && !select4.disabled) {
+                const hasOption = Array.from(select4.options).some(o => o.value === code4);
+                if (hasOption) {
+                  select4.value = code4;
+                  onKsicLevel4Change();
+                }
+              }
+              
+              // 5자리 코드 설정
+              if (fullCode.length >= 5) {
+                const code5 = fullCode.substring(0, 5);
+                setTimeout(() => {
+                  const select5 = document.getElementById('ksic-level-5');
+                  if (select5 && !select5.disabled) {
+                    const hasOption = Array.from(select5.options).some(o => o.value === code5);
+                    if (hasOption) {
+                      select5.value = code5;
+                      onKsicLevel5Change();
+                    }
+                  }
+                }, 100);
+              }
+            }, 100);
+          }
+        }, 100);
+      }
+    }
     let lastMatchedPrograms = []; // 맞춤찾기 결과 저장 (요약/상세분석에 사용)
     let lastCompanyData = null; // 마지막 검색 기업 데이터
     let accessToken = localStorage.getItem('driveAccessToken') || null;
@@ -1688,25 +1835,11 @@
     }
     
     /**
-     * KSIC hidden 필드 업데이트
-     */
-    function updateKsicHiddenField() {
-      const ksic1 = document.getElementById('ksic-1').value;
-      const ksic2 = document.getElementById('ksic-2').value;
-      const ksic3 = document.getElementById('ksic-3').value;
-      const ksic4 = document.getElementById('ksic-4').value;
-      const ksic5 = document.getElementById('ksic-5').value;
-      
-      const fullCode = ksic1 + ksic2 + ksic3 + ksic4 + ksic5;
-      document.getElementById('ksic-code').value = fullCode;
-    }
-    
-    /**
      * KSIC 검색 사이트 열기 (통계청 공식)
      */
     function openKsicSearch() {
       // 통계청 한국표준산업분류 검색 페이지 (직접 접근)
-      window.open('https://kssc.kostat.go.kr:8443/ksscNew_web/kssc/common/ClassificationContent.do?gubun=1&strCategoryNameCode=001&categoryMenu=007&addGubun=no', '_blank');
+      window.open('https://kssc.mods.go.kr:8443/ksscNew_web/kssc/common/ClassificationContent.do?gubun=1&strCategoryNameCode=001&categoryMenu=007&addGubun=no', '_blank');
     }
     
     /**
@@ -1953,6 +2086,8 @@
     // ==================== Google API 초기화 ====================
     function gapiLoaded() {
       gapi.load('client', initializeGapiClient);
+      // KSIC 데이터 로드
+      loadKsicData();
     }
     
     async function initializeGapiClient() {
@@ -3044,19 +3179,13 @@
         calculateBusinessAge();
       }
       
-      // KSIC 코드 5자리 개별 입력창에 로드
+      // KSIC 코드 계층형 드롭다운에 로드
       if (company.ksicCode) {
         const code = String(company.ksicCode).padStart(5, '0');
-        document.getElementById('ksic-1').value = code[0] || '';
-        document.getElementById('ksic-2').value = code[1] || '';
-        document.getElementById('ksic-3').value = code[2] || '';
-        document.getElementById('ksic-4').value = code[3] || '';
-        document.getElementById('ksic-5').value = code[4] || '';
-        updateKsicHiddenField();
-        
-        // KSIC 대분류 선택 설정
-        const categoryCode = code.substring(0, 2);
-        document.getElementById('ksic-select').value = categoryCode;
+        // 계층형 드롭다운 설정
+        setTimeout(() => {
+          setKsicFromCode(code);
+        }, 500); // KSIC 데이터 로드 후 설정
       }
       
       // 시도 선택 후 시군구 옵션 업데이트
@@ -3570,6 +3699,15 @@
           }
         }
         
+        // 중기업 대상 공고 - 소기업 제외
+        if ((combinedText.includes('중기업') || combinedText.includes('중기업 대상')) && 
+            !combinedText.includes('소기업') && !combinedText.includes('중소기업')) {
+          if (companySize === '소기업') {
+            console.log(`❌ [규모] ${programName.substring(0, 30)} - 중기업 대상`);
+            return false;
+          }
+        }
+        
         // 소기업 전용 공고 - 중기업/중견기업 제외
         if (combinedText.includes('소기업 전용') || combinedText.includes('소기업만')) {
           if (companySize !== '소기업') {
@@ -3578,20 +3716,30 @@
           }
         }
         
+        // 중소기업 전용인데 중견기업인 경우 제외
+        if ((combinedText.includes('중소기업') || combinedText.includes('중소기업 전용')) && 
+            !combinedText.includes('중견기업')) {
+          if (companySize === '중견기업' || companySize === '대기업') {
+            console.log(`❌ [규모] ${programName.substring(0, 30)} - 중소기업 전용`);
+            return false;
+          }
+        }
+        
         // -----------------------------------------
-        // 필터 4: 업종 불일치 제외 (명확한 경우만)
+        // 필터 4: 업종 불일치 제외 (강화된 필터링)
         // -----------------------------------------
         const ksicCategory = getKsicCategory(companyData.ksicCode);
+        const ksicCode = companyData.ksicCode || '';
         
-        // 특정 업종 전용 공고
+        // 4-1. 특정 업종 전용 공고 (명시적 키워드)
         const industryExclusions = [
-          { keywords: ['농업 전용', '농업분야만', '농업인만', '농어업인'], industries: ['농업', '어업', '임업'] },
-          { keywords: ['어업 전용', '수산업 전용', '어업인만'], industries: ['어업', '수산'] },
-          { keywords: ['제조업 전용', '제조업체만'], industries: ['제조', '식품', '화학', '금속', '전자', '기계', '자동차'] },
-          { keywords: ['건설업 전용', '건설업체만'], industries: ['건설', '토목'] },
+          { keywords: ['농업 전용', '농업분야만', '농업인만', '농어업인', '농업관련'], industries: ['농업', '어업', '임업'] },
+          { keywords: ['어업 전용', '수산업 전용', '어업인만', '수산관련'], industries: ['어업', '수산'] },
+          { keywords: ['제조업 전용', '제조업체만', '제조기업만'], industries: ['제조', '식품', '화학', '금속', '전자', '기계', '자동차'] },
+          { keywords: ['건설업 전용', '건설업체만', '건설기업만'], industries: ['건설', '토목'] },
           { keywords: ['의료기관 전용', '병원만', '의료기관만'], industries: ['보건', '의료'] },
-          { keywords: ['사회적기업 전용', '사회적기업만'], industries: [] }, // 별도 조건
-          { keywords: ['협동조합 전용', '협동조합만'], industries: [] } // 별도 조건
+          { keywords: ['사회적기업 전용', '사회적기업만'], industries: [] },
+          { keywords: ['협동조합 전용', '협동조합만'], industries: [] }
         ];
         
         for (const exclusion of industryExclusions) {
@@ -3603,17 +3751,63 @@
           }
         }
         
+        // 4-2. 특정 분야 한정 공고 (분야명 + 기업/업체 조합)
+        const specificIndustryPatterns = [
+          { patterns: ['기계분야', '기계관련', '기계 관련', '기계업체', '기계기업'], validKsic: ['29', '28', '30', '31'] },
+          { patterns: ['조명관련', '조명 관련', '조명기업', '조명업체', '조명산업'], validKsic: ['26', '27', '28'] },
+          { patterns: ['탄소융복합', '탄소산업', '탄소소재', '탄소섬유'], validKsic: ['20', '22', '26'] },
+          { patterns: ['관광업계', '여행사', '인바운드여행', '관광기관', 'DMC'], validKsic: ['79', '55', '56'] },
+          { patterns: ['식품기업', '식품업체', '식품관련', '식품산업', '고령친화식품'], validKsic: ['10', '11', '56'] },
+          { patterns: ['섬유관련', '섬유기업', '섬유업체', '의류기업'], validKsic: ['13', '14'] },
+          { patterns: ['화장품기업', '화장품업체', '뷰티산업'], validKsic: ['20', '47'] },
+          { patterns: ['바이오기업', '바이오업체', '제약기업', '의약품'], validKsic: ['21', '72'] },
+          { patterns: ['물류기업', '물류업체', '운송기업', '운송업체'], validKsic: ['49', '52'] },
+          { patterns: ['콘텐츠기업', '게임기업', '영상기업', '미디어기업'], validKsic: ['58', '59', '60', '63'] }
+        ];
+        
+        const ksicPrefix = ksicCode.substring(0, 2);
+        for (const { patterns, validKsic } of specificIndustryPatterns) {
+          if (patterns.some(p => combinedText.includes(p))) {
+            if (!validKsic.includes(ksicPrefix)) {
+              console.log(`❌ [업종] ${programName.substring(0, 30)} - ${patterns[0]} 대상 (기업: ${ksicCategory})`);
+              return false;
+            }
+          }
+        }
+        
+        // 4-3. 전시회/박람회 분야 체크 (분야 특화 전시회)
+        const exhibitionPatterns = [
+          { keywords: ['국제관광박람회', '여행박람회', '관광홍보관'], validKsic: ['79', '55', '56'] },
+          { keywords: ['산업전시회', '기계전시회', 'hannover'], validKsic: ['28', '29', '30', '31', '26', '27'] },
+          { keywords: ['건축조명', '조명전시회', '조명박람회'], validKsic: ['26', '27', '28', '41'] },
+          { keywords: ['식품박람회', '식품전시회', '푸드쇼'], validKsic: ['10', '11', '56'] },
+          { keywords: ['뷰티박람회', '화장품전시회', '코스메틱'], validKsic: ['20', '47'] },
+          { keywords: ['의료기기전시회', '헬스케어박람회'], validKsic: ['21', '27', '86'] }
+        ];
+        
+        for (const { keywords, validKsic } of exhibitionPatterns) {
+          if (keywords.some(kw => combinedText.includes(kw.toLowerCase()))) {
+            if (!validKsic.includes(ksicPrefix)) {
+              console.log(`❌ [전시회] ${programName.substring(0, 30)} - 업종 불일치 (기업: ${ksicCategory})`);
+              return false;
+            }
+          }
+        }
+        
         // -----------------------------------------
         // 필터 5: 업력 조건 불일치 제외
         // -----------------------------------------
-        // "창업 3년 이내", "7년 이내" 등 추출
+        // "창업 3년 이내", "7년 이내", "업력 7년 이상" 등 추출
         const yearPatterns = [
           { pattern: /창업\s*(\d+)\s*년\s*이내/, type: 'max' },
           { pattern: /(\d+)\s*년\s*이내\s*(창업|기업)/, type: 'max' },
-          { pattern: /(\d+)\s*년\s*이상/, type: 'min' },
+          { pattern: /(\d+)\s*년\s*이상\s*(의|인)?\s*(중기업|기업|업체)/, type: 'min' },
           { pattern: /업력\s*(\d+)\s*년\s*이상/, type: 'min' },
           { pattern: /업력\s*(\d+)\s*년\s*이내/, type: 'max' },
-          { pattern: /(\d+)\s*년\s*미만/, type: 'max' }
+          { pattern: /(\d+)\s*년\s*미만/, type: 'max' },
+          { pattern: /(\d+)\s*년\s*이상\s*업력/, type: 'min' },
+          { pattern: /설립\s*(\d+)\s*년\s*이상/, type: 'min' },
+          { pattern: /설립\s*(\d+)\s*년\s*이내/, type: 'max' }
         ];
         
         for (const { pattern, type } of yearPatterns) {
