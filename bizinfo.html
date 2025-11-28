@@ -3309,11 +3309,84 @@
           }
         }
         
-        // 지역 매칭 (+20점)
+        // 지역 매칭 로직 (개선됨)
+        const organization = program.organization || '';
+        const programName = program.name || '';
         const hashTags = program.hashTags || '';
-        if (hashTags.includes(companyRegion) || hashTags.includes('전국') || !hashTags) {
+        
+        // 지역명 매핑 (주관기관에서 지역 추출)
+        const regionMapping = {
+          '서울': ['서울', '서울시', '서울특별시'],
+          '부산': ['부산', '부산시', '부산광역시'],
+          '대구': ['대구', '대구시', '대구광역시'],
+          '인천': ['인천', '인천시', '인천광역시'],
+          '광주': ['광주', '광주시', '광주광역시'],
+          '대전': ['대전', '대전시', '대전광역시'],
+          '울산': ['울산', '울산시', '울산광역시'],
+          '세종': ['세종', '세종시', '세종특별자치시'],
+          '경기': ['경기', '경기도'],
+          '강원': ['강원', '강원도', '강원특별자치도'],
+          '충북': ['충북', '충청북도'],
+          '충남': ['충남', '충청남도'],
+          '전북': ['전북', '전라북도', '전북특별자치도'],
+          '전남': ['전남', '전라남도'],
+          '경북': ['경북', '경상북도'],
+          '경남': ['경남', '경상남도'],
+          '제주': ['제주', '제주도', '제주특별자치도']
+        };
+        
+        // 주관기관 또는 공고명에서 지역 추출
+        let programRegion = null;
+        const checkText = organization + ' ' + programName;
+        
+        for (const [region, keywords] of Object.entries(regionMapping)) {
+          if (keywords.some(kw => checkText.includes(kw))) {
+            programRegion = region;
+            break;
+          }
+        }
+        
+        // 시/군/구 단위 지역 체크 (예: "진주시", "제천시")
+        const cityPattern = /([\uAC00-\uD7AF]+)(시|군|구)\s/;
+        const cityMatch = checkText.match(cityPattern);
+        if (cityMatch && !programRegion) {
+          // 시/군 이름으로 광역지역 추정
+          const cityName = cityMatch[1];
+          // 주요 시/군 매핑
+          const cityToRegion = {
+            '진주': '경남', '창원': '경남', '김해': '경남', '양산': '경남',
+            '제천': '충북', '청주': '충북', '충주': '충북',
+            '천안': '충남', '아산': '충남', '서산': '충남',
+            '포항': '경북', '구미': '경북', '경주': '경북',
+            '전주': '전북', '익산': '전북', '군산': '전북',
+            '목포': '전남', '여수': '전남', '순천': '전남',
+            '춘천': '강원', '원주': '강원', '강릉': '강원',
+            '수원': '경기', '성남': '경기', '고양': '경기', '용인': '경기', '안양': '경기', '화성': '경기'
+          };
+          if (cityToRegion[cityName]) {
+            programRegion = cityToRegion[cityName];
+          }
+        }
+        
+        // 전국 대상 기관 (지역 제한 없음)
+        const nationalOrgs = ['중소벤처기업부', '산업통상자원부', '과학기술정보통신부', '고용노동부', 
+                            '중소기업진흥공단', '소상공인시장진흥공단', '한국산업기술진흥원',
+                            '창업진흥원', '정보통신산업진흥원', '한국무역협회', '코트라', 'KOTRA'];
+        const isNationalProgram = nationalOrgs.some(org => organization.includes(org));
+        
+        // 지역 매칭 점수 계산
+        if (isNationalProgram || !programRegion) {
+          // 전국 대상 프로그램
           score += 20;
-          reasons.push(`✅ ${companyRegion || '전국'} 지역 해당`);
+          reasons.push('✅ 전국 대상 사업');
+        } else if (programRegion === companyRegion) {
+          // 회사 지역과 공고 지역이 일치
+          score += 25;
+          reasons.push(`✅ ${companyRegion} 지역 기업 대상`);
+        } else {
+          // 지역 불일치 - 점수 감점
+          score -= 30;
+          reasons.push(`⚠️ ${programRegion} 지역 한정 (${companyRegion} 기업 부적합)`);
         }
         
         // 지원대상 키워드 매칭 (+15점)
