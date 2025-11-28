@@ -11,6 +11,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
   
   <!-- Google API for Drive -->
   <script src="https://apis.google.com/js/api.js"></script>
@@ -1413,7 +1414,7 @@
       <!-- AI 분석 버튼 (상세분석) + 저장(AI분석포함) -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
         <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
-          📊 상세분석
+          📊 상세분석(상위10개)
         </button>
         <button class="btn btn-secondary" onclick="saveWithAIAnalysis()" style="flex: 1; font-size: 0.85rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
           💾 저장(AI분석포함)
@@ -1456,6 +1457,9 @@
     // Firebase 초기화
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    
+    // Firebase Functions 초기화 (서울 리전)
+    const functions = firebase.app().functions('asia-northeast3');
     
     // Google API 클라이언트 초기화
     const CLIENT_ID = '1012609333373-5d223e3cqp6fo28i8bi85i9ae0p7ohen.apps.googleusercontent.com';
@@ -2037,13 +2041,11 @@
       
       try {
         console.log('📡 기업마당 API 호출 중...');
-        const response = await fetch('/.netlify/functions/getBizInfoPrograms');
         
-        if (!response.ok) {
-          throw new Error(`API 오류: ${response.status}`);
-        }
-        
-        const data = await response.json();
+        // Firebase Functions를 통해 기업마당 데이터 가져오기
+        const getBizInfoPrograms = functions.httpsCallable('getBizInfoPrograms');
+        const result = await getBizInfoPrograms();
+        const data = result.data;
         
         if (data.success && data.programs) {
           bizInfoPrograms = data.programs;
@@ -4126,22 +4128,14 @@
           if (loadingText) loadingText.textContent = '🤖 AI 요약분석 중...';
           if (loadingDetail) loadingDetail.textContent = '② ' + allPrograms.length + '개 지원사업을 Gemini AI가 분석하고 있습니다...';
           
-          // Netlify Function을 통해 Gemini API 호출
-          const response = await fetch('/.netlify/functions/geminiSummary', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              companyData: lastCompanyData,
-              programs: allPrograms
-            })
+          // Firebase Functions를 통해 Gemini API 호출 (API 키 보호)
+          const geminiSummary = functions.httpsCallable('geminiSummary');
+          const result = await geminiSummary({
+            companyData: lastCompanyData,
+            programs: allPrograms
           });
           
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `서버 오류: ${response.status}`);
-          }
-          
-          const data = await response.json();
+          const data = result.data;
           
           if (!data.success) {
             throw new Error(data.error || 'AI 분석 실패');
@@ -4266,22 +4260,14 @@
           loadingDetail.textContent = '서버에서 AI 분석 중... 잠시만 기다려주세요.';
         }
         
-        // Netlify Function을 통해 Gemini API 호출 (API 키 안전하게 보호)
-        const response = await fetch('/.netlify/functions/geminiSummary', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            companyData: lastCompanyData,
-            programs: allPrograms
-          })
+        // Firebase Functions를 통해 Gemini API 호출 (API 키 보호)
+        const geminiSummary = functions.httpsCallable('geminiSummary');
+        const result = await geminiSummary({
+          companyData: lastCompanyData,
+          programs: allPrograms
         });
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `서버 오류: ${response.status}`);
-        }
-        
-        const data = await response.json();
+        const data = result.data;
         
         if (!data.success) {
           throw new Error(data.error || 'AI 분석 실패');
@@ -4324,26 +4310,24 @@
       }
       
       // 안내 팝업 - PDF 분석 설명 추가
-      const totalCount = lastMatchedPrograms.length;
-      const confirmed = confirm(`📄 AI 공고문 PDF 상세분석을 시작합니다.\n\n✅ ${totalCount}개 공고의 PDF 파일을 AI가 직접 읽고 분석합니다.\n✅ 자격요건, 평가기준, 제출서류, 선정규모 등을 정확히 추출합니다.\n✅ 귀사의 선정 가능성을 구체적으로 분석합니다.\n\n⏱️ 공고 수에 따라 분석 시간이 달라집니다.\n\n계속하시겠습니까?`);
+      const confirmed = confirm('📄 AI 공고문 PDF 상세분석을 시작합니다.\n\n✅ PDF 파일이 있는 상위 10개 공고를 AI가 직접 읽고 분석합니다.\n✅ 자격요건, 평가기준, 제출서류, 선정규모 등을 정확히 추출합니다.\n✅ 귀사의 선정 가능성을 구체적으로 분석합니다.\n\n⏱️ 분석에 약 1~2분 소요됩니다.\n\n계속하시겠습니까?');
       
       if (!confirmed) {
         return;
       }
       
       try {
-        // 가져온 모든 프로그램 분석
-        const allPrograms = lastMatchedPrograms;
-        
-        // PDF URL이 있는 프로그램만 필터링
-        const programsWithPDF = allPrograms.filter(p => p.printFileUrl || p.attachmentUrl);
+        // PDF URL이 있는 프로그램만 필터링 후 상위 10개
+        const programsWithPDF = lastMatchedPrograms
+          .filter(p => p.printFileUrl || p.attachmentUrl)
+          .slice(0, 10);
         
         if (programsWithPDF.length === 0) {
           alert('⚠️ PDF 공고문이 있는 지원사업이 없습니다.\n\n요약분석을 이용해주세요.');
           return;
         }
         
-        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ ${programsWithPDF.length}개 공고문 PDF를 Gemini AI가 읽고 분석하고 있습니다...`, programsWithPDF.length);
+        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ PDF 있는 상위 ${programsWithPDF.length}개 공고문을 Gemini AI가 분석하고 있습니다...`, programsWithPDF.length);
         
         const detailResults = [];
         
@@ -4364,23 +4348,14 @@
           }
           
           try {
-            // 기존 Netlify Function (analyzeProgramPDF) 사용
-            // 서버에서 PDF 다운로드 및 분석 수행
-            const response = await fetch('/.netlify/functions/analyzeProgramPDF', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                pdfUrl: pdfUrl,
-                companyData: lastCompanyData
-              })
+            // Firebase Functions를 통해 PDF 분석 (API 키 보호)
+            const analyzeProgramPDF = functions.httpsCallable('analyzeProgramPDF');
+            const result = await analyzeProgramPDF({
+              pdfUrl: pdfUrl,
+              companyData: lastCompanyData
             });
             
-            if (!response.ok) {
-              console.log(`⚠️ PDF 분석 API 오류: ${response.status}`);
-              continue;
-            }
-            
-            const data = await response.json();
+            const data = result.data;
             
             if (data.success && data.analysis) {
               detailResults.push({
@@ -5018,38 +4993,33 @@
         updateAIProgress(10);
         updateAILoading('기업마당 API 조회 중...', '공고 불러오는 중...');
         
-        // Step 1: 기업마당 API 조회
-        const response1 = await fetch('/.netlify/functions/getBizinfoPrograms', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filters: {} })
-        });
+        // Step 1: 기업마당 API 조회 (Firebase Functions 사용)
+        const getBizinfoPrograms = functions.httpsCallable('getBizInfoPrograms');
+        const result1 = await getBizinfoPrograms({ filters: {} });
+        const data1 = result1.data;
         
-        if (!response1.ok) {
+        if (!data1.success) {
           throw new Error('기업마당 API 조회 실패');
         }
         
-        const data1 = await response1.json();
         const programs = data1.programs || [];
         
         updateAIProgress(50);
         updateAILoading('Gemini AI 분석 중...', `${programs.length}개 공고와 기업 정보 매칭 중...`);
         
-        // Step 2: AI 매칭 분석
-        const response2 = await fetch('/.netlify/functions/analyzeCompanyMatch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            companyData: companyData,
-            programs: programs
-          })
+        // Step 2: AI 매칭 분석 (Firebase Functions 사용)
+        const analyzeCompanyMatch = functions.httpsCallable('analyzeCompanyMatch');
+        const result2 = await analyzeCompanyMatch({
+          companyData: companyData,
+          programs: programs
         });
         
-        if (!response2.ok) {
+        const data2 = result2.data;
+        
+        if (!data2.success) {
           throw new Error('AI 분석 실패');
         }
         
-        const data2 = await response2.json();
         const matchedPrograms = data2.matchedPrograms || [];
         
         updateAIProgress(100);
