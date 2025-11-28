@@ -485,148 +485,190 @@ exports.analyzeProgramPDF = functions
         ceoAge = new Date().getFullYear() - birthYear;
       }
       
-      // 2. Gemini API - 프리미엄 상세분석 프롬프트 (최적화 버전)
-      const prompt = `당신은 20년 경력의 정부지원사업 컨설팅 전문가입니다. 
-이 PDF 공고문을 분석하여 아래 기업에 대한 프리미엄 분석 보고서를 작성하세요.
+      // 2. Gemini API - 프리미엄 상세분석 프롬프트 (Pro 모델용)
+      const prompt = `당신은 20년 경력의 대한민국 정부지원사업 컨설팅 전문가입니다.
+수천 건의 지원사업 신청을 도와왔고, 평가위원 경험도 있습니다.
+이 PDF 공고문을 분석하여 아래 기업의 CEO에게 브리핑할 "프리미엄 분석 보고서"를 작성해주세요.
 
-[분석 대상 기업 정보]
+이 분석은 유료 서비스(건당 2,000원)로 제공되므로, 
+무료 요약분석과는 차원이 다른 깊이 있고 실용적인 인사이트를 제공해야 합니다.
+
+═══════════════════════════════════════════════════════════════
+분석 대상 기업 프로필 (모든 항목을 공고 자격요건과 1:1 대조 필수)
+═══════════════════════════════════════════════════════════════
+
+【기업 기본정보】
 • 기업명: ${companyData?.companyName || '미입력'}
-• 소재지: ${companyData?.locationSido || '미입력'} ${companyData?.locationSigungu || ''} (${companyData?.capitalArea === 'Y' ? '수도권' : '비수도권'})
+• 법인형태: ${companyData?.companyType || '미입력'}
+• 소재지: ${companyData?.locationSido || '미입력'} ${companyData?.locationSigungu || ''}
+• 수도권 여부: ${companyData?.capitalArea === 'Y' ? '수도권 (서울/경기/인천)' : '비수도권'}
 • 기업규모: ${companyData?.companySize || '미입력'}
-• 기업형태: ${companyData?.companyType || '미입력'}
-• 업종: ${ksicCategory} (${companyData?.ksicCode || '미입력'})
-• 주력제품: ${companyData?.productKeywords || '미입력'}
-• 설립일: ${companyData?.establishDate || '미입력'} (업력 ${companyData?.businessAge || 0}년)
-• 매출액: ${companyData?.revenueRecent ? Math.round(companyData.revenueRecent / 100000000) + '억원' : '미입력'}
+
+【업종 및 사업분야】
+• 업종코드(KSIC): ${companyData?.ksicCode || '미입력'}
+• 업종 대분류: ${ksicCategory}
+• 세부업종: ${companyData?.ksicName || '미입력'}
+• 주력 제품/서비스: ${companyData?.productKeywords || '미입력'}
+
+【업력 및 성장단계】
+• 설립일: ${companyData?.establishDate || '미입력'}
+• 업력: ${companyData?.businessAge || 0}년
+• 성장단계: ${companyData?.businessAge <= 3 ? '초기창업기' : companyData?.businessAge <= 7 ? '성장기' : '성숙기'}
+
+【재무현황】
+• 최근 매출액: ${companyData?.revenueRecent ? Math.round(companyData.revenueRecent / 100000000) + '억원' : '미입력'}
+• 전년 매출액: ${companyData?.revenuePrevious ? Math.round(companyData.revenuePrevious / 100000000) + '억원' : '미입력'}
 • 영업이익: ${companyData?.profitRecent ? Math.round(companyData.profitRecent / 100000000) + '억원' : '미입력'}
-• 상시근로자: ${companyData?.employeesTotal || 0}명 (청년 ${companyData?.employeesYouth || 0}명, 여성 ${companyData?.employeesFemale || 0}명)
-• 대표자: ${companyData?.ceoGender === 'F' ? '여성' : '남성'}, ${ceoAge > 0 ? ceoAge + '세' : '미입력'}
-• 보유인증: 벤처(${companyData?.certVenture === 'Y' ? 'O' : 'X'}), 이노비즈(${companyData?.certInnobiz === 'Y' ? 'O' : 'X'}), 메인비즈(${companyData?.certMainbiz === 'Y' ? 'O' : 'X'}), 여성기업(${companyData?.certWoman === 'Y' ? 'O' : 'X'})
+• 부채비율: ${companyData?.debtRatio || '미입력'}%
+
+【고용현황】
+• 상시근로자: ${companyData?.employeesTotal || 0}명
+• 청년근로자(만 15~34세): ${companyData?.employeesYouth || 0}명
+• 여성근로자: ${companyData?.employeesFemale || 0}명
+• 장애인근로자: ${companyData?.employeesDisabled || 0}명
+
+【대표자 정보】
+• 성별: ${companyData?.ceoGender === 'M' ? '남성' : companyData?.ceoGender === 'F' ? '여성' : '미입력'}
+• 연령: ${ceoAge > 0 ? ceoAge + '세' : '미입력'} ${ceoAge > 0 && ceoAge <= 39 ? '(청년CEO)' : ceoAge >= 60 ? '(시니어CEO)' : ''}
+
+【보유 인증현황】
+• 벤처기업: ${companyData?.certVenture === 'Y' ? '✅ 보유' : '❌ 미보유'}
+• 이노비즈: ${companyData?.certInnobiz === 'Y' ? '✅ 보유' : '❌ 미보유'}
+• 메인비즈: ${companyData?.certMainbiz === 'Y' ? '✅ 보유' : '❌ 미보유'}
+• 여성기업: ${companyData?.certWoman === 'Y' ? '✅ 보유' : '❌ 미보유'}
+• 장애인기업: ${companyData?.certDisabled === 'Y' ? '✅ 보유' : '❌ 미보유'}
+• 사회적기업: ${companyData?.certSocial === 'Y' ? '✅ 인증' : '❌ 비해당'}
+
+【기술/연구역량】
 • 연구조직: ${companyData?.researchOrg || '없음'}
 • 등록특허: ${companyData?.patentsRegistered || 0}건
-• 수출실적: ${(companyData?.exportRecent && companyData.exportRecent > 0) ? '$' + companyData.exportRecent.toLocaleString() : '없음'}
-• 체납여부: 국세(${companyData?.taxArrears === 'N' ? '없음' : '있음'}), 지방세(${companyData?.localTaxArrears === 'N' ? '없음' : '있음'})
+• 출원특허: ${companyData?.patentsPending || 0}건
 
-[분석 수행 지침]
-1단계 - 사업 개요: 사업목적, 주관기관, 지원대상, 지원내용 파악
-2단계 - 자격요건 추출: 지역/규모/업종/업력/매출/인증 등 모든 조건을 PDF에서 정확히 추출
-3단계 - 기업 매칭: 위 기업정보와 자격요건을 항목별로 1:1 대조하여 충족/미충족/확인필요 판정
-4단계 - 평가분석: 평가항목, 배점, 가점요소 추출 및 기업의 예상 경쟁력 분석
-5단계 - 전략수립: 신청 시 강조할 점, 주의사항, 준비서류 정리
+【수출현황】
+• 수출실적: ${(companyData?.exportRecent && companyData.exportRecent > 0) ? '있음 ($' + companyData.exportRecent.toLocaleString() + ')' : '없음 (내수기업)'}
 
-[JSON 출력 형식]
+【결격사유 체크】
+• 국세체납: ${companyData?.taxArrears === 'N' ? '✅ 없음' : '⚠️ 있음'}
+• 지방세체납: ${companyData?.localTaxArrears === 'N' ? '✅ 없음' : '⚠️ 있음'}
+
+═══════════════════════════════════════════════════════════════
+PDF 분석 프로세스 (6단계 심층분석)
+═══════════════════════════════════════════════════════════════
+
+【1단계: 사업 핵심 파악】
+- 사업의 정책 목적과 배경
+- 주무부처의 정책 방향
+- 사업의 핵심 키워드
+
+【2단계: 자격요건 완전 추출】
+- 필수조건 vs 우대조건 명확히 구분
+- 제외 대상 (명시적 불가 조건)
+- 지역/규모/업종/업력/매출/인증 조건
+
+【3단계: 지원내용 상세분석】
+- 총 예산과 기업당 지원한도
+- 정부지원 vs 기업부담 비율
+- 지원항목별 한도
+
+【4단계: 평가체계 분석】
+- 평가항목 및 배점표
+- 가점항목과 조건
+- 평가방식 (서류/발표/현장)
+
+【5단계: 기업 맞춤 적합성 분석】
+- 자격요건 항목별 충족/미충족 판정
+- 가점 획득 가능 항목
+- 강점과 약점 분석
+
+【6단계: 실전 신청전략】
+- 강조해야 할 핵심 포인트
+- 평가위원이 중요시하는 요소
+- 흔한 탈락 사유와 회피법
+
+═══════════════════════════════════════════════════════════════
+출력 형식 (JSON) - 반드시 아래 구조 정확히 따르세요
+═══════════════════════════════════════════════════════════════
+
 {
-  "summary": {
-    "programName": "공고명",
-    "organization": "주관기관",
-    "verdict": "강력추천/추천/신중검토/비추천 중 택1",
-    "fitScore": 0-100,
-    "successRate": "높음/중상/중/중하/낮음",
-    "verdictReason": "판정 이유 100자"
-  },
-  
-  "programInfo": {
-    "purpose": "사업 목적 및 배경 200자",
-    "content": "지원 내용 상세 300자",
-    "targetCompany": "지원 대상 기업 유형",
-    "keyFeatures": ["이 사업의 특징/장점 3-5개"]
-  },
+  "programSummary": "사업의 목적, 지원대상, 지원내용, 지원규모를 포함한 종합 요약. 어떤 기업이 무엇을 얼마나 지원받을 수 있는지 명확하게 400자 내외로 작성.",
   
   "eligibility": {
-    "requirements": [
-      {"item": "자격조건명", "condition": "공고상 조건", "companyStatus": "기업현황", "result": "충족/미충족/확인필요", "importance": "필수/우대"}
-    ],
-    "exclusions": ["지원 제외 대상"],
-    "restrictions": ["중복참여 제한 등"]
+    "companySize": "지원 가능한 기업 규모 조건 (예: 중소기업, 중견기업 등)",
+    "businessAge": "업력 조건 (예: 3년 이상, 7년 이내, 제한없음 등)",
+    "requiredCerts": ["필수로 보유해야 하는 인증 목록"],
+    "regionLimit": "지역 제한사항 (전국 또는 특정 지역만)",
+    "industryLimit": "업종 제한사항",
+    "revenueLimit": "매출 조건",
+    "otherRequirements": ["기타 자격요건 - 각각 구체적으로"]
   },
   
-  "supportDetails": {
-    "totalBudget": "총 사업예산",
-    "maxPerCompany": "기업당 최대 지원금",
-    "govRatio": "정부지원 비율",
-    "companyRatio": "기업부담 비율",
-    "supportItems": ["지원항목 목록 (인건비, 재료비 등)"],
-    "selectedCount": "선정 예정 기업수",
-    "projectPeriod": "사업수행 기간"
-  },
-  
-  "schedule": {
-    "applicationPeriod": "신청기간 (시작~마감)",
-    "applicationMethod": "신청방법 (온라인시스템명 등)",
-    "reviewSchedule": "심사일정",
-    "selectionDate": "선정발표일",
-    "executionPeriod": "사업수행기간"
+  "budget": {
+    "totalBudget": "이 사업의 총 예산 규모",
+    "perCompany": "기업당 최대 지원금액",
+    "govRatio": "정부지원 비율 (%)",
+    "companyRatio": "기업부담 비율 및 방식",
+    "selectedCount": "선정 예정 기업 수",
+    "supportDetails": "지원 가능한 비용 항목들 (인건비, 재료비, 외주비, 장비비 등)"
   },
   
   "documents": {
-    "required": ["필수 제출서류 목록"],
-    "optional": ["선택/가점 서류"],
-    "tips": ["서류 준비 팁"]
+    "required": ["필수 제출서류 전체 목록 - 빠짐없이"],
+    "optional": ["선택 또는 가점 서류 목록"],
+    "tips": ["서류 준비 시 실무 팁"]
+  },
+  
+  "schedule": {
+    "applicationPeriod": "신청 접수 기간 (시작일 ~ 마감일시)",
+    "applicationMethod": "신청 방법 (온라인시스템명, URL 등)",
+    "reviewPeriod": "심사 진행 기간",
+    "selectionDate": "최종 선정 발표 예정일",
+    "executionPeriod": "사업 수행 기간"
   },
   
   "evaluation": {
-    "stages": ["평가단계 (서류→발표→현장 등)"],
-    "criteria": [
-      {"item": "평가항목", "maxScore": "배점", "description": "평가내용"}
-    ],
-    "bonusPoints": [
-      {"item": "가점항목", "score": "점수", "condition": "조건", "applicable": "해당여부(O/X)"}
-    ],
+    "stages": ["평가 진행 단계 (예: 서류심사 → 발표평가)"],
+    "criteria": ["평가항목과 배점 (예: 기술성 30점, 사업성 25점 등)"],
+    "bonusPoints": ["가점 항목과 점수 (예: 여성기업 +3점)"],
     "disqualification": ["결격/탈락 사유"]
   },
   
   "companyFit": {
-    "eligible": true/false,
-    "score": 0-100,
-    "grade": "A/B/C/D/F",
-    
-    "checkResult": {
-      "passed": ["충족하는 조건 목록"],
-      "failed": ["미충족 조건 목록"],
-      "uncertain": ["확인 필요 조건"]
-    },
-    
+    "eligible": true 또는 false,
+    "fitScore": 0-100 점수,
     "strengths": [
-      {"point": "강점", "impact": "평가영향", "strategy": "어필방법"}
+      "이 기업의 강점 5개 - 선정에 유리한 요소를 각각 구체적으로 설명"
     ],
     "weaknesses": [
-      {"point": "약점", "impact": "평가영향", "mitigation": "보완방법"}
+      "이 기업의 약점/보완점 - 솔직하게, 대응방안도 함께"
     ],
-    
-    "estimatedBonus": "예상 가점 합계",
-    "competitiveness": "경쟁력 분석 100자"
-  },
-  
-  "strategy": {
-    "coreMessage": "사업계획서 핵심 메시지",
-    "emphasisPoints": ["강조할 내용 5개"],
-    "cautions": ["주의사항 3개"],
-    "commonMistakes": ["흔한 탈락사유"],
-    "timeline": ["준비 일정표"]
-  },
-  
-  "recommendation": {
-    "finalOpinion": "최종 추천 의견 300자 - 신청 여부, 이유, 전략을 전문가 관점에서 솔직하게",
-    "expectedBenefit": "선정 시 기대효과",
-    "priority": "신청 우선순위 (상/중/하)",
-    "alternativePlans": "탈락 시 대안"
+    "recommendation": "신청 여부에 대한 최종 의견. '강력추천/추천/신중검토/비추천' 중 하나를 선택하고, 그 이유를 전문가 관점에서 300자 내외로 구체적으로 설명. 선정 가능성, 경쟁력, 준비사항 등 포함."
   }
 }
 
-[필수 준수사항]
-1. PDF에서 추출한 정보만 사용하고 추측하지 말 것
-2. 자격요건 충족 여부는 보수적으로 판단
-3. 점수 기준:
-   - 90점 이상: 모든 필수요건 충족 + 다수 가점 + 경쟁력 우수
-   - 70-89점: 필수요건 충족 + 일부 가점
-   - 50-69점: 필수요건 충족 + 가점 없음
-   - 30-49점: 일부 요건 미충족 가능성
-   - 30점 미만: 필수요건 미충족
-4. PDF에 없는 정보는 "확인필요"로 표시
-5. 반드시 순수 JSON만 출력 (설명문, 마크다운 없이)`;
+═══════════════════════════════════════════════════════════════
+품질 기준
+═══════════════════════════════════════════════════════════════
+
+1. 정확성: PDF에서 추출한 정보는 100% 정확해야 함
+2. 구체성: 모호한 표현 대신 구체적 수치와 내용
+3. 실용성: 바로 활용 가능한 수준
+4. 솔직성: 미충족 조건은 솔직하게 표시
+5. 전문성: 정부지원사업 전문가다운 분석
+
+【점수 기준】
+- 90점 이상: 모든 필수요건 충족 + 다수 가점 + 경쟁력 우수 → 강력추천
+- 70~89점: 필수요건 충족 + 일부 가점 → 추천
+- 50~69점: 필수요건 충족 + 가점 없음 → 신중검토
+- 30~49점: 일부 요건 미충족 가능성 → 신중검토
+- 30점 미만: 필수요건 미충족 → 비추천
+
+【중요】
+- PDF에 없는 정보는 "확인 필요"로 표시
+- 반드시 순수 JSON만 출력 (마크다운, 설명문 없이)
+- 이 분석을 받는 CEO가 2,000원의 가치를 느낄 수 있도록 작성`;
 
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
