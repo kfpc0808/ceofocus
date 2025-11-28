@@ -3722,10 +3722,16 @@
       }
       
       try {
-        showLoadingOverlay('🤖 AI 요약분석 중...', '⭐ 상위 10개 지원사업을 Gemini AI로 분석하고 있습니다...');
-        
         // 상위 10개 프로그램 선택
         const top10 = lastMatchedPrograms.slice(0, 10);
+        
+        showLoadingOverlay('🤖 AI 요약분석 중...', '⭐ 상위 10개 지원사업을 Gemini AI로 분석하고 있습니다...', top10.length);
+        
+        // 분석 중 메시지 표시
+        const loadingDetail = document.getElementById('aiLoadingDetail');
+        if (loadingDetail) {
+          loadingDetail.textContent = '서버에서 AI 분석 중... 잠시만 기다려주세요.';
+        }
         
         // Netlify Function을 통해 Gemini API 호출 (API 키 안전하게 보호)
         const response = await fetch('/.netlify/functions/geminiSummary', {
@@ -3750,12 +3756,17 @@
         
         const summaryResults = data.results;
         
-        hideLoadingOverlay();
+        // 100% 완료 표시 후 닫기
+        updateProgress(100, top10.length, top10.length);
         
-        // 결과를 화면에 표시
-        updateResultsWithSummary(summaryResults);
-        
-        alert('✅ AI 요약분석이 완료되었습니다!\n\n각 공고 카드에 AI 요약이 추가되었습니다.');
+        setTimeout(() => {
+          hideLoadingOverlay();
+          
+          // 결과를 화면에 표시
+          updateResultsWithSummary(summaryResults);
+          
+          alert('✅ AI 요약분석이 완료되었습니다!\n\n각 공고 카드에 AI 요약이 추가되었습니다.');
+        }, 500);
         
       } catch (error) {
         hideLoadingOverlay();
@@ -3798,7 +3809,7 @@
           return;
         }
         
-        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ ${programsWithPDF.length}개 공고문 PDF를 Gemini AI가 읽고 분석하고 있습니다...`);
+        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ ${programsWithPDF.length}개 공고문 PDF를 Gemini AI가 읽고 분석하고 있습니다...`, programsWithPDF.length);
         
         const detailResults = [];
         
@@ -3809,8 +3820,14 @@
           
           console.log(`📄 [${i + 1}/${programsWithPDF.length}] PDF 분석 중: ${program.name}`);
           
-          // 로딩 상태 업데이트
-          updateLoadingProgress(i + 1, programsWithPDF.length, program.name);
+          // 로딩 상태 업데이트 - 실제 진행률 표시
+          const percent = Math.round(((i + 1) / programsWithPDF.length) * 100);
+          updateProgress(percent, i + 1, programsWithPDF.length);
+          
+          const loadingDetail = document.getElementById('aiLoadingDetail');
+          if (loadingDetail) {
+            loadingDetail.textContent = `분석 중: ${program.name.substring(0, 30)}...`;
+          }
           
           try {
             // 기존 Netlify Function (analyzeProgramPDF) 사용
@@ -4016,35 +4033,46 @@
       });
     }
     
-    function showLoadingOverlay(title, subtitle) {
-      const totalPrograms = bizInfoPrograms.length || 500;
+    function showLoadingOverlay(title, subtitle, analysisCount = null) {
+      // AI 분석 시에는 analysisCount 사용, 아니면 전체 공고수
+      const isAIAnalysis = analysisCount !== null;
+      const totalPrograms = isAIAnalysis ? analysisCount : (bizInfoPrograms.length || 500);
+      
       const overlay = document.createElement('div');
       overlay.className = 'loading-overlay';
       overlay.id = 'loading-overlay';
+      overlay.dataset.isAiAnalysis = isAIAnalysis;
+      overlay.dataset.totalCount = totalPrograms;
+      
       overlay.innerHTML = `
         <div class="loader"></div>
         <h2>${title}</h2>
         <p>${subtitle}</p>
-        <p id="program-count" style="font-size: 0.75rem; color: #ffd27f; margin-top: 0.5rem;">📋 ${totalPrograms}개 공고 분석 중...</p>
-        <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin-top: 0.5rem; overflow: hidden;">
-          <div id="progress-bar" style="width: 0%; height: 100%; background: #FF8802; border-radius: 3px; transition: width 0.3s;"></div>
+        <p id="program-count" style="font-size: 0.85rem; color: #ffd27f; margin-top: 0.5rem;">
+          ${isAIAnalysis ? `📋 0/${totalPrograms}개 공고 분석 완료` : `📋 ${totalPrograms}개 공고 분석 중...`}
+        </p>
+        <div style="width: 200px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin-top: 0.5rem; overflow: hidden;">
+          <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #FF8802, #FFB347); border-radius: 4px; transition: width 0.3s;"></div>
         </div>
-        <p id="progress-text" style="font-size: 0.8rem; margin-top: 0.5rem;">0%</p>
+        <p id="progress-text" style="font-size: 0.9rem; margin-top: 0.5rem; font-weight: bold;">0%</p>
+        <p id="aiLoadingDetail" style="font-size: 0.75rem; color: #aaa; margin-top: 0.3rem;"></p>
       `;
       document.body.appendChild(overlay);
       
-      // 진행율 애니메이션
-      let progress = 0;
-      let analyzed = 0;
-      const progressInterval = setInterval(() => {
-        progress += Math.random() * 15;
-        analyzed = Math.min(Math.floor(progress / 100 * totalPrograms), totalPrograms);
-        if (progress > 90) progress = 90;
-        updateProgress(progress, analyzed, totalPrograms);
-        if (progress >= 90) clearInterval(progressInterval);
-      }, 200);
-      
-      overlay.progressInterval = progressInterval;
+      // AI 분석이 아닌 경우에만 자동 진행률 애니메이션
+      if (!isAIAnalysis) {
+        let progress = 0;
+        let analyzed = 0;
+        const progressInterval = setInterval(() => {
+          progress += Math.random() * 15;
+          analyzed = Math.min(Math.floor(progress / 100 * totalPrograms), totalPrograms);
+          if (progress > 90) progress = 90;
+          updateProgress(progress, analyzed, totalPrograms);
+          if (progress >= 90) clearInterval(progressInterval);
+        }, 200);
+        
+        overlay.progressInterval = progressInterval;
+      }
     }
     
     function updateProgress(percent, analyzed, total) {
@@ -4062,9 +4090,19 @@
       const overlay = document.getElementById('loading-overlay');
       if (overlay) {
         if (overlay.progressInterval) clearInterval(overlay.progressInterval);
-        const totalPrograms = bizInfoPrograms.length || 500;
-        updateProgress(100, totalPrograms, totalPrograms);
-        setTimeout(() => overlay.remove(), 300);
+        
+        // AI 분석인 경우 100% 표시 후 닫기
+        const isAIAnalysis = overlay.dataset.isAiAnalysis === 'true';
+        const totalCount = parseInt(overlay.dataset.totalCount) || 10;
+        
+        if (isAIAnalysis) {
+          updateProgress(100, totalCount, totalCount);
+        } else {
+          const totalPrograms = bizInfoPrograms.length || 500;
+          updateProgress(100, totalPrograms, totalPrograms);
+        }
+        
+        setTimeout(() => overlay.remove(), 500);
       }
     }
     
