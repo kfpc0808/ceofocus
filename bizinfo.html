@@ -2232,6 +2232,11 @@
         
         console.log('📥 Google Drive에서 불러오는 중...');
         
+        // GAPI 클라이언트에 토큰 설정 확인
+        if (gapiInited && gapi.client) {
+          gapi.client.setToken({ access_token: accessToken });
+        }
+        
         const searchResponse = await gapi.client.drive.files.list({
           q: "name='kfpc-bizinfo-data.json' and trashed=false",
           fields: 'files(id, name)',
@@ -2245,7 +2250,7 @@
         
         const files = searchResponse.result.files;
         if (!files || files.length === 0) {
-          console.log('📁 저장된 파일이 없습니다');
+          console.log('📁 저장된 파일이 없습니다 (새로운 사용자)');
           return false;
         }
         
@@ -2256,6 +2261,25 @@
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
+        
+        // 401 에러 처리 (토큰 만료)
+        if (getResponse.status === 401) {
+          console.log('⚠️ Access Token 만료, 토큰 갱신 시도...');
+          localStorage.removeItem('driveAccessToken');
+          accessToken = null;
+          
+          // 토큰 갱신 시도
+          try {
+            await requestDriveAccess();
+            // 토큰 갱신 후 재시도
+            return await loadFromDrive();
+          } catch (e) {
+            console.error('❌ 토큰 갱신 실패, 재로그인 필요');
+            updateConnectionStatus('disconnected');
+            alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
+            return false;
+          }
+        }
         
         if (getResponse.ok) {
           const fileData = await getResponse.json();
@@ -2272,6 +2296,15 @@
         return false;
       } catch (error) {
         console.error('❌ Drive 로드 실패:', error);
+        
+        // 401 관련 에러 메시지 확인
+        if (error.status === 401 || error.message?.includes('401')) {
+          console.log('⚠️ 인증 오류 - 토큰 초기화');
+          localStorage.removeItem('driveAccessToken');
+          accessToken = null;
+          updateConnectionStatus('disconnected');
+        }
+        
         return false;
       }
     }
