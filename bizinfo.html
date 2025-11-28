@@ -1507,13 +1507,16 @@
 
     <!-- 실행 버튼 -->
     <div class="card">
-      <!-- 기업정보저장 + 맞춤찾기 버튼 -->
+      <!-- 기업정보저장 + 맞춤찾기 + 저장(기업정보+지원사업) 버튼 -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
         <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 0.95rem; padding: 1rem;">
           💾 기업정보 저장
         </button>
         <button class="btn btn-primary" onclick="findMatchingPrograms()" style="flex: 2; font-size: 1rem; padding: 1rem; background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);">
           🔍 맞춤 지원사업 찾기
+        </button>
+        <button class="btn btn-secondary" onclick="saveWithPrograms()" style="flex: 1.5; font-size: 0.85rem; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+          💾 저장(기업정보+지원사업)
         </button>
       </div>
       <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: -0.5rem; margin-bottom: 1rem; text-align: center;">
@@ -1533,7 +1536,7 @@
         </p>
       </div>
       
-      <!-- AI 분석 버튼 (요약/상세 선택) -->
+      <!-- AI 분석 버튼 (요약/상세 선택) + 저장(AI분석포함) -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
         <button class="btn btn-secondary" onclick="analyzeProgramsSummary()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
           📝 요약분석(상위10개)
@@ -1541,8 +1544,8 @@
         <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
           📊 상세분석(상위10개)
         </button>
-        <button class="btn btn-secondary" onclick="saveWithPrograms()" style="flex: 1; font-size: 0.85rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-          💾 저장(기업정보+지원사업)
+        <button class="btn btn-secondary" onclick="saveWithAIAnalysis()" style="flex: 1; font-size: 0.85rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+          💾 저장(AI분석포함)
         </button>
       </div>
       <button class="btn btn-secondary" onclick="deleteCompany()" style="width: 100%; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
@@ -2232,11 +2235,6 @@
         
         console.log('📥 Google Drive에서 불러오는 중...');
         
-        // GAPI 클라이언트에 토큰 설정 확인
-        if (gapiInited && gapi.client) {
-          gapi.client.setToken({ access_token: accessToken });
-        }
-        
         const searchResponse = await gapi.client.drive.files.list({
           q: "name='kfpc-bizinfo-data.json' and trashed=false",
           fields: 'files(id, name)',
@@ -2250,7 +2248,7 @@
         
         const files = searchResponse.result.files;
         if (!files || files.length === 0) {
-          console.log('📁 저장된 파일이 없습니다 (새로운 사용자)');
+          console.log('📁 저장된 파일이 없습니다');
           return false;
         }
         
@@ -2261,25 +2259,6 @@
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
-        
-        // 401 에러 처리 (토큰 만료)
-        if (getResponse.status === 401) {
-          console.log('⚠️ Access Token 만료, 토큰 갱신 시도...');
-          localStorage.removeItem('driveAccessToken');
-          accessToken = null;
-          
-          // 토큰 갱신 시도
-          try {
-            await requestDriveAccess();
-            // 토큰 갱신 후 재시도
-            return await loadFromDrive();
-          } catch (e) {
-            console.error('❌ 토큰 갱신 실패, 재로그인 필요');
-            updateConnectionStatus('disconnected');
-            alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
-            return false;
-          }
-        }
         
         if (getResponse.ok) {
           const fileData = await getResponse.json();
@@ -2296,15 +2275,6 @@
         return false;
       } catch (error) {
         console.error('❌ Drive 로드 실패:', error);
-        
-        // 401 관련 에러 메시지 확인
-        if (error.status === 401 || error.message?.includes('401')) {
-          console.log('⚠️ 인증 오류 - 토큰 초기화');
-          localStorage.removeItem('driveAccessToken');
-          accessToken = null;
-          updateConnectionStatus('disconnected');
-        }
-        
         return false;
       }
     }
@@ -3218,6 +3188,101 @@
         
         alert(`✅ 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
         console.log('💾 기업정보+지원사업 저장 완료:', savedItems);
+      } else {
+        alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+    
+    /**
+     * AI분석 포함 저장 (요약분석 또는 상세분석 결과가 있어야 저장 가능)
+     */
+    async function saveWithAIAnalysis() {
+      const companyData = collectFormData();
+      
+      if (!companyData.companyName) {
+        alert('회사명을 입력해주세요.');
+        return;
+      }
+      
+      if (!companyData.businessNumber) {
+        alert('사업자등록번호를 입력해주세요.');
+        return;
+      }
+      
+      // 맞춤찾기 결과 확인
+      if (!lastMatchedPrograms || lastMatchedPrograms.length === 0) {
+        alert('⚠️ 먼저 "맞춤 지원사업 찾기"를 실행해주세요!');
+        return;
+      }
+      
+      // AI 분석 결과 수집
+      const summaryResults = [];
+      const detailResults = [];
+      
+      document.querySelectorAll('.ai-summary-box').forEach((box, index) => {
+        const summaryText = box.querySelector('p')?.textContent || '';
+        const recommendText = box.querySelectorAll('p')[1]?.textContent || '';
+        summaryResults.push({
+          index: index,
+          summary: summaryText,
+          recommendation: recommendText.replace('💡 ', '')
+        });
+      });
+      
+      document.querySelectorAll('.ai-detail-box').forEach((box, index) => {
+        const detailText = box.querySelector('div[style*="rgba(255,255,255,0.2)"] p')?.textContent || '';
+        const strategyText = box.querySelectorAll('div[style*="rgba(255,255,255,0.15)"] p')[0]?.textContent || '';
+        const benefitText = box.querySelectorAll('div[style*="rgba(255,255,255,0.15)"] p')[1]?.textContent || '';
+        const prioritySpan = box.querySelector('span[style*="border-radius: 20px"]');
+        const priority = prioritySpan?.textContent?.includes('최우선') ? '상' : 
+                        prioritySpan?.textContent?.includes('우선') ? '중' : '하';
+        detailResults.push({
+          index: index,
+          detailedAnalysis: detailText,
+          applicationStrategy: strategyText,
+          expectedBenefit: benefitText,
+          priority: priority
+        });
+      });
+      
+      // AI 분석 결과가 하나도 없으면 저장 불가
+      if (summaryResults.length === 0 && detailResults.length === 0) {
+        alert('⚠️ AI 분석 결과가 없습니다!\n\n"요약분석" 또는 "상세분석"을 먼저 실행해주세요.\n\nAI 분석 결과가 있어야 이 버튼으로 저장할 수 있습니다.');
+        return;
+      }
+      
+      // 기존 기업 수정인지 신규인지 확인
+      const companyId = selectedCompanyId || Date.now().toString();
+      savedCompanies[companyId] = {
+        ...companyData,
+        // 맞춤찾기 결과 저장 (상위 50개까지)
+        matchedPrograms: lastMatchedPrograms.slice(0, 50),
+        // AI 분석 결과 저장
+        aiSummary: summaryResults.length > 0 ? summaryResults : null,
+        aiDetail: detailResults.length > 0 ? detailResults : null,
+        savedAt: new Date().toISOString()
+      };
+      
+      // Google Drive에 암호화하여 저장
+      const success = await saveToDrive(savedCompanies);
+      
+      if (success) {
+        selectedCompanyId = companyId;
+        updateCompanySelect();
+        
+        // 연결 상태 업데이트
+        updateConnectionStatus('connected');
+        
+        document.getElementById('company-name-search').value = companyData.companyName;
+        
+        const savedItems = [];
+        savedItems.push('기업정보');
+        savedItems.push(`맞춤 지원사업 ${lastMatchedPrograms.length}건`);
+        if (summaryResults.length > 0) savedItems.push(`AI 요약분석 ${summaryResults.length}건`);
+        if (detailResults.length > 0) savedItems.push(`AI 상세분석 ${detailResults.length}건`);
+        
+        alert(`✅ AI분석 포함 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
+        console.log('💾 AI분석 포함 저장 완료:', savedItems);
       } else {
         alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
       }
