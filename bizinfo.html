@@ -1420,8 +1420,8 @@
           💾 저장(AI분석포함)
         </button>
       </div>
-      <button class="btn btn-secondary" onclick="deleteCompany()" style="width: 100%; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
-        🗑️ 삭제
+      <button class="btn btn-secondary" onclick="clearSupportResults()" style="width: 100%; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
+        🗑️ 지원정보 삭제
       </button>
     </div>
 
@@ -3222,6 +3222,23 @@
         displayResults({ recommendations: company.matchedPrograms });
         hasCompletedSearch = true;
         console.log('✅ 저장된 맞춤지원정보 로드:', company.matchedPrograms.length, '개');
+        
+        // 저장된 AI 요약분석이 있으면 표시
+        if (company.aiSummary && company.aiSummary.length > 0) {
+          // 약간의 지연 후 AI 요약 표시 (DOM이 준비된 후)
+          setTimeout(() => {
+            updateResultsWithSummary(company.aiSummary);
+            console.log('✅ 저장된 AI 요약분석 로드:', company.aiSummary.length, '개');
+          }, 100);
+        }
+        
+        // 저장된 AI 상세분석이 있으면 표시
+        if (company.aiDetail && company.aiDetail.length > 0) {
+          setTimeout(() => {
+            updateResultsWithDetail(company.aiDetail);
+            console.log('✅ 저장된 AI 상세분석 로드:', company.aiDetail.length, '개');
+          }, 200);
+        }
       } else {
         // 맞춤지원정보 없으면 초기화
         const resultsSection = document.getElementById('results-section');
@@ -3300,39 +3317,46 @@
       const summaryResults = [];
       const detailResults = [];
       
-      document.querySelectorAll('.ai-summary-box').forEach((box, index) => {
-        // 실제 HTML 구조에 맞게 수정: div[style*="f8f9ff"] 안의 p 태그가 요약
-        const summaryDiv = box.querySelector('div[style*="f8f9ff"]');
-        const recommendDiv = box.querySelector('div[style*="fff8e6"]');
-        const summaryText = summaryDiv?.querySelector('p')?.textContent || '';
-        const recommendText = recommendDiv?.querySelector('span')?.textContent || recommendDiv?.querySelector('p')?.textContent || '';
+      document.querySelectorAll('.result-card').forEach((card, index) => {
+        const programId = card.getAttribute('data-program-id') || lastMatchedPrograms[index]?.id;
+        const summaryBox = card.querySelector('.ai-summary-box');
         
-        if (summaryText || recommendText) {
-          summaryResults.push({
-            index: index,
-            summary: summaryText,
-            recommendation: recommendText.replace('💡 ', '').trim()
-          });
+        if (summaryBox) {
+          const summaryDiv = summaryBox.querySelector('div[style*="f8f9ff"]');
+          const recommendDiv = summaryBox.querySelector('div[style*="fff8e6"]');
+          const summaryText = summaryDiv?.querySelector('p')?.textContent || '';
+          const recommendText = recommendDiv?.querySelector('span')?.textContent || recommendDiv?.querySelector('p')?.textContent || '';
+          
+          if (summaryText || recommendText) {
+            summaryResults.push({
+              index: index,
+              id: programId,
+              summary: summaryText,
+              recommendation: recommendText.replace('💡 ', '').trim()
+            });
+          }
         }
-      });
-      
-      document.querySelectorAll('.ai-detail-box').forEach((box, index) => {
-        const allParagraphs = box.querySelectorAll('p');
-        const detailText = allParagraphs[0]?.textContent || '';
-        const strategyText = allParagraphs[1]?.textContent || '';
-        const benefitText = allParagraphs[2]?.textContent || '';
-        const prioritySpan = box.querySelector('span[style*="border-radius: 20px"]');
-        const priority = prioritySpan?.textContent?.includes('최우선') ? '상' : 
-                        prioritySpan?.textContent?.includes('우선') ? '중' : '하';
         
-        if (detailText || strategyText || benefitText) {
-          detailResults.push({
-            index: index,
-            detailedAnalysis: detailText,
-            applicationStrategy: strategyText,
-            expectedBenefit: benefitText,
-            priority: priority
-          });
+        const detailBox = card.querySelector('.ai-detail-box');
+        if (detailBox) {
+          const allParagraphs = detailBox.querySelectorAll('p');
+          const detailText = allParagraphs[0]?.textContent || '';
+          const strategyText = allParagraphs[1]?.textContent || '';
+          const benefitText = allParagraphs[2]?.textContent || '';
+          const prioritySpan = detailBox.querySelector('span[style*="border-radius: 20px"]');
+          const priority = prioritySpan?.textContent?.includes('최우선') ? '상' : 
+                          prioritySpan?.textContent?.includes('우선') ? '중' : '하';
+          
+          if (detailText || strategyText || benefitText) {
+            detailResults.push({
+              index: index,
+              id: programId,
+              detailedAnalysis: detailText,
+              applicationStrategy: strategyText,
+              expectedBenefit: benefitText,
+              priority: priority
+            });
+          }
         }
       });
       
@@ -3503,6 +3527,35 @@
       } else {
         alert('❌ 삭제에 실패했습니다.');
       }
+    }
+    
+    /**
+     * 지원정보만 삭제 (기업정보는 유지)
+     */
+    function clearSupportResults() {
+      if (!confirm('지원사업 검색 결과와 AI 분석 결과를 삭제하시겠습니까?\n\n(기업정보는 유지됩니다)')) {
+        return;
+      }
+      
+      // 맞춤지원정보 결과 초기화
+      const resultsSection = document.getElementById('results-section');
+      if (resultsSection) {
+        resultsSection.innerHTML = '';
+        resultsSection.style.display = 'none';
+      }
+      
+      // AI 분석 결과 초기화
+      const aiResultsSection = document.getElementById('aiResultsSection');
+      if (aiResultsSection) {
+        aiResultsSection.style.display = 'none';
+        const aiResultsList = document.getElementById('aiResultsList');
+        if (aiResultsList) aiResultsList.innerHTML = '';
+      }
+      
+      lastMatchedPrograms = [];
+      hasCompletedSearch = false;
+      
+      alert('✅ 지원정보가 삭제되었습니다.\n기업정보는 유지됩니다.');
     }
     
     function clearForm() {
@@ -4142,12 +4195,32 @@
           }
           
           const summaryResults = data.results;
+          const totalAnalyzed = data.totalAnalyzed || allPrograms.length;
+          const eligibleCount = data.eligibleCount || summaryResults.length;
           
-          // 결과를 화면에 표시
-          updateResultsWithSummary(summaryResults);
+          console.log(`🤖 AI 분석 결과: ${totalAnalyzed}개 분석 → ${eligibleCount}개 적합`);
           
-          hideLoadingOverlay();
-          alert('✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ' + results.length + '개 추천\n• AI 요약분석: ' + summaryResults.length + '개 완료\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.');
+          // 적합한 공고만 필터링하여 결과 업데이트
+          if (eligibleCount > 0) {
+            // 적합한 공고 ID 목록
+            const eligibleIds = summaryResults.map(r => r.id);
+            
+            // 적합한 공고만 필터링
+            const eligiblePrograms = results.filter(p => eligibleIds.includes(p.id));
+            
+            // 결과 다시 표시 (적합한 공고만)
+            lastMatchedPrograms = eligiblePrograms;
+            displayResults({ recommendations: eligiblePrograms });
+            
+            // AI 요약 결과를 화면에 표시
+            updateResultsWithSummaryById(summaryResults);
+            
+            hideLoadingOverlay();
+            alert('✅ AI 맞춤분석이 완료되었습니다!\n\n• 전체 공고 분석: ' + totalAnalyzed + '개\n• 적합한 공고: ' + eligibleCount + '개\n• 부적합 공고: ' + (totalAnalyzed - eligibleCount) + '개 제외\n\n적합한 공고만 표시됩니다.');
+          } else {
+            hideLoadingOverlay();
+            alert('😢 분석 결과 적합한 지원사업이 없습니다.\n\n' + totalAnalyzed + '개 공고를 분석했으나,\n귀사의 조건에 맞는 공고가 없습니다.\n\n다른 조건으로 다시 시도해보세요.');
+          }
         } else {
           hideLoadingOverlay();
           alert('매칭되는 지원사업이 없습니다.\n입력 정보를 확인하시거나 다른 조건으로 시도해보세요.');
@@ -4648,7 +4721,7 @@
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
         
         html += `
-          <div class="result-card ${rankClass}">
+          <div class="result-card ${rankClass}" data-program-id="${rec.id}">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
               <span class="rank">${rankEmoji} ${index + 1}위</span>
               <span class="match-score" style="font-size: 1.1rem; font-weight: bold;">매칭도: ${rec.matchScore}점</span>
@@ -4706,6 +4779,83 @@
       section.innerHTML = html;
       section.style.display = 'block';
       section.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    /**
+     * AI 요약분석 결과를 ID로 매칭하여 화면에 표시
+     */
+    function updateResultsWithSummaryById(summaryResults) {
+      const resultCards = document.querySelectorAll('.result-card');
+      
+      resultCards.forEach((card, index) => {
+        // 카드의 data-id 또는 인덱스로 해당 프로그램 찾기
+        const programId = card.getAttribute('data-program-id') || lastMatchedPrograms[index]?.id;
+        
+        // 해당 프로그램의 AI 요약 결과 찾기
+        const result = summaryResults.find(r => r.id === programId) || summaryResults[index];
+        
+        if (!result) return;
+        
+        // 기존 AI 요약이 있으면 제거
+        const existingSummary = card.querySelector('.ai-summary-box');
+        if (existingSummary) {
+          existingSummary.remove();
+        }
+        
+        // AI 요약 박스 생성
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'ai-summary-box';
+        summaryDiv.style.cssText = `
+          background: #ffffff;
+          padding: 1.2rem;
+          border-radius: 12px;
+          margin-top: 1.5rem;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          border: 2px solid #667eea;
+          animation: slideIn 0.5s ease-out;
+        `;
+        
+        summaryDiv.innerHTML = `
+          <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
+            <span style="font-size: 1.5rem; margin-right: 0.5rem;">🤖</span>
+            <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
+          </div>
+          <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
+            <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
+              ${result.summary || '요약 정보가 없습니다.'}
+            </p>
+          </div>
+          <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
+              💡 <span style="color: #0c2c54;">${result.recommendation || '추천 정보가 없습니다.'}</span>
+            </p>
+          </div>
+        `;
+        
+        // 카드에 추가
+        card.appendChild(summaryDiv);
+      });
+      
+      // 애니메이션 CSS 추가 (한 번만)
+      if (!document.getElementById('ai-summary-animation')) {
+        const style = document.createElement('style');
+        style.id = 'ai-summary-animation';
+        style.textContent = `
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      console.log('✅ AI 요약분석 결과 표시 완료:', summaryResults.length, '개');
     }
     
     /**
