@@ -2042,6 +2042,10 @@
       try {
         console.log('🔐 Google 로그인 시작...');
         
+        // 기존 토큰 초기화
+        localStorage.removeItem('driveAccessToken');
+        accessToken = null;
+        
         // Firebase Auth 로그인 (Drive 권한 포함)
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/drive');
@@ -2050,7 +2054,7 @@
         const result = await auth.signInWithPopup(provider);
         console.log('✅ Firebase 로그인 성공:', result.user.email);
         
-        // Firebase credential에서 직접 access token 획득 (GIS 팝업 불필요!)
+        // Firebase credential에서 직접 access token 획득
         const credential = result.credential;
         if (credential && credential.accessToken) {
           accessToken = credential.accessToken;
@@ -2058,8 +2062,18 @@
           console.log('🔑 Firebase credential에서 Access Token 획득 성공');
           
           // GAPI 클라이언트에 토큰 설정
-          if (gapiInited) {
+          if (gapiInited && gapi.client) {
             gapi.client.setToken({ access_token: accessToken });
+            console.log('🔑 GAPI 클라이언트에 토큰 설정 완료');
+          }
+        } else {
+          console.log('⚠️ Firebase credential에서 토큰을 받지 못함, GIS로 재시도...');
+          // GIS를 통해 토큰 요청
+          try {
+            await requestDriveAccess();
+            console.log('🔑 GIS에서 Access Token 획득 성공');
+          } catch (e) {
+            console.error('❌ GIS 토큰 획득 실패:', e);
           }
         }
         
@@ -2235,6 +2249,11 @@
         
         console.log('📥 Google Drive에서 불러오는 중...');
         
+        // GAPI 클라이언트에 토큰 설정 확인
+        if (gapiInited && gapi.client) {
+          gapi.client.setToken({ access_token: accessToken });
+        }
+        
         const searchResponse = await gapi.client.drive.files.list({
           q: "name='kfpc-bizinfo-data.json' and trashed=false",
           fields: 'files(id, name)',
@@ -2248,7 +2267,7 @@
         
         const files = searchResponse.result.files;
         if (!files || files.length === 0) {
-          console.log('📁 저장된 파일이 없습니다');
+          console.log('📁 저장된 파일이 없습니다 (새로운 사용자)');
           return false;
         }
         
@@ -2259,6 +2278,25 @@
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
+        
+        // 401 에러 처리 (토큰 만료)
+        if (getResponse.status === 401) {
+          console.log('⚠️ Access Token 만료, 토큰 갱신 시도...');
+          localStorage.removeItem('driveAccessToken');
+          accessToken = null;
+          
+          // 토큰 갱신 시도
+          try {
+            await requestDriveAccess();
+            // 토큰 갱신 후 재시도
+            return await loadFromDrive();
+          } catch (e) {
+            console.error('❌ 토큰 갱신 실패, 재로그인 필요');
+            updateConnectionStatus('disconnected');
+            alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
+            return false;
+          }
+        }
         
         if (getResponse.ok) {
           const fileData = await getResponse.json();
@@ -2275,6 +2313,15 @@
         return false;
       } catch (error) {
         console.error('❌ Drive 로드 실패:', error);
+        
+        // 401 관련 에러 메시지 확인
+        if (error.status === 401 || (error.result && error.result.error && error.result.error.code === 401)) {
+          console.log('⚠️ 인증 오류 - 토큰 초기화');
+          localStorage.removeItem('driveAccessToken');
+          accessToken = null;
+          updateConnectionStatus('disconnected');
+        }
+        
         return false;
       }
     }
