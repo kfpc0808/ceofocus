@@ -461,6 +461,24 @@ exports.analyzeProgramPDF = functions
       
       const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
       
+      // PDF에서 텍스트 추출 (pdf-parse 사용)
+      let pdfText = '';
+      try {
+        const pdfParse = require('pdf-parse');
+        const pdfData = await pdfParse(Buffer.from(pdfBuffer));
+        pdfText = pdfData.text;
+        console.log('📄 PDF 텍스트 추출 완료:', pdfText.length, '자');
+      } catch (pdfError) {
+        console.error('PDF 텍스트 추출 실패:', pdfError.message);
+        // 텍스트 추출 실패 시 기본 메시지
+        pdfText = 'PDF 텍스트 추출에 실패했습니다. 공고 정보를 직접 확인해주세요.';
+      }
+      
+      // 텍스트가 너무 길면 앞부분만 사용 (약 50,000자 = 약 25,000 토큰)
+      if (pdfText.length > 50000) {
+        pdfText = pdfText.substring(0, 50000) + '\n\n... (이하 생략)';
+      }
+      
       // 업종 대분류 추출
       const ksicPrefix = (companyData?.ksicCode || '').substring(0, 2);
       const ksicCategoryMap = {
@@ -665,18 +683,23 @@ PDF 분석 프로세스 (6단계 심층분석)
 【중요】
 - PDF에 없는 정보는 "확인 필요"로 표시
 - 반드시 순수 JSON만 출력 (마크다운, 설명문 없이)
-- 이 분석을 받는 CEO가 2,000원의 가치를 느낄 수 있도록 작성`;
+- 이 분석을 받는 CEO가 2,000원의 가치를 느낄 수 있도록 작성
+
+═══════════════════════════════════════════════════════════════
+분석할 공고문 내용 (PDF에서 추출)
+═══════════════════════════════════════════════════════════════
+
+${pdfText}`;
 
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{
               parts: [
-                { text: prompt },
-                { inline_data: { mime_type: "application/pdf", data: pdfBase64 } }
+                { text: prompt }
               ]
             }],
             generationConfig: {

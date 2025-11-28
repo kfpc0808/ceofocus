@@ -3,13 +3,14 @@
   "description": "기업 지원사업 AI 매칭 - Firebase Functions",
   "version": "1.0.0",
   "engines": {
-    "node": "20"
+    "node": "18"
   },
   "main": "index.js",
   "dependencies": {
     "firebase-admin": "^11.11.0",
     "firebase-functions": "^4.5.0",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "pdf-parse": "^1.1.1"
   },
   "private": true
 }
