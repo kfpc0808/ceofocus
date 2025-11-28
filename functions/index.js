@@ -668,7 +668,7 @@ PDF 분석 프로세스 (6단계 심층분석)
 - 이 분석을 받는 CEO가 2,000원의 가치를 느낄 수 있도록 작성`;
 
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
