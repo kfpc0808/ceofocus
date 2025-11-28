@@ -2250,10 +2250,20 @@
         
         console.log('📥 Google Drive에서 불러오는 중...');
         
-        // GAPI 클라이언트에 토큰 설정 확인
-        if (gapiInited && gapi.client) {
-          gapi.client.setToken({ access_token: accessToken });
+        // GAPI 클라이언트 초기화 확인
+        if (!gapiInited || !gapi.client) {
+          console.log('⚠️ GAPI 클라이언트가 초기화되지 않음, 초기화 시도...');
+          await initGapi();
         }
+        
+        // Drive API 로드 확인
+        if (!gapi.client.drive) {
+          console.log('⚠️ Drive API 로드 중...');
+          await gapi.client.load('drive', 'v3');
+        }
+        
+        // GAPI 클라이언트에 토큰 설정
+        gapi.client.setToken({ access_token: accessToken });
         
         const searchResponse = await gapi.client.drive.files.list({
           q: "name='kfpc-bizinfo-data.json' and trashed=false",
