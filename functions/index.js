@@ -180,13 +180,16 @@ exports.geminiSummary = functions
         return { success: false, error: 'API 키가 설정되지 않았습니다.' };
       }
 
-      const { companyData, programs } = data || {};
+      const { companyData, programs: rawPrograms } = data || {};
 
-      if (!companyData || !programs || programs.length === 0) {
+      if (!companyData || !rawPrograms || rawPrograms.length === 0) {
         return { success: false, error: '기업 정보와 프로그램 목록이 필요합니다.' };
       }
 
-      console.log(`🤖 AI 분석 시작: ${programs.length}개 공고`);
+      // 공고 수 15개로 제한 (응답 품질 및 속도 개선)
+      const programs = rawPrograms.slice(0, 15);
+
+      console.log(`🤖 AI 분석 시작: ${programs.length}개 공고 (전체 ${rawPrograms.length}개 중)`);
 
       // 업종 대분류 추출 (KSIC 앞 2자리)
       const ksicPrefix = (companyData.ksicCode || '').substring(0, 2);
@@ -363,7 +366,7 @@ ${programs.map((p, i) => `
           }],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 8192
+            maxOutputTokens: 16384
           }
         })
       });
