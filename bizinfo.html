@@ -981,7 +981,7 @@
         </div>
         
         <div class="form-group full-width">
-          <label>업종(KSIC 코드) <span class="required">*</span></label>
+          <label>업종(KSIC 코드_10차) <span class="required">*</span></label>
           <div style="display: flex; gap: 0.3rem; align-items: flex-start; flex-wrap: wrap;">
             <!-- 계층형 KSIC 선택 -->
             <select id="ksic-level-2" onchange="onKsicLevel2Change()" style="flex: 1; min-width: 150px;">
@@ -1397,40 +1397,21 @@
 
     <!-- 실행 버튼 -->
     <div class="card">
-      <!-- 기업정보저장 + 맞춤찾기 + 저장(기업정보+지원사업) 버튼 -->
+      <!-- 기업정보저장 + 지원사업+분석 + 저장(기업정보+지원사업) 버튼 -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
         <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 0.95rem; padding: 1rem;">
           💾 기업정보 저장
         </button>
-        <button class="btn btn-primary" onclick="findMatchingPrograms()" style="flex: 2; font-size: 1rem; padding: 1rem; background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);">
-          🔍 맞춤 지원사업 찾기
+        <button class="btn btn-primary" onclick="findAndAnalyzePrograms()" style="flex: 2; font-size: 1rem; padding: 1rem; background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);">
+          🔍 지원사업+분석
         </button>
         <button class="btn btn-secondary" onclick="saveWithPrograms()" style="flex: 1.5; font-size: 0.85rem; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
           💾 저장(기업정보+지원사업)
         </button>
       </div>
-      <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: -0.5rem; margin-bottom: 1rem; text-align: center;">
-        ↑ 먼저 맞춤찾기를 실행한 후, 아래 분석 버튼을 선택하세요
-      </p>
       
-      <!-- AI 지원사업 매칭 분석 안내 -->
-      <div style="background: rgba(255, 136, 2, 0.15); border: 2px solid #FF8802; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
-        <h3 style="color: #FFD700; margin: 0 0 0.5rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          🤖 AI 지원사업 매칭 분석
-          <span style="font-size: 0.8em; color: rgba(255,255,255,0.6); font-weight: normal;">
-            (기업마당 공고 × Gemini AI)
-          </span>
-        </h3>
-        <p style="margin: 0; font-size: 0.9rem; color: rgba(255,255,255,0.8);">
-          💡 위에 입력한 기업 정보를 바탕으로 기업마당 공고를 AI가 자동 분석합니다. 약 15초 소요됩니다.
-        </p>
-      </div>
-      
-      <!-- AI 분석 버튼 (요약/상세 선택) + 저장(AI분석포함) -->
+      <!-- AI 분석 버튼 (상세분석) + 저장(AI분석포함) -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <button class="btn btn-secondary" onclick="analyzeProgramsSummary()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
-          📝 요약분석(상위10개)
-        </button>
         <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
           📊 상세분석(상위10개)
         </button>
@@ -3309,7 +3290,7 @@
       
       // 맞춤찾기 결과 확인
       if (!lastMatchedPrograms || lastMatchedPrograms.length === 0) {
-        alert('⚠️ 먼저 "맞춤 지원사업 찾기"를 실행해주세요!\n\n맞춤찾기 결과가 있어야 지원사업을 함께 저장할 수 있습니다.');
+        alert('⚠️ 먼저 "지원사업+분석"을 실행해주세요!\n\n지원사업+분석 결과가 있어야 지원사업을 함께 저장할 수 있습니다.');
         return;
       }
       
@@ -3398,7 +3379,7 @@
       
       // 맞춤찾기 결과 확인
       if (!lastMatchedPrograms || lastMatchedPrograms.length === 0) {
-        alert('⚠️ 먼저 "맞춤 지원사업 찾기"를 실행해주세요!');
+        alert('⚠️ 먼저 "지원사업+분석"을 실행해주세요!');
         return;
       }
       
@@ -3434,7 +3415,7 @@
       
       // AI 분석 결과가 하나도 없으면 저장 불가
       if (summaryResults.length === 0 && detailResults.length === 0) {
-        alert('⚠️ AI 분석 결과가 없습니다!\n\n"요약분석" 또는 "상세분석"을 먼저 실행해주세요.\n\nAI 분석 결과가 있어야 이 버튼으로 저장할 수 있습니다.');
+        alert('⚠️ AI 분석 결과가 없습니다!\n\n"지원사업+분석" 또는 "상세분석"을 먼저 실행해주세요.\n\nAI 분석 결과가 있어야 이 버튼으로 저장할 수 있습니다.');
         return;
       }
       
@@ -4055,7 +4036,118 @@
      * 요약분석: 클라이언트 매칭만 수행
      */
     /**
-     * 맞춤 지원사업 찾기 (클라이언트 매칭)
+     * 지원사업+분석: 맞춤 지원사업 찾기 + AI 요약분석 동시 진행
+     */
+    async function findAndAnalyzePrograms() {
+      const companyData = collectFormData();
+      
+      // KSIC 코드 5자리 필수 검증
+      if (!companyData.ksicCode || companyData.ksicCode.length !== 5) {
+        alert('⚠️ KSIC 코드 5자리를 모두 입력해주세요!\n\nKSIC 코드는 AI 분석에 가장 중요한 역할을 합니다.\n정확한 업종 코드 5자리를 입력해야 정확한 매칭 결과를 받을 수 있습니다.\n\n🔍 검색 버튼을 눌러 정확한 코드를 확인하세요.');
+        document.getElementById('ksic-1').focus();
+        return;
+      }
+      
+      // 필수 필드 검증 (항목명 포함)
+      const requiredFields = [
+        { key: 'companyName', name: '기업명' },
+        { key: 'businessNumber', name: '사업자등록번호' },
+        { key: 'establishDate', name: '개업연월일' },
+        { key: 'companySize', name: '기업 규모' },
+        { key: 'companyType', name: '기업 형태' },
+        { key: 'ksicCode', name: '업종(KSIC)' },
+        { key: 'locationSido', name: '소재지(시도)' },
+        { key: 'capitalArea', name: '수도권 여부' },
+        { key: 'revenueRecent', name: '최근 매출액' },
+        { key: 'taxArrears', name: '국세 체납 여부' },
+        { key: 'localTaxArrears', name: '지방세 체납 여부' },
+        { key: 'employeesTotal', name: '상시근로자 수' }
+      ];
+      
+      const missingFields = requiredFields.filter(f => {
+        const val = companyData[f.key];
+        return val === '' || val === null || val === undefined || val === 0;
+      });
+      
+      // 희망 지원분야 체크
+      if (!companyData.supportNeeds || companyData.supportNeeds.length === 0) {
+        missingFields.push({ key: 'supportNeeds', name: '희망 지원분야' });
+      }
+      
+      if (missingFields.length > 0) {
+        const fieldNames = missingFields.map(f => '• ' + f.name).join('\n');
+        alert('다음 필수 항목을 입력해주세요:\n\n' + fieldNames);
+        return;
+      }
+      
+      try {
+        // Step 1: 맞춤 지원사업 찾기
+        showLoadingOverlay('🔍 지원사업+분석 진행 중...', '① 기업마당에서 맞춤 공고를 가져오고 있습니다...');
+        
+        const results = await clientSideMatching(companyData);
+        
+        // 결과 저장
+        lastMatchedPrograms = results;
+        lastCompanyData = companyData;
+        hasCompletedSearch = true;
+        
+        // 결과 표시
+        displayResults({ recommendations: results });
+        
+        console.log('✅ 맞춤찾기 완료:', results.length, '개 추천');
+        
+        // Step 2: AI 요약분석 자동 진행
+        if (results.length > 0) {
+          const top10 = results.slice(0, 10);
+          
+          // 로딩 메시지 업데이트
+          const loadingText = document.getElementById('aiLoadingText');
+          const loadingDetail = document.getElementById('aiLoadingDetail');
+          if (loadingText) loadingText.textContent = '🤖 AI 요약분석 중...';
+          if (loadingDetail) loadingDetail.textContent = '② 상위 ' + top10.length + '개 지원사업을 Gemini AI가 분석하고 있습니다...';
+          
+          // Netlify Function을 통해 Gemini API 호출
+          const response = await fetch('/.netlify/functions/geminiSummary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              companyData: lastCompanyData,
+              programs: top10
+            })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `서버 오류: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (!data.success) {
+            throw new Error(data.error || 'AI 분석 실패');
+          }
+          
+          const summaryResults = data.results;
+          
+          // 결과를 화면에 표시
+          updateResultsWithSummary(summaryResults);
+          
+          hideLoadingOverlay();
+          alert('✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ' + results.length + '개 추천\n• AI 요약분석: 상위 ' + summaryResults.length + '개 완료\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.');
+        } else {
+          hideLoadingOverlay();
+          alert('매칭되는 지원사업이 없습니다.\n입력 정보를 확인하시거나 다른 조건으로 시도해보세요.');
+        }
+        
+      } catch (error) {
+        hideLoadingOverlay();
+        console.error('❌ 지원사업+분석 오류:', error);
+        alert('지원사업+분석 중 오류가 발생했습니다: ' + error.message);
+      }
+    }
+    
+    /**
+     * 맞춤 지원사업 찾기 (클라이언트 매칭) - 기존 함수 유지
      */
     async function findMatchingPrograms() {
       const companyData = collectFormData();
@@ -4133,12 +4225,12 @@
     async function analyzeProgramsSummary() {
       // 먼저 맞춤찾기가 완료되었는지 확인
       if (!hasCompletedSearch) {
-        alert('⚠️ 먼저 아래 "맞춤 지원사업 찾기" 버튼을 눌러주세요!\n\n맞춤찾기로 추천된 공고가 있어야 요약분석을 진행할 수 있습니다.');
+        alert('⚠️ 먼저 "지원사업+분석" 버튼을 눌러주세요!\n\n지원사업+분석으로 추천된 공고가 있어야 요약분석을 진행할 수 있습니다.');
         return;
       }
       
       if (!lastMatchedPrograms || lastMatchedPrograms.length === 0) {
-        alert('⚠️ 맞춤찾기 결과가 없습니다. 먼저 맞춤찾기를 실행해주세요.');
+        alert('⚠️ 지원사업+분석 결과가 없습니다. 먼저 지원사업+분석을 실행해주세요.');
         return;
       }
       
@@ -4200,14 +4292,14 @@
      * 상세분석: PDF 전문 AI 분석 수행
      */
     async function analyzeProgramsDetail() {
-      // 먼저 맞춤찾기가 완료되었는지 확인
+      // 먼저 지원사업+분석이 완료되었는지 확인
       if (!hasCompletedSearch) {
-        alert('⚠️ 먼저 아래 "맞춤 지원사업 찾기" 버튼을 눌러주세요!\n\n맞춤찾기로 추천된 공고가 있어야 상세분석을 진행할 수 있습니다.');
+        alert('⚠️ 먼저 "지원사업+분석" 버튼을 눌러주세요!\n\n지원사업+분석으로 추천된 공고가 있어야 상세분석을 진행할 수 있습니다.');
         return;
       }
       
       if (!lastMatchedPrograms || lastMatchedPrograms.length === 0) {
-        alert('⚠️ 맞춤찾기 결과가 없습니다. 먼저 맞춤찾기를 실행해주세요.');
+        alert('⚠️ 지원사업+분석 결과가 없습니다. 먼저 지원사업+분석을 실행해주세요.');
         return;
       }
       
@@ -4870,9 +4962,9 @@
         const loadingSection = document.getElementById('aiLoadingSection');
         const resultsSection = document.getElementById('aiResultsSection');
         
-        // 맞춤찾기 먼저 실행 여부 체크
+        // 지원사업+분석 먼저 실행 여부 체크
         if (!hasCompletedSearch) {
-          alert('먼저 "요약분석" 버튼을 눌러주세요.');
+          alert('먼저 "지원사업+분석" 버튼을 눌러주세요.');
           return;
         }
         
