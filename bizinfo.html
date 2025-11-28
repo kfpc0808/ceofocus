@@ -3572,7 +3572,7 @@
         const top10 = lastMatchedPrograms.slice(0, 10);
         
         // Gemini API 호출 (전역 GEMINI_API_KEY 사용)
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         // 프롬프트 생성 - 더 충실한 분석을 위해 개선
         const prompt = `
@@ -3719,7 +3719,7 @@ ${top10.map((p, i) => `
             );
             
             // Gemini API로 PDF 분석
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
             const prompt = `
 당신은 대한민국 정부지원사업 전문 컨설턴트입니다.
