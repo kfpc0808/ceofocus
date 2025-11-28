@@ -1413,7 +1413,7 @@
       <!-- AI 분석 버튼 (상세분석) + 저장(AI분석포함) -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
         <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
-          📊 상세분석(상위10개)
+          📊 상세분석
         </button>
         <button class="btn btn-secondary" onclick="saveWithAIAnalysis()" style="flex: 1; font-size: 0.85rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
           💾 저장(AI분석포함)
@@ -3299,29 +3299,39 @@
       const detailResults = [];
       
       document.querySelectorAll('.ai-summary-box').forEach((box, index) => {
-        const summaryText = box.querySelector('p')?.textContent || '';
-        const recommendText = box.querySelectorAll('p')[1]?.textContent || '';
-        summaryResults.push({
-          index: index,
-          summary: summaryText,
-          recommendation: recommendText.replace('💡 ', '')
-        });
+        // 실제 HTML 구조에 맞게 수정: div[style*="f8f9ff"] 안의 p 태그가 요약
+        const summaryDiv = box.querySelector('div[style*="f8f9ff"]');
+        const recommendDiv = box.querySelector('div[style*="fff8e6"]');
+        const summaryText = summaryDiv?.querySelector('p')?.textContent || '';
+        const recommendText = recommendDiv?.querySelector('span')?.textContent || recommendDiv?.querySelector('p')?.textContent || '';
+        
+        if (summaryText || recommendText) {
+          summaryResults.push({
+            index: index,
+            summary: summaryText,
+            recommendation: recommendText.replace('💡 ', '').trim()
+          });
+        }
       });
       
       document.querySelectorAll('.ai-detail-box').forEach((box, index) => {
-        const detailText = box.querySelector('div[style*="rgba(255,255,255,0.2)"] p')?.textContent || '';
-        const strategyText = box.querySelectorAll('div[style*="rgba(255,255,255,0.15)"] p')[0]?.textContent || '';
-        const benefitText = box.querySelectorAll('div[style*="rgba(255,255,255,0.15)"] p')[1]?.textContent || '';
+        const allParagraphs = box.querySelectorAll('p');
+        const detailText = allParagraphs[0]?.textContent || '';
+        const strategyText = allParagraphs[1]?.textContent || '';
+        const benefitText = allParagraphs[2]?.textContent || '';
         const prioritySpan = box.querySelector('span[style*="border-radius: 20px"]');
         const priority = prioritySpan?.textContent?.includes('최우선') ? '상' : 
                         prioritySpan?.textContent?.includes('우선') ? '중' : '하';
-        detailResults.push({
-          index: index,
-          detailedAnalysis: detailText,
-          applicationStrategy: strategyText,
-          expectedBenefit: benefitText,
-          priority: priority
-        });
+        
+        if (detailText || strategyText || benefitText) {
+          detailResults.push({
+            index: index,
+            detailedAnalysis: detailText,
+            applicationStrategy: strategyText,
+            expectedBenefit: benefitText,
+            priority: priority
+          });
+        }
       });
       
       // 기존 기업 수정인지 신규인지 확인
@@ -3388,29 +3398,39 @@
       const detailResults = [];
       
       document.querySelectorAll('.ai-summary-box').forEach((box, index) => {
-        const summaryText = box.querySelector('p')?.textContent || '';
-        const recommendText = box.querySelectorAll('p')[1]?.textContent || '';
-        summaryResults.push({
-          index: index,
-          summary: summaryText,
-          recommendation: recommendText.replace('💡 ', '')
-        });
+        // 실제 HTML 구조에 맞게 수정: div[style*="f8f9ff"] 안의 p 태그가 요약
+        const summaryDiv = box.querySelector('div[style*="f8f9ff"]');
+        const recommendDiv = box.querySelector('div[style*="fff8e6"]');
+        const summaryText = summaryDiv?.querySelector('p')?.textContent || '';
+        const recommendText = recommendDiv?.querySelector('span')?.textContent || recommendDiv?.querySelector('p')?.textContent || '';
+        
+        if (summaryText || recommendText) {
+          summaryResults.push({
+            index: index,
+            summary: summaryText,
+            recommendation: recommendText.replace('💡 ', '').trim()
+          });
+        }
       });
       
       document.querySelectorAll('.ai-detail-box').forEach((box, index) => {
-        const detailText = box.querySelector('div[style*="rgba(255,255,255,0.2)"] p')?.textContent || '';
-        const strategyText = box.querySelectorAll('div[style*="rgba(255,255,255,0.15)"] p')[0]?.textContent || '';
-        const benefitText = box.querySelectorAll('div[style*="rgba(255,255,255,0.15)"] p')[1]?.textContent || '';
+        const allParagraphs = box.querySelectorAll('p');
+        const detailText = allParagraphs[0]?.textContent || '';
+        const strategyText = allParagraphs[1]?.textContent || '';
+        const benefitText = allParagraphs[2]?.textContent || '';
         const prioritySpan = box.querySelector('span[style*="border-radius: 20px"]');
         const priority = prioritySpan?.textContent?.includes('최우선') ? '상' : 
                         prioritySpan?.textContent?.includes('우선') ? '중' : '하';
-        detailResults.push({
-          index: index,
-          detailedAnalysis: detailText,
-          applicationStrategy: strategyText,
-          expectedBenefit: benefitText,
-          priority: priority
-        });
+        
+        if (detailText || strategyText || benefitText) {
+          detailResults.push({
+            index: index,
+            detailedAnalysis: detailText,
+            applicationStrategy: strategyText,
+            expectedBenefit: benefitText,
+            priority: priority
+          });
+        }
       });
       
       // AI 분석 결과가 하나도 없으면 저장 불가
@@ -4098,13 +4118,13 @@
         
         // Step 2: AI 요약분석 자동 진행
         if (results.length > 0) {
-          const top10 = results.slice(0, 10);
+          const allPrograms = results; // 가져온 모든 공고 분석
           
           // 로딩 메시지 업데이트
           const loadingText = document.getElementById('aiLoadingText');
           const loadingDetail = document.getElementById('aiLoadingDetail');
           if (loadingText) loadingText.textContent = '🤖 AI 요약분석 중...';
-          if (loadingDetail) loadingDetail.textContent = '② 상위 ' + top10.length + '개 지원사업을 Gemini AI가 분석하고 있습니다...';
+          if (loadingDetail) loadingDetail.textContent = '② ' + allPrograms.length + '개 지원사업을 Gemini AI가 분석하고 있습니다...';
           
           // Netlify Function을 통해 Gemini API 호출
           const response = await fetch('/.netlify/functions/geminiSummary', {
@@ -4112,7 +4132,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               companyData: lastCompanyData,
-              programs: top10
+              programs: allPrograms
             })
           });
           
@@ -4133,7 +4153,7 @@
           updateResultsWithSummary(summaryResults);
           
           hideLoadingOverlay();
-          alert('✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ' + results.length + '개 추천\n• AI 요약분석: 상위 ' + summaryResults.length + '개 완료\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.');
+          alert('✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ' + results.length + '개 추천\n• AI 요약분석: ' + summaryResults.length + '개 완료\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.');
         } else {
           hideLoadingOverlay();
           alert('매칭되는 지원사업이 없습니다.\n입력 정보를 확인하시거나 다른 조건으로 시도해보세요.');
@@ -4235,10 +4255,10 @@
       }
       
       try {
-        // 상위 10개 프로그램 선택
-        const top10 = lastMatchedPrograms.slice(0, 10);
+        // 가져온 모든 프로그램 분석
+        const allPrograms = lastMatchedPrograms;
         
-        showLoadingOverlay('🤖 AI 요약분석 중...', '⭐ 상위 10개 지원사업을 Gemini AI로 분석하고 있습니다...', top10.length);
+        showLoadingOverlay('🤖 AI 요약분석 중...', '⭐ ' + allPrograms.length + '개 지원사업을 Gemini AI로 분석하고 있습니다...', allPrograms.length);
         
         // 분석 중 메시지 표시
         const loadingDetail = document.getElementById('aiLoadingDetail');
@@ -4252,7 +4272,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             companyData: lastCompanyData,
-            programs: top10
+            programs: allPrograms
           })
         });
         
@@ -4270,7 +4290,7 @@
         const summaryResults = data.results;
         
         // 100% 완료 표시 후 닫기
-        updateProgress(100, top10.length, top10.length);
+        updateProgress(100, allPrograms.length, allPrograms.length);
         
         setTimeout(() => {
           hideLoadingOverlay();
@@ -4304,18 +4324,19 @@
       }
       
       // 안내 팝업 - PDF 분석 설명 추가
-      const confirmed = confirm('📄 AI 공고문 PDF 상세분석을 시작합니다.\n\n✅ 상위 10개 공고의 PDF 파일을 AI가 직접 읽고 분석합니다.\n✅ 자격요건, 평가기준, 제출서류, 선정규모 등을 정확히 추출합니다.\n✅ 귀사의 선정 가능성을 구체적으로 분석합니다.\n\n⏱️ 분석에는 약 30-60초가 소요됩니다.\n\n계속하시겠습니까?');
+      const totalCount = lastMatchedPrograms.length;
+      const confirmed = confirm(`📄 AI 공고문 PDF 상세분석을 시작합니다.\n\n✅ ${totalCount}개 공고의 PDF 파일을 AI가 직접 읽고 분석합니다.\n✅ 자격요건, 평가기준, 제출서류, 선정규모 등을 정확히 추출합니다.\n✅ 귀사의 선정 가능성을 구체적으로 분석합니다.\n\n⏱️ 공고 수에 따라 분석 시간이 달라집니다.\n\n계속하시겠습니까?`);
       
       if (!confirmed) {
         return;
       }
       
       try {
-        // 상위 10개 프로그램 선택
-        const top10 = lastMatchedPrograms.slice(0, 10);
+        // 가져온 모든 프로그램 분석
+        const allPrograms = lastMatchedPrograms;
         
         // PDF URL이 있는 프로그램만 필터링
-        const programsWithPDF = top10.filter(p => p.printFileUrl || p.attachmentUrl);
+        const programsWithPDF = allPrograms.filter(p => p.printFileUrl || p.attachmentUrl);
         
         if (programsWithPDF.length === 0) {
           alert('⚠️ PDF 공고문이 있는 지원사업이 없습니다.\n\n요약분석을 이용해주세요.');
@@ -4327,7 +4348,7 @@
         const detailResults = [];
         
         // 각 프로그램의 PDF를 순차적으로 분석
-        for (let i = 0; i < Math.min(programsWithPDF.length, 10); i++) {
+        for (let i = 0; i < programsWithPDF.length; i++) {
           const program = programsWithPDF[i];
           const pdfUrl = program.printFileUrl || program.attachmentUrl;
           
