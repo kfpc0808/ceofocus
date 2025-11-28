@@ -416,7 +416,7 @@ ${programs.map((p, i) => `
 // ============================================================
 exports.analyzeProgramPDF = functions
   .region('asia-northeast3')
-  .runWith({ timeoutSeconds: 120, memory: '512MB' })
+  .runWith({ timeoutSeconds: 180, memory: '1GB' })
   .https.onCall(async (data, context) => {
     try {
       const { pdfUrl, companyData } = data || {};
@@ -433,9 +433,9 @@ exports.analyzeProgramPDF = functions
       
       console.log('📄 PDF 분석 시작:', pdfUrl);
       
-      // 1. PDF 다운로드 (타임아웃 5초)
+      // 1. PDF 다운로드 (타임아웃 15초로 증가)
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
       
       let pdfResponse;
       try {
@@ -443,7 +443,7 @@ exports.analyzeProgramPDF = functions
         clearTimeout(timeout);
       } catch (e) {
         clearTimeout(timeout);
-        throw new Error('PDF 다운로드 시간 초과');
+        throw new Error('PDF 다운로드 시간 초과 (15초)');
       }
       
       if (!pdfResponse.ok) {
@@ -454,20 +454,345 @@ exports.analyzeProgramPDF = functions
       const pdfSizeKB = Math.round(pdfBuffer.byteLength / 1024);
       console.log('📦 PDF 크기:', pdfSizeKB, 'KB');
       
-      // PDF가 너무 크면 스킵 (5MB 이상)
-      if (pdfBuffer.byteLength > 5 * 1024 * 1024) {
-        throw new Error('PDF 파일이 너무 큽니다 (5MB 초과)');
+      // PDF가 너무 크면 스킵 (10MB로 증가)
+      if (pdfBuffer.byteLength > 10 * 1024 * 1024) {
+        throw new Error('PDF 파일이 너무 큽니다 (10MB 초과)');
       }
       
       const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
       
-      // 2. Gemini API - 간단한 프롬프트로 빠르게 분석
-      const prompt = `이 공고문 PDF를 분석하여 JSON으로 응답하세요.
+      // 업종 대분류 추출
+      const ksicPrefix = (companyData?.ksicCode || '').substring(0, 2);
+      const ksicCategoryMap = {
+        '01': '농업', '02': '임업', '03': '어업',
+        '10': '식품제조', '11': '음료제조', '13': '섬유', '14': '의류',
+        '20': '화학', '21': '의약품', '22': '고무플라스틱', '23': '비금속광물',
+        '24': '금속', '25': '금속가공', '26': '전자부품', '27': '의료기기',
+        '28': '전기장비', '29': '기계장비', '30': '자동차', '31': '운송장비',
+        '41': '건설', '42': '토목', '45': '자동차판매', '46': '도매', '47': '소매',
+        '49': '육상운송', '52': '물류창고', '55': '숙박', '56': '음식점',
+        '58': '출판', '59': '영상제작', '60': '방송', '61': '통신', 
+        '62': '소프트웨어', '63': '정보서비스', '64': '금융',
+        '70': '본사', '71': '연구개발', '72': '과학기술서비스', '73': '전문서비스',
+        '74': '디자인', '79': '여행', '85': '교육', '86': '보건'
+      };
+      const ksicCategory = ksicCategoryMap[ksicPrefix] || '기타';
+      
+      // 대표자 나이 계산
+      let ceoAge = 0;
+      if (companyData?.ceoBirth) {
+        const birthYear = parseInt(companyData.ceoBirth.substring(0, 4));
+        ceoAge = new Date().getFullYear() - birthYear;
+      }
+      
+      // 2. Gemini API - 프리미엄 상세분석 프롬프트
+      const prompt = `당신은 20년 경력의 대한민국 정부지원사업 컨설팅 전문가입니다.
+수천 건의 지원사업 신청을 도와왔고, 평가위원 경험도 있습니다.
+이 PDF 공고문을 분석하여 아래 기업의 CEO에게 브리핑할 "프리미엄 분석 보고서"를 작성해주세요.
 
-기업정보: ${companyData?.companyName || '미입력'}, 업력 ${companyData?.businessAge || 0}년, 매출 ${companyData?.revenue || 0}원
+이 분석은 유료 서비스(건당 2,000원)로 제공되므로, 
+무료 요약분석과는 차원이 다른 깊이 있고 실용적인 인사이트를 제공해야 합니다.
 
-다음 형식으로만 응답:
-{"eligibility":{"companySize":"중소기업","businessAge":"3년이상","certifications":["벤처"]},"budget":{"maxPerCompany":"1억","totalBudget":"100억"},"schedule":{"period":"2025.01~02","deadline":"2025.01.31"},"companyMatch":{"eligible":true,"strengths":["강점1"],"weaknesses":["약점1"],"selectionProbability":70,"recommendation":"추천의견"}}`;
+████████████████████████████████████████████████████████████████████████
+█ 분석 대상 기업 프로필 (모든 항목을 공고 자격요건과 1:1 대조 필수)
+████████████████████████████████████████████████████████████████████████
+
+【기업 기본정보】
+• 기업명: ${companyData?.companyName || '미입력'}
+• 법인형태: ${companyData?.companyType || '미입력'}
+• 소재지: ${companyData?.locationSido || '미입력'} ${companyData?.locationSigungu || ''}
+• 수도권 여부: ${companyData?.capitalArea === 'Y' ? '수도권 (서울/경기/인천)' : '비수도권'}
+• 기업규모: ${companyData?.companySize || '미입력'}
+
+【업종 및 사업분야】
+• 업종코드(KSIC): ${companyData?.ksicCode || '미입력'}
+• 업종 대분류: ${ksicCategory}
+• 세부업종: ${companyData?.ksicName || '미입력'}
+• 주력 제품/서비스: ${companyData?.productKeywords || '미입력'}
+
+【업력 및 성장단계】
+• 설립일: ${companyData?.establishDate || '미입력'}
+• 업력: ${companyData?.businessAge || 0}년
+• 성장단계: ${companyData?.businessAge <= 3 ? '초기창업기' : companyData?.businessAge <= 7 ? '성장기' : '성숙기'}
+
+【재무현황】
+• 최근 매출액: ${companyData?.revenueRecent ? Math.round(companyData.revenueRecent / 100000000) + '억원' : '미입력'}
+• 전년 매출액: ${companyData?.revenuePrevious ? Math.round(companyData.revenuePrevious / 100000000) + '억원' : '미입력'}
+• 매출 성장률: ${(companyData?.revenueRecent && companyData?.revenuePrevious) ? Math.round((companyData.revenueRecent - companyData.revenuePrevious) / companyData.revenuePrevious * 100) + '%' : '미입력'}
+• 영업이익: ${companyData?.profitRecent ? Math.round(companyData.profitRecent / 100000000) + '억원' : '미입력'}
+• 부채비율: ${companyData?.debtRatio || '미입력'}%
+
+【고용현황】
+• 상시근로자: ${companyData?.employeesTotal || 0}명
+• 청년근로자(만 15~34세): ${companyData?.employeesYouth || 0}명 (${companyData?.employeesTotal ? Math.round((companyData?.employeesYouth || 0) / companyData.employeesTotal * 100) : 0}%)
+• 여성근로자: ${companyData?.employeesFemale || 0}명 (${companyData?.employeesTotal ? Math.round((companyData?.employeesFemale || 0) / companyData.employeesTotal * 100) : 0}%)
+• 장애인근로자: ${companyData?.employeesDisabled || 0}명
+• 신규채용(최근1년): ${companyData?.employeesNew || '미입력'}명
+
+【대표자 정보】
+• 대표자명: ${companyData?.ceoName || '미입력'}
+• 성별: ${companyData?.ceoGender === 'M' ? '남성' : companyData?.ceoGender === 'F' ? '여성' : '미입력'}
+• 연령: ${ceoAge > 0 ? ceoAge + '세' : '미입력'} ${ceoAge > 0 && ceoAge <= 39 ? '(청년CEO)' : ceoAge >= 60 ? '(시니어CEO)' : ''}
+
+【보유 인증현황】
+• 벤처기업: ${companyData?.certVenture === 'Y' ? '✅ 인증 보유' : '❌ 미보유'}
+• 이노비즈: ${companyData?.certInnobiz === 'Y' ? '✅ 인증 보유' : '❌ 미보유'}
+• 메인비즈: ${companyData?.certMainbiz === 'Y' ? '✅ 인증 보유' : '❌ 미보유'}
+• 여성기업: ${companyData?.certWoman === 'Y' ? '✅ 확인서 보유' : '❌ 미보유'}
+• 장애인기업: ${companyData?.certDisabled === 'Y' ? '✅ 확인서 보유' : '❌ 미보유'}
+• 사회적기업: ${companyData?.certSocial === 'Y' ? '✅ 인증' : '❌ 비해당'}
+• ISO인증: ${companyData?.certISO === 'Y' ? '✅ 보유' : '❌ 미보유'}
+• 녹색인증: ${companyData?.certGreen === 'Y' ? '✅ 보유' : '❌ 미보유'}
+
+【기술/연구역량】
+• 연구조직: ${companyData?.researchOrg || '없음'}
+• 등록특허: ${companyData?.patentsRegistered || 0}건
+• 출원특허: ${companyData?.patentsPending || 0}건
+• R&D투자비율: ${companyData?.rdRatio || '미입력'}%
+
+【수출현황】
+• 수출실적: ${(companyData?.exportRecent && companyData.exportRecent > 0) ? '✅ 있음 ($' + companyData.exportRecent.toLocaleString() + ')' : '❌ 없음 (내수기업)'}
+• 수출국가: ${companyData?.exportCountries || '미입력'}
+
+【결격사유 체크】
+• 국세체납: ${companyData?.taxArrears === 'N' ? '✅ 없음' : '⚠️ 있음 (결격사유)'}
+• 지방세체납: ${companyData?.localTaxArrears === 'N' ? '✅ 없음' : '⚠️ 있음 (결격사유)'}
+• 4대보험체납: ${companyData?.insuranceArrears === 'N' ? '✅ 없음' : '⚠️ 있음'}
+• 휴폐업: ${companyData?.isClosed === 'N' ? '✅ 정상영업' : '⚠️ 휴폐업'}
+• 부정수급이력: ${companyData?.fraudHistory === 'N' ? '✅ 없음' : '⚠️ 있음 (결격사유)'}
+
+████████████████████████████████████████████████████████████████████████
+█ PDF 분석 프로세스 (6단계 심층분석)
+████████████████████████████████████████████████████████████████████████
+
+【1단계: 사업 핵심 파악】
+☐ 사업의 정책 목적 (왜 정부가 이 사업을 하는가?)
+☐ 주무부처의 정책 방향과의 연관성
+☐ 전년도 대비 변경사항 (있다면)
+☐ 사업의 핵심 키워드 3가지
+
+【2단계: 자격요건 완전 추출】
+☐ 신청 자격 (필수조건 vs 우대조건 구분)
+☐ 제외 대상 (명시적 불가 조건)
+☐ 지역/규모/업종/업력/매출 조건
+☐ 필수 인증 및 서류 요건
+☐ 컨소시엄/단독 신청 여부
+☐ 동일/유사사업 중복참여 제한
+
+【3단계: 지원내용 상세분석】
+☐ 지원금액 (총액, 기업당 한도)
+☐ 정부출연금 vs 기업부담금 비율
+☐ 지원항목별 한도 (인건비, 재료비, 외주비 등)
+☐ 간접비 비율
+☐ 현금/현물 부담 조건
+☐ 사업기간 및 정산방식
+
+【4단계: 평가체계 분석】
+☐ 평가항목 및 배점표 추출
+☐ 필수/선택 평가항목 구분
+☐ 가점항목 (여성기업, 고용증가, 지역 등)
+☐ 감점항목 및 결격사유
+☐ 평가방식 (서류/발표/현장)
+☐ 선정기준 (고득점순, 패스/페일 등)
+
+【5단계: 기업 맞춤 적합성 분석】
+☐ 자격요건 항목별 충족/미충족 판정
+☐ 이 기업의 평가 예상점수 (항목별)
+☐ 가점 획득 가능 항목
+☐ 경쟁력 있는 강점 요소
+☐ 보완이 필요한 약점 요소
+☐ 유사기업 대비 경쟁력
+
+【6단계: 실전 신청전략 수립】
+☐ 신청서 작성 핵심 포인트
+☐ 사업계획서 강조해야 할 내용
+☐ 평가위원이 중요시하는 요소
+☐ 흔한 탈락 사유와 회피 방법
+☐ 제출서류 체크리스트
+☐ 일정별 준비 타임라인
+
+████████████████████████████████████████████████████████████████████████
+█ 출력 형식 (프리미엄 분석 보고서 - JSON)
+████████████████████████████████████████████████████████████████████████
+
+{
+  "reportSummary": {
+    "programName": "공고명 (정확히)",
+    "managingOrg": "주관기관",
+    "executingOrg": "수행기관",
+    "overallVerdict": "강력추천/추천/신중검토/비추천 중 택1",
+    "verdictReason": "판정 이유 50자 내외",
+    "fitScore": 0~100,
+    "expectedSuccessRate": "높음/중상/중/중하/낮음"
+  },
+  
+  "programOverview": {
+    "purpose": "사업 목적 및 정책 배경 200자",
+    "summary": "사업 핵심 내용 300자 - 무엇을 지원받을 수 있는지 구체적으로",
+    "targetDescription": "지원 대상 기업 유형 설명",
+    "keyFeatures": ["이 사업만의 특징/장점 3~5가지"],
+    "policyDirection": "관련 정책 동향 및 향후 전망"
+  },
+  
+  "eligibilityDetail": {
+    "mustHave": {
+      "companySize": "기업규모 조건 (정확히)",
+      "businessAge": "업력 조건 (정확히)",
+      "region": "지역 조건",
+      "industry": "업종 조건",
+      "revenue": "매출 조건",
+      "employees": "고용 조건",
+      "requiredCerts": ["필수 인증"],
+      "otherMust": ["기타 필수 조건"]
+    },
+    "mustNotHave": ["제외 대상 - 이런 기업은 안됨"],
+    "preferred": ["우대 조건 목록"],
+    "restrictions": ["중복참여 제한, 동일사업 제한 등"]
+  },
+  
+  "supportDetail": {
+    "totalBudget": "총 사업예산",
+    "maxPerCompany": "기업당 최대 지원금",
+    "govShare": "정부지원 비율",
+    "companyShare": "기업부담 비율 및 방식(현금/현물)",
+    "selectedCount": "선정 예정 기업수",
+    "supportItems": {
+      "personnel": "인건비 지원 내용 및 한도",
+      "materials": "재료비 지원 내용 및 한도",
+      "equipment": "장비비 지원 내용 및 한도",
+      "outsourcing": "외주비 지원 내용 및 한도",
+      "others": "기타 지원 항목"
+    },
+    "indirectCost": "간접비 비율",
+    "executionPeriod": "사업수행 기간",
+    "paymentMethod": "지원금 지급/정산 방식"
+  },
+  
+  "requiredDocuments": {
+    "mandatory": ["필수 제출서류 전체 목록 - 빠짐없이"],
+    "optional": ["선택/가점 서류"],
+    "templates": ["양식 제공 여부 및 다운로드 안내"],
+    "preparationTips": ["서류 준비 팁 - 실무 경험 기반"]
+  },
+  
+  "scheduleDetail": {
+    "announcement": "공고일",
+    "applicationStart": "접수 시작일",
+    "applicationEnd": "접수 마감일 (시간까지)",
+    "applicationMethod": "신청 방법 (온라인시스템명, URL 등)",
+    "documentReview": "서류 심사 기간",
+    "presentationReview": "발표 심사 일정 (해당시)",
+    "siteReview": "현장 실사 일정 (해당시)",
+    "finalSelection": "최종 선정 발표일",
+    "contractPeriod": "협약 체결 기간",
+    "projectStart": "사업 착수일",
+    "projectEnd": "사업 종료일",
+    "timeline": ["D-day 기준 준비 타임라인"]
+  },
+  
+  "evaluationSystem": {
+    "stages": ["평가 단계 (서류→발표→현장 등)"],
+    "criteria": [
+      {"item": "평가항목명", "score": "배점", "description": "평가내용"}
+    ],
+    "bonusPoints": [
+      {"item": "가점항목", "score": "점수", "condition": "조건"}
+    ],
+    "deductions": ["감점 요소"],
+    "disqualification": ["결격/탈락 사유"],
+    "selectionMethod": "선정 방식 설명",
+    "passingScore": "통과 기준점수 (있다면)"
+  },
+  
+  "companyFitAnalysis": {
+    "overallEligible": true/false,
+    "fitScore": 0~100,
+    "fitGrade": "A/B/C/D/F",
+    
+    "eligibilityCheck": {
+      "passed": [
+        {"requirement": "충족 조건명", "companyStatus": "기업 현황", "verdict": "✅ 충족"}
+      ],
+      "failed": [
+        {"requirement": "미충족 조건명", "companyStatus": "기업 현황", "verdict": "❌ 미충족", "impact": "치명적/중요/경미"}
+      ],
+      "uncertain": [
+        {"requirement": "확인필요 조건명", "reason": "확인 필요 이유"}
+      ]
+    },
+    
+    "estimatedScore": {
+      "total": "예상 총점/만점",
+      "breakdown": [
+        {"item": "평가항목", "maxScore": "배점", "estimatedScore": "예상점수", "reason": "근거"}
+      ],
+      "bonusApplicable": [
+        {"item": "가점항목", "score": "점수", "applicable": true/false, "reason": "근거"}
+      ]
+    },
+    
+    "strengthsAnalysis": [
+      {"strength": "강점 요소", "evaluationImpact": "평가에 미치는 영향", "howToLeverage": "어필 방법"}
+    ],
+    
+    "weaknessesAnalysis": [
+      {"weakness": "약점 요소", "evaluationImpact": "평가에 미치는 영향", "mitigation": "보완 방법"}
+    ],
+    
+    "competitivePosition": "동종업계 경쟁 기업 대비 포지션 분석",
+    "expectedCompetition": "예상 경쟁률 및 난이도"
+  },
+  
+  "applicationStrategy": {
+    "coreMessage": "사업계획서 핵심 메시지 (이것만은 꼭 강조)",
+    "differentiators": ["차별화 포인트 - 경쟁사 대비"],
+    "emphasisPoints": ["강조해야 할 내용 5가지"],
+    "avoidPoints": ["피해야 할 내용/표현"],
+    "evaluatorPerspective": "평가위원이 중요시하는 것",
+    "commonMistakes": ["흔한 탈락 사유 및 회피법"],
+    "documentTips": ["서류 작성 실전 팁"],
+    "presentationTips": ["발표 심사 팁 (해당시)"]
+  },
+  
+  "actionPlan": {
+    "immediateActions": ["지금 당장 해야 할 일"],
+    "beforeApplication": ["신청 전 준비사항 체크리스트"],
+    "documentChecklist": ["제출서류 최종 체크리스트"],
+    "riskFactors": ["신청 시 위험요소 및 대응"],
+    "alternativePlans": ["탈락 시 대안 (유사 사업 등)"]
+  },
+  
+  "consultantNote": {
+    "finalRecommendation": "최종 추천 의견 300자 - 신청 여부, 이유, 주의사항을 솔직하고 전문적으로",
+    "expectedBenefit": "선정 시 기대효과 - 구체적 금액과 혜택",
+    "successProbability": "선정 가능성 (상/중상/중/중하/하) 및 근거",
+    "priorityLevel": "이 사업의 신청 우선순위 (다른 사업 대비)",
+    "additionalAdvice": "컨설턴트로서 드리는 추가 조언"
+  }
+}
+
+████████████████████████████████████████████████████████████████████████
+█ 품질 기준 (프리미엄 서비스 수준)
+████████████████████████████████████████████████████████████████████████
+
+1. 정확성: PDF에서 추출한 정보는 100% 정확해야 함. 추측 금지.
+2. 구체성: "좋음", "많음" 같은 모호한 표현 대신 구체적 수치/내용
+3. 실용성: 컨설턴트가 바로 고객에게 설명할 수 있는 수준
+4. 솔직성: 미충족 조건은 솔직하게, 가능성 낮으면 낮다고 명확히
+5. 전문성: 정부지원사업 전문가다운 깊이 있는 분석
+6. 완결성: 고객이 추가 질문 없이도 의사결정 가능한 수준
+
+【점수 기준】
+- 90점 이상: 모든 필수요건 충족 + 다수 가점 + 경쟁력 우수
+- 70~89점: 필수요건 충족 + 일부 가점 + 보통 경쟁력  
+- 50~69점: 필수요건 충족 + 가점 없음 + 약한 경쟁력
+- 30~49점: 일부 요건 미충족 가능성 + 확인 필요
+- 30점 미만: 필수요건 미충족 + 신청 비권장
+
+【중요】
+- PDF에 없는 정보: "PDF에 명시되지 않음 - 공고기관 확인 필요"
+- 반드시 순수 JSON만 출력 (마크다운, 설명문 없이)
+- 이 분석을 받는 CEO가 2,000원의 가치를 느낄 수 있도록 작성`;
 
       const geminiResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -482,14 +807,16 @@ exports.analyzeProgramPDF = functions
               ]
             }],
             generationConfig: {
-              temperature: 0.1,
-              maxOutputTokens: 1024
+              temperature: 0.2,
+              maxOutputTokens: 16384
             }
           })
         }
       );
       
       if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text();
+        console.error('Gemini API 오류:', geminiResponse.status, errorText);
         throw new Error(`Gemini API 오류: ${geminiResponse.status}`);
       }
       
@@ -500,6 +827,7 @@ exports.analyzeProgramPDF = functions
       }
       
       const analysisText = geminiData.candidates[0].content.parts[0].text;
+      console.log('📝 AI 응답 길이:', analysisText.length);
       
       // JSON 추출
       let jsonText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -508,10 +836,15 @@ exports.analyzeProgramPDF = functions
       try {
         analysis = JSON.parse(jsonText);
       } catch (e) {
+        console.error('JSON 파싱 오류:', e);
+        console.error('원본 텍스트:', jsonText.substring(0, 500));
         // JSON 파싱 실패 시 기본 구조 반환
         analysis = {
-          eligibility: { companySize: "확인필요", businessAge: "확인필요" },
-          companyMatch: { eligible: null, recommendation: analysisText.substring(0, 200) }
+          programSummary: analysisText.substring(0, 200),
+          eligibility: { companySize: "확인 필요", businessAge: "확인 필요" },
+          budget: { totalBudget: "확인 필요", perCompany: "확인 필요" },
+          schedule: { applicationPeriod: "확인 필요" },
+          companyFit: { eligible: null, fitScore: 0, recommendation: "PDF 분석에 실패했습니다. 공고문을 직접 확인해주세요." }
         };
       }
       
