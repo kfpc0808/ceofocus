@@ -1115,7 +1115,7 @@ exports.addCredits = functions
       const { targetUserId, amount } = data;
       
       // 관리자 확인 (이메일 기반)
-      const adminEmails = ['admin@kfpc.co.kr', 'kfpcpro@gmail.com'];
+      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com'];
       const callerEmail = context.auth.token.email;
       
       if (!adminEmails.includes(callerEmail)) {
