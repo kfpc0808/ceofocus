@@ -792,11 +792,33 @@
 <body>
   <div class="loading-screen" id="loading-screen">
     <div class="loader"></div>
-    <div class="loading-text">앱 로딩 중...</div>
+    <div class="loading-text" id="loading-text">앱 로딩 중...</div>
   </div>
 
-  <!-- Google 로그인 화면 -->
-  <div id="login-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+  <!-- 인증 확인용 로딩 화면 (로그인 화면 대신) -->
+  <div id="auth-loading-screen" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;">
+    <div style="text-align: center;">
+      <div style="font-size: 4rem; margin-bottom: 1.5rem; animation: pulse 1.5s infinite;">🏢</div>
+      <h2 style="color: white; margin-bottom: 1rem; font-size: 1.8rem;">기업 지원사업 AI 매칭</h2>
+      <div id="auth-status-text" style="color: rgba(255,255,255,0.9); font-size: 1rem; margin-bottom: 2rem;">
+        인증 확인 중...
+      </div>
+      <div style="width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+    </div>
+  </div>
+  
+  <style>
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Google 로그인 화면 (로그인 필요할 때만 표시) -->
+  <div id="login-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); z-index: 9999; align-items: center; justify-content: center;">
     <div style="background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%;">
       <div style="font-size: 4rem; margin-bottom: 1rem;">🏢</div>
       <h2 style="color: #0c2c54; margin-bottom: 0.5rem; font-size: 1.8rem;">기업 지원사업 AI 매칭</h2>
@@ -2211,7 +2233,9 @@
         currentUser = { email: result.user.email };
         document.getElementById('user-info').textContent = result.user.email;
         
-        // 로그인 화면 숨기고 메인 화면 표시
+        // 로그인 화면 및 로딩 화면 숨기고 메인 화면 표시
+        const authLoadingScreen = document.getElementById('auth-loading-screen');
+        if (authLoadingScreen) authLoadingScreen.style.display = 'none';
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
         
@@ -2587,14 +2611,23 @@
         
         // Firebase 인증 상태 확인 (자동 로그인)
         auth.onAuthStateChanged(async (user) => {
+          const authLoadingScreen = document.getElementById('auth-loading-screen');
+          const authStatusText = document.getElementById('auth-status-text');
+          
           if (user) {
             console.log('✅ Firebase 세션 유지:', user.email);
+            
+            // 상태 텍스트 업데이트
+            if (authStatusText) {
+              authStatusText.textContent = '데이터 로딩 중...';
+            }
             
             // 사용자 정보 표시
             currentUser = { email: user.email };
             document.getElementById('user-info').textContent = user.email;
             
-            // 메인 화면 표시
+            // 로딩 화면 숨기고 메인 화면 표시
+            if (authLoadingScreen) authLoadingScreen.style.display = 'none';
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             
@@ -2673,6 +2706,9 @@
           } else {
             console.log('⚠️ 로그인 필요');
             updateConnectionStatus('disconnected', false); // 로그인 화면 표시하므로 팝업 불필요
+            
+            // 로딩 화면 숨기고 로그인 화면 표시
+            if (authLoadingScreen) authLoadingScreen.style.display = 'none';
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('main-content').style.display = 'none';
             hideLoading();
