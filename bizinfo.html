@@ -1420,9 +1420,17 @@
           💾 저장(맞춤형분석 포함)
         </button>
       </div>
-      <button class="btn btn-secondary" onclick="deleteCompany()" style="width: 100%; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
-        🗑️ 삭제(지원정보)
-      </button>
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+        <button class="btn" onclick="showDetailSample()" style="flex: 1; background: linear-gradient(135deg, #667eea, #764ba2); border: none; color: white; font-weight: 600;">
+          👁️ 상세분석 샘플
+        </button>
+        <button class="btn" onclick="showMyPoints()" style="flex: 1; background: linear-gradient(135deg, #f093fb, #f5576c); border: none; color: white; font-weight: 600;">
+          💰 포인트 조회
+        </button>
+        <button class="btn btn-secondary" onclick="deleteCompany()" style="flex: 1; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
+          🗑️ 삭제(지원정보)
+        </button>
+      </div>
       <p style="text-align: center; font-size: 0.75rem; color: #aaa; margin-top: 0.3rem;">※ 기업정보는 목록에서 삭제</p>
     </div>
 
@@ -2294,7 +2302,7 @@
         
         console.log('💾 Google Drive에 저장 중...');
         
-        // 데이터 암호화
+        // 데이터 암호화 (기업 정보만 저장, 크레딧은 Firestore에서 관리)
         const encryptedData = encryptData(data);
         
         // 기존 파일 검색 (루트 폴더)
@@ -2436,7 +2444,13 @@
           const decryptedData = decryptData(fileData.encryptedData);
           
           if (decryptedData) {
-            savedCompanies = decryptedData;
+            // 하위 호환성: 새 형식(companies 포함)이면 companies만 추출
+            if (decryptedData.companies) {
+              savedCompanies = decryptedData.companies;
+            } else {
+              savedCompanies = decryptedData;
+            }
+            
             updateCompanySelect();
             console.log('✅ Drive 로드 완료:', Object.keys(savedCompanies).length, '개 고객사');
             return true;
@@ -4139,6 +4153,40 @@
           
           console.log(`📊 요약분석: 전체 ${allPrograms.length}개 중 기존 ${existingSummaryIds.length}개 제외, 신규 ${newPrograms.length}개 분석`);
           
+          // 🆕 100% 동일하면 차감 없이 기존 결과 표시
+          if (newPrograms.length === 0 && lastSummaryResults.length > 0) {
+            hideLoadingOverlay();
+            
+            // 기존 결과를 화면에 표시
+            const allSummaryResults = lastSummaryResults.filter(s => 
+              allPrograms.some(p => p.id === s.programId || p.id === s.id)
+            );
+            updateResultsWithSummary(allSummaryResults);
+            
+            // 기존 상세분석 결과가 있으면 다시 표시
+            if (lastDetailResults && lastDetailResults.length > 0) {
+              setTimeout(() => {
+                updateResultsWithPDFDetail(lastDetailResults);
+              }, 100);
+            }
+            
+            alert(
+              '✅ 지원사업+분석이 완료되었습니다!\n\n' +
+              `• 맞춤 지원사업: ${results.length}개 추천\n` +
+              `• 기존 분석 결과: ${allSummaryResults.length}개 (변경 없음)\n\n` +
+              '💰 크레딧이 차감되지 않았습니다.'
+            );
+            return;
+          }
+          
+          // 🆕 크레딧 확인 (신규 공고가 있을 때만)
+          hideLoadingOverlay(); // 일단 로딩 숨기고
+          const canProceed = await checkAndConfirmCredits('summary');
+          if (!canProceed) return;
+          
+          // 다시 로딩 표시
+          showLoadingOverlay('🔍 지원사업+분석 진행 중...', '② AI 요약분석을 진행합니다...');
+          
           let newSummaryResults = [];
           
           // 신규 공고가 있을 때만 API 호출
@@ -4170,6 +4218,8 @@
             
             // 기존 결과와 병합하여 저장
             lastSummaryResults = [...lastSummaryResults, ...newSummaryResults];
+            
+            console.log(`📊 분석 결과: 적합 ${data.eligibleCount || 0}개, 부적합 ${data.ineligibleCount || 0}개`);
           }
           
           // 전체 결과 (기존 + 신규)를 화면에 표시
@@ -4188,19 +4238,20 @@
           
           hideLoadingOverlay();
           
-          // 완료 메시지 (신규 분석 vs 기존 결과 구분)
-          const existingCount = existingSummaryIds.length;
-          const newCount = newSummaryResults.length;
-          let summaryMsg = '';
-          if (existingCount > 0 && newCount > 0) {
-            summaryMsg = `• AI 요약분석: 기존 ${existingCount}개 유지 + 신규 ${newCount}개 완료`;
-          } else if (existingCount > 0) {
-            summaryMsg = `• AI 요약분석: 기존 ${existingCount}개 결과 유지 (신규 분석 없음)`;
-          } else {
-            summaryMsg = `• AI 요약분석: ${newCount}개 완료`;
+          // 완료 메시지 (적합/부적합 구분)
+          const eligibleCount = allSummaryResults.filter(r => r.eligible === true).length;
+          const ineligibleCount = allSummaryResults.filter(r => r.eligible === false).length;
+          let summaryMsg = `• AI 요약분석: 적합 ${eligibleCount}개`;
+          if (ineligibleCount > 0) {
+            summaryMsg += ` + 참고용 ${ineligibleCount}개`;
           }
           
-          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.`);
+          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 적합: 신청 권장\n🔴 참고용: 협력사/관계사에 추천`);
+          
+          // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
+          if (newPrograms.length > 0) {
+            await deductCredits('summary');
+          }
         } else {
           hideLoadingOverlay();
           alert('매칭되는 지원사업이 없습니다.\n입력 정보를 확인하시거나 다른 조건으로 시도해보세요.');
@@ -4301,10 +4352,30 @@
         return;
       }
       
+      // 가져온 모든 프로그램
+      const allPrograms = lastMatchedPrograms;
+      
+      // 🆕 기존 분석 결과와 비교하여 신규 공고 확인
+      const existingIds = lastSummaryResults.map(s => s.programId || s.id);
+      const newPrograms = allPrograms.filter(p => !existingIds.includes(p.id));
+      
+      // 100% 동일하면 차감 없이 기존 결과 표시
+      if (newPrograms.length === 0 && lastSummaryResults.length > 0) {
+        alert(
+          '✅ 이미 모든 공고의 요약분석이 완료되어 있습니다!\n\n' +
+          `• 기존 분석 결과: ${lastSummaryResults.length}개\n\n` +
+          '💰 크레딧이 차감되지 않았습니다.'
+        );
+        // 기존 결과 다시 표시
+        updateResultsWithSummary(lastSummaryResults);
+        return;
+      }
+      
+      // 🆕 크레딧 확인 (신규 공고가 있을 때만)
+      const canProceed = await checkAndConfirmCredits('summary');
+      if (!canProceed) return;
+      
       try {
-        // 가져온 모든 프로그램 분석
-        const allPrograms = lastMatchedPrograms;
-        
         showLoadingOverlay('🤖 AI 요약분석 중...', '⭐ ' + allPrograms.length + '개 지원사업을 Gemini AI로 분석하고 있습니다...', allPrograms.length);
         
         // 분석 중 메시지 표시
@@ -4331,13 +4402,17 @@
         // 100% 완료 표시 후 닫기
         updateProgress(100, allPrograms.length, allPrograms.length);
         
-        setTimeout(() => {
+        setTimeout(async () => {
           hideLoadingOverlay();
           
           // 결과를 화면에 표시
           updateResultsWithSummary(summaryResults);
           
-          alert('✅ AI 요약분석이 완료되었습니다!\n\n각 공고 카드에 AI 요약이 추가되었습니다.');
+          // 🆕 크레딧 차감 (서버에서 처리)
+          await deductCredits('summary');
+          
+          // 🆕 완료 메시지 (잔액 포함)
+          showCompletionWithCredits('summary', summaryResults.length);
         }, 500);
         
       } catch (error) {
@@ -4362,39 +4437,40 @@
         return;
       }
       
-      // 안내 팝업 - PDF 분석 설명 추가
-      const confirmed = confirm('📄 AI 공고문 PDF 상세분석을 시작합니다.\n\n✅ PDF 파일이 있는 상위 10개 공고를 AI가 직접 읽고 분석합니다.\n✅ 자격요건, 평가기준, 제출서류, 선정규모 등을 정확히 추출합니다.\n✅ 귀사의 선정 가능성을 구체적으로 분석합니다.\n\n⏱️ 분석에 약 1~2분 소요됩니다.\n\n계속하시겠습니까?');
+      // PDF URL이 있는 프로그램만 필터링 후 상위 10개
+      const programsWithPDF = lastMatchedPrograms
+        .filter(p => p.printFileUrl || p.attachmentUrl)
+        .slice(0, 10);
       
-      if (!confirmed) {
+      if (programsWithPDF.length === 0) {
+        alert('⚠️ PDF 공고문이 있는 지원사업이 없습니다.\n\n요약분석을 이용해주세요.');
         return;
       }
       
+      // 🆕 기존 상세분석 결과와 비교하여 신규 공고 확인
+      const existingDetailIds = lastDetailResults.map(d => d.programId);
+      const newProgramsToAnalyze = programsWithPDF.filter(p => !existingDetailIds.includes(p.id));
+      const existingPrograms = programsWithPDF.filter(p => existingDetailIds.includes(p.id));
+      
+      console.log(`📄 상세분석: 전체 ${programsWithPDF.length}개 중 기존 ${existingPrograms.length}개 제외, 신규 ${newProgramsToAnalyze.length}개 분석`);
+      
+      // 🆕 100% 동일하면 차감 없이 기존 결과 표시
+      if (newProgramsToAnalyze.length === 0) {
+        alert(
+          '✅ 이미 모든 공고의 상세분석이 완료되어 있습니다!\n\n' +
+          `• 기존 분석 결과: ${existingPrograms.length}개\n\n` +
+          '💰 크레딧이 차감되지 않았습니다.'
+        );
+        // 기존 결과 다시 표시
+        updateResultsWithPDFDetail(lastDetailResults);
+        return;
+      }
+      
+      // 🆕 크레딧 확인 (신규 공고가 있을 때만 - 2,000P 필요)
+      const canProceed = await checkAndConfirmCredits('detail');
+      if (!canProceed) return;
+      
       try {
-        // PDF URL이 있는 프로그램만 필터링 후 상위 10개
-        const programsWithPDF = lastMatchedPrograms
-          .filter(p => p.printFileUrl || p.attachmentUrl)
-          .slice(0, 10);
-        
-        if (programsWithPDF.length === 0) {
-          alert('⚠️ PDF 공고문이 있는 지원사업이 없습니다.\n\n요약분석을 이용해주세요.');
-          return;
-        }
-        
-        // 기존 상세분석 결과가 있는 공고는 제외 (비용 절감)
-        const existingDetailIds = lastDetailResults.map(d => d.programId);
-        const newProgramsToAnalyze = programsWithPDF.filter(p => !existingDetailIds.includes(p.id));
-        const existingPrograms = programsWithPDF.filter(p => existingDetailIds.includes(p.id));
-        
-        console.log(`📄 상세분석: 전체 ${programsWithPDF.length}개 중 기존 ${existingPrograms.length}개 제외, 신규 ${newProgramsToAnalyze.length}개 분석`);
-        
-        // 모든 공고가 이미 분석됨
-        if (newProgramsToAnalyze.length === 0) {
-          alert(`✅ 이미 모든 공고의 상세분석이 완료되어 있습니다!\n\n기존 분석 결과 ${existingPrograms.length}개가 유지됩니다.`);
-          // 기존 결과 다시 표시
-          updateResultsWithPDFDetail(lastDetailResults);
-          return;
-        }
-        
         showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ 신규 ${newProgramsToAnalyze.length}개 공고문을 Gemini AI가 분석하고 있습니다... (기존 ${existingPrograms.length}개 유지)`, newProgramsToAnalyze.length);
         
         const newDetailResults = [];
@@ -4458,7 +4534,20 @@
           detailMsg = `${newCount}개 완료`;
         }
         
-        alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.`);
+        // 🆕 신규 분석이 있었을 때만 크레딧 차감
+        if (newCount > 0) {
+          await deductCredits('detail');
+          
+          alert(
+            `✅ AI PDF 상세분석이 완료되었습니다!\n\n` +
+            `${detailMsg}\n` +
+            `총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n` +
+            `💳 차감 포인트: 2,000P\n` +
+            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
+          );
+        } else {
+          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.`);
+        }
         
       } catch (error) {
         hideLoadingOverlay();
@@ -4833,7 +4922,24 @@
           existingSummary.remove();
         }
         
-        // AI 요약 박스 생성 - 흰색 배경으로 변경
+        // 적합/부적합 여부에 따른 스타일 결정
+        const isEligible = result.eligible === true;
+        const borderColor = isEligible ? '#28a745' : '#dc3545';
+        const headerBgColor = isEligible ? '#d4edda' : '#f8d7da';
+        const headerTextColor = isEligible ? '#155724' : '#721c24';
+        const statusIcon = isEligible ? '🟢' : '🔴';
+        const statusText = isEligible ? '적합' : '참고용 (부적합)';
+        const fitScore = result.fitScore || (isEligible ? 80 : 55);
+        
+        // 매칭도 점수 업데이트 (카드 헤더의 점수)
+        const scoreSpan = targetCard.querySelector('span[style*="background: linear-gradient"]');
+        if (scoreSpan) {
+          const scoreColor = isEligible ? 'linear-gradient(135deg, #28a745, #20c997)' : 'linear-gradient(135deg, #dc3545, #fd7e14)';
+          scoreSpan.style.background = scoreColor;
+          scoreSpan.textContent = `매칭도: ${fitScore}점`;
+        }
+        
+        // AI 요약 박스 생성
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'ai-summary-box';
         summaryDiv.style.cssText = `
@@ -4842,23 +4948,49 @@
           border-radius: 12px;
           margin-top: 1.5rem;
           box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-          border: 2px solid #667eea;
+          border: 2px solid ${borderColor};
           animation: slideIn 0.5s ease-out;
         `;
         
+        // 적합/부적합 이유 HTML 생성
+        let reasonHtml = '';
+        if (isEligible && result.eligibleReason) {
+          reasonHtml = `
+            <div style="background: #d4edda; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #28a745;">
+              <p style="color: #155724; margin: 0; font-weight: 600; font-size: 0.9rem;">
+                ✅ 적합 이유: <span style="font-weight: normal;">${result.eligibleReason}</span>
+              </p>
+            </div>
+          `;
+        } else if (!isEligible && result.ineligibleReason) {
+          reasonHtml = `
+            <div style="background: #f8d7da; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #dc3545;">
+              <p style="color: #721c24; margin: 0; font-weight: 600; font-size: 0.9rem;">
+                ❌ 부적합 이유: <span style="font-weight: normal;">${result.ineligibleReason}</span>
+              </p>
+            </div>
+          `;
+        }
+        
         summaryDiv.innerHTML = `
-          <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
-            <span style="font-size: 1.5rem; margin-right: 0.5rem;">🤖</span>
-            <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 1.5rem; margin-right: 0.5rem;">🤖</span>
+              <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
+            </div>
+            <span style="background: ${headerBgColor}; color: ${headerTextColor}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+              ${statusIcon} ${statusText}
+            </span>
           </div>
+          ${reasonHtml}
           <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
             <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
               ${result.summary || '요약 정보가 없습니다.'}
             </p>
           </div>
-          <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #ffc107;">
-            <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
-              💡 <span style="color: #0c2c54;">${result.recommendation || '추천 정보가 없습니다.'}</span>
+          <div style="background: ${isEligible ? '#fff8e6' : '#fff3cd'}; padding: 0.8rem; border-radius: 8px; border-left: 4px solid ${isEligible ? '#ffc107' : '#fd7e14'};">
+            <p style="color: ${isEligible ? '#856404' : '#856404'}; margin: 0; font-weight: 600; font-size: 0.9rem;">
+              💡 <span style="color: #0c2c54; font-weight: normal;">${result.recommendation || '추천 정보가 없습니다.'}</span>
             </p>
           </div>
         `;
@@ -4887,6 +5019,117 @@
       }
       
       console.log('✅ AI 요약분석 결과 표시 완료:', summaryResults.length, '개');
+      
+      // 카드 순서 재정렬 (적합 → 부적합 순)
+      reorderResultCards(summaryResults);
+    }
+    
+    /**
+     * Gemini 분석 결과에 따라 카드 순서 재정렬
+     */
+    function reorderResultCards(summaryResults) {
+      const resultsSection = document.getElementById('results-section');
+      const headerCard = resultsSection.querySelector('.card'); // 헤더 카드
+      const resultCards = Array.from(resultsSection.querySelectorAll('.result-card'));
+      
+      if (resultCards.length === 0) return;
+      
+      // summaryResults 순서대로 카드 정렬 (적합이 먼저, 부적합이 나중)
+      const sortedCards = [];
+      summaryResults.forEach(result => {
+        const card = resultCards.find(c => {
+          const cardId = c.getAttribute('data-program-id');
+          return cardId === result.programId || cardId === result.id;
+        });
+        if (card) {
+          sortedCards.push({ card, result });
+        }
+      });
+      
+      // 분석 결과가 없는 카드는 맨 뒤에 추가
+      resultCards.forEach(card => {
+        const cardId = card.getAttribute('data-program-id');
+        const hasResult = summaryResults.some(r => r.programId === cardId || r.id === cardId);
+        if (!hasResult) {
+          sortedCards.push({ card, result: null });
+        }
+      });
+      
+      // 카드 재배치 및 순위 업데이트
+      sortedCards.forEach(({ card, result }, index) => {
+        // 순위 업데이트
+        const rankSpan = card.querySelector('.rank');
+        if (rankSpan) {
+          const isEligible = result?.eligible === true;
+          const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+          
+          if (!isEligible && result) {
+            // 부적합 공고는 순위 대신 "참고" 표시
+            rankSpan.innerHTML = `⚠️ 참고`;
+            rankSpan.style.background = 'linear-gradient(135deg, #dc3545, #fd7e14)';
+          } else {
+            rankSpan.innerHTML = `${rankEmoji} ${index + 1}위`;
+            if (index < 3) {
+              // 상위 3개 스타일 유지
+            }
+          }
+        }
+        
+        // rank 클래스 업데이트
+        card.classList.remove('rank-1', 'rank-2', 'rank-3');
+        if (result?.eligible === true) {
+          if (index === 0) card.classList.add('rank-1');
+          else if (index === 1) card.classList.add('rank-2');
+          else if (index === 2) card.classList.add('rank-3');
+        }
+        
+        // DOM에서 순서 변경
+        resultsSection.appendChild(card);
+      });
+      
+      console.log('✅ 카드 순서 재정렬 완료: 적합', sortedCards.filter(s => s.result?.eligible === true).length, '개 → 부적합', sortedCards.filter(s => s.result?.eligible === false).length, '개');
+      
+      // 헤더 카드 문구 업데이트
+      updateResultsHeader(summaryResults);
+    }
+    
+    /**
+     * 결과 헤더 문구 업데이트 (적합/참고 개수 표시)
+     */
+    function updateResultsHeader(summaryResults) {
+      const headerCard = document.querySelector('#results-section .card');
+      if (!headerCard) return;
+      
+      const eligibleCount = summaryResults.filter(r => r.eligible === true).length;
+      const ineligibleCount = summaryResults.filter(r => r.eligible === false).length;
+      
+      let headerHtml = `<h2>📊 맞춤형 지원사업 추천 결과</h2>`;
+      
+      if (eligibleCount > 0 && ineligibleCount > 0) {
+        headerHtml += `
+          <p style="color: #666; margin-top: 0.5rem;">
+            🟢 <strong style="color: #28a745;">적합 ${eligibleCount}개</strong> + 
+            🔴 <strong style="color: #dc3545;">참고용 ${ineligibleCount}개</strong> (총 ${eligibleCount + ineligibleCount}개)
+          </p>
+          <p style="color: #888; font-size: 0.85rem; margin-top: 0.3rem;">
+            ※ 참고용 공고는 협력사/관계사에 추천해보세요
+          </p>
+        `;
+      } else if (eligibleCount > 0) {
+        headerHtml += `
+          <p style="color: #666; margin-top: 0.5rem;">
+            총 <strong style="color: #28a745;">${eligibleCount}개</strong>의 지원사업이 귀사에 적합합니다.
+          </p>
+        `;
+      } else {
+        headerHtml += `
+          <p style="color: #666; margin-top: 0.5rem;">
+            총 <strong style="color: #FF8802;">${summaryResults.length}개</strong>의 지원사업을 분석했습니다.
+          </p>
+        `;
+      }
+      
+      headerCard.innerHTML = headerHtml;
     }
     
     /**
@@ -5405,7 +5648,358 @@
     */
     // ==================== AI 분석 종료 ====================
     
+    // ==================== 상세분석 샘플 모달 ====================
+    
+    /**
+     * 상세분석 샘플 모달 표시
+     */
+    function showDetailSample() {
+      const modal = document.getElementById('detail-sample-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    
+    /**
+     * 상세분석 샘플 모달 닫기
+     */
+    function closeDetailSample() {
+      const modal = document.getElementById('detail-sample-modal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }
+    }
+    
+    // ==================== 크레딧 시스템 (Firestore 기반) ====================
+    
+    // 로컬 캐시 (화면 표시용, 실제 데이터는 Firestore에서 관리)
+    let userCredits = {
+      freeRemaining: 10,
+      paidBalance: 0,
+      lastResetMonth: '',
+      isLoaded: false
+    };
+    
+    /**
+     * Firestore에서 크레딧 조회 (Firebase Functions 통해)
+     */
+    async function loadCreditsFromServer() {
+      try {
+        const getCredits = functions.httpsCallable('getCredits');
+        const result = await getCredits();
+        
+        if (result.data.success) {
+          userCredits = {
+            ...result.data.credits,
+            isLoaded: true
+          };
+          console.log('💰 크레딧 로드:', userCredits);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('❌ 크레딧 로드 실패:', error);
+        return false;
+      }
+    }
+    
+    /**
+     * 포인트 조회 버튼 클릭
+     */
+    async function showMyPoints() {
+      // 로그인 확인
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert('⚠️ 로그인이 필요합니다.\n\n포인트 조회를 위해 먼저 로그인해주세요.');
+        return;
+      }
+      
+      try {
+        // 서버에서 최신 정보 조회
+        await loadCreditsFromServer();
+        
+        // 현재 월 계산
+        const now = new Date();
+        const currentMonth = now.toISOString().slice(0, 7);
+        const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+        const displayMonth = monthNames[now.getMonth()];
+        
+        // 무료 사용 현황
+        const freeUsed = 10 - userCredits.freeRemaining;
+        const freeStatus = userCredits.freeRemaining > 0 
+          ? `✅ ${freeUsed}/10회 사용 (잔여 ${userCredits.freeRemaining}회)`
+          : `❌ 10/10회 사용 (소진)`;
+        
+        alert(
+          `💰 내 포인트 현황\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `👤 ${user.email}\n\n` +
+          `📊 ${displayMonth} 무료 사용\n` +
+          `    ${freeStatus}\n\n` +
+          `💎 보유 포인트\n` +
+          `    ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `📌 요약분석: 무료 10회/월, 이후 500P\n` +
+          `📌 상세분석: 2,000P/회`
+        );
+        
+      } catch (error) {
+        console.error('❌ 포인트 조회 오류:', error);
+        alert('포인트 조회 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
+      }
+    }
+    
+    /**
+     * 크레딧 확인 및 확인 팝업 표시
+     * @param {string} type - 'summary' | 'detail'
+     * @returns {Promise<boolean>} - 진행 여부
+     */
+    async function checkAndConfirmCredits(type) {
+      // 크레딧 정보 로드 (아직 안 되었으면)
+      if (!userCredits.isLoaded) {
+        await loadCreditsFromServer();
+      }
+      
+      if (type === 'summary') {
+        // 요약분석: 무료 10회, 이후 500P
+        if (userCredits.freeRemaining > 0) {
+          // 무료 사용 가능
+          const confirmed = confirm(
+            `✅ 요약분석을 시작합니다.\n\n` +
+            `📊 이번 달 무료 사용: ${10 - userCredits.freeRemaining + 1}/10회\n` +
+            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+            `계속 진행하시겠습니까?`
+          );
+          return confirmed;
+        } else {
+          // 무료 소진, 유료 필요
+          if (userCredits.paidBalance >= 500) {
+            const confirmed = confirm(
+              `⚠️ 이번 달 무료 10회를 모두 사용했습니다.\n\n` +
+              `💳 차감 포인트: 500P\n` +
+              `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n` +
+              `    → 사용 후: ${(userCredits.paidBalance - 500).toLocaleString()}P\n\n` +
+              `계속 진행하시겠습니까?`
+            );
+            return confirmed;
+          } else {
+            alert(
+              `❌ 포인트가 부족합니다.\n\n` +
+              `📊 무료 사용: 10/10회 (소진)\n` +
+              `💳 필요 포인트: 500P\n` +
+              `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+              `포인트를 충전해주세요.`
+            );
+            return false;
+          }
+        }
+      } else if (type === 'detail') {
+        // 상세분석: 항상 2,000P
+        if (userCredits.paidBalance >= 2000) {
+          const confirmed = confirm(
+            `💰 상세분석을 시작합니다.\n\n` +
+            `PDF 공고문 최대 10개를 AI가 상세 분석합니다.\n\n` +
+            `💳 차감 포인트: 2,000P\n` +
+            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n` +
+            `    → 분석 후: ${(userCredits.paidBalance - 2000).toLocaleString()}P\n\n` +
+            `계속 진행하시겠습니까?`
+          );
+          return confirmed;
+        } else {
+          // 샘플 보기 유도
+          const showSample = confirm(
+            `❌ 포인트가 부족합니다.\n\n` +
+            `💳 필요 포인트: 2,000P\n` +
+            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+            `[확인] 상세분석 샘플 보기\n` +
+            `[취소] 닫기`
+          );
+          if (showSample) {
+            showDetailSample();
+          }
+          return false;
+        }
+      }
+      
+      return false;
+    }
+    
+    /**
+     * 크레딧 차감 (Firebase Functions 통해 Firestore에서 차감)
+     * @param {string} type - 'summary' | 'detail'
+     * @returns {Promise<boolean>} - 성공 여부
+     */
+    async function deductCredits(type) {
+      try {
+        const deductCreditsFunc = functions.httpsCallable('deductCredits');
+        const result = await deductCreditsFunc({ type });
+        
+        if (result.data.success) {
+          // 로컬 캐시 업데이트
+          userCredits = {
+            ...result.data.credits,
+            isLoaded: true
+          };
+          console.log(`💰 크레딧 차감 완료:`, userCredits);
+          return true;
+        } else {
+          console.error('❌ 크레딧 차감 실패:', result.data.error);
+          alert('크레딧 차감에 실패했습니다: ' + result.data.error);
+          return false;
+        }
+      } catch (error) {
+        console.error('❌ 크레딧 차감 오류:', error);
+        return false;
+      }
+    }
+    
+    /**
+     * 분석 완료 후 잔액 표시
+     * @param {string} type - 'summary' | 'detail'
+     */
+    function showCompletionWithCredits(type, resultCount) {
+      if (type === 'summary') {
+        const freeMsg = userCredits.freeRemaining > 0 
+          ? `📊 이번 달 무료 잔여: ${userCredits.freeRemaining}회`
+          : `📊 무료 사용 소진 (다음 달 리셋)`;
+        
+        alert(
+          `✅ 요약분석이 완료되었습니다!\n\n` +
+          `• 분석 완료: ${resultCount}개 공고\n\n` +
+          `${freeMsg}\n` +
+          `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
+        );
+      } else if (type === 'detail') {
+        alert(
+          `✅ 상세분석이 완료되었습니다!\n\n` +
+          `• 분석 완료: ${resultCount}개 공고\n` +
+          `• 차감 포인트: 2,000P\n\n` +
+          `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
+        );
+      }
+    }
+    
+    // ==================== 크레딧 시스템 종료 ====================
+    
   </script>
+
+  <!-- 상세분석 샘플 모달 -->
+  <div id="detail-sample-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background: white; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+      
+      <!-- 헤더 -->
+      <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.5rem; border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1;">
+        <button onclick="closeDetailSample()" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;">✕</button>
+        <h2 style="margin: 0; font-size: 1.3rem;">👁️ 상세분석 샘플</h2>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">이런 분석을 PDF 공고문 최대 10개에 대해 제공합니다</p>
+      </div>
+      
+      <!-- 샘플 내용 -->
+      <div style="padding: 1.5rem;">
+        
+        <!-- 공고 정보 -->
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+          <h3 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">📋 2025년 중소기업 수출바우처 지원사업</h3>
+          <p style="color: #666; margin: 0; font-size: 0.85rem;">주관: 중소벤처기업부 | 분야: 수출지원</p>
+        </div>
+        
+        <!-- 적합도 -->
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold;">
+            🎯 적합도: 92점
+          </div>
+          <span style="color: #28a745; font-weight: 600;">매우 적합</span>
+        </div>
+        
+        <!-- 핵심 요약 -->
+        <div style="background: #e8f5e9; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
+          <h4 style="color: #2e7d32; margin: 0 0 0.5rem 0;">📌 핵심 요약</h4>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8;">
+            <li><strong>지원금액:</strong> 최대 1억원 (정부 70%, 기업 30%)</li>
+            <li><strong>지원내용:</strong> 해외마케팅, 통번역, 해외인증, 물류비 등</li>
+            <li><strong>신청기간:</strong> 2025.03.01 ~ 2025.03.31</li>
+            <li><strong>선정규모:</strong> 약 3,000개사 내외</li>
+          </ul>
+        </div>
+        
+        <!-- 적합 포인트 -->
+        <div style="background: #e3f2fd; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #2196f3;">
+          <h4 style="color: #1565c0; margin: 0 0 0.5rem 0;">✅ 귀사 적합 포인트</h4>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8;">
+            <li>서울 소재 중소기업 → <strong style="color: #1565c0;">지역 조건 충족</strong></li>
+            <li>수출 희망 기업 → <strong style="color: #1565c0;">사업 목적 부합</strong></li>
+            <li>제조업 영위 → <strong style="color: #1565c0;">우대 업종 해당</strong></li>
+            <li>벤처기업 인증 보유 → <strong style="color: #1565c0;">가점 5점 획득 가능</strong></li>
+          </ul>
+        </div>
+        
+        <!-- 강점/보완점 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div style="background: #f0fff4; padding: 1rem; border-radius: 12px; border: 1px solid #c6f6d5;">
+            <h4 style="color: #28a745; margin: 0 0 0.5rem 0; font-size: 0.95rem;">💪 강점</h4>
+            <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.85rem; line-height: 1.6;">
+              <li>벤처기업 인증 (가점 5점)</li>
+              <li>연구전담부서 보유 (가점 3점)</li>
+              <li>수출 경험 보유</li>
+            </ul>
+          </div>
+          <div style="background: #fff5f5; padding: 1rem; border-radius: 12px; border: 1px solid #fed7d7;">
+            <h4 style="color: #dc3545; margin: 0 0 0.5rem 0; font-size: 0.95rem;">⚠️ 보완점</h4>
+            <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.85rem; line-height: 1.6;">
+              <li>수출실적 증빙자료 준비</li>
+              <li>사업계획서 구체화 필요</li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- 주의사항 -->
+        <div style="background: #fff8e1; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
+          <h4 style="color: #f57c00; margin: 0 0 0.5rem 0;">⚠️ 신청 시 주의사항</h4>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8; font-size: 0.9rem;">
+            <li>최근 3년 수출실적 증빙 필요 (관세청 실적 또는 외화입금증명)</li>
+            <li>동일 사업 중복 지원 불가 (수출바우처 기참여 기업 제외)</li>
+            <li>사업계획서 평가 점수 70점 이상 필요</li>
+            <li>기업부담금 30% 사전 확보 필요</li>
+          </ul>
+        </div>
+        
+        <!-- 신청 전략 -->
+        <div style="background: #f3e5f5; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid #9c27b0;">
+          <h4 style="color: #7b1fa2; margin: 0 0 0.5rem 0;">📝 신청 전략 (AI 추천)</h4>
+          <ol style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8; font-size: 0.9rem;">
+            <li>수출계획서에 <strong>구체적 타겟 시장 3개국 이상</strong> 명시</li>
+            <li>기존 해외 바이어 정보 및 거래 실적 첨부</li>
+            <li>사업비 집행계획을 <strong>월별/항목별</strong>로 상세 작성</li>
+            <li>전년도 수출 성과 및 금년 목표 수치화</li>
+          </ol>
+        </div>
+        
+        <!-- 안내 문구 -->
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem; border-radius: 12px; text-align: center;">
+          <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem;">
+            💡 <strong>이런 상세분석을 PDF가 있는 공고 최대 10개에 대해 제공합니다</strong>
+          </p>
+          <p style="margin: 0; font-size: 0.85rem; opacity: 0.9;">
+            맞춤형 적합도 분석 · 강점/보완점 · 신청 전략까지
+          </p>
+        </div>
+        
+      </div>
+      
+      <!-- 하단 버튼 -->
+      <div style="padding: 1rem 1.5rem 1.5rem; border-top: 1px solid #eee; display: flex; gap: 0.75rem;">
+        <button onclick="closeDetailSample()" style="flex: 1; padding: 0.9rem; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+          닫기
+        </button>
+        <button onclick="closeDetailSample(); analyzeProgramsDetail();" style="flex: 2; padding: 0.9rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+          📄 상세분석 시작 (2,000P)
+        </button>
+      </div>
+      
+    </div>
+  </div>
 
 </body>
 </html>
