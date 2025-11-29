@@ -1011,7 +1011,7 @@
         </div>
         
         <div class="form-group full-width">
-          <label>업종(KSIC 코드_10차) <span class="required">*</span></label>
+          <label>업종(KSIC 코드_11차) <span class="required">*</span></label>
           <div style="display: flex; gap: 0.3rem; align-items: flex-start; flex-wrap: wrap;">
             <!-- 계층형 KSIC 선택 -->
             <select id="ksic-level-2" onchange="onKsicLevel2Change()" style="flex: 1; min-width: 150px;">
@@ -1357,110 +1357,197 @@
     <div class="card">
       <h2>Section 7. 희망 지원분야 <span class="required">*</span></h2>
       
+      <style>
+        .support-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.8rem;
+        }
+        @media (max-width: 1024px) {
+          .support-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+        @media (max-width: 768px) {
+          .support-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        .support-item {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.15);
+          border-radius: 8px;
+          padding: 0.7rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+        }
+        .support-item:hover {
+          background: rgba(255,255,255,0.1);
+          border-color: rgba(255,255,255,0.25);
+        }
+        .support-item label {
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+        }
+        .support-item .support-desc {
+          font-size: 0.7rem;
+          color: rgba(255,255,255,0.6);
+          line-height: 1.3;
+          margin-left: 1.4rem;
+        }
+      </style>
+      
       <h3>7-1. 지원 필요 분야 (중복선택 가능)</h3>
-      <div class="checkbox-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <div class="support-grid">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-finance" name="desiredSupport" value="금융">
-            <label for="support-finance" style="font-weight: bold;">금융</label>
+            <label for="support-finance">금융</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">정책자금, 융자, 보증, 투자</span>
+          <span class="support-desc">정책자금, 융자, 보증, 투자</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-tech" name="desiredSupport" value="기술">
-            <label for="support-tech" style="font-weight: bold;">기술</label>
+            <label for="support-tech">기술</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">R&D, 기술개발, 특허, 인증</span>
+          <span class="support-desc">R&D, 기술개발, 특허, 인증</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-manpower" name="desiredSupport" value="인력">
-            <label for="support-manpower" style="font-weight: bold;">인력</label>
+            <label for="support-manpower">인력</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">고용지원, 채용, 교육훈련, 인건비</span>
+          <span class="support-desc">고용지원, 채용, 교육, 인건비</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-export" name="desiredSupport" value="수출">
-            <label for="support-export" style="font-weight: bold;">수출</label>
+            <label for="support-export">수출</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">해외진출, 수출바우처, 무역</span>
+          <span class="support-desc">해외진출, 수출바우처, 무역</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-domestic" name="desiredSupport" value="내수">
-            <label for="support-domestic" style="font-weight: bold;">내수</label>
+            <label for="support-domestic">내수</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">판로개척, 마케팅, 홍보, 전시회</span>
+          <span class="support-desc">판로개척, 마케팅, 홍보</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-startup" name="desiredSupport" value="창업">
-            <label for="support-startup" style="font-weight: bold;">창업</label>
+            <label for="support-startup">창업</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">창업지원, 액셀러레이팅, 초기기업</span>
+          <span class="support-desc">창업지원, 액셀러레이팅</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-management" name="desiredSupport" value="경영">
-            <label for="support-management" style="font-weight: bold;">경영</label>
+            <label for="support-management">경영</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">컨설팅, 경영혁신, 스마트공장</span>
+          <span class="support-desc">컨설팅, 혁신, 스마트공장</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-etc" name="desiredSupport" value="기타">
-            <label for="support-etc" style="font-weight: bold;">기타</label>
+            <label for="support-etc">기타</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">ESG, 탄소중립, 시설, 공간</span>
+          <span class="support-desc">ESG, 탄소중립, 시설, 공간</span>
         </div>
-        <div class="checkbox-item" style="flex-direction: column; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="support-item" style="grid-column: span 2; background: rgba(255,210,127,0.1); border-color: rgba(255,210,127,0.3);">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
             <input type="checkbox" id="support-all" name="desiredSupport" value="전체" onchange="toggleAllSupport(this.checked)">
-            <label for="support-all" style="font-weight: bold;">전체</label>
+            <label for="support-all" style="color: #ffd27f;">전체</label>
           </div>
-          <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 1.5rem;">분야 무관, 모든 지원사업</span>
+          <span class="support-desc" style="color: rgba(255,210,127,0.8);">분야 무관, 모든 지원사업</span>
         </div>
       </div>
     </div>
 
     <!-- 실행 버튼 -->
     <div class="card">
-      <!-- 기업정보저장 + 지원사업+분석 + 저장(기업정보+지원사업) 버튼 -->
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-        <button class="btn btn-secondary" onclick="saveCompany()" style="flex: 1; font-size: 0.95rem; padding: 1rem;">
-          💾 기업정보 저장
-        </button>
-        <button class="btn btn-primary" onclick="findAndAnalyzePrograms()" style="flex: 2; font-size: 1rem; padding: 1rem; background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);">
+      <style>
+        .action-btn-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+        }
+        @media (max-width: 768px) {
+          .action-btn-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        .btn-action-primary {
+          background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
+          color: white;
+          border: none;
+          padding: 0.9rem 0.5rem;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+          text-align: center;
+          white-space: nowrap;
+        }
+        .btn-action-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255,136,2,0.4);
+        }
+        .btn-action-secondary {
+          background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+          color: white;
+          border: none;
+          padding: 0.9rem 0.5rem;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+          text-align: center;
+          white-space: nowrap;
+        }
+        .btn-action-secondary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(74,85,104,0.4);
+        }
+      </style>
+      
+      <!-- 버튼 그리드 (PC: 4개씩, 모바일: 2개씩) -->
+      <div class="action-btn-grid">
+        <button class="btn-action-primary" onclick="findAndAnalyzePrograms()">
           🔍 지원사업+분석
         </button>
-        <button class="btn btn-secondary" onclick="saveWithPrograms()" style="flex: 1.5; font-size: 0.85rem; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-          💾 저장(기업정보+지원사업)
+        <button class="btn-action-primary" onclick="analyzeProgramsDetail()">
+          📊 상세분석(최대10개)
+        </button>
+        <button class="btn-action-secondary" onclick="saveCompany()">
+          💾 기업정보 저장
+        </button>
+        <button class="btn-action-secondary" onclick="saveWithPrograms()">
+          💾 저장(기업+지원사업)
         </button>
       </div>
       
-      <!-- AI 분석 버튼 (상세분석) + 저장(AI분석포함) -->
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
-          📊 상세분석(기업맞춤형, 최대10개)
+      <div class="action-btn-grid">
+        <button class="btn-action-secondary" onclick="saveWithAIAnalysis()">
+          💾 저장(분석포함)
         </button>
-        <button class="btn btn-secondary" onclick="saveWithAIAnalysis()" style="flex: 1; font-size: 0.85rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-          💾 저장(맞춤형분석 포함)
-        </button>
-      </div>
-      <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-        <button class="btn" onclick="showDetailSample()" style="flex: 1; background: linear-gradient(135deg, #667eea, #764ba2); border: none; color: white; font-weight: 600;">
+        <button class="btn-action-secondary" onclick="showDetailSample()">
           👁️ 상세분석 샘플
         </button>
-        <button class="btn" onclick="showMyPoints()" style="flex: 1; background: linear-gradient(135deg, #f093fb, #f5576c); border: none; color: white; font-weight: 600;">
+        <button class="btn-action-secondary" onclick="showMyPoints()">
           💰 포인트 조회
         </button>
-        <button class="btn btn-secondary" onclick="deleteCompany()" style="flex: 1; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
+        <button class="btn-action-secondary" onclick="deleteCompany()" style="background: linear-gradient(135deg, #718096 0%, #4a5568 100%);">
           🗑️ 삭제(지원정보)
         </button>
       </div>
-      <p style="text-align: center; font-size: 0.75rem; color: #aaa; margin-top: 0.3rem;">※ 기업정보는 목록에서 삭제</p>
+      <p style="text-align: center; font-size: 0.75rem; color: #aaa; margin-top: 0.5rem;">※ 기업정보는 목록에서 삭제</p>
     </div>
 
     <!-- 결과 표시 영역 -->
@@ -2825,6 +2912,58 @@
       setTimeout(() => loading.style.display = 'none', 300);
     }
     
+    /**
+     * 저장 중 표시 (즉시 피드백)
+     */
+    function showSavingIndicator(message = '저장 중...') {
+      // 기존 표시가 있으면 제거
+      hideSavingIndicator();
+      
+      const indicator = document.createElement('div');
+      indicator.id = 'saving-indicator';
+      indicator.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 1.5rem 2.5rem;
+        border-radius: 16px;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        font-size: 1rem;
+        font-weight: 600;
+      `;
+      indicator.innerHTML = `
+        <div style="width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <span>${message}</span>
+      `;
+      
+      // 스피너 애니메이션 추가
+      if (!document.getElementById('saving-spinner-style')) {
+        const style = document.createElement('style');
+        style.id = 'saving-spinner-style';
+        style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(indicator);
+    }
+    
+    /**
+     * 저장 중 표시 제거
+     */
+    function hideSavingIndicator() {
+      const indicator = document.getElementById('saving-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+    
     function collectFormData() {
       // 안전한 값 가져오기 헬퍼 함수
       const getVal = (id) => document.getElementById(id)?.value || '';
@@ -3421,6 +3560,9 @@
         return;
       }
       
+      // 🆕 즉시 저장 중 표시
+      showSavingIndicator('기업정보 저장 중...');
+      
       // 기존 기업 수정인지 신규인지 확인
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
@@ -3430,6 +3572,9 @@
       
       // Google Drive에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
+      
+      // 🆕 저장 중 표시 제거
+      hideSavingIndicator();
       
       if (success) {
         selectedCompanyId = companyId;
@@ -3470,6 +3615,9 @@
         return;
       }
       
+      // 🆕 즉시 저장 중 표시
+      showSavingIndicator('기업정보+지원사업 저장 중...');
+      
       // AI 분석 결과는 전역 변수에서 가져옴 (HTML 파싱 대신 - 정확한 데이터 보존)
       const summaryResultsToSave = lastSummaryResults.length > 0 ? lastSummaryResults : [];
       const detailResultsToSave = lastDetailResults.length > 0 ? lastDetailResults : [];
@@ -3488,6 +3636,9 @@
       
       // Google Drive에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
+      
+      // 🆕 저장 중 표시 제거
+      hideSavingIndicator();
       
       if (success) {
         selectedCompanyId = companyId;
@@ -3543,6 +3694,9 @@
         return;
       }
       
+      // 🆕 즉시 저장 중 표시
+      showSavingIndicator('분석결과 포함 저장 중...');
+      
       // 기존 기업 수정인지 신규인지 확인
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
@@ -3557,6 +3711,9 @@
       
       // Google Drive에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
+      
+      // 🆕 저장 중 표시 제거
+      hideSavingIndicator();
       
       if (success) {
         selectedCompanyId = companyId;
