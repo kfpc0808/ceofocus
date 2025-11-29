@@ -1,6 +1,7 @@
 /**
  * Firebase Functions for 기업 지원사업 AI 매칭
  * 기존 Netlify Functions를 Firebase 형식으로 변환
+ * v2.1 - 15개 전체 분석 강제, 프롬프트 강화 (2024-11-30)
  */
 
 const functions = require('firebase-functions');
@@ -348,14 +349,18 @@ ${programs.map((p, i) => `
   }
 ]
 
-⚠️ 중요 지시사항:
-1. **반드시 모든 ${programs.length}개 공고에 대해 결과를 출력하세요.** 생략하지 마세요!
+⚠️ 중요 지시사항 (절대 위반 금지):
+1. **반드시 모든 ${programs.length}개 공고에 대해 결과를 출력하세요.** 
+   - 정확히 ${programs.length}개의 JSON 객체가 배열에 있어야 합니다.
+   - 생략하면 시스템 오류가 발생합니다!
 2. 적합(eligible: true) 공고는 fitScore 70-100, 부적합(eligible: false)은 fitScore 50-69로 설정
 3. 적합한 공고는 eligibleReason을 작성, 부적합한 공고는 ineligibleReason을 작성
 4. 지역 조건은 특히 엄격하게 적용하세요.
 5. 반드시 유효한 JSON 배열만 출력하세요. 설명이나 마크다운 없이 순수 JSON만 응답하세요.
 6. summary는 300자 내외로 충분히 상세하게 작성하세요.
 7. recommendation은 200자 내외로 구체적인 이유와 기대효과를 작성하세요.
+
+🚨 최종 확인: 출력하는 JSON 배열에 정확히 ${programs.length}개의 객체가 있는지 확인하세요!
 `;
 
       // Gemini API 호출
@@ -1119,7 +1124,7 @@ exports.addCredits = functions
       const { targetUserId, amount } = data;
       
       // 관리자 확인 (이메일 기반)
-      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com'];
+      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com', 'polarislkh@gmail.com'];
       const callerEmail = context.auth.token.email;
       
       if (!adminEmails.includes(callerEmail)) {
