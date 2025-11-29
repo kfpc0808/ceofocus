@@ -862,13 +862,12 @@
   <div class="container" id="main-content" style="display: none;">
     <div class="header">
       <div class="header-left">
-        <span id="user-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.8); margin-right: 0.5rem;"></span>
         <button id="connection-status-btn" class="btn-main btn-small" style="background: #6c757d;" onclick="connectDrive()">
           <span style="font-size: 0.9rem;">⏳</span> 연결 중...
         </button>
         <button class="btn-main btn-small" onclick="signOut()">로그아웃</button>
       </div>
-      <h1>🏢 기업 지원사업 AI 매칭</h1>
+      <h1 style="flex: 1; text-align: center;">🏢 기업 지원사업 AI 매칭</h1>
       <button class="btn-main btn-small" onclick="goHome()">메인</button>
     </div>
 
@@ -1543,11 +1542,13 @@
         <button class="btn-action-secondary" onclick="showMyPoints()">
           💰 포인트 조회
         </button>
-        <button class="btn-action-secondary" onclick="deleteCompany()" style="background: linear-gradient(135deg, #718096 0%, #4a5568 100%);">
-          🗑️ 삭제(지원정보)
-        </button>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <button class="btn-action-secondary" onclick="deleteCompany()" style="background: linear-gradient(135deg, #718096 0%, #4a5568 100%); width: 100%;">
+            🗑️ 삭제(지원정보)
+          </button>
+          <p style="font-size: 0.7rem; color: #aaa; margin: 0.3rem 0 0 0;">※ 기업정보는 목록에서 삭제</p>
+        </div>
       </div>
-      <p style="text-align: center; font-size: 0.75rem; color: #aaa; margin-top: 0.5rem;">※ 기업정보는 목록에서 삭제</p>
     </div>
 
     <!-- 결과 표시 영역 -->
@@ -1562,6 +1563,11 @@
         <div id="aiResultsList"></div>
       </div>
     </div>
+    
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 2rem 1rem; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 0.8rem;">
+      <p style="margin: 0;">© 2025 (주)한국FP센터. All Rights Reserved.</p>
+    </footer>
   </div>
 
   <script>
@@ -1951,7 +1957,7 @@
      */
     function openKsicSearch() {
       // 통계청 한국표준산업분류 검색 페이지 (직접 접근)
-      window.open('https://kssc.mods.go.kr:8443/ksscNew_web/kssc/common/ClassificationContent.do?gubun=1&strCategoryNameCode=001&categoryMenu=007&addGubun=no', '_blank');
+      window.open('https://kssc.kostat.go.kr:8443/ksscNew_web/kssc/common/ClassificationContent.do?gubun=1&strCategoryNameCode=001&categoryMenu=007&addGubun=no', '_blank');
     }
     
     /**
@@ -4498,10 +4504,10 @@
           const ineligibleCount = allSummaryResults.filter(r => r.eligible === false).length;
           let summaryMsg = `• AI 요약분석: 적합 ${eligibleCount}개`;
           if (ineligibleCount > 0) {
-            summaryMsg += ` + 참고용 ${ineligibleCount}개`;
+            summaryMsg += ` + 참고 ${ineligibleCount}개`;
           }
           
-          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 적합: 신청 권장\n🔴 참고용: 협력사/관계사에 추천`);
+          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 적합: 신청 권장\n🟡 참고: 협력사/관계사에 추천`);
           
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
           if (newPrograms.length > 0) {
@@ -5179,19 +5185,26 @@
         
         // 적합/부적합 여부에 따른 스타일 결정
         const isEligible = result.eligible === true;
-        const borderColor = isEligible ? '#28a745' : '#dc3545';
-        const headerBgColor = isEligible ? '#d4edda' : '#f8d7da';
-        const headerTextColor = isEligible ? '#155724' : '#721c24';
-        const statusIcon = isEligible ? '🟢' : '🔴';
+        const borderColor = isEligible ? '#28a745' : '#ffc107';  // 부적합은 노란색
+        const headerBgColor = isEligible ? '#d4edda' : '#fff3cd';  // 부적합은 노란 배경
+        const headerTextColor = isEligible ? '#155724' : '#856404';  // 부적합은 갈색 텍스트
+        const statusIcon = isEligible ? '🟢' : '🟡';  // 부적합은 노란 동그라미
         const statusText = isEligible ? '적합' : '참고용 (부적합)';
         const fitScore = result.fitScore || (isEligible ? 80 : 55);
         
         // 매칭도 점수 업데이트 (카드 헤더의 점수)
         const scoreSpan = targetCard.querySelector('span[style*="background: linear-gradient"]');
         if (scoreSpan) {
-          const scoreColor = isEligible ? 'linear-gradient(135deg, #28a745, #20c997)' : 'linear-gradient(135deg, #dc3545, #fd7e14)';
-          scoreSpan.style.background = scoreColor;
-          scoreSpan.textContent = `매칭도: ${fitScore}점`;
+          if (isEligible) {
+            // 적합: 매칭도 점수 표시 (초록색)
+            scoreSpan.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+            scoreSpan.textContent = `매칭도: ${fitScore}점`;
+          } else {
+            // 부적합: "참고" 뱃지로 변경 (노란색)
+            scoreSpan.style.background = 'linear-gradient(135deg, #ffc107, #ffda6a)';
+            scoreSpan.style.color = '#333';
+            scoreSpan.textContent = `⚠️ 참고`;
+          }
         }
         
         // AI 요약 박스 생성
@@ -5219,9 +5232,9 @@
           `;
         } else if (!isEligible && result.ineligibleReason) {
           reasonHtml = `
-            <div style="background: #f8d7da; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #dc3545;">
-              <p style="color: #721c24; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ❌ 부적합 이유: <span style="font-weight: normal;">${result.ineligibleReason}</span>
+            <div style="background: #fff3cd; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #ffc107;">
+              <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
+                ⚠️ 참고 이유: <span style="font-weight: normal;">${result.ineligibleReason}</span>
               </p>
             </div>
           `;
@@ -5324,9 +5337,10 @@
           const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
           
           if (!isEligible && result) {
-            // 부적합 공고는 순위 대신 "참고" 표시
+            // 부적합 공고는 순위 대신 "참고" 표시 (노란색)
             rankSpan.innerHTML = `⚠️ 참고`;
-            rankSpan.style.background = 'linear-gradient(135deg, #dc3545, #fd7e14)';
+            rankSpan.style.background = 'linear-gradient(135deg, #ffc107, #ffda6a)';
+            rankSpan.style.color = '#333';
           } else {
             rankSpan.innerHTML = `${rankEmoji} ${index + 1}위`;
             if (index < 3) {
@@ -5369,10 +5383,10 @@
         headerHtml += `
           <p style="color: #666; margin-top: 0.5rem;">
             🟢 <strong style="color: #28a745;">적합 ${eligibleCount}개</strong> + 
-            🔴 <strong style="color: #dc3545;">참고용 ${ineligibleCount}개</strong> (총 ${eligibleCount + ineligibleCount}개)
+            🟡 <strong style="color: #d39e00;">참고 ${ineligibleCount}개</strong> (총 ${eligibleCount + ineligibleCount}개)
           </p>
           <p style="color: #888; font-size: 0.85rem; margin-top: 0.3rem;">
-            ※ 참고용 공고는 협력사/관계사에 추천해보세요
+            ※ 참고 공고는 협력사/관계사에 추천해보세요
           </p>
         `;
       } else if (eligibleCount > 0) {
