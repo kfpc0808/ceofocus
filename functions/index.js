@@ -403,18 +403,21 @@ ${programs.map((p, i) => `
         return { success: false, error: 'AI 응답 파싱 실패', rawText: aiText };
       }
 
-      // 적합한 공고만 필터링
-      const eligibleResults = Array.isArray(summaryResults) 
-        ? summaryResults.filter(r => r.eligible === true)
-        : [];
+      // 전체 결과 반환 (적합 + 부적합 모두)
+      const allResults = Array.isArray(summaryResults) ? summaryResults : [];
+      
+      // 적합/부적합 개수 집계
+      const eligibleCount = allResults.filter(r => r.eligible === true).length;
+      const ineligibleCount = allResults.filter(r => r.eligible === false).length;
 
-      console.log(`✅ AI 분석 완료: ${programs.length}개 중 ${eligibleResults.length}개 적합`);
+      console.log(`✅ AI 분석 완료: 전체 ${allResults.length}개 (적합 ${eligibleCount}개, 부적합 ${ineligibleCount}개)`);
 
       return { 
         success: true, 
-        results: eligibleResults,
+        results: allResults,
         totalAnalyzed: programs.length,
-        eligibleCount: eligibleResults.length
+        eligibleCount: eligibleCount,
+        ineligibleCount: ineligibleCount
       };
 
     } catch (error) {
