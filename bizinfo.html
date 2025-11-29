@@ -1603,6 +1603,70 @@
     let tokenClient = null;
     let hasCompletedSearch = false; // 맞춤찾기 완료 플래그
     
+    // ==================== 관련도 등급 변환 ====================
+    /**
+     * 점수를 관련도 등급으로 변환
+     * @param {number} score - 점수 (0~100)
+     * @param {boolean} isEligible - 적합 여부
+     * @returns {object} { text: '매우높음', color: '#28a745', bgColor: '...' }
+     */
+    function getRelevanceGrade(score, isEligible = true) {
+      // 부적합이거나 80점 이하면 "참고"
+      if (!isEligible || score <= 80) {
+        return {
+          text: '참고',
+          color: '#333',
+          bgColor: 'linear-gradient(135deg, #ffc107, #ffda6a)',
+          borderColor: '#ffc107',
+          headerBg: '#fff3cd',
+          headerText: '#856404',
+          icon: '🟡'
+        };
+      }
+      
+      if (score >= 96) {
+        return {
+          text: '매우높음',
+          color: '#fff',
+          bgColor: 'linear-gradient(135deg, #28a745, #20c997)',
+          borderColor: '#28a745',
+          headerBg: '#d4edda',
+          headerText: '#155724',
+          icon: '🟢'
+        };
+      } else if (score >= 91) {
+        return {
+          text: '높음',
+          color: '#fff',
+          bgColor: 'linear-gradient(135deg, #17a2b8, #20c997)',
+          borderColor: '#17a2b8',
+          headerBg: '#d1ecf1',
+          headerText: '#0c5460',
+          icon: '🔵'
+        };
+      } else if (score >= 86) {
+        return {
+          text: '보통',
+          color: '#fff',
+          bgColor: 'linear-gradient(135deg, #6f42c1, #e83e8c)',
+          borderColor: '#6f42c1',
+          headerBg: '#e2d9f3',
+          headerText: '#4a2c7c',
+          icon: '🟣'
+        };
+      } else { // 81~85
+        return {
+          text: '도전',
+          color: '#333',
+          bgColor: 'linear-gradient(135deg, #fd7e14, #ffc107)',
+          borderColor: '#fd7e14',
+          headerBg: '#fff3cd',
+          headerText: '#856404',
+          icon: '🟠'
+        };
+      }
+    }
+    
     // ==================== KSIC 데이터 및 계층형 드롭다운 ====================
     let ksicData = [];
     
@@ -4972,6 +5036,43 @@
         `;
         
         targetCard.appendChild(detailBox);
+        
+        // 🔥 상세분석 결과가 자격미달이면 요약분석 카드도 "참고"로 변경
+        if (!eligible) {
+          // 순위 뱃지 변경
+          const rankSpan = targetCard.querySelector('.rank');
+          if (rankSpan) {
+            rankSpan.innerHTML = `🟡 참고`;
+            rankSpan.style.background = 'linear-gradient(135deg, #ffc107, #ffda6a)';
+            rankSpan.style.color = '#333';
+          }
+          
+          // 관련도 뱃지 변경
+          const scoreSpan = targetCard.querySelector('.match-score');
+          if (scoreSpan) {
+            const refGrade = getRelevanceGrade(0, false);
+            scoreSpan.style.background = refGrade.bgColor;
+            scoreSpan.style.color = refGrade.color;
+            scoreSpan.textContent = `관련도: ${refGrade.text}`;
+          }
+          
+          // 요약분석 박스 상태 변경
+          const summaryBox = targetCard.querySelector('.ai-summary-box');
+          if (summaryBox) {
+            summaryBox.style.border = '2px solid #ffc107';
+            const statusSpan = summaryBox.querySelector('span[style*="border-radius: 20px"]');
+            if (statusSpan && !statusSpan.textContent.includes('상세분석')) {
+              statusSpan.style.background = '#fff3cd';
+              statusSpan.style.color = '#856404';
+              statusSpan.innerHTML = '🟡 참고 (상세분석 결과)';
+            }
+          }
+          
+          // rank 클래스 제거
+          targetCard.classList.remove('rank-1', 'rank-2', 'rank-3');
+          
+          console.log(`⚠️ 상세분석 자격미달: ${result.programId} → 요약분석도 "참고"로 변경`);
+        }
         });
       });
     }
@@ -5087,12 +5188,13 @@
       result.recommendations.forEach((rec, index) => {
         const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+        const initialGrade = getRelevanceGrade(rec.matchScore, true);
         
         html += `
-          <div class="result-card ${rankClass}" data-program-id="${rec.id || ''}">
+          <div class="result-card ${rankClass}" data-program-id="${rec.id || ''}" data-match-score="${rec.matchScore || 0}">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
               <span class="rank">${rankEmoji} ${index + 1}위</span>
-              <span class="match-score" style="font-size: 1.1rem; font-weight: bold;">매칭도: ${rec.matchScore}점</span>
+              <span class="match-score" style="font-size: 1rem; font-weight: bold; background: ${initialGrade.bgColor}; color: ${initialGrade.color}; padding: 0.3rem 0.8rem; border-radius: 20px;">관련도: ${initialGrade.text}</span>
             </div>
             
             <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">${rec.name}</h3>
@@ -5178,28 +5280,17 @@
           existingSummary.remove();
         }
         
-        // 적합/부적합 여부에 따른 스타일 결정
+        // 적합/부적합 여부 및 관련도 등급 결정
         const isEligible = result.eligible === true;
-        const borderColor = isEligible ? '#28a745' : '#ffc107';  // 부적합은 노란색
-        const headerBgColor = isEligible ? '#d4edda' : '#fff3cd';  // 부적합은 노란 배경
-        const headerTextColor = isEligible ? '#155724' : '#856404';  // 부적합은 갈색 텍스트
-        const statusIcon = isEligible ? '🟢' : '🟡';  // 부적합은 노란 동그라미
-        const statusText = isEligible ? '적합' : '참고용 (부적합)';
-        const fitScore = result.fitScore || (isEligible ? 80 : 55);
+        const fitScore = result.fitScore || (isEligible ? 85 : 55);
+        const grade = getRelevanceGrade(fitScore, isEligible);
         
-        // 매칭도 점수 업데이트 (카드 헤더의 점수)
-        const scoreSpan = targetCard.querySelector('span[style*="background: linear-gradient"]');
+        // 관련도 업데이트 (카드 헤더의 점수)
+        const scoreSpan = targetCard.querySelector('.match-score');
         if (scoreSpan) {
-          if (isEligible) {
-            // 적합: 매칭도 점수 표시 (초록색)
-            scoreSpan.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
-            scoreSpan.textContent = `매칭도: ${fitScore}점`;
-          } else {
-            // 부적합: "참고" 뱃지로 변경 (노란색)
-            scoreSpan.style.background = 'linear-gradient(135deg, #ffc107, #ffda6a)';
-            scoreSpan.style.color = '#333';
-            scoreSpan.textContent = `⚠️ 참고`;
-          }
+          scoreSpan.style.background = grade.bgColor;
+          scoreSpan.style.color = grade.color;
+          scoreSpan.textContent = `관련도: ${grade.text}`;
         }
         
         // AI 요약 박스 생성
@@ -5211,7 +5302,7 @@
           border-radius: 12px;
           margin-top: 1.5rem;
           box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-          border: 2px solid ${borderColor};
+          border: 2px solid ${grade.borderColor};
           animation: slideIn 0.5s ease-out;
         `;
         
@@ -5219,21 +5310,24 @@
         let reasonHtml = '';
         if (isEligible && result.eligibleReason) {
           reasonHtml = `
-            <div style="background: #d4edda; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #28a745;">
-              <p style="color: #155724; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ✅ 적합 이유: <span style="font-weight: normal;">${result.eligibleReason}</span>
+            <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
+              <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
+                ${grade.icon} 적합 이유: <span style="font-weight: normal;">${result.eligibleReason}</span>
               </p>
             </div>
           `;
         } else if (!isEligible && result.ineligibleReason) {
           reasonHtml = `
-            <div style="background: #fff3cd; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #ffc107;">
-              <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ⚠️ 참고 이유: <span style="font-weight: normal;">${result.ineligibleReason}</span>
+            <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
+              <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
+                ${grade.icon} 참고 이유: <span style="font-weight: normal;">${result.ineligibleReason}</span>
               </p>
             </div>
           `;
         }
+        
+        // 상태 텍스트 결정
+        const statusText = isEligible ? (fitScore >= 86 ? '적합' : '검토') : '참고';
         
         summaryDiv.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee; flex-wrap: wrap; gap: 0.5rem;">
@@ -5242,8 +5336,8 @@
               <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-              <span style="background: ${headerBgColor}; color: ${headerTextColor}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                ${statusIcon} ${statusText}
+              <span style="background: ${grade.headerBg}; color: ${grade.headerText}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                ${grade.icon} ${statusText}
               </span>
               <button onclick="showDetailAnalysisConfirm()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; box-shadow: 0 2px 6px rgba(102,126,234,0.3); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 6px rgba(102,126,234,0.3)';">
                 📊 상세분석보기
@@ -5256,8 +5350,8 @@
               ${result.summary || '요약 정보가 없습니다.'}
             </p>
           </div>
-          <div style="background: ${isEligible ? '#fff8e6' : '#fff3cd'}; padding: 0.8rem; border-radius: 8px; border-left: 4px solid ${isEligible ? '#ffc107' : '#fd7e14'};">
-            <p style="color: ${isEligible ? '#856404' : '#856404'}; margin: 0; font-weight: 600; font-size: 0.9rem;">
+          <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
               💡 <span style="color: #0c2c54; font-weight: normal;">${result.recommendation || '추천 정보가 없습니다.'}</span>
             </p>
           </div>
@@ -5302,12 +5396,18 @@
       
       if (resultCards.length === 0) return;
       
-      // 🔥 적합/부적합 분리 후 정렬
-      const eligibleResults = summaryResults.filter(r => r.eligible === true);
-      const ineligibleResults = summaryResults.filter(r => r.eligible === false);
+      // 🔥 적합/참고 분리 (eligible=true AND fitScore > 80 이어야 적합)
+      const eligibleResults = summaryResults.filter(r => {
+        const score = r.fitScore || 0;
+        return r.eligible === true && score > 80;
+      });
+      const referenceResults = summaryResults.filter(r => {
+        const score = r.fitScore || 0;
+        return r.eligible === false || score <= 80;
+      });
       
-      // 적합 먼저, 부적합 나중 순서로 합치기
-      const orderedResults = [...eligibleResults, ...ineligibleResults];
+      // 적합 먼저, 참고 나중 순서로 합치기
+      const orderedResults = [...eligibleResults, ...referenceResults];
       
       // 정렬된 순서대로 카드 배치
       const sortedCards = [];
@@ -5335,26 +5435,39 @@
       sortedCards.forEach(({ card, result }, index) => {
         // 순위 업데이트
         const rankSpan = card.querySelector('.rank');
+        const scoreSpan = card.querySelector('.match-score');
+        
         if (rankSpan) {
           const isEligible = result?.eligible === true;
+          const fitScore = result?.fitScore || 0;
+          const isActuallyEligible = isEligible && fitScore > 80;
           
-          if (isEligible) {
+          if (isActuallyEligible) {
             eligibleRank++;
             const rankEmoji = eligibleRank === 1 ? '🥇' : eligibleRank === 2 ? '🥈' : eligibleRank === 3 ? '🥉' : '';
             rankSpan.innerHTML = `${rankEmoji} ${eligibleRank}위`;
             rankSpan.style.background = '';
             rankSpan.style.color = '';
           } else if (result) {
-            // 부적합 공고는 순위 대신 "참고" 표시 (노란색)
-            rankSpan.innerHTML = `⚠️ 참고`;
+            // 참고 공고 (부적합 또는 80점 이하)
+            rankSpan.innerHTML = `🟡 참고`;
             rankSpan.style.background = 'linear-gradient(135deg, #ffc107, #ffda6a)';
             rankSpan.style.color = '#333';
+            
+            // 관련도도 참고로 변경
+            if (scoreSpan) {
+              const grade = getRelevanceGrade(fitScore, isEligible);
+              scoreSpan.style.background = grade.bgColor;
+              scoreSpan.style.color = grade.color;
+              scoreSpan.textContent = `관련도: ${grade.text}`;
+            }
           }
         }
         
         // rank 클래스 업데이트
         card.classList.remove('rank-1', 'rank-2', 'rank-3');
-        if (result?.eligible === true) {
+        const isActuallyEligible = result?.eligible === true && (result?.fitScore || 0) > 80;
+        if (isActuallyEligible) {
           if (eligibleRank === 1) card.classList.add('rank-1');
           else if (eligibleRank === 2) card.classList.add('rank-2');
           else if (eligibleRank === 3) card.classList.add('rank-3');
@@ -5377,16 +5490,20 @@
       const headerCard = document.querySelector('#results-section .card');
       if (!headerCard) return;
       
-      const eligibleCount = summaryResults.filter(r => r.eligible === true).length;
-      const ineligibleCount = summaryResults.filter(r => r.eligible === false).length;
+      // 적합: eligible=true AND fitScore > 80
+      const eligibleCount = summaryResults.filter(r => {
+        const score = r.fitScore || 0;
+        return r.eligible === true && score > 80;
+      }).length;
+      const referenceCount = summaryResults.length - eligibleCount;
       
       let headerHtml = `<h2>📊 맞춤형 지원사업 추천 결과</h2>`;
       
-      if (eligibleCount > 0 && ineligibleCount > 0) {
+      if (eligibleCount > 0 && referenceCount > 0) {
         headerHtml += `
           <p style="color: #666; margin-top: 0.5rem;">
             🟢 <strong style="color: #28a745;">적합 ${eligibleCount}개</strong> + 
-            🟡 <strong style="color: #d39e00;">참고 ${ineligibleCount}개</strong> (총 ${eligibleCount + ineligibleCount}개)
+            🟡 <strong style="color: #d39e00;">참고 ${referenceCount}개</strong> (총 ${summaryResults.length}개)
           </p>
           <p style="color: #888; font-size: 0.85rem; margin-top: 0.3rem;">
             ※ 참고 공고는 협력사/관계사에 추천해보세요
