@@ -2266,7 +2266,6 @@
         }).then(res => res.json());
         
         currentUser = userInfo;
-        document.getElementById('user-info').textContent = userInfo.email;
         console.log('✅ 로그인 성공:', userInfo.email);
       } catch (e) {
         console.error('사용자 정보 가져오기 실패:', e);
@@ -2331,7 +2330,6 @@
         }
         
         currentUser = { email: result.user.email };
-        document.getElementById('user-info').textContent = result.user.email;
         
         // 로그인 화면 및 로딩 화면 숨기고 메인 화면 표시
         const authLoadingScreen = document.getElementById('auth-loading-screen');
@@ -2722,9 +2720,8 @@
               authStatusText.textContent = '데이터 로딩 중...';
             }
             
-            // 사용자 정보 표시
+            // 사용자 정보 저장
             currentUser = { email: user.email };
-            document.getElementById('user-info').textContent = user.email;
             
             // 로딩 화면 숨기고 메인 화면 표시
             if (authLoadingScreen) authLoadingScreen.style.display = 'none';
