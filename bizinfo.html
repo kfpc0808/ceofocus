@@ -1421,8 +1421,9 @@
         </button>
       </div>
       <button class="btn btn-secondary" onclick="deleteCompany()" style="width: 100%; background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.5);">
-        🗑️ 삭제
+        🗑️ 삭제(지원정보)
       </button>
+      <p style="text-align: center; font-size: 0.75rem; color: #aaa; margin-top: 0.3rem;">※ 기업정보는 목록에서 삭제</p>
     </div>
 
     <!-- 결과 표시 영역 -->
@@ -2099,6 +2100,7 @@
     function maybeEnableButtons() {
       if (gapiInited && gisInited) {
         console.log('✅ Google API 준비 완료');
+        // 자동 로그인은 auth.onAuthStateChanged에서 처리
       }
     }
     
@@ -2423,7 +2425,7 @@
             return await loadFromDrive();
           } catch (e) {
             console.error('❌ 토큰 갱신 실패, 재로그인 필요');
-            updateConnectionStatus('disconnected');
+            updateConnectionStatus('disconnected', false);
             alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
             return false;
           }
@@ -2611,33 +2613,39 @@
                 }
               }
               
-              // 토큰이 만료되었으면 자동 재인증 시도 (백그라운드)
+              // 토큰이 없거나 만료되었으면 계정 선택 팝업 표시
               if (!accessToken && gisInited) {
-                console.log('🔑 Drive 토큰 자동 갱신 시도...');
+                console.log('🔑 Drive 연결을 위해 계정 선택 필요...');
+                updateConnectionStatus('disconnected', false); // 자동 재연결 팝업 방지 (아래서 직접 처리)
                 
-                // GIS를 이용한 조용한 토큰 갱신 (prompt: '' = 이전 선택 기억)
+                // 사용자에게 연결 필요 알림 후 계정 선택 팝업
+                setTimeout(() => {
+                  if (confirm('Google Drive 연결이 필요합니다.\n\n계정을 선택하여 연결하시겠습니까?')) {
+                    tokenClient.requestAccessToken({ prompt: 'select_account' });
+                  } else {
+                    hideLoading();
+                  }
+                }, 500);
+                
                 return new Promise((resolve) => {
                   window._tokenPromiseResolve = async () => {
                     try {
                       await loadFromDrive();
-                      updateConnectionStatus('connected');
+                      updateConnectionStatus('connected', false);
                       console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
                     } catch (error) {
                       console.error('Drive 로드 실패:', error);
-                      updateConnectionStatus('disconnected');
+                      updateConnectionStatus('disconnected', false);
                     }
                     hideLoading();
                     resolve();
                   };
                   window._tokenPromiseReject = () => {
-                    console.log('⚠️ 토큰 갱신 실패 - 재로그인 필요');
-                    updateConnectionStatus('disconnected');
+                    console.log('⚠️ 연결 취소됨');
+                    updateConnectionStatus('disconnected', false);
                     hideLoading();
                     resolve();
                   };
-                  
-                  // 팝업 없이 토큰 요청 시도 (실패하면 팝업)
-                  tokenClient.requestAccessToken({ prompt: '' });
                 });
               }
               
@@ -2645,12 +2653,12 @@
               
             } catch (error) {
               console.log('⚠️ 자동 토큰 발급 실패:', error.message);
-              updateConnectionStatus('disconnected');
+              updateConnectionStatus('disconnected'); // 자동 재연결 팝업 허용
               hideLoading();
             }
           } else {
             console.log('⚠️ 로그인 필요');
-            updateConnectionStatus('disconnected');
+            updateConnectionStatus('disconnected', false); // 로그인 화면 표시하므로 팝업 불필요
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('main-content').style.display = 'none';
             hideLoading();
@@ -2667,7 +2675,7 @@
     /**
      * 연결 상태 버튼 업데이트
      */
-    function updateConnectionStatus(status) {
+    function updateConnectionStatus(status, autoReconnect = true) {
       const btn = document.getElementById('connection-status-btn');
       if (!btn) return;
       
@@ -2691,6 +2699,32 @@
           btn.style.background = '#dc3545';
           btn.style.color = '#fff';
           btn.style.cursor = 'pointer';
+          
+          // 미연결 시 자동으로 계정 선택 팝업 (중복 방지)
+          if (autoReconnect && gisInited && !window._reconnectInProgress) {
+            window._reconnectInProgress = true;
+            setTimeout(() => {
+              if (confirm('Google Drive 연결이 필요합니다.\n\n계정을 선택하여 연결하시겠습니까?')) {
+                window._tokenPromiseResolve = async () => {
+                  try {
+                    await loadFromDrive();
+                    updateConnectionStatus('connected', false);
+                    console.log('✅ 재연결 성공');
+                  } catch (error) {
+                    console.error('재연결 실패:', error);
+                  }
+                  window._reconnectInProgress = false;
+                };
+                window._tokenPromiseReject = () => {
+                  console.log('연결 취소됨');
+                  window._reconnectInProgress = false;
+                };
+                tokenClient.requestAccessToken({ prompt: 'select_account' });
+              } else {
+                window._reconnectInProgress = false;
+              }
+            }, 300);
+          }
           break;
       }
     }
@@ -2723,7 +2757,7 @@
         
       } catch (error) {
         console.error('❌ Drive 연결 실패:', error);
-        updateConnectionStatus('disconnected');
+        updateConnectionStatus('disconnected', false); // 이미 alert 표시하므로 팝업 불필요
         alert('Drive 연결에 실패했습니다. 다시 시도해주세요.');
       }
     }
@@ -3332,8 +3366,8 @@
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
         ...companyData,
-        // 맞춤찾기 결과 저장 (상위 50개까지)
-        matchedPrograms: lastMatchedPrograms.slice(0, 50),
+        // 맞춤찾기 결과 저장 (상위 15개)
+        matchedPrograms: lastMatchedPrograms.slice(0, 15),
         // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
         aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
         aiDetail: detailResultsToSave.length > 0 ? detailResultsToSave : null,
@@ -3401,8 +3435,8 @@
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
         ...companyData,
-        // 맞춤찾기 결과 저장 (상위 50개까지)
-        matchedPrograms: lastMatchedPrograms.slice(0, 50),
+        // 맞춤찾기 결과 저장 (상위 15개)
+        matchedPrograms: lastMatchedPrograms.slice(0, 15),
         // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
         aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
         aiDetail: detailResultsToSave.length > 0 ? detailResultsToSave : null,
@@ -3443,19 +3477,40 @@
       const company = savedCompanies[selectedCompanyId];
       if (!company) return;
       
-      if (!confirm(`"${company.companyName}"을(를) 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`)) {
+      // 지원정보가 있는지 확인
+      const hasMatchedPrograms = company.matchedPrograms && company.matchedPrograms.length > 0;
+      const hasAiSummary = company.aiSummary && company.aiSummary.length > 0;
+      const hasAiDetail = company.aiDetail && company.aiDetail.length > 0;
+      
+      if (!hasMatchedPrograms && !hasAiSummary && !hasAiDetail) {
+        alert('삭제할 지원정보가 없습니다.');
         return;
       }
       
-      delete savedCompanies[selectedCompanyId];
+      if (!confirm(`"${company.companyName}"의 지원정보를 삭제하시겠습니까?\n\n삭제 항목:\n• 맞춤 지원사업 ${company.matchedPrograms?.length || 0}건\n• AI 요약분석 ${company.aiSummary?.length || 0}건\n• AI 맞춤형분석 ${company.aiDetail?.length || 0}건\n\n※ 기업정보는 유지됩니다.`)) {
+        return;
+      }
+      
+      // 지원정보만 삭제 (기업정보는 유지)
+      delete savedCompanies[selectedCompanyId].matchedPrograms;
+      delete savedCompanies[selectedCompanyId].aiSummary;
+      delete savedCompanies[selectedCompanyId].aiDetail;
       
       const success = await saveToDrive(savedCompanies);
       
       if (success) {
-        selectedCompanyId = null;
-        clearForm();
-        updateCompanySelect();
-        alert('🗑️ 삭제되었습니다.');
+        // 화면에서 결과 섹션 초기화
+        const resultsSection = document.getElementById('results-section');
+        if (resultsSection) {
+          resultsSection.innerHTML = '';
+          resultsSection.style.display = 'none';
+        }
+        lastMatchedPrograms = [];
+        lastSummaryResults = [];
+        lastDetailResults = [];
+        hasCompletedSearch = false;
+        
+        alert('🗑️ 지원정보가 삭제되었습니다.\n\n기업정보는 유지됩니다.');
       } else {
         alert('❌ 삭제에 실패했습니다.');
       }
@@ -3972,11 +4027,11 @@
         };
       });
       
-      // 5. 점수순 정렬 및 상위 50개 반환
+      // 5. 점수순 정렬 및 상위 15개 반환
       const sortedPrograms = scoredPrograms
         .filter(p => p.matchScore >= 50) // 50점 미만 제외
         .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 50);
+        .slice(0, 15);
       
       console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램`);
       sortedPrograms.slice(0, 5).forEach((p, i) => {
@@ -4426,26 +4481,28 @@
     function updateResultsWithPDFDetail(pdfResults) {
       const resultCards = document.querySelectorAll('.result-card');
       
-      pdfResults.forEach((result) => {
-        // 해당 프로그램의 카드 찾기 (programId로 매칭)
-        let targetCard = null;
-        resultCards.forEach((card) => {
-          const cardProgramId = card.getAttribute('data-program-id');
-          if (cardProgramId && cardProgramId === result.programId) {
-            targetCard = card;
-          }
-        });
-        
-        // programId로 못 찾으면 index로 폴백
-        if (!targetCard) {
-          resultCards.forEach((card, idx) => {
-            if (idx === result.index) {
+      // requestAnimationFrame으로 깜빡임 방지
+      requestAnimationFrame(() => {
+        pdfResults.forEach((result) => {
+          // 해당 프로그램의 카드 찾기 (programId로 매칭)
+          let targetCard = null;
+          resultCards.forEach((card) => {
+            const cardProgramId = card.getAttribute('data-program-id');
+            if (cardProgramId && cardProgramId === result.programId) {
               targetCard = card;
             }
           });
-        }
-        
-        if (!targetCard) return;
+          
+          // programId로 못 찾으면 index로 폴백
+          if (!targetCard) {
+            resultCards.forEach((card, idx) => {
+              if (idx === result.index) {
+                targetCard = card;
+              }
+            });
+          }
+          
+          if (!targetCard) return;
         
         // 기존 상세분석 제거
         const existingDetail = targetCard.querySelector('.ai-detail-box');
@@ -4570,6 +4627,7 @@
         `;
         
         targetCard.appendChild(detailBox);
+        });
       });
     }
     
@@ -4631,6 +4689,9 @@
       if (overlay) {
         if (overlay.progressInterval) clearInterval(overlay.progressInterval);
         
+        // 현재 스크롤 위치 저장
+        const scrollY = window.scrollY;
+        
         // AI 분석인 경우 100% 표시 후 닫기
         const isAIAnalysis = overlay.dataset.isAiAnalysis === 'true';
         const totalCount = parseInt(overlay.dataset.totalCount) || 10;
@@ -4642,7 +4703,11 @@
           updateProgress(100, totalPrograms, totalPrograms);
         }
         
-        setTimeout(() => overlay.remove(), 500);
+        setTimeout(() => {
+          overlay.remove();
+          // 스크롤 위치 복원
+          window.scrollTo(0, scrollY);
+        }, 500);
       }
     }
     
