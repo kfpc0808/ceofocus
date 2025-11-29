@@ -919,11 +919,18 @@
           <button onclick="closeCompanyListModal()" style="background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; padding: 0; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">×</button>
         </div>
         
+        <!-- 안내 문구 -->
+        <div style="background: rgba(255,210,127,0.15); border: 1px solid rgba(255,210,127,0.3); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1rem;">💡</span>
+          <span style="color: #ffd27f; font-size: 0.8rem; line-height: 1.4;">고객사가 리스트에 없을 경우 <strong>새로고침</strong>을 눌러주세요</span>
+        </div>
+        
         <!-- 검색 및 정렬 -->
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-          <input type="text" id="modal-company-search" placeholder="🔍 회사명 검색..." oninput="filterModalList()" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
-          <button class="sort-btn active" onclick="sortModalList('name')" id="modal-sort-name" style="padding: 0.6rem 1rem; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">가나다순</button>
-          <button class="sort-btn" onclick="sortModalList('date')" id="modal-sort-date" style="padding: 0.6rem 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">최신순</button>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+          <input type="text" id="modal-company-search" placeholder="🔍 회사명 검색..." oninput="filterModalList()" style="flex: 1; min-width: 120px; padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+          <button class="sort-btn active" onclick="sortModalList('name')" id="modal-sort-name" style="padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">가나다순</button>
+          <button class="sort-btn" onclick="sortModalList('date')" id="modal-sort-date" style="padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">최신순</button>
+          <button onclick="refreshDriveConnection()" style="padding: 0.6rem 0.8rem; background: linear-gradient(135deg, #28a745, #20c997); border: none; color: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap; display: flex; align-items: center; gap: 0.3rem; font-weight: 600; box-shadow: 0 2px 8px rgba(40,167,69,0.3);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">🔄 새로고침</button>
         </div>
         
         <!-- 고객사 리스트 -->
@@ -1436,7 +1443,7 @@
       <!-- AI 분석 버튼 (상세분석) + 저장(AI분석포함) -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
         <button class="btn btn-secondary" onclick="analyzeProgramsDetail()" style="flex: 1; font-size: 0.9rem; padding: 0.8rem;">
-          📊 지원사업 기업맞춤형 분석(최대10개)
+          📊 상세분석(기업맞춤형, 최대10개)
         </button>
         <button class="btn btn-secondary" onclick="saveWithAIAnalysis()" style="flex: 1; font-size: 0.85rem; padding: 0.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
           💾 저장(맞춤형분석 포함)
@@ -2965,6 +2972,61 @@
       
       // 검색어 초기화
       document.getElementById('modal-company-search').value = '';
+    }
+    
+    /**
+     * 새로고침 버튼 - Google Drive 재연결
+     */
+    async function refreshDriveConnection() {
+      try {
+        // 로딩 표시
+        const refreshBtn = event.target.closest('button');
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '⏳ 연결 중...';
+        refreshBtn.disabled = true;
+        
+        // 기존 토큰 제거
+        accessToken = null;
+        localStorage.removeItem('driveAccessToken');
+        
+        // GIS를 통해 새로운 토큰 요청 (계정 선택 팝업)
+        if (gisInited && tokenClient) {
+          tokenClient.requestAccessToken({ prompt: 'select_account' });
+          
+          // 토큰 획득 후 콜백
+          window._tokenPromiseResolve = async () => {
+            try {
+              await loadFromDrive();
+              updateConnectionStatus('connected');
+              renderModalCompanyList();
+              
+              // 성공 알림
+              alert('✅ Google Drive 연결 성공!\n\n' + Object.keys(savedCompanies).length + '개 고객사를 불러왔습니다.');
+            } catch (error) {
+              console.error('Drive 로드 실패:', error);
+              alert('❌ 데이터 로드 실패\n\n다시 시도해주세요.');
+            }
+            
+            // 버튼 복원
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+          };
+          
+          window._tokenPromiseReject = () => {
+            console.log('⚠️ 연결 취소됨');
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+          };
+        } else {
+          alert('⚠️ Google 인증이 초기화되지 않았습니다.\n\n페이지를 새로고침 후 다시 시도해주세요.');
+          refreshBtn.innerHTML = originalText;
+          refreshBtn.disabled = false;
+        }
+        
+      } catch (error) {
+        console.error('새로고침 오류:', error);
+        alert('❌ 연결 중 오류가 발생했습니다.\n\n' + error.message);
+      }
     }
     
     function renderModalCompanyList() {
@@ -5009,14 +5071,19 @@
         }
         
         summaryDiv.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee; flex-wrap: wrap; gap: 0.5rem;">
             <div style="display: flex; align-items: center;">
               <span style="font-size: 1.5rem; margin-right: 0.5rem;">🤖</span>
               <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
             </div>
-            <span style="background: ${headerBgColor}; color: ${headerTextColor}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-              ${statusIcon} ${statusText}
-            </span>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span style="background: ${headerBgColor}; color: ${headerTextColor}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                ${statusIcon} ${statusText}
+              </span>
+              <button onclick="showDetailAnalysisConfirm()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; box-shadow: 0 2px 6px rgba(102,126,234,0.3); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 6px rgba(102,126,234,0.3)';">
+                📊 상세분석보기
+              </button>
+            </div>
           </div>
           ${reasonHtml}
           <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
@@ -5708,6 +5775,37 @@
       }
     }
     
+    /**
+     * 상세분석보기 버튼 클릭 시 확인 팝업
+     */
+    function showDetailAnalysisConfirm() {
+      // 상세분석 확인 모달 표시
+      const modal = document.getElementById('detail-confirm-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    
+    /**
+     * 상세분석 확인 모달 닫기
+     */
+    function closeDetailConfirm() {
+      const modal = document.getElementById('detail-confirm-modal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }
+    }
+    
+    /**
+     * 상세분석 확인 후 진행
+     */
+    function proceedDetailAnalysis() {
+      closeDetailConfirm();
+      analyzeProgramsDetail();
+    }
+    
     // ==================== 크레딧 시스템 (Firestore 기반) ====================
     
     // 로컬 캐시 (화면 표시용, 실제 데이터는 Firestore에서 관리)
@@ -5945,115 +6043,229 @@
   </script>
 
   <!-- 상세분석 샘플 모달 -->
-  <div id="detail-sample-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 1rem;">
-    <div style="background: white; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+  <div id="detail-sample-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 1rem; overflow-y: auto;">
+    <div style="background: white; border-radius: 16px; max-width: 900px; width: 100%; max-height: 95vh; overflow-y: auto; position: relative; margin: auto;">
       
       <!-- 헤더 -->
       <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.5rem; border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1;">
         <button onclick="closeDetailSample()" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;">✕</button>
-        <h2 style="margin: 0; font-size: 1.3rem;">👁️ 상세분석 샘플</h2>
-        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">이런 분석을 PDF 공고문 최대 10개에 대해 제공합니다</p>
+        <h2 style="margin: 0; font-size: 1.3rem;">👁️ 상세분석 샘플 미리보기</h2>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">실제 AI PDF 상세분석 결과와 동일한 형태입니다</p>
       </div>
       
-      <!-- 샘플 내용 -->
+      <!-- 샘플 내용 (실제 분석 형태) -->
       <div style="padding: 1.5rem;">
         
-        <!-- 공고 정보 -->
-        <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
-          <h3 style="color: #0c2c54; margin: 0 0 0.5rem 0; font-size: 1.1rem;">📋 2025년 중소기업 수출바우처 지원사업</h3>
-          <p style="color: #666; margin: 0; font-size: 0.85rem;">주관: 중소벤처기업부 | 분야: 수출지원</p>
-        </div>
-        
-        <!-- 적합도 -->
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-          <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold;">
-            🎯 적합도: 92점
+        <!-- AI PDF 상세분석 박스 -->
+        <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px solid #667eea; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(102,126,234,0.15);">
+          
+          <!-- 헤더 -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px dashed rgba(102,126,234,0.3);">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="font-size: 1.8rem;">📄</span>
+              <h3 style="color: #667eea; margin: 0; font-size: 1.2rem; font-weight: 700;">AI PDF 상세분석</h3>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">✅ 지원 가능</span>
+              <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">적합도 70점</span>
+            </div>
           </div>
-          <span style="color: #28a745; font-weight: 600;">매우 적합</span>
-        </div>
-        
-        <!-- 핵심 요약 -->
-        <div style="background: #e8f5e9; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
-          <h4 style="color: #2e7d32; margin: 0 0 0.5rem 0;">📌 핵심 요약</h4>
-          <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8;">
-            <li><strong>지원금액:</strong> 최대 1억원 (정부 70%, 기업 30%)</li>
-            <li><strong>지원내용:</strong> 해외마케팅, 통번역, 해외인증, 물류비 등</li>
-            <li><strong>신청기간:</strong> 2025.03.01 ~ 2025.03.31</li>
-            <li><strong>선정규모:</strong> 약 3,000개사 내외</li>
-          </ul>
-        </div>
-        
-        <!-- 적합 포인트 -->
-        <div style="background: #e3f2fd; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #2196f3;">
-          <h4 style="color: #1565c0; margin: 0 0 0.5rem 0;">✅ 귀사 적합 포인트</h4>
-          <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8;">
-            <li>서울 소재 중소기업 → <strong style="color: #1565c0;">지역 조건 충족</strong></li>
-            <li>수출 희망 기업 → <strong style="color: #1565c0;">사업 목적 부합</strong></li>
-            <li>제조업 영위 → <strong style="color: #1565c0;">우대 업종 해당</strong></li>
-            <li>벤처기업 인증 보유 → <strong style="color: #1565c0;">가점 5점 획득 가능</strong></li>
-          </ul>
-        </div>
-        
-        <!-- 강점/보완점 -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-          <div style="background: #f0fff4; padding: 1rem; border-radius: 12px; border: 1px solid #c6f6d5;">
-            <h4 style="color: #28a745; margin: 0 0 0.5rem 0; font-size: 0.95rem;">💪 강점</h4>
-            <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.85rem; line-height: 1.6;">
-              <li>벤처기업 인증 (가점 5점)</li>
-              <li>연구전담부서 보유 (가점 3점)</li>
-              <li>수출 경험 보유</li>
+          
+          <!-- 사업 요약 -->
+          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #667eea; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="color: #667eea; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>📋</span> 사업 요약
+            </h4>
+            <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.95rem;">
+              본 사업은 수도권 소재 중소기업 및 사회적·장애인기업의 공공조달시장 진출을 지원하기 위한 무료 1:1 맞춤형 컨설팅 프로그램입니다. 나라장터 조달업체 등록부터 벤처·혁신제품, MAS, 경쟁입찰 등 공공조달 제도 전반에 대한 전문가 컨설팅을 제공하며, 총 50개사를 선정합니다. 특히 사회적기업 및 장애인기업은 우선 모집대상입니다. 공공조달 시장 진입을 희망하는 기업에게 실질적인 도움을 줄 수 있는 기회입니다.
+            </p>
+          </div>
+          
+          <!-- 자격요건 -->
+          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #28a745; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="color: #28a745; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>📌</span> 자격요건
+            </h4>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.9; font-size: 0.95rem;">
+              <li><strong>기업규모:</strong> 중소기업 (소기업 포함)</li>
+              <li><strong>업력:</strong> 제한 없음</li>
+              <li><strong>필수인증:</strong> 없음</li>
+              <li><strong>지역제한:</strong> 수도권 (서울, 경기, 인천)에 본사 또는 공장이 소재한 기업</li>
+              <li>공공조달시장 진출에 관심 있는 기업</li>
             </ul>
           </div>
-          <div style="background: #fff5f5; padding: 1rem; border-radius: 12px; border: 1px solid #fed7d7;">
-            <h4 style="color: #dc3545; margin: 0 0 0.5rem 0; font-size: 0.95rem;">⚠️ 보완점</h4>
-            <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.85rem; line-height: 1.6;">
-              <li>수출실적 증빙자료 준비</li>
-              <li>사업계획서 구체화 필요</li>
+          
+          <!-- 지원규모 -->
+          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #ffc107; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="color: #f57c00; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>💰</span> 지원규모
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">총 예산</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">확인 필요 (컨설팅 서비스 제공 사업으로 예산 규모는 별도 명시되지 않음)</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">기업당</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">무료 1:1 맞춤형 컨설팅 제공 (금전적 지원 없음)</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">선정규모</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">50개사 (선착순, 사회적기업/장애인기업 우선 모집)</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">지원내용</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">공공조달 제도 전반에 대한 1:1 맞춤형 컨설팅 (나라장터 조달업체 등록, 벤처·창업기업제품, 혁신제품, 우수조달물품, 다수공급자계약(MAS), 경쟁입찰 등)</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 제출서류 -->
+          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #17a2b8; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="color: #17a2b8; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>📎</span> 제출서류
+            </h4>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.9; font-size: 0.95rem;">
+              <li><strong>필수:</strong> 컨설팅 신청서 (붙임1), 개인정보 수집 동의서 (붙임2)</li>
+              <li><strong>선택:</strong> 사회적기업(예비) 인증서 또는 장애인기업 확인서 (해당 기업만 제출, 우선 모집 대상)</li>
             </ul>
           </div>
-        </div>
-        
-        <!-- 주의사항 -->
-        <div style="background: #fff8e1; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
-          <h4 style="color: #f57c00; margin: 0 0 0.5rem 0;">⚠️ 신청 시 주의사항</h4>
-          <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8; font-size: 0.9rem;">
-            <li>최근 3년 수출실적 증빙 필요 (관세청 실적 또는 외화입금증명)</li>
-            <li>동일 사업 중복 지원 불가 (수출바우처 기참여 기업 제외)</li>
-            <li>사업계획서 평가 점수 70점 이상 필요</li>
-            <li>기업부담금 30% 사전 확보 필요</li>
-          </ul>
-        </div>
-        
-        <!-- 신청 전략 -->
-        <div style="background: #f3e5f5; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid #9c27b0;">
-          <h4 style="color: #7b1fa2; margin: 0 0 0.5rem 0;">📝 신청 전략 (AI 추천)</h4>
-          <ol style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.8; font-size: 0.9rem;">
-            <li>수출계획서에 <strong>구체적 타겟 시장 3개국 이상</strong> 명시</li>
-            <li>기존 해외 바이어 정보 및 거래 실적 첨부</li>
-            <li>사업비 집행계획을 <strong>월별/항목별</strong>로 상세 작성</li>
-            <li>전년도 수출 성과 및 금년 목표 수치화</li>
-          </ol>
-        </div>
-        
-        <!-- 안내 문구 -->
-        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem; border-radius: 12px; text-align: center;">
-          <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem;">
-            💡 <strong>이런 상세분석을 PDF가 있는 공고 최대 10개에 대해 제공합니다</strong>
-          </p>
-          <p style="margin: 0; font-size: 0.85rem; opacity: 0.9;">
-            맞춤형 적합도 분석 · 강점/보완점 · 신청 전략까지
-          </p>
+          
+          <!-- 주요 일정 -->
+          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #6f42c1; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="color: #6f42c1; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>📅</span> 주요 일정
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">신청기간</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">2025.11.27.(목) ~ 2025.12.17.(수)</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">심사기간</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">2025.12.17. 이후 (신청서 검토 및 컨설팅 대상업체 선정)</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">선정발표</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">2026년 1월 초순 (컨설팅 대상기업 유선 연락)</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">수행기간</p>
+                <p style="margin: 0; color: #333; font-weight: 600;">2026년 1월 ~ 2026년 3월 중순 (업체별 컨설팅 진행)</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 한국에프피센터 맞춤 분석 -->
+          <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #f59e0b;">
+            <h4 style="color: #d97706; margin: 0 0 1rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>🏢</span> 한국에프피센터 맞춤 분석
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <!-- 강점 -->
+              <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #22c55e;">
+                <h5 style="color: #16a34a; margin: 0 0 0.5rem 0; font-size: 0.95rem;">💪 강점</h5>
+                <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.9rem; line-height: 1.7;">
+                  <li>**수도권 소재 충족:** 서울 송파구에 소재하여 본 사업의 가장 기본적인 자격요건인 '수도권 소재 기업'을 완벽하게 충족합니다.</li>
+                  <li>**기업 규모 적합:** '소기업'으로서 중소기업 범주에 해당하여 지원 대상에 부합합니다. 중소기업 지원 사업의 취지에 적합합니다.</li>
+                  <li>**경쟁사 우대:** 국내 및 지방재 제도 없이 전국 무역 지원 사업 참여에 대한 기본적인 신뢰도를 확보하고 있습니다.</li>
+                  <li>**기업부설연구소 보유:** 기업부설연구소를 보유하고 있어 기술 기반의 전문 서비스 기업임을 어필할 수 있으며, 향후 공공조달 시장에서 기술력 기반의 제품/서비스를 제안할 가능성을 보여줄 수 있습니다.</li>
+                  <li>**재무 건전성:** 부채비율 50%로 양호한 재무 상태를 유지하고 있어, 사업 수행 능력에 대한 우려가 적습니다.</li>
+                </ul>
+              </div>
+              
+              <!-- 보완점 -->
+              <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444;">
+                <h5 style="color: #dc2626; margin: 0 0 0.5rem 0; font-size: 0.95rem;">⚠️ 보완점</h5>
+                <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.9rem; line-height: 1.7;">
+                  <li>**우선 모집 대상 미해당:** 사회적기업 또는 장애인기업이 아니므로, '우선 모집' 대상에서 제외되어 선착순 경쟁에서 다소 불리할 수 있습니다. (대응방안: 신청 기간 시작과 동시에 신속하게 접수하여 선착순 기회를 확보해야 합니다.)</li>
+                  <li>**주력 제품/서비스 정보 부족:** 기업 프로필에 주력 제품/서비스 및 세부 업종 정보가 미입력되어 있어, 공공조달 시장 적합성을 어필하기 위한 구체적인 사업 내용 보완이 시급합니다. (대응방안: 컨설팅 신청서에서 기술하여 합니다.)</li>
+                  <li>**기술/연구 역량 어필 한계:** 등록/출원 특허가 없어 기업부설연구소 보유에도 불구하고 기시적인 기술적 성빙이 부족합니다. (대응방안: 연구소의 활동 내용과 향후 공공조달 시장에 기여할 수 있는 기술 개발 계획을 신청서에서 상세히 기술하여 잠재력을 어필해야 합니다.)</li>
+                  <li>**공공조달 경험 부재:** '조달청 나라장터 등록 여부' 항목이 미등록으로 예상되며, 공공조달 시장 진출 경험이 없는 것으로 보입니다. (대응방안: 컨설팅 요청 내용을 매우 구체적으로 작성하여, 본 컨설팅을 통해 공공조달 시장에 성공적으로 진입하겠다는 강력한 의지와 계획 보여주어야 합니다.)</li>
+                  <li>**성숙기 기업의 명확한 목적 제시 필요:** 업력 13년차의 성숙기 기업으로서, 단순한 정보 습득을 넘어 컨설팅을 통해 어떤 구체적인 성과(예: 특정 조달 등록, 계약 수주 목표 등)를 낼 것인지 명확한 목표를 제시해야 합니다. (대응방안: 컨설팅 요청 내용에 공공조달 시장 진출 목표를 포함하여 작성해야 합니다.)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- AI 추천 의견 -->
+          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #10b981;">
+            <h4 style="color: #059669; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>💡</span> 추천 의견
+            </h4>
+            <p style="color: #333; margin: 0; line-height: 1.9; font-size: 0.95rem;">
+              추천. 한국에프피센터는 본 사업의 필수 자격요건(수도권 소재, 중소기업)을 모두 충족하며, 재무 상태 및 기업부설연구소 보유 등 기본적인 강점을 가지고 있습니다. 다만, 사회적기업이나 장애인기업이 아니므로 우선 모집 대상에 해당하지 않아 선착순 경쟁에서 불리할 수 있습니다. 따라서 신청 기간 시작과 동시에 신속하게 접수하는 것이 매우 중요합니다. 또한, 컨설팅 신청서의 '컨설팅 요청내용'을 당사의 전문 서비스와 공공조달 시장의 연계성을 명확히 보여줄 수 있도록 구체적이고 전략적으로 작성하여, 컨설팅을 통해 얻고자 하는 목표와 기대 효과를 강력하게 어필해야 합니다. 이러한 준비를 통해 충분히 선정 가능성이 있으며, 무료로 제공되는 공공조달 전문가 컨설팅은 기업의 새로운 성장 동력을 확보하는 데 큰 도움이 될 것입니다.
+            </p>
+          </div>
+          
+          <!-- 선정 가능성 높이는 팁 -->
+          <div style="background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); padding: 1.2rem; border-radius: 12px; border: 2px solid #ec4899;">
+            <h4 style="color: #db2777; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>⭐</span> 선정 가능성 높이는 팁
+            </h4>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.9; font-size: 0.95rem;">
+              <li>공고문을 상세히 확인하세요</li>
+              <li>신청 기간 초반에 접수하세요 (선착순 우선)</li>
+              <li>컨설팅 요청 내용을 구체적으로 작성하세요</li>
+              <li>기업의 공공조달 시장 진출 의지를 명확히 표현하세요</li>
+            </ul>
+          </div>
+          
         </div>
         
       </div>
       
       <!-- 하단 버튼 -->
-      <div style="padding: 1rem 1.5rem 1.5rem; border-top: 1px solid #eee; display: flex; gap: 0.75rem;">
-        <button onclick="closeDetailSample()" style="flex: 1; padding: 0.9rem; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+      <div style="padding: 1rem 1.5rem 1.5rem; border-top: 1px solid #eee; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <button onclick="closeDetailSample()" style="flex: 1; min-width: 100px; padding: 0.9rem; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
           닫기
         </button>
-        <button onclick="closeDetailSample(); analyzeProgramsDetail();" style="flex: 2; padding: 0.9rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
-          📄 상세분석 시작 (2,000P)
+        <button onclick="closeDetailSample(); analyzeProgramsDetail();" style="flex: 2; min-width: 200px; padding: 0.9rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+          📊 상세분석 시작 (2,000P)
+        </button>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- 상세분석 확인 모달 (요약분석 카드에서 진입) -->
+  <div id="detail-confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background: white; border-radius: 16px; max-width: 450px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+      
+      <!-- 헤더 -->
+      <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.5rem; text-align: center;">
+        <span style="font-size: 3rem; display: block; margin-bottom: 0.5rem;">📊</span>
+        <h3 style="margin: 0; font-size: 1.3rem;">상세분석 안내</h3>
+      </div>
+      
+      <!-- 내용 -->
+      <div style="padding: 1.5rem;">
+        <div style="background: #f8f9ff; padding: 1.2rem; border-radius: 12px; border-left: 4px solid #667eea; margin-bottom: 1rem;">
+          <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.95rem;">
+            본 공고문을 포함하여 <strong style="color: #667eea;">최대 10개</strong> 지원사업에 대하여 상세한 분석을 보실 수 있습니다.
+          </p>
+        </div>
+        
+        <div style="background: #fff8e6; padding: 1rem; border-radius: 12px; border-left: 4px solid #ffc107;">
+          <p style="color: #856404; margin: 0; font-size: 0.9rem; line-height: 1.6;">
+            💡 <strong>상세분석 포함 내용:</strong><br>
+            • 사업 요약 및 자격요건<br>
+            • 지원규모 및 제출서류<br>
+            • 주요 일정<br>
+            • 귀사 맞춤 강점/보완점 분석<br>
+            • AI 추천 의견 및 선정 팁
+          </p>
+        </div>
+      </div>
+      
+      <!-- 버튼 -->
+      <div style="padding: 1rem 1.5rem 1.5rem; display: flex; gap: 0.75rem;">
+        <button onclick="closeDetailConfirm()" style="flex: 1; padding: 0.9rem; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+          취소
+        </button>
+        <button onclick="proceedDetailAnalysis()" style="flex: 2; padding: 0.9rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(255,136,2,0.3);">
+          📊 상세분석 시작 (2,000P)
         </button>
       </div>
       
