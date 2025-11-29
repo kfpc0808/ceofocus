@@ -5794,7 +5794,7 @@
      */
     async function checkAndConfirmCredits(type) {
       // 관리자 이메일 (무제한 사용 가능)
-      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com'];
+      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com', 'polarislkh@gmail.com'];
       const user = firebase.auth().currentUser;
       
       // 관리자는 무제한 사용
@@ -5884,7 +5884,7 @@
      */
     async function deductCredits(type) {
       // 관리자는 차감 안 함
-      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com'];
+      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com', 'polarislkh@gmail.com'];
       const user = firebase.auth().currentUser;
       if (user && adminEmails.includes(user.email)) {
         console.log('👑 관리자 모드: 포인트 차감 없음');
