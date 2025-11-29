@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 사용자 크레딧 정보
+    match /users/{userId} {
+      // 본인만 읽기 가능, 쓰기는 서버(Functions)만 가능
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;  // 클라이언트에서 직접 수정 불가
+      
+      // 사용 내역 (서브컬렉션)
+      match /usageHistory/{docId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+      
+      // 충전 내역 (서브컬렉션)
+      match /chargeHistory/{docId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+    
+  }
+}
