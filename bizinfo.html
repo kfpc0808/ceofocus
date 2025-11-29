@@ -5757,6 +5757,21 @@
      * @returns {Promise<boolean>} - 진행 여부
      */
     async function checkAndConfirmCredits(type) {
+      // 관리자 이메일 (무제한 사용 가능)
+      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com'];
+      const user = firebase.auth().currentUser;
+      
+      // 관리자는 무제한 사용
+      if (user && adminEmails.includes(user.email)) {
+        const confirmed = confirm(
+          `👑 관리자 모드\n\n` +
+          `${type === 'summary' ? '요약분석' : '상세분석'}을 시작합니다.\n` +
+          `(포인트 차감 없음)\n\n` +
+          `계속 진행하시겠습니까?`
+        );
+        return confirmed;
+      }
+      
       // 크레딧 정보 로드 (아직 안 되었으면)
       if (!userCredits.isLoaded) {
         await loadCreditsFromServer();
@@ -5832,6 +5847,14 @@
      * @returns {Promise<boolean>} - 성공 여부
      */
     async function deductCredits(type) {
+      // 관리자는 차감 안 함
+      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com'];
+      const user = firebase.auth().currentUser;
+      if (user && adminEmails.includes(user.email)) {
+        console.log('👑 관리자 모드: 포인트 차감 없음');
+        return true;
+      }
+      
       try {
         const deductCreditsFunc = functions.httpsCallable('deductCredits');
         const result = await deductCreditsFunc({ type });
