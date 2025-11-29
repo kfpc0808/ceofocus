@@ -1732,7 +1732,8 @@
     }
     let lastMatchedPrograms = []; // 맞춤찾기 결과 저장 (요약/상세분석에 사용)
     let lastCompanyData = null; // 마지막 검색 기업 데이터
-    let lastDetailResults = []; // PDF 상세분석 결과 저장
+    let lastDetailResults = []; // PDF 상세분석 결과 저장 (programId 기반)
+    let lastSummaryResults = []; // AI 요약분석 결과 저장 (programId 기반)
     let accessToken = localStorage.getItem('driveAccessToken') || null;
     let currentUser = null;
     
@@ -3224,6 +3225,18 @@
         hasCompletedSearch = true;
         console.log('✅ 저장된 맞춤지원정보 로드:', company.matchedPrograms.length, '개');
         
+        // 저장된 AI 요약분석 결과가 있으면 로드
+        if (company.aiSummary && company.aiSummary.length > 0) {
+          lastSummaryResults = company.aiSummary;
+          console.log('✅ 저장된 요약분석 로드:', company.aiSummary.length, '개');
+          // 요약분석 결과 표시
+          setTimeout(() => {
+            updateResultsWithSummary(company.aiSummary);
+          }, 200);
+        } else {
+          lastSummaryResults = [];
+        }
+        
         // 저장된 AI 상세분석(맞춤형분석) 결과가 있으면 표시
         if (company.aiDetail && company.aiDetail.length > 0) {
           lastDetailResults = company.aiDetail;
@@ -3231,7 +3244,7 @@
           setTimeout(() => {
             updateResultsWithPDFDetail(company.aiDetail);
             console.log('✅ 저장된 맞춤형분석 로드:', company.aiDetail.length, '개');
-          }, 300);
+          }, 400);
         } else {
           lastDetailResults = [];
         }
@@ -3243,6 +3256,7 @@
           resultsSection.style.display = 'none';
         }
         lastMatchedPrograms = [];
+        lastSummaryResults = [];
         lastDetailResults = [];
         hasCompletedSearch = false;
       }
@@ -3310,27 +3324,8 @@
         return;
       }
       
-      // 현재 화면에 표시된 AI 분석 결과 수집
-      const summaryResults = [];
-      const detailResults = [];
-      
-      document.querySelectorAll('.ai-summary-box').forEach((box, index) => {
-        // 실제 HTML 구조에 맞게 수정: div[style*="f8f9ff"] 안의 p 태그가 요약
-        const summaryDiv = box.querySelector('div[style*="f8f9ff"]');
-        const recommendDiv = box.querySelector('div[style*="fff8e6"]');
-        const summaryText = summaryDiv?.querySelector('p')?.textContent || '';
-        const recommendText = recommendDiv?.querySelector('span')?.textContent || recommendDiv?.querySelector('p')?.textContent || '';
-        
-        if (summaryText || recommendText) {
-          summaryResults.push({
-            index: index,
-            summary: summaryText,
-            recommendation: recommendText.replace('💡 ', '').trim()
-          });
-        }
-      });
-      
-      // PDF 상세분석 결과는 전역 변수에서 가져옴 (HTML 파싱 대신)
+      // AI 분석 결과는 전역 변수에서 가져옴 (HTML 파싱 대신 - 정확한 데이터 보존)
+      const summaryResultsToSave = lastSummaryResults.length > 0 ? lastSummaryResults : [];
       const detailResultsToSave = lastDetailResults.length > 0 ? lastDetailResults : [];
       
       // 기존 기업 수정인지 신규인지 확인
@@ -3339,8 +3334,8 @@
         ...companyData,
         // 맞춤찾기 결과 저장 (상위 50개까지)
         matchedPrograms: lastMatchedPrograms.slice(0, 50),
-        // AI 분석 결과 저장
-        aiSummary: summaryResults.length > 0 ? summaryResults : null,
+        // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
+        aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
         aiDetail: detailResultsToSave.length > 0 ? detailResultsToSave : null,
         savedAt: new Date().toISOString()
       };
@@ -3360,8 +3355,8 @@
         const savedItems = [];
         savedItems.push('기업정보');
         savedItems.push(`맞춤 지원사업 ${lastMatchedPrograms.length}건`);
-        if (summaryResults.length > 0) savedItems.push('AI 요약분석');
-        if (detailResults.length > 0) savedItems.push('AI 상세분석');
+        if (summaryResultsToSave.length > 0) savedItems.push(`AI 요약분석 ${summaryResultsToSave.length}건`);
+        if (detailResultsToSave.length > 0) savedItems.push(`AI 맞춤형분석 ${detailResultsToSave.length}건`);
         
         alert(`✅ 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
         console.log('💾 기업정보+지원사업 저장 완료:', savedItems);
@@ -3392,30 +3387,12 @@
         return;
       }
       
-      // AI 분석 결과 수집
-      const summaryResults = [];
-      
-      document.querySelectorAll('.ai-summary-box').forEach((box, index) => {
-        // 실제 HTML 구조에 맞게 수정: div[style*="f8f9ff"] 안의 p 태그가 요약
-        const summaryDiv = box.querySelector('div[style*="f8f9ff"]');
-        const recommendDiv = box.querySelector('div[style*="fff8e6"]');
-        const summaryText = summaryDiv?.querySelector('p')?.textContent || '';
-        const recommendText = recommendDiv?.querySelector('span')?.textContent || recommendDiv?.querySelector('p')?.textContent || '';
-        
-        if (summaryText || recommendText) {
-          summaryResults.push({
-            index: index,
-            summary: summaryText,
-            recommendation: recommendText.replace('💡 ', '').trim()
-          });
-        }
-      });
-      
-      // PDF 상세분석 결과는 전역 변수에서 가져옴 (HTML 파싱 대신)
+      // AI 분석 결과는 전역 변수에서 가져옴 (HTML 파싱 대신 - 정확한 데이터 보존)
+      const summaryResultsToSave = lastSummaryResults.length > 0 ? lastSummaryResults : [];
       const detailResultsToSave = lastDetailResults.length > 0 ? lastDetailResults : [];
       
       // AI 분석 결과가 하나도 없으면 저장 불가
-      if (summaryResults.length === 0 && detailResultsToSave.length === 0) {
+      if (summaryResultsToSave.length === 0 && detailResultsToSave.length === 0) {
         alert('⚠️ AI 분석 결과가 없습니다!\n\n"지원사업+분석" 또는 "맞춤형분석"을 먼저 실행해주세요.\n\nAI 분석 결과가 있어야 이 버튼으로 저장할 수 있습니다.');
         return;
       }
@@ -3426,8 +3403,8 @@
         ...companyData,
         // 맞춤찾기 결과 저장 (상위 50개까지)
         matchedPrograms: lastMatchedPrograms.slice(0, 50),
-        // AI 분석 결과 저장
-        aiSummary: summaryResults.length > 0 ? summaryResults : null,
+        // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
+        aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
         aiDetail: detailResultsToSave.length > 0 ? detailResultsToSave : null,
         savedAt: new Date().toISOString()
       };
@@ -3447,7 +3424,7 @@
         const savedItems = [];
         savedItems.push('기업정보');
         savedItems.push(`맞춤 지원사업 ${lastMatchedPrograms.length}건`);
-        if (summaryResults.length > 0) savedItems.push(`AI 요약분석 ${summaryResults.length}건`);
+        if (summaryResultsToSave.length > 0) savedItems.push(`AI 요약분석 ${summaryResultsToSave.length}건`);
         if (detailResultsToSave.length > 0) savedItems.push(`AI 맞춤형분석 ${detailResultsToSave.length}건`);
         
         alert(`✅ 맞춤형분석 포함 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
@@ -4099,34 +4076,76 @@
         
         // Step 2: AI 요약분석 자동 진행
         if (results.length > 0) {
-          const allPrograms = results; // 가져온 모든 공고 분석
+          const allPrograms = results; // 가져온 모든 공고
           
-          // 로딩 메시지 업데이트
-          const loadingText = document.getElementById('aiLoadingText');
-          const loadingDetail = document.getElementById('aiLoadingDetail');
-          if (loadingText) loadingText.textContent = '🤖 AI 요약분석 중...';
-          if (loadingDetail) loadingDetail.textContent = '② ' + allPrograms.length + '개 지원사업을 Gemini AI가 분석하고 있습니다...';
+          // 기존 요약분석 결과가 있는 공고는 제외 (비용 절감)
+          const existingSummaryIds = lastSummaryResults.map(s => s.programId || s.id);
+          const newPrograms = allPrograms.filter(p => !existingSummaryIds.includes(p.id));
           
-          // Firebase Functions를 통해 Gemini API 호출 (API 키 보호)
-          const geminiSummary = functions.httpsCallable('geminiSummary');
-          const result = await geminiSummary({
-            companyData: lastCompanyData,
-            programs: allPrograms
-          });
+          console.log(`📊 요약분석: 전체 ${allPrograms.length}개 중 기존 ${existingSummaryIds.length}개 제외, 신규 ${newPrograms.length}개 분석`);
           
-          const data = result.data;
+          let newSummaryResults = [];
           
-          if (!data.success) {
-            throw new Error(data.error || 'AI 분석 실패');
+          // 신규 공고가 있을 때만 API 호출
+          if (newPrograms.length > 0) {
+            // 로딩 메시지 업데이트
+            const loadingText = document.getElementById('aiLoadingText');
+            const loadingDetail = document.getElementById('aiLoadingDetail');
+            if (loadingText) loadingText.textContent = '🤖 AI 요약분석 중...';
+            if (loadingDetail) loadingDetail.textContent = '② ' + newPrograms.length + '개 신규 지원사업을 Gemini AI가 분석하고 있습니다...';
+            
+            // Firebase Functions를 통해 Gemini API 호출 (API 키 보호)
+            const geminiSummary = functions.httpsCallable('geminiSummary');
+            const result = await geminiSummary({
+              companyData: lastCompanyData,
+              programs: newPrograms
+            });
+            
+            const data = result.data;
+            
+            if (!data.success) {
+              throw new Error(data.error || 'AI 분석 실패');
+            }
+            
+            // 신규 결과에 programId 추가
+            newSummaryResults = data.results.map(r => ({
+              ...r,
+              programId: r.id || newPrograms[r.index]?.id
+            }));
+            
+            // 기존 결과와 병합하여 저장
+            lastSummaryResults = [...lastSummaryResults, ...newSummaryResults];
           }
           
-          const summaryResults = data.results;
+          // 전체 결과 (기존 + 신규)를 화면에 표시
+          const allSummaryResults = lastSummaryResults.filter(s => 
+            allPrograms.some(p => p.id === s.programId || p.id === s.id)
+          );
+          updateResultsWithSummary(allSummaryResults);
           
-          // 결과를 화면에 표시
-          updateResultsWithSummary(summaryResults);
+          // 기존 상세분석(맞춤형분석) 결과가 있으면 다시 표시
+          if (lastDetailResults && lastDetailResults.length > 0) {
+            setTimeout(() => {
+              updateResultsWithPDFDetail(lastDetailResults);
+              console.log('✅ 기존 맞춤형분석 결과 복원:', lastDetailResults.length, '개');
+            }, 100);
+          }
           
           hideLoadingOverlay();
-          alert('✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ' + results.length + '개 추천\n• AI 요약분석: ' + summaryResults.length + '개 완료\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.');
+          
+          // 완료 메시지 (신규 분석 vs 기존 결과 구분)
+          const existingCount = existingSummaryIds.length;
+          const newCount = newSummaryResults.length;
+          let summaryMsg = '';
+          if (existingCount > 0 && newCount > 0) {
+            summaryMsg = `• AI 요약분석: 기존 ${existingCount}개 유지 + 신규 ${newCount}개 완료`;
+          } else if (existingCount > 0) {
+            summaryMsg = `• AI 요약분석: 기존 ${existingCount}개 결과 유지 (신규 분석 없음)`;
+          } else {
+            summaryMsg = `• AI 요약분석: ${newCount}개 완료`;
+          }
+          
+          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.`);
         } else {
           hideLoadingOverlay();
           alert('매칭되는 지원사업이 없습니다.\n입력 정보를 확인하시거나 다른 조건으로 시도해보세요.');
@@ -4306,20 +4325,35 @@
           return;
         }
         
-        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ PDF 있는 상위 ${programsWithPDF.length}개 공고문을 Gemini AI가 분석하고 있습니다...`, programsWithPDF.length);
+        // 기존 상세분석 결과가 있는 공고는 제외 (비용 절감)
+        const existingDetailIds = lastDetailResults.map(d => d.programId);
+        const newProgramsToAnalyze = programsWithPDF.filter(p => !existingDetailIds.includes(p.id));
+        const existingPrograms = programsWithPDF.filter(p => existingDetailIds.includes(p.id));
         
-        const detailResults = [];
+        console.log(`📄 상세분석: 전체 ${programsWithPDF.length}개 중 기존 ${existingPrograms.length}개 제외, 신규 ${newProgramsToAnalyze.length}개 분석`);
         
-        // 각 프로그램의 PDF를 순차적으로 분석
-        for (let i = 0; i < programsWithPDF.length; i++) {
-          const program = programsWithPDF[i];
+        // 모든 공고가 이미 분석됨
+        if (newProgramsToAnalyze.length === 0) {
+          alert(`✅ 이미 모든 공고의 상세분석이 완료되어 있습니다!\n\n기존 분석 결과 ${existingPrograms.length}개가 유지됩니다.`);
+          // 기존 결과 다시 표시
+          updateResultsWithPDFDetail(lastDetailResults);
+          return;
+        }
+        
+        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ 신규 ${newProgramsToAnalyze.length}개 공고문을 Gemini AI가 분석하고 있습니다... (기존 ${existingPrograms.length}개 유지)`, newProgramsToAnalyze.length);
+        
+        const newDetailResults = [];
+        
+        // 신규 프로그램의 PDF를 순차적으로 분석
+        for (let i = 0; i < newProgramsToAnalyze.length; i++) {
+          const program = newProgramsToAnalyze[i];
           const pdfUrl = program.printFileUrl || program.attachmentUrl;
           
-          console.log(`📄 [${i + 1}/${programsWithPDF.length}] PDF 분석 중: ${program.name}`);
+          console.log(`📄 [${i + 1}/${newProgramsToAnalyze.length}] PDF 분석 중: ${program.name}`);
           
           // 로딩 상태 업데이트 - 실제 진행률 표시
-          const percent = Math.round(((i + 1) / programsWithPDF.length) * 100);
-          updateProgress(percent, i + 1, programsWithPDF.length);
+          const percent = Math.round(((i + 1) / newProgramsToAnalyze.length) * 100);
+          updateProgress(percent, i + 1, newProgramsToAnalyze.length);
           
           const loadingDetail = document.getElementById('aiLoadingDetail');
           if (loadingDetail) {
@@ -4337,7 +4371,7 @@
             const data = result.data;
             
             if (data.success && data.analysis) {
-              detailResults.push({
+              newDetailResults.push({
                 index: i,
                 programId: program.id,
                 programName: program.name,
@@ -4353,18 +4387,23 @@
         
         hideLoadingOverlay();
         
-        if (detailResults.length === 0) {
-          alert('⚠️ PDF 분석에 실패했습니다.\n\nPDF 파일에 접근할 수 없거나 형식이 올바르지 않습니다.');
-          return;
+        // 기존 결과와 신규 결과 병합
+        lastDetailResults = [...lastDetailResults.filter(d => !newDetailResults.some(n => n.programId === d.programId)), ...newDetailResults];
+        
+        // 전체 결과를 화면에 표시
+        updateResultsWithPDFDetail(lastDetailResults);
+        
+        // 완료 메시지 (신규 분석 vs 기존 결과 구분)
+        const existingCount = existingPrograms.length;
+        const newCount = newDetailResults.length;
+        let detailMsg = '';
+        if (existingCount > 0 && newCount > 0) {
+          detailMsg = `기존 ${existingCount}개 유지 + 신규 ${newCount}개 완료`;
+        } else {
+          detailMsg = `${newCount}개 완료`;
         }
         
-        // 결과를 화면에 표시
-        updateResultsWithPDFDetail(detailResults);
-        
-        // 전역 변수에 저장 (저장/불러오기용)
-        lastDetailResults = detailResults;
-        
-        alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailResults.length}개 공고의 상세 분석이 추가되었습니다.`);
+        alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.`);
         
       } catch (error) {
         hideLoadingOverlay();
@@ -4388,13 +4427,23 @@
       const resultCards = document.querySelectorAll('.result-card');
       
       pdfResults.forEach((result) => {
-        // 해당 프로그램의 카드 찾기
+        // 해당 프로그램의 카드 찾기 (programId로 매칭)
         let targetCard = null;
-        resultCards.forEach((card, idx) => {
-          if (idx === result.index) {
+        resultCards.forEach((card) => {
+          const cardProgramId = card.getAttribute('data-program-id');
+          if (cardProgramId && cardProgramId === result.programId) {
             targetCard = card;
           }
         });
+        
+        // programId로 못 찾으면 index로 폴백
+        if (!targetCard) {
+          resultCards.forEach((card, idx) => {
+            if (idx === result.index) {
+              targetCard = card;
+            }
+          });
+        }
         
         if (!targetCard) return;
         
@@ -4630,7 +4679,7 @@
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
         
         html += `
-          <div class="result-card ${rankClass}">
+          <div class="result-card ${rankClass}" data-program-id="${rec.id || ''}">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
               <span class="rank">${rankEmoji} ${index + 1}위</span>
               <span class="match-score" style="font-size: 1.1rem; font-weight: bold;">매칭도: ${rec.matchScore}점</span>
@@ -4696,49 +4745,61 @@
     function updateResultsWithSummary(summaryResults) {
       const resultCards = document.querySelectorAll('.result-card');
       
-      summaryResults.forEach((result, index) => {
-        if (index < resultCards.length) {
-          const card = resultCards[index];
-          
-          // 기존 AI 요약이 있으면 제거
-          const existingSummary = card.querySelector('.ai-summary-box');
-          if (existingSummary) {
-            existingSummary.remove();
+      summaryResults.forEach((result) => {
+        // programId로 매칭 시도
+        let targetCard = null;
+        resultCards.forEach((card) => {
+          const cardProgramId = card.getAttribute('data-program-id');
+          if (cardProgramId && (cardProgramId === result.programId || cardProgramId === result.id)) {
+            targetCard = card;
           }
-          
-          // AI 요약 박스 생성 - 흰색 배경으로 변경
-          const summaryDiv = document.createElement('div');
-          summaryDiv.className = 'ai-summary-box';
-          summaryDiv.style.cssText = `
-            background: #ffffff;
-            padding: 1.2rem;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border: 2px solid #667eea;
-            animation: slideIn 0.5s ease-out;
-          `;
-          
-          summaryDiv.innerHTML = `
-            <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
-              <span style="font-size: 1.5rem; margin-right: 0.5rem;">🤖</span>
-              <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
-            </div>
-            <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
-              <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
-                ${result.summary || '요약 정보가 없습니다.'}
-              </p>
-            </div>
-            <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #ffc107;">
-              <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                💡 <span style="color: #0c2c54;">${result.recommendation || '추천 정보가 없습니다.'}</span>
-              </p>
-            </div>
-          `;
-          
-          // 카드에 추가 (기존 내용 뒤에)
-          card.appendChild(summaryDiv);
+        });
+        
+        // programId로 못 찾으면 index로 폴백
+        if (!targetCard && result.index !== undefined && result.index < resultCards.length) {
+          targetCard = resultCards[result.index];
         }
+        
+        if (!targetCard) return;
+        
+        // 기존 AI 요약이 있으면 제거
+        const existingSummary = targetCard.querySelector('.ai-summary-box');
+        if (existingSummary) {
+          existingSummary.remove();
+        }
+        
+        // AI 요약 박스 생성 - 흰색 배경으로 변경
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'ai-summary-box';
+        summaryDiv.style.cssText = `
+          background: #ffffff;
+          padding: 1.2rem;
+          border-radius: 12px;
+          margin-top: 1.5rem;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          border: 2px solid #667eea;
+          animation: slideIn 0.5s ease-out;
+        `;
+        
+        summaryDiv.innerHTML = `
+          <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
+            <span style="font-size: 1.5rem; margin-right: 0.5rem;">🤖</span>
+            <h5 style="color: #667eea; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 요약분석</h5>
+          </div>
+          <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
+            <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
+              ${result.summary || '요약 정보가 없습니다.'}
+            </p>
+          </div>
+          <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <p style="color: #856404; margin: 0; font-weight: 600; font-size: 0.9rem;">
+              💡 <span style="color: #0c2c54;">${result.recommendation || '추천 정보가 없습니다.'}</span>
+            </p>
+          </div>
+        `;
+        
+        // 카드에 추가 (기존 내용 뒤에)
+        targetCard.appendChild(summaryDiv);
       });
       
       // 애니메이션 CSS 추가 (한 번만)
