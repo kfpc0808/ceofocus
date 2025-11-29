@@ -224,8 +224,8 @@ exports.geminiSummary = functions
       // 상세 프롬프트 생성
       // ========================================
       const prompt = `당신은 대한민국 정부 지원사업 자격요건 심사 전문가입니다.
-아래 기업 정보를 바탕으로, 각 공고가 이 기업에 "적합"한지 엄격하게 판단하세요.
-부적합한 공고는 반드시 제외하고, 적합한 공고만 요약 분석을 제공하세요.
+아래 기업 정보를 바탕으로, 각 공고가 이 기업에 "적합"한지 또는 "부적합"한지 판단하세요.
+**모든 공고에 대해 분석 결과를 제공하세요. 부적합한 공고도 반드시 포함합니다.**
 
 ═══════════════════════════════════════════════════════════════
 📌 분석 대상 기업 정보
@@ -250,108 +250,66 @@ exports.geminiSummary = functions
 • 희망 지원분야: ${companyData.supportNeeds?.join(', ') || '전체'}
 
 ═══════════════════════════════════════════════════════════════
-📌 적합성 판단 기준 (매우 엄격하게 적용)
+📌 적합성 판단 기준
 ═══════════════════════════════════════════════════════════════
 
-【1. 지역 조건】 ❗ 가장 중요
-다음 패턴이 보이면 해당 지역 기업만 가능:
-- "○○지역 소재", "○○ 소재 기업", "○○지역 내"
-- "○○도내", "○○시내", "○○권역"
-- "[서울·경기·인천]", "[전남]", "[경북]" 등 대괄호 표기
-- 사업수행기관에 지역명 포함 (예: "전남정보문화산업진흥원" → 전남 한정)
-- "수도권", "비수도권", "지방" 표현
+【적합 판정 기준】
+- 지역 조건이 맞거나 전국 대상인 경우
+- 기업 규모(중소기업/소기업/중기업 등)가 맞는 경우
+- 업종이 관련 있거나 제한이 없는 경우
+- 기타 필수 조건(인증, 업력 등)을 충족하는 경우
+→ 하나라도 긍정적 요소가 있으면 "적합"으로 판단
 
-예외: "전국", "전 지역", 중앙부처 직접 운영 (전국 대상)
-
-→ 기업 소재지(${companyData.locationSido})와 불일치하면 "부적합"
-
-【2. 기업 규모 조건】
-- "중기업", "중기업 대상" → 소기업 부적합
-- "소기업 전용", "소기업만" → 중기업/중견기업 부적합
-- "중견기업", "중견기업 전용" → 소기업/중기업 부적합
-- "대기업" → 중소기업 부적합
-- "중소기업" → 중견기업/대기업 부적합
-
-→ 기업 규모(${companyData.companySize})와 불일치하면 "부적합"
-
-【3. 업종 조건】
-- "제조업", "제조기업", "제조업체" → 비제조업 부적합
-- "농업", "농기계", "농어업" → 농업 외 부적합
-- "수산업", "어업", "수산물" → 어업 외 부적합
-- "IT기업", "SW기업", "ICT기업" → IT 외 부적합
-- "관광업", "여행사", "숙박업" → 관광업 외 부적합
-- "바이오", "제약", "의료기기" → 바이오/의료 외 부적합
-- "뿌리산업" (주조, 금형, 용접, 표면처리, 열처리, 소성가공) → 해당 업종 외 부적합
-- "콘텐츠", "게임", "영상" → 콘텐츠 외 부적합
-
-→ 기업 업종(${ksicCategory}, KSIC: ${companyData.ksicCode})과 불일치하면 "부적합"
-
-【4. 업력 조건】
-- "창업 3년 이내", "3년 미만" → 업력 ${businessAge}년이 3년 초과면 부적합
-- "창업 7년 이내", "7년 미만" → 업력 ${businessAge}년이 7년 초과면 부적합
-- "업력 3년 이상", "설립 3년 이상" → 업력 ${businessAge}년이 3년 미만이면 부적합
-- "예비창업자", "창업예정자" → 이미 설립된 기업은 부적합
-
-【5. 기업 형태/인증 조건】
-- "협동조합", "협동조합만" → 일반기업 부적합
-- "사회적기업", "사회적경제기업" → 일반기업 부적합 (현재: ${companyData.certSocial === 'Y' ? '사회적기업' : '일반기업'})
-- "벤처기업 필수", "벤처기업만" → 벤처인증 없으면 부적합 (현재: ${companyData.certVenture === 'Y' ? '있음' : '없음'})
-- "여성기업", "여성CEO" → 여성기업 아니면 부적합 (현재: ${companyData.certWoman === 'Y' ? '있음' : '없음'})
-- "장애인기업" → 장애인기업 아니면 부적합
-
-【6. 특수 조건】
-- "○○ 선정기업", "기존 참여기업" → 기존 선정 필요, 신규기업 부적합
-- "수출기업", "수출실적 보유" → 내수기업 부적합 (현재: ${(companyData.exportRecent && companyData.exportRecent > 0) ? '수출기업' : '내수기업'})
-- "청년창업", "청년CEO", "만 39세 이하" → 대표자 ${ceoAge}세가 40세 이상이면 부적합
-- "시니어", "중장년", "만 50세 이상" → 대표자 ${ceoAge}세가 50세 미만이면 부적합
-- "1인 기업", "1인 창조기업" → 직원 ${companyData.employeesTotal}명이 2명 이상이면 부적합
-- "비영리", "비영리법인" → 영리기업 부적합
-- "개인 소비자 대상", "B2C" → 기업 대상 사업이 아님, 부적합
-
-【7. 분야 매칭】 (희망 분야: ${companyData.supportNeeds?.join(', ') || '전체'})
-- 기업이 "전체"를 선택했으면 분야 무관
-- 특정 분야 선택 시, 공고 분야와 최소한의 관련성 필요
+【부적합 판정 기준】 (다음 중 하나라도 해당되면 부적합)
+- 다른 지역 한정 사업 (예: 전남 기업 → 서울 소재 기업 부적합)
+- 기업 규모 불일치 (예: 소기업 전용 → 중기업 부적합)
+- 업종 제한 (예: 제조업 전용 → 서비스업 부적합)
+- 업력 조건 불충족 (예: 창업 3년 이내 → 업력 5년 기업 부적합)
+- 필수 인증 미보유 (예: 벤처기업 필수 → 벤처인증 없음)
+- 특수 조건 불충족 (예: 여성기업 한정, 사회적기업 한정 등)
 
 ═══════════════════════════════════════════════════════════════
 📌 분석 대상 공고 목록 (${programs.length}개)
 ═══════════════════════════════════════════════════════════════
-${programs.map((p, i) => `
-【공고 ${i + 1}】 ID: ${p.id}
-• 공고명: ${p.name || ''}
-• 주관기관: ${p.organization || ''}
-• 수행기관: ${p.executor || ''}
-• 지원분야: ${p.category || ''}
-• 지원대상: ${p.target || ''}
-• 사업개요: ${p.description || ''}
-• 해시태그: ${p.hashTags || ''}
-• 신청기간: ${p.applicationPeriod || ''}
-`).join('\n')}
+${programs.map((p, i) => \`
+【공고 \${i + 1}】 ID: \${p.id}
+• 공고명: \${p.name || ''}
+• 주관기관: \${p.organization || ''}
+• 수행기관: \${p.executor || ''}
+• 지원분야: \${p.category || ''}
+• 지원대상: \${p.target || ''}
+• 사업개요: \${p.description || ''}
+• 해시태그: \${p.hashTags || ''}
+• 신청기간: \${p.applicationPeriod || ''}
+\`).join('\\n')}
 
 ═══════════════════════════════════════════════════════════════
 📌 출력 형식 (반드시 준수)
 ═══════════════════════════════════════════════════════════════
 
-적합한 공고만 아래 JSON 배열로 출력하세요.
-부적합한 공고는 출력하지 마세요.
+**모든 ${programs.length}개 공고에 대해** 아래 JSON 배열로 출력하세요.
 
 [
   {
     "id": "공고 ID (위에 표시된 ID 그대로)",
     "index": 0,
-    "eligible": true,
-    "summary": "이 지원사업의 핵심 내용, 지원금액, 지원범위, 혜택 등을 300자 내외로 상세하게 설명. 기업이 이 사업을 통해 무엇을 받을 수 있는지 구체적으로 작성.",
-    "recommendation": "이 기업이 신청해야 하는 이유, 자격요건 충족 여부, 선정 가능성, 기대효과 등을 200자 내외로 구체적으로 설명."
+    "eligible": true 또는 false,
+    "fitScore": 50~100 (적합도 점수. 적합:70~100, 부적합:50~69),
+    "eligibleReason": "적합한 경우: 왜 적합한지 구체적 이유 2~3가지. 부적합한 경우: 빈 문자열",
+    "ineligibleReason": "부적합한 경우: 왜 부적합한지 구체적 이유. 적합한 경우: 빈 문자열",
+    "summary": "이 지원사업의 핵심 내용, 지원금액, 지원범위, 혜택 등을 300자 내외로 상세하게 설명.",
+    "recommendation": "적합: 신청해야 하는 이유와 기대효과. 부적합: '협력사나 관계사 중 조건에 맞는 기업에 추천해보세요'와 함께 어떤 기업에 적합한지 안내."
   }
 ]
 
 ⚠️ 중요 지시사항:
-1. 조금이라도 자격요건 불일치가 의심되면 "부적합"으로 판단하여 제외하세요.
-2. 지역 조건은 특히 엄격하게 적용하세요.
-3. 애매한 경우 기업에게 불리하게 판단하세요 (보수적 접근).
-4. 적합한 공고가 하나도 없으면 빈 배열 []을 출력하세요.
-5. 반드시 유효한 JSON 배열만 출력하세요. 설명이나 마크다운 없이 순수 JSON만 응답하세요.
-6. summary는 300자 내외로 충분히 상세하게 작성하세요.
-7. recommendation은 200자 내외로 구체적인 이유와 기대효과를 작성하세요.
+1. **모든 공고에 대해 분석 결과를 출력하세요.** 부적합 공고도 반드시 포함합니다.
+2. eligible이 true면 eligibleReason을 상세히, ineligibleReason은 빈 문자열로.
+3. eligible이 false면 ineligibleReason을 상세히, eligibleReason은 빈 문자열로.
+4. fitScore는 적합도를 숫자로: 매우적합(90~100), 적합(70~89), 부적합(50~69)
+5. 부적합 공고의 recommendation에는 "협력사나 관계사에 추천" 문구를 포함하세요.
+6. 반드시 유효한 JSON 배열만 출력하세요. 설명이나 마크다운 없이 순수 JSON만 응답하세요.
+7. 정확히 ${programs.length}개의 결과를 반환하세요.
 `;
 
       // Gemini API 호출
@@ -394,18 +352,32 @@ ${programs.map((p, i) => `
         return { success: false, error: 'AI 응답 파싱 실패', rawText: aiText };
       }
 
-      // 적합한 공고만 필터링
-      const eligibleResults = Array.isArray(summaryResults) 
-        ? summaryResults.filter(r => r.eligible === true)
-        : [];
+      // 모든 결과 반환 (적합 + 부적합)
+      const allResults = Array.isArray(summaryResults) ? summaryResults : [];
+      
+      // 적합/부적합 분리하여 정렬 (적합 먼저, 그 다음 부적합을 fitScore 순으로)
+      const eligibleResults = allResults.filter(r => r.eligible === true).sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0));
+      const ineligibleResults = allResults.filter(r => r.eligible === false).sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0));
+      
+      // 적합 공고 우선, 부족분은 부적합으로 채움 (최대 15개)
+      let finalResults = [];
+      if (eligibleResults.length >= 15) {
+        // 적합 공고가 15개 이상이면 적합만 15개
+        finalResults = eligibleResults.slice(0, 15);
+      } else {
+        // 적합 공고가 15개 미만이면 부적합으로 채움
+        const neededIneligible = 15 - eligibleResults.length;
+        finalResults = [...eligibleResults, ...ineligibleResults.slice(0, neededIneligible)];
+      }
 
-      console.log(`✅ AI 분석 완료: ${programs.length}개 중 ${eligibleResults.length}개 적합`);
+      console.log(`✅ AI 분석 완료: ${programs.length}개 중 적합 ${eligibleResults.length}개, 부적합 ${ineligibleResults.length}개`);
 
       return { 
         success: true, 
-        results: eligibleResults,
+        results: finalResults,
         totalAnalyzed: programs.length,
-        eligibleCount: eligibleResults.length
+        eligibleCount: eligibleResults.length,
+        ineligibleCount: ineligibleResults.length
       };
 
     } catch (error) {
@@ -938,5 +910,240 @@ ${JSON.stringify((programs || []).slice(0, 100).map(p => ({
         error: error.message,
         matchedPrograms: []
       };
+    }
+  });
+
+// ============================================================
+// 5. 크레딧 시스템 - Firestore 기반
+// ============================================================
+
+const admin = require('firebase-admin');
+
+// Firebase Admin 초기화 (한 번만)
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const db = admin.firestore();
+
+/**
+ * 크레딧 조회
+ */
+exports.getCredits = functions
+  .region('asia-northeast3')
+  .https.onCall(async (data, context) => {
+    try {
+      // 인증 확인
+      if (!context.auth) {
+        return { success: false, error: '로그인이 필요합니다.' };
+      }
+      
+      const userId = context.auth.uid;
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      
+      // Firestore에서 사용자 크레딧 조회
+      const userRef = db.collection('users').doc(userId);
+      const userDoc = await userRef.get();
+      
+      let credits;
+      
+      if (!userDoc.exists) {
+        // 신규 사용자 - 기본 크레딧 생성
+        credits = {
+          freeRemaining: 10,
+          paidBalance: 0,
+          lastResetMonth: currentMonth,
+          createdAt: new Date().toISOString()
+        };
+        await userRef.set(credits);
+        console.log('🆕 신규 사용자 크레딧 생성:', userId);
+      } else {
+        credits = userDoc.data();
+        
+        // 월이 바뀌었으면 무료 횟수 리셋
+        if (credits.lastResetMonth !== currentMonth) {
+          credits.freeRemaining = 10;
+          credits.lastResetMonth = currentMonth;
+          await userRef.update({
+            freeRemaining: 10,
+            lastResetMonth: currentMonth
+          });
+          console.log('📅 월간 무료 횟수 리셋:', userId);
+        }
+      }
+      
+      return {
+        success: true,
+        credits: {
+          freeRemaining: credits.freeRemaining,
+          paidBalance: credits.paidBalance,
+          lastResetMonth: credits.lastResetMonth
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ 크레딧 조회 오류:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+/**
+ * 크레딧 차감
+ */
+exports.deductCredits = functions
+  .region('asia-northeast3')
+  .https.onCall(async (data, context) => {
+    try {
+      // 인증 확인
+      if (!context.auth) {
+        return { success: false, error: '로그인이 필요합니다.' };
+      }
+      
+      const userId = context.auth.uid;
+      const { type } = data; // 'summary' | 'detail'
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      
+      // Firestore에서 사용자 크레딧 조회
+      const userRef = db.collection('users').doc(userId);
+      const userDoc = await userRef.get();
+      
+      if (!userDoc.exists) {
+        return { success: false, error: '사용자 정보가 없습니다.' };
+      }
+      
+      let credits = userDoc.data();
+      
+      // 월이 바뀌었으면 무료 횟수 리셋
+      if (credits.lastResetMonth !== currentMonth) {
+        credits.freeRemaining = 10;
+        credits.lastResetMonth = currentMonth;
+      }
+      
+      // 차감 처리
+      if (type === 'summary') {
+        if (credits.freeRemaining > 0) {
+          // 무료 사용
+          credits.freeRemaining--;
+          console.log(`📊 무료 요약분석 사용: ${userId}, 잔여 ${credits.freeRemaining}회`);
+        } else if (credits.paidBalance >= 500) {
+          // 유료 사용
+          credits.paidBalance -= 500;
+          console.log(`📊 유료 요약분석 사용: ${userId}, 잔액 ${credits.paidBalance}원`);
+        } else {
+          return { success: false, error: '포인트가 부족합니다.' };
+        }
+      } else if (type === 'detail') {
+        if (credits.paidBalance >= 2000) {
+          credits.paidBalance -= 2000;
+          console.log(`📄 상세분석 사용: ${userId}, 잔액 ${credits.paidBalance}원`);
+        } else {
+          return { success: false, error: '포인트가 부족합니다. (2,000P 필요)' };
+        }
+      } else {
+        return { success: false, error: '잘못된 타입입니다.' };
+      }
+      
+      // Firestore 업데이트
+      await userRef.update({
+        freeRemaining: credits.freeRemaining,
+        paidBalance: credits.paidBalance,
+        lastResetMonth: credits.lastResetMonth
+      });
+      
+      // 사용 내역 기록 (무료 사용 여부는 차감 전 freeRemaining으로 판단)
+      let cost = 0;
+      if (type === 'summary') {
+        // 차감 후 freeRemaining이 원래보다 1 줄었으면 무료 사용
+        cost = (userDoc.data().freeRemaining > credits.freeRemaining) ? 0 : 500;
+      } else if (type === 'detail') {
+        cost = 2000;
+      }
+      
+      await userRef.collection('usageHistory').add({
+        type,
+        cost,
+        date: new Date().toISOString(),
+        freeRemainingAfter: credits.freeRemaining,
+        paidBalanceAfter: credits.paidBalance
+      });
+      
+      return {
+        success: true,
+        credits: {
+          freeRemaining: credits.freeRemaining,
+          paidBalance: credits.paidBalance,
+          lastResetMonth: credits.lastResetMonth
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ 크레딧 차감 오류:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+/**
+ * 크레딧 충전 (관리자용)
+ */
+exports.addCredits = functions
+  .region('asia-northeast3')
+  .https.onCall(async (data, context) => {
+    try {
+      // 인증 확인
+      if (!context.auth) {
+        return { success: false, error: '로그인이 필요합니다.' };
+      }
+      
+      const { targetUserId, amount } = data;
+      
+      // 관리자 확인 (이메일 기반)
+      const adminEmails = ['admin@kfpc.co.kr', 'kfpcpro@gmail.com']; // 관리자 이메일 목록
+      const callerEmail = context.auth.token.email;
+      
+      if (!adminEmails.includes(callerEmail)) {
+        return { success: false, error: '관리자 권한이 필요합니다.' };
+      }
+      
+      if (!targetUserId || !amount || amount <= 0) {
+        return { success: false, error: '유효한 사용자 ID와 금액이 필요합니다.' };
+      }
+      
+      // 대상 사용자 크레딧 조회
+      const userRef = db.collection('users').doc(targetUserId);
+      const userDoc = await userRef.get();
+      
+      if (!userDoc.exists) {
+        // 신규 사용자 생성
+        await userRef.set({
+          freeRemaining: 10,
+          paidBalance: amount,
+          lastResetMonth: new Date().toISOString().slice(0, 7),
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        // 기존 사용자 잔액 추가
+        const currentBalance = userDoc.data().paidBalance || 0;
+        await userRef.update({
+          paidBalance: currentBalance + amount
+        });
+      }
+      
+      // 충전 내역 기록
+      await userRef.collection('chargeHistory').add({
+        amount,
+        date: new Date().toISOString(),
+        chargedBy: callerEmail
+      });
+      
+      console.log(`💰 크레딧 충전: ${targetUserId}에게 ${amount}원 (by ${callerEmail})`);
+      
+      return {
+        success: true,
+        message: `${amount}P가 충전되었습니다.`
+      };
+      
+    } catch (error) {
+      console.error('❌ 크레딧 충전 오류:', error);
+      return { success: false, error: error.message };
     }
   });
