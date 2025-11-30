@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Master 통합 관리자 V23 (실시간연동/엑셀)</title>
+    <title>Financial Master 통합 관리자 V24 (레이아웃 동기화)</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Phosphor Icons -->
@@ -152,7 +152,8 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 8px; padding: 1.5rem; max-height: 90vh; overflow-y: auto; }
 
-        /* 배지 */
+        /* 배지 및 기타 */
+        .tab-btn-group { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; border-bottom: 1px solid #eee; padding-bottom: 0.8rem; }
         .badge { padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
         .badge-blue { background: #e3f2fd; color: #1565c0; }
         .badge-green { background: #e8f5e9; color: #2e7d32; }
@@ -160,9 +161,12 @@
         .badge-gray { background: #f1f3f5; color: #495057; }
         .badge-warning { background: var(--warning-bg); color: var(--warning-text); }
         .badge-point { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; }
-        
+        .badge-purple { background: #f3e5f5; color: #7b1fa2; }
+        .password-display { font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 3px; border: 1px solid #dee2e6; color: #d63384; font-weight: bold; font-size: 0.85rem; }
         .status-card { display: flex; align-items: center; gap: 0.8rem; background: #fff; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .status-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
+        .status-card div div:first-child { font-size: 0.85rem; }
+        .status-card div div:last-child { font-size: 1.3rem; }
     </style>
 </head>
 <body>
@@ -348,6 +352,7 @@
         <div id="notices" class="tab-content">
             <div class="page-header"><h1 class="page-title">공지사항 관리</h1><button class="btn btn-primary" onclick="openNoticeModal()">새 공지 등록</button></div>
             <div class="card">
+                <div class="table-controls"><h3>등록된 공지사항</h3><div class="search-box"><input type="text" id="noticeSearch" placeholder="제목 검색" onkeyup="renderNotices()"></div></div>
                 <div class="table-container"><table id="noticeTable"><thead><tr><th style="width: 50px;">No</th><th>제목</th><th>등록일자</th><th>첨부파일</th><th>관리</th></tr></thead><tbody id="noticeTableBody"></tbody></table></div>
                 <div id="noticePagination" class="pagination"></div>
             </div>
@@ -372,17 +377,30 @@
         </div>
     </main>
 
-    <!-- 모달: ID 발급 및 가입 승인 -->
+    <!-- 모달: ID 발급 및 가입 승인 (수정됨) -->
     <div id="registerModal" class="modal">
         <div class="modal-content">
             <h3>👥 회원 승인 및 ID 발급</h3>
+            <p style="font-size:0.9rem; color:#666; margin-bottom:1rem;">신청 정보를 확인하고 ID/비밀번호 및 권한을 설정하세요.</p>
             <form id="registerForm">
+                <!-- 신청 정보 (Read-Only: 레이아웃 동기화) -->
                 <div style="background:#f8f9fa; padding:1rem; border-radius:6px; margin-bottom:1rem; border:1px solid #eee;">
                     <h4 style="margin-bottom:0.5rem; font-size:0.9rem; color:var(--primary-color);">[신청자 정보]</h4>
-                    <div class="form-row"><div class="form-group"><label>성명</label><input type="text" id="newUserName" class="form-control" readonly style="background:white"></div><div class="form-group"><label>연락처</label><input type="text" id="newUserPhone" class="form-control" readonly style="background:white"></div></div>
-                    <div class="form-row"><div class="form-group"><label>이메일</label><input type="text" id="newUserEmail" class="form-control" readonly style="background:white"></div><div class="form-group"><label>지역</label><input type="text" id="newUserRegion" class="form-control" readonly style="background:white"></div></div>
-                    <div class="form-row"><div class="form-group"><label>소속사</label><input type="text" id="newUserCompany" class="form-control" readonly style="background:white"></div><div class="form-group"><label>직함</label><input type="text" id="newUserTitle" class="form-control" readonly style="background:white"></div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>성명</label><input type="text" id="newUserName" class="form-control" readonly style="background:white"></div>
+                        <div class="form-group"><label>소속사</label><input type="text" id="newUserCompany" class="form-control" readonly style="background:white"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>직함</label><input type="text" id="newUserTitle" class="form-control" readonly style="background:white"></div>
+                        <div class="form-group"><label>지역</label><input type="text" id="newUserRegion" class="form-control" readonly style="background:white"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>연락처</label><input type="text" id="newUserPhone" class="form-control" readonly style="background:white"></div>
+                        <div class="form-group"><label>이메일</label><input type="text" id="newUserEmail" class="form-control" readonly style="background:white"></div>
+                    </div>
                 </div>
+
+                <!-- 관리자 설정 -->
                 <div style="padding:1rem; border:1px solid #dee2e6; border-radius:6px;">
                     <h4 style="margin-bottom:0.5rem; font-size:0.9rem; color:var(--accent-color);">[관리자 설정]</h4>
                     <div class="form-row"><div class="form-group"><label>아이디 (생성)</label><input type="text" id="newUserId" class="form-control" placeholder="예: FP2025001" required></div><div class="form-group"><label>비밀번호</label><input type="text" id="newUserPw" class="form-control" value="1234" required></div></div>
