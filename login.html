@@ -269,7 +269,7 @@
             to { transform: scale(1); }
         }
         .custom-modal h3 {
-            color: #e74c3c; /* 경고 색상 */
+            color: #e74c3c;
             margin-bottom: 1rem;
             font-size: 1.2rem;
         }
@@ -298,7 +298,7 @@
         <div class="spinner"></div>
     </div>
 
-    <!-- 커스텀 알림 팝업 (미입력 확인용) -->
+    <!-- 커스텀 알림 팝업 -->
     <div class="custom-modal-overlay" id="customAlert">
         <div class="custom-modal">
             <h3>⚠️ 입력 확인</h3>
@@ -336,7 +336,7 @@
         </div>
     </div>
 
-    <!-- 2. 회원가입 신청 화면 (수정됨) -->
+    <!-- 2. 회원가입 신청 화면 -->
     <div id="signupView" class="container-box hidden">
         <h1>📝 회원가입 신청</h1>
         <p class="subtitle">모든 항목은 필수 입력입니다.<br>정확하게 입력해주세요.</p>
@@ -350,7 +350,7 @@
                 <input type="text" id="regName" placeholder="홍길동">
             </div>
 
-            <!-- 연락처 (3분할, 숫자만) -->
+            <!-- 연락처 -->
             <div class="form-group">
                 <label>연락처 <span style="color:red">*</span></label>
                 <div class="input-group phone-group">
@@ -369,7 +369,7 @@
                 </div>
             </div>
 
-            <!-- 이메일 (2분할 + 직접입력) -->
+            <!-- 이메일 -->
             <div class="form-group">
                 <label>이메일 <span style="color:red">*</span></label>
                 <div class="input-group email-group">
@@ -387,7 +387,7 @@
                 <input type="text" id="emailCustomDomain" placeholder="도메인 입력 (예: company.com)" class="hidden" style="margin-top: 0.5rem;">
             </div>
 
-            <!-- 소속/직함 (필수, placeholder 수정) -->
+            <!-- 소속/직함 -->
             <div class="form-group">
                 <label>소속 / 직함 <span style="color:red">*</span></label>
                 <div class="input-group">
@@ -520,14 +520,13 @@
         const loading = document.getElementById('loadingOverlay');
         const customAlertOverlay = document.getElementById('customAlert');
         const customAlertMsg = document.getElementById('customAlertMsg');
-        let alertFocusTarget = null; // 팝업 닫을 때 포커스 갈 요소
+        let alertFocusTarget = null;
 
         function showLoading() { loading.style.display = 'flex'; }
         function hideLoading() { loading.style.display = 'none'; }
         
-        // 커스텀 알림 함수
         function showCustomAlert(msg, elementIdToFocus) {
-            customAlertMsg.innerHTML = msg; // 줄바꿈 지원을 위해 innerHTML 사용
+            customAlertMsg.innerHTML = msg;
             customAlertOverlay.style.display = 'flex';
             if (elementIdToFocus) {
                 alertFocusTarget = document.getElementById(elementIdToFocus);
@@ -536,7 +535,6 @@
             }
         }
 
-        // 알림 닫기
         window.closeCustomAlert = function() {
             customAlertOverlay.style.display = 'none';
             if (alertFocusTarget) {
@@ -547,7 +545,6 @@
         function switchView(viewName) {
             document.querySelectorAll('.message').forEach(el => el.style.display = 'none');
             document.querySelectorAll('form').forEach(form => form.reset());
-            // 직접 입력창 숨기기 초기화
             document.getElementById('emailCustomDomain').classList.add('hidden');
             
             Object.values(views).forEach(el => el.classList.add('hidden'));
@@ -561,7 +558,6 @@
             el.style.display = 'block';
         }
 
-        // 이메일 직접입력 토글
         window.toggleCustomDomain = function(select) {
             const customInput = document.getElementById('emailCustomDomain');
             if (select.value === 'custom') {
@@ -572,7 +568,7 @@
             }
         };
 
-        // --- 3. 로그인 로직 ---
+        // --- 3. 로그인 로직 (관리자 접속 기능 추가됨) ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const userId = document.getElementById('userId').value.trim();
@@ -587,6 +583,15 @@
                 return;
             }
 
+            // [관리자 접속 체크]
+            if (userId === 'admin' && userPw === 'kfpc0808') {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                alert('관리자 모드로 접속합니다.');
+                window.location.href = 'admin.html'; // 관리자 페이지로 이동
+                return;
+            }
+
+            // 일반 회원 로그인 진행
             showLoading();
             
             try {
@@ -606,71 +611,32 @@
             }
         });
 
-        // --- 4. 회원가입 신청 로직 (개선됨) ---
+        // --- 4. 회원가입 신청 로직 ---
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // 값 가져오기
             const name = document.getElementById('regName').value.trim();
-            
             const phone1 = document.getElementById('phone1').value;
             const phone2 = document.getElementById('phone2').value.trim();
             const phone3 = document.getElementById('phone3').value.trim();
-            
             const emailId = document.getElementById('emailId').value.trim();
             const emailDomainSelect = document.getElementById('emailDomainSelect').value;
             const emailCustomDomain = document.getElementById('emailCustomDomain').value.trim();
-            
             const company = document.getElementById('regCompany').value.trim();
             const position = document.getElementById('regPosition').value.trim();
             const region = document.getElementById('regRegion').value;
 
-            // 필수값 검증 (하나라도 비면 팝업 후 중단)
-            if (!name) {
-                showCustomAlert("성명을 입력해주세요.", "regName");
-                return;
-            }
+            if (!name) { showCustomAlert("성명을 입력해주세요.", "regName"); return; }
+            if (!phone2) { showCustomAlert("연락처(가운데 자리)를 입력해주세요.", "phone2"); return; }
+            if (!phone3) { showCustomAlert("연락처(끝 자리)를 입력해주세요.", "phone3"); return; }
+            if (phone2.length < 3 || phone3.length < 4) { showCustomAlert("올바른 연락처를 입력해주세요.", "phone2"); return; }
+            if (!emailId) { showCustomAlert("이메일 아이디를 입력해주세요.", "emailId"); return; }
+            if (!emailDomainSelect) { showCustomAlert("이메일 도메인을 선택해주세요.", "emailDomainSelect"); return; }
+            if (emailDomainSelect === 'custom' && !emailCustomDomain) { showCustomAlert("이메일 도메인을 직접 입력해주세요.", "emailCustomDomain"); return; }
+            if (!company) { showCustomAlert("소속을 입력해주세요.", "regCompany"); return; }
+            if (!position) { showCustomAlert("직함을 입력해주세요.", "regPosition"); return; }
+            if (!region) { showCustomAlert("지역을 선택해주세요.", "regRegion"); return; }
 
-            if (!phone2) {
-                showCustomAlert("연락처(가운데 자리)를 입력해주세요.", "phone2");
-                return;
-            }
-            if (!phone3) {
-                showCustomAlert("연락처(끝 자리)를 입력해주세요.", "phone3");
-                return;
-            }
-            if (phone2.length < 3 || phone3.length < 4) {
-                showCustomAlert("올바른 연락처를 입력해주세요.", "phone2");
-                return;
-            }
-
-            if (!emailId) {
-                showCustomAlert("이메일 아이디를 입력해주세요.", "emailId");
-                return;
-            }
-            if (!emailDomainSelect) {
-                showCustomAlert("이메일 도메인을 선택해주세요.", "emailDomainSelect");
-                return;
-            }
-            if (emailDomainSelect === 'custom' && !emailCustomDomain) {
-                showCustomAlert("이메일 도메인을 직접 입력해주세요.", "emailCustomDomain");
-                return;
-            }
-
-            if (!company) {
-                showCustomAlert("소속을 입력해주세요.", "regCompany");
-                return;
-            }
-            if (!position) {
-                showCustomAlert("직함을 입력해주세요.", "regPosition");
-                return;
-            }
-            if (!region) {
-                showCustomAlert("지역을 선택해주세요.", "regRegion");
-                return;
-            }
-
-            // 데이터 조합
             const fullPhone = `${phone1}${phone2}${phone3}`;
             const finalDomain = (emailDomainSelect === 'custom') ? emailCustomDomain : emailDomainSelect;
             const fullEmail = `${emailId}@${finalDomain}`;
@@ -679,7 +645,7 @@
 
             try {
                 if (!auth.currentUser) {
-                     // 필요시 익명 로그인 로직
+                     // 필요시 익명 로그인
                 }
 
                 await db.collection('account_requests').add({
@@ -715,8 +681,10 @@
 
                 const userData = userDoc.data();
                 
+                // Firestore role이 admin인 경우에도 관리자 페이지로 이동
                 if (userData.role === 'admin') {
-                    enterMainPage(userData);
+                    sessionStorage.setItem('adminLoggedIn', 'true');
+                    window.location.href = 'admin.html';
                     return;
                 }
 
@@ -773,16 +741,10 @@
             } catch (error) {
                 console.error('Password Change Error:', error);
                 hideLoading();
-                let msg = '비밀번호 변경 중 오류가 발생했습니다.';
-                if (error.code === 'auth/requires-recent-login') {
-                    msg = '보안을 위해 다시 로그인한 후 시도해주세요.';
-                    setTimeout(() => window.location.reload(), 2000);
-                }
-                showMessage('pwMessage', msg, 'error');
+                showMessage('pwMessage', '비밀번호 변경 중 오류가 발생했습니다.', 'error');
             }
         });
 
-        // --- 7. 메인 페이지 진입 ---
         function enterMainPage(userData) {
             hideLoading();
             switchView('main');
@@ -790,7 +752,6 @@
             document.getElementById('welcomeText').textContent = `${name}님, 오늘도 좋은 하루 되세요!`;
         }
 
-        // --- 8. 로그아웃 ---
         window.logout = function() {
             auth.signOut().then(() => {
                 window.location.reload();
