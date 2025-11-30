@@ -25,11 +25,11 @@
         /* 공통 컨테이너 스타일 */
         .container-box {
             background: white;
-            padding: 2.5rem 2rem;
+            padding: 2rem 1.5rem; /* 패딩 축소 */
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             width: 100%;
-            max-width: 450px;
+            max-width: 420px; /* 모바일 최적화 폭 */
             animation: fadeIn 0.5s ease-out;
             position: relative;
         }
@@ -42,37 +42,38 @@
         h1 {
             text-align: center;
             color: #0c2c54;
-            margin-bottom: 0.5rem;
-            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
+            font-size: 1.5rem; /* 폰트 사이즈 축소 */
         }
 
         .subtitle {
             text-align: center;
             color: #6c757d;
-            margin-bottom: 2rem;
-            font-size: 0.875rem;
-            line-height: 1.4;
+            margin-bottom: 1.25rem; /* 여백 축소 */
+            font-size: 0.8rem;
+            line-height: 1.3;
         }
 
+        /* 폼 그룹 간격 축소 */
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 0.8rem;
         }
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
             color: #0c2c54;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        /* 기본 인풋 스타일 */
+        /* 기본 인풋 스타일 - 높이 축소 */
         input, select {
             width: 100%;
-            padding: 0.9rem;
+            padding: 0.7rem;
             border: 2px solid #dee2e6;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 15px;
             transition: border-color 0.3s;
             -webkit-appearance: none;
             background: #fff;
@@ -83,38 +84,45 @@
             border-color: #2a5a8a;
         }
 
-        /* 분할된 인풋 그룹 (전화번호, 이메일, 소속/직함) */
-        .input-group {
+        /* 2단 그리드 레이아웃 (모바일 공간 절약용) */
+        .row-group {
             display: flex;
             gap: 0.5rem;
+        }
+        .row-group > div {
+            flex: 1;
+        }
+
+        /* 분할된 인풋 그룹 */
+        .input-group {
+            display: flex;
+            gap: 0.3rem;
             align-items: center;
         }
         
-        .input-group select {
-            padding-right: 1.5rem; /* 화살표 공간 */
-        }
+        .input-group select { padding-right: 1.2rem; }
 
         /* 전화번호 스타일 */
-        .phone-group select { width: 30%; }
-        .phone-group input { width: 35%; text-align: center; }
-        .phone-group span { font-weight: bold; color: #999; }
+        .phone-group select { width: 30%; padding: 0.6rem 0.2rem; text-align: center; }
+        .phone-group input { width: 35%; text-align: center; padding: 0.6rem 0.2rem; }
+        .phone-group span { font-weight: bold; color: #ccc; font-size: 0.8rem; }
 
         /* 이메일 스타일 */
-        .email-group input { flex: 1; }
-        .email-group select { flex: 1; }
-        .email-group span { font-weight: bold; color: #999; }
+        .email-group input { flex: 1; padding: 0.6rem; }
+        .email-group select { flex: 1; padding: 0.6rem; }
+        .email-group span { font-weight: bold; color: #ccc; font-size: 0.9rem; }
 
         /* 버튼 스타일 */
         .btn {
             width: 100%;
-            padding: 1rem;
+            padding: 0.9rem;
             border: none;
             border-radius: 10px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            margin-top: 1rem;
+            margin-top: 0.8rem;
             background: #0c2c54;
             color: white;
         }
@@ -131,16 +139,17 @@
         .btn-back {
             background: transparent;
             color: #666;
-            font-size: 0.9rem;
-            margin-top: 1rem;
+            font-size: 0.85rem;
+            margin-top: 0.8rem;
             font-weight: normal;
+            padding: 0.5rem;
         }
 
         .divider {
             text-align: center;
-            margin: 1.5rem 0 1rem;
+            margin: 1.2rem 0 0.8rem;
             color: #6c757d;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
         }
@@ -153,12 +162,12 @@
         .divider::after { margin-left: 10px; }
 
         .message {
-            padding: 1rem;
+            padding: 0.8rem;
             border-radius: 8px;
             margin-bottom: 1rem;
             display: none;
             white-space: pre-line;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-align: center;
         }
         .message.error { background: #f8d7da; color: #721c24; }
@@ -187,57 +196,24 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 대시보드 스타일 */
-        .dashboard-container {
-            max-width: 800px;
-            text-align: center;
-        }
-        .dashboard-menu {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        .menu-item {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid #dee2e6;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .menu-item:hover {
-            background: #e7f3ff;
-            border-color: #2a5a8a;
-        }
-        .logout-btn {
-            background: #6c757d;
-            margin-top: 2rem;
-        }
-        small {
-            color: #666;
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
-            display: block;
-        }
-        
-        /* 계좌 정보 박스 */
+        /* 계좌 정보 박스 (컴팩트 버전) */
         .account-info-box {
             background: #f1f8ff;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.25rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
             border: 1px solid #d0e6fd;
+            text-align: center;
         }
         .account-info-title {
             color: #0c2c54;
             font-weight: 700;
-            margin-bottom: 0.25rem;
-            font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+            font-size: 0.85rem;
         }
         .account-info-detail {
             color: #555;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         /* 커스텀 팝업 모달 스타일 */
@@ -256,10 +232,10 @@
         }
         .custom-modal {
             background: white;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 15px;
-            width: 90%;
-            max-width: 320px;
+            width: 85%;
+            max-width: 300px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             transform: scale(0.9);
@@ -270,22 +246,22 @@
         }
         .custom-modal h3 {
             color: #e74c3c;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
         }
         .custom-modal p {
             color: #333;
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
+            margin-bottom: 1.2rem;
+            font-size: 0.95rem;
             line-height: 1.4;
         }
         .custom-modal button {
             background: #0c2c54;
             color: white;
             border: none;
-            padding: 0.8rem 2rem;
+            padding: 0.7rem 1.5rem;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             cursor: pointer;
             width: 100%;
         }
@@ -317,12 +293,12 @@
         <form id="loginForm">
             <div class="form-group">
                 <label>아이디 (ID)</label>
-                <input type="text" id="userId" placeholder="본사에서 제공받은 아이디" required autocomplete="username">
+                <input type="text" id="userId" placeholder="아이디 입력" required autocomplete="username">
             </div>
             
             <div class="form-group">
                 <label>비밀번호</label>
-                <input type="password" id="userPw" placeholder="제공받은 비밀번호 입력" required autocomplete="current-password">
+                <input type="password" id="userPw" placeholder="비밀번호 입력" required autocomplete="current-password">
             </div>
             
             <button type="submit" class="btn">로그인</button>
@@ -331,26 +307,50 @@
         <div class="divider">계정이 없으신가요?</div>
         
         <button type="button" class="btn btn-secondary" onclick="switchView('signup')">회원가입 신청하기</button>
-        <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
+        <div style="text-align: center; margin-top: 0.5rem; font-size: 0.75rem; color: #666;">
             * 신청하시면 본사 확인 후 아이디를 발급해드립니다.
         </div>
     </div>
 
-    <!-- 2. 회원가입 신청 화면 -->
+    <!-- 2. 회원가입 신청 화면 (모바일 최적화) -->
     <div id="signupView" class="container-box hidden">
         <h1>📝 회원가입 신청</h1>
-        <p class="subtitle">모든 항목은 필수 입력입니다.<br>정확하게 입력해주세요.</p>
+        <p class="subtitle">필수 정보를 입력해주세요.</p>
         
         <div id="signupMessage" class="message"></div>
 
         <form id="signupForm" novalidate>
-            <!-- 성명 -->
-            <div class="form-group">
-                <label>성명 <span style="color:red">*</span></label>
-                <input type="text" id="regName" placeholder="홍길동">
+            <!-- 1열: 성명 / 지역 (공간 절약) -->
+            <div class="row-group">
+                <div class="form-group">
+                    <label>성명 <span style="color:red">*</span></label>
+                    <input type="text" id="regName" placeholder="홍길동">
+                </div>
+                <div class="form-group">
+                    <label>지역 <span style="color:red">*</span></label>
+                    <select id="regRegion" style="padding: 0.7rem 0.2rem;">
+                        <option value="">선택</option>
+                        <option value="서울">서울</option>
+                        <option value="경기">경기</option>
+                        <option value="인천">인천</option>
+                        <option value="강원">강원</option>
+                        <option value="충남">충남</option>
+                        <option value="충북">충북</option>
+                        <option value="대전">대전</option>
+                        <option value="경남">경남</option>
+                        <option value="경북">경북</option>
+                        <option value="대구">대구</option>
+                        <option value="부산">부산</option>
+                        <option value="울산">울산</option>
+                        <option value="전남">전남</option>
+                        <option value="전북">전북</option>
+                        <option value="광주">광주</option>
+                        <option value="제주">제주</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- 연락처 -->
+            <!-- 2열: 연락처 -->
             <div class="form-group">
                 <label>연락처 <span style="color:red">*</span></label>
                 <div class="input-group phone-group">
@@ -369,11 +369,11 @@
                 </div>
             </div>
 
-            <!-- 이메일 -->
+            <!-- 3열: 이메일 -->
             <div class="form-group">
                 <label>이메일 <span style="color:red">*</span></label>
                 <div class="input-group email-group">
-                    <input type="text" id="emailId" placeholder="example" inputmode="email">
+                    <input type="text" id="emailId" placeholder="ID" inputmode="email">
                     <span>@</span>
                     <select id="emailDomainSelect" onchange="toggleCustomDomain(this)">
                         <option value="">선택</option>
@@ -384,107 +384,52 @@
                         <option value="custom">직접입력</option>
                     </select>
                 </div>
-                <input type="text" id="emailCustomDomain" placeholder="도메인 입력 (예: company.com)" class="hidden" style="margin-top: 0.5rem;">
+                <input type="text" id="emailCustomDomain" placeholder="도메인 입력" class="hidden" style="margin-top: 0.4rem; padding: 0.6rem;">
             </div>
 
-            <!-- 소속/직함 -->
-            <div class="form-group">
-                <label>소속 / 직함 <span style="color:red">*</span></label>
-                <div class="input-group">
+            <!-- 4열: 소속 / 직함 (공간 절약) -->
+            <div class="row-group">
+                <div class="form-group">
+                    <label>소속 <span style="color:red">*</span></label>
                     <input type="text" id="regCompany" placeholder="한국생명">
+                </div>
+                <div class="form-group">
+                    <label>직함 <span style="color:red">*</span></label>
                     <input type="text" id="regPosition" placeholder="매니저">
                 </div>
             </div>
 
-            <!-- 지역 -->
-            <div class="form-group">
-                <label>지역 <span style="color:red">*</span></label>
-                <select id="regRegion">
-                    <option value="">선택하세요</option>
-                    <option value="서울">서울</option>
-                    <option value="경기">경기</option>
-                    <option value="인천">인천</option>
-                    <option value="강원">강원</option>
-                    <option value="충남">충남</option>
-                    <option value="충북">충북</option>
-                    <option value="대전">대전</option>
-                    <option value="경남">경남</option>
-                    <option value="경북">경북</option>
-                    <option value="대구">대구</option>
-                    <option value="부산">부산</option>
-                    <option value="울산">울산</option>
-                    <option value="전남">전남</option>
-                    <option value="전북">전북</option>
-                    <option value="광주">광주</option>
-                    <option value="제주">제주</option>
-                </select>
-            </div>
-
-            <!-- 계좌 정보 -->
+            <!-- 계좌 정보 (컴팩트) -->
             <div class="account-info-box">
                 <div class="account-info-title">[송금계좌] 국민 378801-01-062695</div>
                 <div class="account-info-detail">예금주: (주)한국FP센터</div>
             </div>
 
-            <button type="submit" class="btn">신청서 제출하기</button>
-            <button type="button" class="btn btn-back" onclick="switchView('login')">← 로그인 화면으로 돌아가기</button>
+            <button type="submit" class="btn">신청서 제출</button>
+            <button type="button" class="btn btn-back" onclick="switchView('login')">로그인 화면으로</button>
         </form>
     </div>
 
     <!-- 3. 비밀번호 변경 화면 -->
     <div id="changePwView" class="container-box hidden">
         <h1>🔑 비밀번호 변경</h1>
-        <p class="subtitle">안전한 사용을 위해 비밀번호를 변경해주세요.</p>
+        <p class="subtitle">최초 접속 시 변경이 필요합니다.</p>
         
-        <div class="message info" style="display: block;">
-            ⚠️ 최초 로그인이 확인되었습니다.<br>새로운 비밀번호를 설정해야 서비스를 이용할 수 있습니다.
-        </div>
         <div id="pwMessage" class="message"></div>
 
         <form id="changePwForm">
             <div class="form-group">
                 <label>새 비밀번호</label>
-                <input type="password" id="newPw" placeholder="영문, 숫자 포함 6자 이상" required minlength="6">
+                <input type="password" id="newPw" placeholder="6자 이상 입력" required minlength="6">
             </div>
             
             <div class="form-group">
                 <label>비밀번호 확인</label>
-                <input type="password" id="confirmPw" placeholder="새 비밀번호 다시 입력" required minlength="6">
+                <input type="password" id="confirmPw" placeholder="한번 더 입력" required minlength="6">
             </div>
             
-            <button type="submit" class="btn">변경하고 시작하기</button>
+            <button type="submit" class="btn">변경 완료 및 시작</button>
         </form>
-    </div>
-
-    <!-- 4. 메인 대시보드 -->
-    <div id="mainView" class="container-box dashboard-container hidden">
-        <h1>👋 환영합니다!</h1>
-        <p class="subtitle" id="welcomeText">Executive Consulting Solution 메인화면</p>
-        
-        <div class="message success" style="display: block;">
-            ✅ 로그인 및 인증이 완료되었습니다.
-        </div>
-
-        <div class="dashboard-menu">
-            <div class="menu-item">
-                <h3>📊 경영 진단</h3>
-                <p>기업 경영 상태 분석</p>
-            </div>
-            <div class="menu-item">
-                <h3>📝 컨설팅 보고서</h3>
-                <p>보고서 작성 및 관리</p>
-            </div>
-            <div class="menu-item">
-                <h3>👥 고객 관리</h3>
-                <p>고객 정보 및 상담 이력</p>
-            </div>
-            <div class="menu-item">
-                <h3>⚙️ 설정</h3>
-                <p>계정 및 시스템 설정</p>
-            </div>
-        </div>
-
-        <button onclick="logout()" class="btn logout-btn">로그아웃</button>
     </div>
 
     <!-- Firebase SDK -->
@@ -514,8 +459,7 @@
         const views = {
             login: document.getElementById('loginView'),
             signup: document.getElementById('signupView'),
-            changePw: document.getElementById('changePwView'),
-            main: document.getElementById('mainView')
+            changePw: document.getElementById('changePwView')
         };
         const loading = document.getElementById('loadingOverlay');
         const customAlertOverlay = document.getElementById('customAlert');
@@ -548,7 +492,7 @@
             document.getElementById('emailCustomDomain').classList.add('hidden');
             
             Object.values(views).forEach(el => el.classList.add('hidden'));
-            views[viewName].classList.remove('hidden');
+            if(views[viewName]) views[viewName].classList.remove('hidden');
         }
 
         function showMessage(elementId, text, type) {
@@ -568,30 +512,23 @@
             }
         };
 
-        // --- 3. 로그인 로직 (관리자 접속 기능 추가됨) ---
+        // --- 3. 로그인 로직 ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const userId = document.getElementById('userId').value.trim();
             const userPw = document.getElementById('userPw').value.trim();
 
-            if (!userId) {
-                showCustomAlert("아이디를 입력해주세요.", "userId");
-                return;
-            }
-            if (!userPw) {
-                showCustomAlert("비밀번호를 입력해주세요.", "userPw");
-                return;
-            }
+            if (!userId) { showCustomAlert("아이디를 입력해주세요.", "userId"); return; }
+            if (!userPw) { showCustomAlert("비밀번호를 입력해주세요.", "userPw"); return; }
 
             // [관리자 접속 체크]
             if (userId === 'admin' && userPw === 'kfpc0808') {
                 sessionStorage.setItem('adminLoggedIn', 'true');
                 alert('관리자 모드로 접속합니다.');
-                window.location.href = 'admin.html'; // 관리자 페이지로 이동
+                window.location.href = 'admin.html'; 
                 return;
             }
 
-            // 일반 회원 로그인 진행
             showLoading();
             
             try {
@@ -627,12 +564,10 @@
             const region = document.getElementById('regRegion').value;
 
             if (!name) { showCustomAlert("성명을 입력해주세요.", "regName"); return; }
-            if (!phone2) { showCustomAlert("연락처(가운데 자리)를 입력해주세요.", "phone2"); return; }
-            if (!phone3) { showCustomAlert("연락처(끝 자리)를 입력해주세요.", "phone3"); return; }
-            if (phone2.length < 3 || phone3.length < 4) { showCustomAlert("올바른 연락처를 입력해주세요.", "phone2"); return; }
+            if (!phone2 || !phone3 || phone2.length < 3 || phone3.length < 4) { showCustomAlert("올바른 연락처를 입력해주세요.", "phone2"); return; }
             if (!emailId) { showCustomAlert("이메일 아이디를 입력해주세요.", "emailId"); return; }
             if (!emailDomainSelect) { showCustomAlert("이메일 도메인을 선택해주세요.", "emailDomainSelect"); return; }
-            if (emailDomainSelect === 'custom' && !emailCustomDomain) { showCustomAlert("이메일 도메인을 직접 입력해주세요.", "emailCustomDomain"); return; }
+            if (emailDomainSelect === 'custom' && !emailCustomDomain) { showCustomAlert("도메인을 직접 입력해주세요.", "emailCustomDomain"); return; }
             if (!company) { showCustomAlert("소속을 입력해주세요.", "regCompany"); return; }
             if (!position) { showCustomAlert("직함을 입력해주세요.", "regPosition"); return; }
             if (!region) { showCustomAlert("지역을 선택해주세요.", "regRegion"); return; }
@@ -644,9 +579,7 @@
             showLoading();
 
             try {
-                if (!auth.currentUser) {
-                     // 필요시 익명 로그인
-                }
+                if (!auth.currentUser) { }
 
                 await db.collection('account_requests').add({
                     name: name,
@@ -670,18 +603,15 @@
             }
         });
 
-        // --- 5. 사용자 상태 확인 ---
+        // --- 5. 사용자 상태 확인 및 이동 ---
         async function checkUserStatus(user) {
             try {
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 
-                if (!userDoc.exists) {
-                    throw new Error("사용자 정보를 찾을 수 없습니다.");
-                }
+                if (!userDoc.exists) throw new Error("사용자 정보를 찾을 수 없습니다.");
 
                 const userData = userDoc.data();
                 
-                // Firestore role이 admin인 경우에도 관리자 페이지로 이동
                 if (userData.role === 'admin') {
                     sessionStorage.setItem('adminLoggedIn', 'true');
                     window.location.href = 'admin.html';
@@ -692,7 +622,8 @@
                     hideLoading();
                     switchView('changePw');
                 } else {
-                    enterMainPage(userData);
+                    // 메인 페이지(index.html)로 이동
+                    window.location.href = 'index.html';
                 }
 
             } catch (error) {
@@ -716,14 +647,8 @@
                 return;
             }
 
-            if (newPw !== confirmPw) {
-                showMessage('pwMessage', '비밀번호가 일치하지 않습니다.', 'error');
-                return;
-            }
-            if (newPw.length < 6) {
-                showMessage('pwMessage', '비밀번호는 최소 6자 이상이어야 합니다.', 'error');
-                return;
-            }
+            if (newPw !== confirmPw) { showMessage('pwMessage', '비밀번호가 일치하지 않습니다.', 'error'); return; }
+            if (newPw.length < 6) { showMessage('pwMessage', '6자 이상 입력해주세요.', 'error'); return; }
 
             showLoading();
 
@@ -734,29 +659,15 @@
                     passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert('비밀번호가 성공적으로 변경되었습니다.\n서비스를 시작합니다.');
-                const updatedDoc = await db.collection('users').doc(user.uid).get();
-                enterMainPage(updatedDoc.data());
+                alert('비밀번호가 변경되었습니다.\n서비스를 시작합니다.');
+                window.location.href = 'index.html';
 
             } catch (error) {
                 console.error('Password Change Error:', error);
                 hideLoading();
-                showMessage('pwMessage', '비밀번호 변경 중 오류가 발생했습니다.', 'error');
+                showMessage('pwMessage', '오류가 발생했습니다.', 'error');
             }
         });
-
-        function enterMainPage(userData) {
-            hideLoading();
-            switchView('main');
-            const name = userData.name || userData.userId || '회원';
-            document.getElementById('welcomeText').textContent = `${name}님, 오늘도 좋은 하루 되세요!`;
-        }
-
-        window.logout = function() {
-            auth.signOut().then(() => {
-                window.location.reload();
-            });
-        };
     </script>
 </body>
 </html>
