@@ -320,11 +320,23 @@
         <div id="signupMessage" class="message"></div>
 
         <form id="signupForm" novalidate>
-            <!-- 1열: 성명 / 지역 (공간 절약) -->
+            <!-- 1열: 성명 / 소속 (순서 변경됨) -->
             <div class="row-group">
                 <div class="form-group">
                     <label>성명 <span style="color:red">*</span></label>
                     <input type="text" id="regName" placeholder="홍길동">
+                </div>
+                <div class="form-group">
+                    <label>소속 <span style="color:red">*</span></label>
+                    <input type="text" id="regCompany" placeholder="한국생명">
+                </div>
+            </div>
+
+            <!-- 2열: 직함 / 지역 (순서 변경됨) -->
+            <div class="row-group">
+                <div class="form-group">
+                    <label>직함 <span style="color:red">*</span></label>
+                    <input type="text" id="regPosition" placeholder="매니저">
                 </div>
                 <div class="form-group">
                     <label>지역 <span style="color:red">*</span></label>
@@ -350,7 +362,7 @@
                 </div>
             </div>
 
-            <!-- 2열: 연락처 -->
+            <!-- 3열: 연락처 -->
             <div class="form-group">
                 <label>연락처 <span style="color:red">*</span></label>
                 <div class="input-group phone-group">
@@ -369,7 +381,7 @@
                 </div>
             </div>
 
-            <!-- 3열: 이메일 -->
+            <!-- 4열: 이메일 -->
             <div class="form-group">
                 <label>이메일 <span style="color:red">*</span></label>
                 <div class="input-group email-group">
@@ -385,18 +397,6 @@
                     </select>
                 </div>
                 <input type="text" id="emailCustomDomain" placeholder="도메인 입력" class="hidden" style="margin-top: 0.4rem; padding: 0.6rem;">
-            </div>
-
-            <!-- 4열: 소속 / 직함 (공간 절약) -->
-            <div class="row-group">
-                <div class="form-group">
-                    <label>소속 <span style="color:red">*</span></label>
-                    <input type="text" id="regCompany" placeholder="한국생명">
-                </div>
-                <div class="form-group">
-                    <label>직함 <span style="color:red">*</span></label>
-                    <input type="text" id="regPosition" placeholder="매니저">
-                </div>
             </div>
 
             <!-- 계좌 정보 (컴팩트) -->
@@ -564,13 +564,13 @@
             const region = document.getElementById('regRegion').value;
 
             if (!name) { showCustomAlert("성명을 입력해주세요.", "regName"); return; }
+            if (!company) { showCustomAlert("소속을 입력해주세요.", "regCompany"); return; }
+            if (!position) { showCustomAlert("직함을 입력해주세요.", "regPosition"); return; }
+            if (!region) { showCustomAlert("지역을 선택해주세요.", "regRegion"); return; }
             if (!phone2 || !phone3 || phone2.length < 3 || phone3.length < 4) { showCustomAlert("올바른 연락처를 입력해주세요.", "phone2"); return; }
             if (!emailId) { showCustomAlert("이메일 아이디를 입력해주세요.", "emailId"); return; }
             if (!emailDomainSelect) { showCustomAlert("이메일 도메인을 선택해주세요.", "emailDomainSelect"); return; }
             if (emailDomainSelect === 'custom' && !emailCustomDomain) { showCustomAlert("도메인을 직접 입력해주세요.", "emailCustomDomain"); return; }
-            if (!company) { showCustomAlert("소속을 입력해주세요.", "regCompany"); return; }
-            if (!position) { showCustomAlert("직함을 입력해주세요.", "regPosition"); return; }
-            if (!region) { showCustomAlert("지역을 선택해주세요.", "regRegion"); return; }
 
             const fullPhone = `${phone1}${phone2}${phone3}`;
             const finalDomain = (emailDomainSelect === 'custom') ? emailCustomDomain : emailDomainSelect;
