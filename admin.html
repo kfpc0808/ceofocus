@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Master 통합 관리자 V18 (검색/페이징 적용)</title>
+    <title>Financial Master 통합 관리자 V22 (가입연동완료)</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Phosphor Icons -->
@@ -30,6 +30,7 @@
             color: var(--text-color);
             display: flex;
             min-height: 100vh;
+            font-size: 0.9rem;
         }
 
         /* 사이드바 */
@@ -47,9 +48,9 @@
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             padding: 0.5rem;
             display: flex;
             align-items: center;
@@ -59,15 +60,16 @@
         }
 
         .nav-menu { list-style: none; flex: 1; }
-        .nav-item { margin-bottom: 0.5rem; }
+        .nav-item { margin-bottom: 0.25rem; }
         .nav-link {
             display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.75rem 1rem;
+            padding: 0.6rem 1rem;
             color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 6px;
             transition: all 0.3s;
             cursor: pointer;
+            font-size: 0.9rem;
         }
         .nav-link:hover, .nav-link.active { background: rgba(255, 255, 255, 0.1); color: white; }
         .admin-profile {
@@ -76,14 +78,14 @@
         }
 
         /* 메인 컨텐츠 */
-        .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 2rem; }
-        .page-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .page-title { font-size: 1.75rem; color: var(--primary-color); font-weight: 700; }
+        .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 1.5rem; }
+        .page-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 1.5rem; color: var(--primary-color); font-weight: 700; }
 
         .card {
-            background: white; border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 1.5rem; margin-bottom: 1.5rem;
+            background: white; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 1.2rem; margin-bottom: 1.2rem;
         }
 
         /* 탭 컨텐츠 제어 */
@@ -92,23 +94,16 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 서브 탭 */
-        .sub-nav {
-            display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; padding-bottom: 0; overflow-x: auto;
-        }
-        .sub-nav-item {
-            padding: 0.75rem 1rem; cursor: pointer; font-weight: 600; color: #6c757d; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
-        }
+        .sub-nav { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 2px solid #e9ecef; padding-bottom: 0; overflow-x: auto; }
+        .sub-nav-item { padding: 0.5rem 0.8rem; cursor: pointer; font-weight: 600; color: #6c757d; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; white-space: nowrap; font-size: 0.9rem; }
         .sub-nav-item:hover { color: var(--primary-color); }
         .sub-nav-item.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
         .sub-tab-content { display: none; }
         .sub-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
         /* 버튼 */
-        .btn {
-            padding: 0.6rem 1.2rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-            display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; text-decoration: none;
-        }
-        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; text-decoration: none; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
         .btn-primary { background: var(--primary-color); color: white; }
         .btn-secondary { background: var(--accent-color); color: white; }
         .btn-danger { background: var(--danger-color); color: white; }
@@ -117,43 +112,44 @@
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
-        /* 테이블 및 검색/페이징 스타일 (New) */
-        .table-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
-        .search-box { display: flex; gap: 0.5rem; align-items: center; }
-        .search-box input { padding: 0.5rem; border: 1px solid #dee2e6; border-radius: 4px; min-width: 250px; }
+        /* 테이블 */
+        .table-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.8rem; }
+        .table-controls h3 { font-size: 1.1rem; margin: 0; }
+        .search-box { display: flex; gap: 0.4rem; align-items: center; }
+        .search-box input { padding: 0.4rem; border: 1px solid #dee2e6; border-radius: 4px; min-width: 200px; font-size: 0.85rem; }
         
-        .table-container { overflow-x: auto; min-height: 200px; } /* 최소 높이 지정으로 깜빡임 방지 */
-        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; min-width: 800px; }
-        th { background: #f8f9fa; color: var(--primary-color); padding: 1rem; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
-        td { padding: 1rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; white-space: nowrap; }
-        .clickable-cell { cursor: pointer; color: var(--primary-color); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+        .table-container { overflow-x: auto; min-height: 200px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.2rem; min-width: 800px; font-size: 0.85rem; }
+        th { background: #f8f9fa; color: var(--primary-color); padding: 0.6rem 0.5rem; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+        td { padding: 0.5rem 0.5rem; border-bottom: 1px solid #eee; vertical-align: middle; white-space: nowrap; }
+        .clickable-cell { cursor: pointer; color: var(--primary-color); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
         
-        .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; align-items: center; }
-        .page-btn { padding: 0.4rem 0.8rem; border: 1px solid #dee2e6; background: white; border-radius: 4px; cursor: pointer; min-width: 32px; text-align: center; }
+        .pagination { display: flex; justify-content: center; gap: 0.3rem; margin-top: 1rem; align-items: center; }
+        .page-btn { padding: 0.3rem 0.6rem; border: 1px solid #dee2e6; background: white; border-radius: 4px; cursor: pointer; min-width: 28px; text-align: center; font-size: 0.85rem; }
         .page-btn:hover { background: #e9ecef; }
         .page-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* 폼 */
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--primary-color); }
-        .form-control { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 0.8rem; }
+        .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 600; color: var(--primary-color); font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
 
         /* 에디터 */
-        .editor-container { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
-        .editor-toolbar { background: #f8f9fa; border-bottom: 1px solid var(--border-color); padding: 0.5rem; display: flex; gap: 0.5rem; align-items: center; }
-        .editor-btn { background: white; border: 1px solid #dee2e6; border-radius: 4px; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; }
-        .editor-content { min-height: 300px; padding: 1rem; outline: none; overflow-y: auto; background: white; }
-        .color-picker { width: 30px; height: 30px; padding: 0; border: none; cursor: pointer; }
+        .editor-container { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; }
+        .editor-toolbar { background: #f8f9fa; border-bottom: 1px solid var(--border-color); padding: 0.4rem; display: flex; gap: 0.4rem; align-items: center; }
+        .editor-btn { background: white; border: 1px solid #dee2e6; border-radius: 3px; width: 26px; height: 26px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .editor-content { min-height: 300px; padding: 0.8rem; outline: none; overflow-y: auto; background: white; font-size: 0.9rem; line-height: 1.5; }
+        .color-picker { width: 26px; height: 26px; padding: 0; border: none; cursor: pointer; }
 
         /* 모달 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 12px; padding: 2rem; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 8px; padding: 1.5rem; max-height: 90vh; overflow-y: auto; }
 
-        /* 기타 */
-        .tab-btn-group { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
-        .badge { padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        /* 배지 및 기타 */
+        .tab-btn-group { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; border-bottom: 1px solid #eee; padding-bottom: 0.8rem; }
+        .badge { padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
         .badge-blue { background: #e3f2fd; color: #1565c0; }
         .badge-green { background: #e8f5e9; color: #2e7d32; }
         .badge-red { background: #ffebee; color: #c62828; }
@@ -161,9 +157,11 @@
         .badge-warning { background: var(--warning-bg); color: var(--warning-text); }
         .badge-point { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; }
         .badge-purple { background: #f3e5f5; color: #7b1fa2; }
-        .password-display { font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; border: 1px solid #dee2e6; color: #d63384; font-weight: bold; }
-        .status-card { display: flex; align-items: center; gap: 1rem; background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .status-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; }
+        .password-display { font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 3px; border: 1px solid #dee2e6; color: #d63384; font-weight: bold; font-size: 0.85rem; }
+        .status-card { display: flex; align-items: center; gap: 0.8rem; background: #fff; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .status-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
+        .status-card div div:first-child { font-size: 0.85rem; }
+        .status-card div div:last-child { font-size: 1.3rem; }
     </style>
 </head>
 <body>
@@ -198,12 +196,12 @@
                     <a href="https://console.cloud.google.com/apis/api/generativelanguage.googleapis.com/metrics" target="_blank" class="btn btn-outline" style="color: #4285F4; border-color: #4285F4;"><i class="ph ph-google-logo"></i> Gemini API 사용량 조회</a>
                 </div>
             </div>
-            <!-- 통계 카드 생략 (기존 유지) -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
-                <div class="status-card"><div class="status-icon" style="background: #e3f2fd; color: #1565c0;"><i class="ph ph-users"></i></div><div><div style="font-size: 0.9rem; color: #666;">전체 회원</div><div style="font-size: 1.5rem; font-weight: 700;">1,240</div></div></div>
-                <div class="status-card"><div class="status-icon" style="background: #e8f5e9; color: #2e7d32;"><i class="ph ph-credit-card"></i></div><div><div style="font-size: 0.9rem; color: #666;">이번달 결제완료</div><div style="font-size: 1.5rem; font-weight: 700;">1,180건</div></div></div>
-                <div class="status-card"><div class="status-icon" style="background: #ffebee; color: #c62828;"><i class="ph ph-warning-circle"></i></div><div><div style="font-size: 0.9rem; color: #666;">신규 신청 대기</div><div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color);">3건</div></div></div>
-                <div class="status-card"><div class="status-icon" style="background: #fff8e1; color: #f57f17;"><i class="ph ph-coins"></i></div><div><div style="font-size: 0.9rem; color: #666;">총 발행 포인트</div><div style="font-size: 1.5rem; font-weight: 700;">2.4M P</div></div></div>
+            <!-- 통계 카드 -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="status-card"><div class="status-icon" style="background: #e3f2fd; color: #1565c0;"><i class="ph ph-users"></i></div><div><div style="font-size: 0.85rem; color: #666;">전체 회원</div><div style="font-size: 1.3rem; font-weight: 700;">1,240</div></div></div>
+                <div class="status-card"><div class="status-icon" style="background: #e8f5e9; color: #2e7d32;"><i class="ph ph-credit-card"></i></div><div><div style="font-size: 0.85rem; color: #666;">이번달 결제완료</div><div style="font-size: 1.3rem; font-weight: 700;">1,180건</div></div></div>
+                <div class="status-card"><div class="status-icon" style="background: #ffebee; color: #c62828;"><i class="ph ph-warning-circle"></i></div><div><div style="font-size: 0.85rem; color: #666;">신규 신청 대기</div><div style="font-size: 1.3rem; font-weight: 700; color: var(--danger-color);">3건</div></div></div>
+                <div class="status-card"><div class="status-icon" style="background: #fff8e1; color: #f57f17;"><i class="ph ph-coins"></i></div><div><div style="font-size: 0.85rem; color: #666;">총 발행 포인트</div><div style="font-size: 1.3rem; font-weight: 700;">2.4M P</div></div></div>
             </div>
         </div>
 
@@ -214,17 +212,29 @@
                 <button class="btn btn-primary" onclick="openRegisterModal()"><i class="ph ph-user-plus"></i> 수동 회원 등록</button>
             </div>
 
-            <!-- 가입 신청 내역 -->
+            <!-- 가입 신청 내역 (승인 대기) -->
             <div class="card" style="border-left: 4px solid var(--accent-color);">
                 <div class="table-controls">
-                    <h3>📝 가입 신청 내역 (승인 대기)</h3>
+                    <h3>📝 가입 신청 내역 (승인 대기) - 홈페이지 연동</h3>
                     <div class="search-box">
-                        <input type="text" id="pendingSearch" placeholder="이름, 소속, 연락처 검색" onkeyup="renderUsers()">
+                        <input type="text" id="pendingSearch" placeholder="이름, 지역, 연락처 검색" onkeyup="renderUsers()">
                     </div>
                 </div>
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>신청일시</th><th>성명</th><th>소속/직함</th><th>연락처</th><th>유형</th><th>가입비</th><th>관리</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>신청일시</th>
+                                <th>성명</th>
+                                <th>소속/직함</th>
+                                <th>지역</th>
+                                <th>연락처</th>
+                                <th>이메일</th> <!-- 추가됨: login.html의 email 필드 대응 -->
+                                <th>유형</th> <!-- 관리자 선택 -->
+                                <th>가입비</th> <!-- 관리자 확인 -->
+                                <th>관리</th>
+                            </tr>
+                        </thead>
                         <tbody id="pendingTableBody"></tbody>
                     </table>
                 </div>
@@ -236,12 +246,12 @@
                 <div class="table-controls">
                     <h3>전체 회원 목록</h3>
                     <div class="search-box">
-                        <input type="text" id="userSearch" placeholder="아이디, 이름, 연락처 검색" onkeyup="renderUsers()">
+                        <input type="text" id="userSearch" placeholder="아이디, 이름, 지역 검색" onkeyup="renderUsers()">
                     </div>
                 </div>
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>No</th><th>아이디</th><th>성명</th><th>소속/직함</th><th>유형</th><th>연락처</th><th>월 결제액</th><th>상태</th><th>관리</th></tr></thead>
+                        <thead><tr><th>No</th><th>아이디</th><th>성명</th><th>소속/직함</th><th>지역</th><th>유형</th><th>연락처/메일</th><th>가입비</th><th>월 결제액</th><th>상태</th><th>관리</th></tr></thead>
                         <tbody id="userTableBody"></tbody>
                     </table>
                 </div>
@@ -249,7 +259,7 @@
             </div>
         </div>
 
-        <!-- 3. 결제 및 포인트 관리 -->
+        <!-- 3. 결제 및 포인트 관리 (기존 유지) -->
         <div id="payment" class="tab-content">
             <div class="page-header">
                 <h1 class="page-title">결제 및 포인트 관리</h1>
@@ -264,52 +274,30 @@
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'payment-unpaid-view')">미결제/연체 관리</div>
             </div>
 
-            <!-- 결제 현황 -->
             <div id="payment-status-view" class="sub-tab-content active">
                 <div class="card">
-                    <div class="table-controls">
-                        <h3>💳 이번달 결제 현황</h3>
-                        <div class="search-box"><input type="text" id="paymentSearch" placeholder="아이디, 이름, 결과 검색" onkeyup="renderPaymentHistory()"></div>
-                    </div>
-                    <div class="table-container">
-                        <table><thead><tr><th>결제일시</th><th>아이디</th><th>성명</th><th>결제 금액</th><th>유형</th><th>결과</th></tr></thead><tbody id="paymentHistoryBody"></tbody></table>
-                    </div>
+                    <div class="table-controls"><h3>💳 이번달 결제 현황</h3><div class="search-box"><input type="text" id="paymentSearch" placeholder="검색..." onkeyup="renderPaymentHistory()"></div></div>
+                    <div class="table-container"><table><thead><tr><th>결제일시</th><th>아이디</th><th>성명</th><th>결제 금액</th><th>유형</th><th>결과</th></tr></thead><tbody id="paymentHistoryBody"></tbody></table></div>
                     <div id="paymentPagination" class="pagination"></div>
                 </div>
             </div>
             
-            <!-- 포인트 로그 -->
             <div id="payment-points-view" class="sub-tab-content">
                 <div class="card">
-                    <div class="table-controls">
-                        <h3>📊 포인트 로그</h3>
-                        <div class="search-box"><input type="text" id="pointSearch" placeholder="아이디, 내용 검색" onkeyup="renderPointLogs()"></div>
-                    </div>
-                    <div class="table-container">
-                        <table><thead><tr><th>일시</th><th>아이디</th><th>성명</th><th>구분</th><th>내용</th><th>변동</th><th>잔액</th></tr></thead><tbody id="pointLogsBody"></tbody></table>
-                    </div>
+                    <div class="table-controls"><h3>📊 포인트 로그</h3><div class="search-box"><input type="text" id="pointSearch" placeholder="검색..." onkeyup="renderPointLogs()"></div></div>
+                    <div class="table-container"><table><thead><tr><th>일시</th><th>아이디</th><th>성명</th><th>구분</th><th>내용</th><th>변동</th><th>잔액</th></tr></thead><tbody id="pointLogsBody"></tbody></table></div>
                     <div id="pointPagination" class="pagination"></div>
                 </div>
             </div>
 
-            <!-- 포인트 분석 -->
             <div id="payment-usage_analysis-view" class="sub-tab-content">
-                <div class="card">
-                    <h3>📈 포인트 사용 분석</h3>
-                    <div class="table-container">
-                        <table style="text-align: center;">
-                            <thead><tr><th rowspan="2">회원정보</th><th rowspan="2">대상 월</th><th colspan="2" style="background:#e3f2fd">요약분석(500P)</th><th colspan="2" style="background:#e8f5e9">상세분석(2000P)</th><th rowspan="2">총 포인트</th></tr><tr><th>횟수</th><th>차감액</th><th>횟수</th><th>차감액</th></tr></thead>
-                            <tbody id="usageStatsBody"></tbody>
-                        </table>
-                    </div>
-                    <!-- 분석은 전체 집계라 페이징 생략 혹은 필요시 추가 -->
-                </div>
+                <div class="card"><h3>📈 포인트 사용 분석</h3><div class="table-container"><table style="text-align: center;"><thead><tr><th rowspan="2">회원정보</th><th rowspan="2">대상 월</th><th colspan="2" style="background:#e3f2fd">요약분석(500P)</th><th colspan="2" style="background:#e8f5e9">상세분석(2000P)</th><th rowspan="2">총 포인트</th></tr><tr><th>횟수</th><th>차감액</th><th>횟수</th><th>차감액</th></tr></thead><tbody id="usageStatsBody"></tbody></table></div></div>
             </div>
-            <div id="payment-expiration-view" class="sub-tab-content"><div class="card"><p>소멸 예정 목록 (페이징 준비중)</p></div></div>
-            <div id="payment-unpaid-view" class="sub-tab-content"><div class="card"><p>미결제 회원 목록 (페이징 준비중)</p></div></div>
+            <div id="payment-expiration-view" class="sub-tab-content"><div class="card"><p>소멸 예정 목록 (준비중)</p></div></div>
+            <div id="payment-unpaid-view" class="sub-tab-content"><div class="card"><p>미결제 회원 목록 (준비중)</p></div></div>
         </div>
 
-        <!-- 4. 프롬프트 관리 탭 -->
+        <!-- 4. 프롬프트 관리 탭 (기존 유지) -->
         <div id="prompts" class="tab-content">
             <div class="page-header"><h1 class="page-title">AI 프롬프트 관리</h1></div>
             <div class="sub-nav">
@@ -318,102 +306,107 @@
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'prompt-guarantee')">보장분석</div>
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'prompt-ff')">FF</div>
             </div>
-            <div id="prompt-company" class="sub-tab-content active">
-                <div class="card"><h3>🏭 기업마당</h3><div class="form-group"><textarea class="form-control" style="min-height: 400px; font-family: monospace;">System Instruction...</textarea></div><button class="btn btn-primary">저장</button></div>
-            </div>
+            <div id="prompt-company" class="sub-tab-content active"><div class="card"><h3>🏭 기업마당</h3><div class="form-group"><textarea class="form-control" style="min-height: 400px; font-family: monospace;">System Instruction...</textarea></div><button class="btn btn-primary">저장</button></div></div>
             <div id="prompt-ceo" class="sub-tab-content"><div class="card"><h3>👔 CEO Focus</h3><textarea class="form-control" style="min-height: 400px;"></textarea><button class="btn btn-primary mt-1">저장</button></div></div>
             <div id="prompt-guarantee" class="sub-tab-content"><div class="card"><h3>🛡️ 보장분석</h3><textarea class="form-control" style="min-height: 400px;"></textarea><button class="btn btn-primary mt-1">저장</button></div></div>
             <div id="prompt-ff" class="sub-tab-content"><div class="card"><h3>📋 FF</h3><textarea class="form-control" style="min-height: 400px;"></textarea><button class="btn btn-primary mt-1">저장</button></div></div>
         </div>
 
-        <!-- 5. 제안/건의 -->
+        <!-- 5. 제안/건의 (기존 유지) -->
         <div id="suggestions" class="tab-content">
             <div class="page-header"><h1 class="page-title">제안 / 건의사항</h1></div>
             <div class="card">
-                <div class="table-controls">
-                    <h3>목록</h3>
-                    <div class="search-box"><input type="text" id="suggestionSearch" placeholder="제목, 작성자 검색" onkeyup="renderSuggestions()"></div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>No</th><th>제목</th><th>작성자</th><th>작성일</th><th>상태</th><th>관리</th></tr></thead>
-                        <tbody id="suggestionTableBody"></tbody>
-                    </table>
-                </div>
+                <div class="table-controls"><h3>목록</h3><div class="search-box"><input type="text" id="suggestionSearch" placeholder="제목, 작성자 검색" onkeyup="renderSuggestions()"></div></div>
+                <div class="table-container"><table><thead><tr><th>No</th><th>제목</th><th>작성자</th><th>작성일</th><th>상태</th><th>관리</th></tr></thead><tbody id="suggestionTableBody"></tbody></table></div>
                 <div id="suggestionPagination" class="pagination"></div>
             </div>
         </div>
 
-        <!-- 6. 공지사항 -->
+        <!-- 6. 공지사항 (기존 유지) -->
         <div id="notices" class="tab-content">
             <div class="page-header"><h1 class="page-title">공지사항 관리</h1><button class="btn btn-primary" onclick="openNoticeModal()"><i class="ph ph-pencil-simple"></i> 새 공지 등록</button></div>
             <div class="card">
-                <div class="table-controls">
-                    <h3>등록된 공지사항</h3>
-                    <div class="search-box"><input type="text" id="noticeSearch" placeholder="제목 검색" onkeyup="renderNotices()"></div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th style="width: 60px;">No</th><th>제목</th><th>등록일자</th><th>첨부파일</th><th>관리</th></tr></thead>
-                        <tbody id="noticeTableBody"></tbody>
-                    </table>
-                </div>
+                <div class="table-controls"><h3>등록된 공지사항</h3><div class="search-box"><input type="text" id="noticeSearch" placeholder="제목 검색" onkeyup="renderNotices()"></div></div>
+                <div class="table-container"><table><thead><tr><th style="width: 50px;">No</th><th>제목</th><th>등록일자</th><th>첨부파일</th><th>관리</th></tr></thead><tbody id="noticeTableBody"></tbody></table></div>
                 <div id="noticePagination" class="pagination"></div>
             </div>
         </div>
 
-        <!-- 7. 관리자 관리 -->
+        <!-- 7. 관리자 관리 (기존 유지) -->
         <div id="admins" class="tab-content">
             <div class="page-header"><h1 class="page-title">관리자 계정 관리</h1><button class="btn btn-primary"><i class="ph ph-plus"></i> 관리자 추가</button></div>
             <div class="card">
-                <div class="table-controls">
-                    <h3>관리자 목록</h3>
-                    <div class="search-box"><input type="text" id="adminSearch" placeholder="아이디, 이름 검색" onkeyup="renderAdmins()"></div>
-                </div>
-                <div class="table-container">
-                    <table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>관리</th></tr></thead><tbody id="adminTableBody"></tbody></table>
-                </div>
+                <div class="table-controls"><h3>관리자 목록</h3><div class="search-box"><input type="text" id="adminSearch" placeholder="아이디, 이름 검색" onkeyup="renderAdmins()"></div></div>
+                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
                 <div id="adminPagination" class="pagination"></div>
             </div>
         </div>
 
-        <!-- 8. 약관 -->
+        <!-- 8. 약관 (기존 유지) -->
         <div id="terms" class="tab-content">
             <div class="page-header"><h1 class="page-title">약관 및 정책 관리</h1></div>
             <div class="card">
-                <div class="tab-btn-group">
-                    <button class="btn btn-primary active" id="btn-term-service" onclick="loadTerm('service')">서비스 이용약관</button>
-                    <button class="btn btn-outline" id="btn-term-privacy" onclick="loadTerm('privacy')">개인정보 처리방침</button>
-                    <button class="btn btn-outline" id="btn-term-marketing" onclick="loadTerm('marketing')">마케팅 수신동의</button>
-                </div>
+                <div class="tab-btn-group"><button class="btn btn-primary active" id="btn-term-service" onclick="loadTerm('service')">서비스 이용약관</button><button class="btn btn-outline" id="btn-term-privacy" onclick="loadTerm('privacy')">개인정보 처리방침</button><button class="btn btn-outline" id="btn-term-marketing" onclick="loadTerm('marketing')">마케팅 수신동의</button></div>
                 <div class="form-group"><textarea class="form-control" id="termEditor" style="min-height: 500px; font-family: monospace; line-height: 1.6;"></textarea></div>
                 <button class="btn btn-primary" onclick="saveTerms()"><i class="ph ph-floppy-disk"></i> 현재 내용 저장</button>
             </div>
         </div>
     </main>
 
-    <!-- 모달: 신규 회원 등록 (생략) -->
-    <!-- 모달: 공지사항 작성 (생략) -->
-    <!-- 모달: 회원 정보 수정 (생략) -->
-    <!-- (필요시 기존 코드와 동일한 모달 구조 삽입) -->
-    <!-- 여기서는 스크립트 로직에 집중하기 위해 HTML 모달 구조는 기존 유지라 가정하고 생략하거나, 실제 구현 시 V17의 모달 코드를 그대로 복사해서 넣으시면 됩니다. -->
-    
-    <!-- 편의상 Register 모달만 하나 예시로 남김 -->
+    <!-- 모달: ID 발급 및 가입 승인 (필드 자동 입력 연동) -->
     <div id="registerModal" class="modal">
         <div class="modal-content">
-            <h3>👥 신규 회원 등록</h3>
+            <h3>👥 회원 승인 및 ID 발급</h3>
+            <p style="font-size:0.9rem; color:#666; margin-bottom:1rem;">신청 정보를 확인하고 ID/비밀번호 및 권한을 설정하세요.</p>
             <form id="registerForm">
-                <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px; margin-bottom: 1rem;">
-                    <label><input type="checkbox" id="regFeeCheck"> 가입비 입금 확인</label>
+                <!-- 신청 정보 (Read-Only: login.html의 필드명 반영) -->
+                <div style="background:#f8f9fa; padding:1rem; border-radius:6px; margin-bottom:1rem; border:1px solid #eee;">
+                    <h4 style="margin-bottom:0.5rem; font-size:0.9rem; color:var(--primary-color);">[신청자 정보]</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label>성명</label><input type="text" id="newUserName" class="form-control" readonly style="background:white"></div>
+                        <div class="form-group"><label>연락처</label><input type="text" id="newUserPhone" class="form-control" readonly style="background:white"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>이메일</label><input type="text" id="newUserEmail" class="form-control" readonly style="background:white"></div>
+                        <div class="form-group"><label>지역</label><input type="text" id="newUserRegion" class="form-control" readonly style="background:white"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>소속사</label><input type="text" id="newUserCompany" class="form-control" readonly style="background:white"></div>
+                        <div class="form-group"><label>직함</label><input type="text" id="newUserTitle" class="form-control" readonly style="background:white"></div>
+                    </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>아이디</label><input type="text" id="newUserId" class="form-control"></div>
-                    <div class="form-group"><label>성명</label><input type="text" id="newUserName" class="form-control"></div>
+
+                <!-- 관리자 설정 -->
+                <div style="padding:1rem; border:1px solid #dee2e6; border-radius:6px;">
+                    <h4 style="margin-bottom:0.5rem; font-size:0.9rem; color:var(--accent-color);">[관리자 설정]</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label>아이디 (생성)</label><input type="text" id="newUserId" class="form-control" placeholder="예: FP2025001" required></div>
+                        <div class="form-group"><label>비밀번호 (초기값)</label><input type="text" id="newUserPw" class="form-control" value="1234" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>회원 유형 (본사 지정)</label>
+                            <select id="newUserType" class="form-control">
+                                <option value="inner">이너</option>
+                                <option value="branch">지사장</option>
+                                <option value="consultant_home">컨홈</option>
+                                <option value="non_member">비회원</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>가입비 입금 확인</label>
+                            <select id="regFeeStatus" class="form-control" style="font-weight:bold;">
+                                <option value="unpaid" selected style="color:red;">미입금 (Default)</option>
+                                <option value="paid" style="color:green;">입금완료 (10,000원)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>월 정기결제 금액</label><input type="number" id="newUserFee" class="form-control" value="10000"></div>
                 </div>
-                <div class="form-group"><label>월 결제액</label><input type="number" id="newUserFee" class="form-control" value="10000"></div>
-                <div class="flex-between">
+
+                <div class="flex-between" style="margin-top:1rem;">
                     <button type="button" class="btn btn-outline" onclick="document.getElementById('registerModal').style.display='none'">취소</button>
-                    <button type="submit" class="btn btn-primary">생성</button>
+                    <button type="submit" class="btn btn-primary">승인 및 생성</button>
                 </div>
             </form>
         </div>
@@ -441,7 +434,6 @@
             event.target.closest('.nav-link').classList.add('active');
             document.getElementById(tabId).classList.add('active');
             
-            // 탭 전환 시 초기 렌더링
             if(tabId === 'users') { renderUsers(); }
             if(tabId === 'notices') { renderNotices(); }
             if(tabId === 'suggestions') { renderSuggestions(); }
@@ -457,30 +449,15 @@
             document.getElementById(viewId).classList.add('active');
         }
 
-        // --- 공통 페이징/검색 로직 ---
+        // --- 공통 페이징/검색 로직 (기존 유지) ---
         const PAGE_SIZE = 15;
-        const state = {
-            users: { page: 1, search: '' },
-            pending: { page: 1, search: '' },
-            payments: { page: 1, search: '' },
-            points: { page: 1, search: '' },
-            notices: { page: 1, search: '' },
-            suggestions: { page: 1, search: '' },
-            admins: { page: 1, search: '' }
-        };
+        const state = { users: { page: 1, search: '' }, pending: { page: 1, search: '' }, payments: { page: 1, search: '' }, points: { page: 1, search: '' }, notices: { page: 1, search: '' }, suggestions: { page: 1, search: '' }, admins: { page: 1, search: '' } };
 
         function filterAndPaginate(data, stateKey) {
             const s = state[stateKey];
-            // 검색 필터링 (모든 필드 대상)
-            const filtered = data.filter(item => {
-                if (!s.search) return true;
-                return Object.values(item).some(val => 
-                    String(val).toLowerCase().includes(s.search.toLowerCase())
-                );
-            });
-            // 페이징 처리
+            const filtered = data.filter(item => { if (!s.search) return true; return Object.values(item).some(val => String(val).toLowerCase().includes(s.search.toLowerCase())); });
             const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
-            if (s.page > totalPages) s.page = totalPages; // 페이지 보정
+            if (s.page > totalPages) s.page = totalPages;
             const start = (s.page - 1) * PAGE_SIZE;
             const paged = filtered.slice(start, start + PAGE_SIZE);
             return { paged, totalPages, totalCount: filtered.length };
@@ -489,81 +466,163 @@
         function renderPaginationControls(containerId, stateKey, totalPages, renderFn) {
             const container = document.getElementById(containerId);
             let html = `<button class="page-btn" onclick="changePage('${stateKey}', ${state[stateKey].page - 1})" ${state[stateKey].page === 1 ? 'disabled' : ''}>Prev</button>`;
-            
-            for(let i=1; i<=totalPages; i++) {
-                html += `<button class="page-btn ${i === state[stateKey].page ? 'active' : ''}" onclick="changePage('${stateKey}', ${i})">${i}</button>`;
-            }
-            
+            for(let i=1; i<=totalPages; i++) { html += `<button class="page-btn ${i === state[stateKey].page ? 'active' : ''}" onclick="changePage('${stateKey}', ${i})">${i}</button>`; }
             html += `<button class="page-btn" onclick="changePage('${stateKey}', ${state[stateKey].page + 1})" ${state[stateKey].page === totalPages ? 'disabled' : ''}>Next</button>`;
             container.innerHTML = html;
-            
-            // 전역 함수로 연결하기 위해 window 객체에 할당 (간단 구현용)
-            window.changePage = (key, newPage) => {
-                if(newPage < 1 || newPage > totalPages) return;
-                state[key].page = newPage;
-                renderFn(); // 해당 렌더 함수 재호출
-            };
+            window.changePage = (key, newPage) => { if(newPage < 1 || newPage > totalPages) return; state[key].page = newPage; renderFn(); };
         }
 
-        // --- 데이터 (대량 더미 데이터 생성) ---
-        function generateDummy(count, generator) {
-            return Array.from({length: count}, (_, i) => generator(i + 1));
-        }
+        // --- 데이터 (시뮬레이션: login.html의 필드명 반영) ---
+        function generateDummy(count, generator) { return Array.from({length: count}, (_, i) => generator(i + 1)); }
 
-        let pendingApps = generateDummy(5, i => ({ id: 100+i, name: `신청자${i}`, company: 'OO생명', title: '팀장', phone: `010-0000-000${i}`, type: 'general', email: `user${i}@test.com`, appliedAt: '2025-11-30 10:00' }));
-        let users = generateDummy(50, i => ({ id: i, userId: `FP2025${i.toString().padStart(3,'0')}`, name: `회원${i}`, company: '삼성생명', jobTitle: 'FP', type: 'branch', phone: '010-1234-5678', password: 'pw', status: 'active', monthlyFee: 10000 }));
-        let notices = generateDummy(20, i => ({ id: i, title: `공지사항 제목 테스트 ${i}`, content: '내용...', date: '2025-11-28', file: '' }));
-        let suggestions = generateDummy(10, i => ({ id: i, title: `건의사항입니다 ${i}`, writer: `회원${i}`, date: '2025-11-30', status: '대기' }));
-        let admins = [ { id: 'admin', name: '최고관리자', role: 'Super', date: '2025-01-01' }, { id: 'sub1', name: '운영자', role: 'Manager', date: '2025-02-01' } ];
+        // 가입 신청 내역 (login.html에 있던 필드 모두 반영: position -> title 로 매핑)
+        let pendingApps = [
+            { id: 101, name: '박신청', phone: '010-9999-8888', email: 'park@naver.com', company: '한화생명', title: '팀장', region: '대전', appliedAt: '2025-11-30 10:00', type: '-', feeStatus: 'unpaid' },
+            { id: 102, name: '최대기', phone: '010-7777-6666', email: 'choi@gmail.com', company: '교보생명', title: 'FP', region: '광주', appliedAt: '2025-11-30 11:30', type: '-', feeStatus: 'unpaid' },
+            { id: 103, name: '이신규', phone: '010-1234-4321', email: 'lee@daum.net', company: '삼성화재', title: 'RC', region: '서울', appliedAt: '2025-11-30 14:00', type: '-', feeStatus: 'unpaid' }
+        ];
+
+        let users = generateDummy(50, i => ({ id: i, userId: `FP2025${i.toString().padStart(3,'0')}`, name: `회원${i}`, company: '삼성생명', jobTitle: 'FP', region: '서울', email: `user${i}@test.com`, type: 'branch', phone: '010-1234-5678', feeStatus: 'paid', monthlyFee: 10000, status: 'active' }));
+        let notices = generateDummy(20, i => ({ id: i, title: `공지사항 제목 ${i}`, content: '내용...', date: '2025-11-28', file: '' }));
+        let suggestions = generateDummy(10, i => ({ id: i, title: `건의사항 ${i}`, writer: `회원${i}`, date: '2025-11-30', status: '대기' }));
+        let admins = [ { id: 'admin', name: '최고관리자', role: 'Super', date: '2025-01-01' } ];
         let payments = generateDummy(30, i => ({ date: '2025-11-30', userId: `FP2025${i}`, name: `회원${i}`, amount: 10000, type: '정기결제', result: 'success' }));
         let pointLogs = generateDummy(30, i => ({ date: '2025-11-30', userId: `FP2025${i}`, name: `회원${i}`, type: 'earn', category: '적립', amount: 10000, balance: 10000 }));
 
-        // --- 렌더링 함수들 (페이징 적용) ---
+        // --- 렌더링 함수들 ---
         function renderUsers() {
-            // 대기자 목록
+            // 대기자 목록 (업데이트: 유형/가입비/이메일 등 모든 필드 표시)
             state.pending.search = document.getElementById('pendingSearch').value;
             const pendingRes = filterAndPaginate(pendingApps, 'pending');
             const pendingBody = document.getElementById('pendingTableBody');
-            if(pendingRes.totalCount === 0) pendingBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">데이터 없음</td></tr>';
-            else pendingBody.innerHTML = pendingRes.paged.map(app => `<tr><td>${app.appliedAt}</td><td>${app.name}</td><td>${app.company}/${app.title}</td><td>${app.phone}</td><td><span class="badge badge-gray">${app.type}</span></td><td><span class="badge badge-warning">확인필요</span></td><td><button class="btn btn-primary btn-sm" onclick="openIssueIdModal(${app.id})">ID발급</button></td></tr>`).join('');
+            if(pendingRes.totalCount === 0) pendingBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">신청 대기 내역이 없습니다.</td></tr>';
+            else pendingBody.innerHTML = pendingRes.paged.map(app => `
+                <tr>
+                    <td>${app.appliedAt}</td>
+                    <td>${app.name}</td>
+                    <td>${app.company} ${app.title}</td>
+                    <td>${app.region}</td>
+                    <td>${app.phone}</td>
+                    <td>${app.email}</td>
+                    <td><span class="badge badge-gray">${app.type || '미지정'}</span></td>
+                    <td><span class="badge badge-red">미입금</span></td>
+                    <td><button class="btn btn-primary btn-sm" onclick="openIssueIdModal(${app.id})">ID발급</button></td>
+                </tr>`).join('');
             renderPaginationControls('pendingPagination', 'pending', pendingRes.totalPages, renderUsers);
 
-            // 전체 회원 목록
+            // 전체 회원 목록 (기존 유지)
             state.users.search = document.getElementById('userSearch').value;
             const userRes = filterAndPaginate(users, 'users');
             const userBody = document.getElementById('userTableBody');
-            userBody.innerHTML = userRes.paged.map((u) => `<tr><td>${u.id}</td><td class="clickable-cell">${u.userId}</td><td>${u.name}</td><td>${u.company}</td><td>${u.type}</td><td>${u.phone}</td><td style="font-weight:bold; color:var(--accent-color);">${u.monthlyFee.toLocaleString()}</td><td><span class="badge badge-green">${u.status}</span></td><td><button class="btn btn-outline btn-sm">관리</button></td></tr>`).join('');
+            userBody.innerHTML = userRes.paged.map((u) => {
+                const feeBadge = u.feeStatus === 'paid' ? '<span class="badge badge-green">납부</span>' : '<span class="badge badge-red">미납</span>';
+                const typeMap = {'inner': '이너', 'branch': '지사장', 'consultant_home': '컨홈', 'non_member': '비회원', 'general': '일반'}; // 매핑
+                return `<tr>
+                    <td>${u.id}</td>
+                    <td class="clickable-cell">${u.userId}</td>
+                    <td>${u.name}</td>
+                    <td>${u.company} ${u.jobTitle}</td>
+                    <td>${u.region}</td>
+                    <td><span class="badge badge-gray">${typeMap[u.type] || u.type}</span></td>
+                    <td>${u.phone}<br><span style="color:#888;font-size:0.8rem">${u.email}</span></td>
+                    <td>${feeBadge}</td>
+                    <td style="font-weight:bold; color:var(--accent-color);">${u.monthlyFee.toLocaleString()}</td>
+                    <td><span class="badge badge-green">${u.status}</span></td>
+                    <td><button class="btn btn-outline btn-sm">관리</button></td>
+                </tr>`;
+            }).join('');
             renderPaginationControls('userPagination', 'users', userRes.totalPages, renderUsers);
         }
 
+        // --- 승인 및 등록 로직 (기존 유지) ---
+        function openIssueIdModal(appId) {
+            const app = pendingApps.find(a => a.id === appId);
+            if(!app) return;
+
+            // 신청 정보 자동 입력 (Readonly)
+            document.getElementById('newUserName').value = app.name;
+            document.getElementById('newUserPhone').value = app.phone;
+            document.getElementById('newUserEmail').value = app.email;
+            document.getElementById('newUserRegion').value = app.region;
+            document.getElementById('newUserCompany').value = app.company;
+            document.getElementById('newUserTitle').value = app.title;
+            
+            // 관리자 입력 필드 초기화
+            document.getElementById('newUserId').value = ''; 
+            document.getElementById('newUserPw').value = '1234';
+            document.getElementById('newUserType').value = 'inner'; 
+            document.getElementById('regFeeStatus').value = 'unpaid'; 
+            
+            document.getElementById('registerForm').dataset.appId = appId;
+            document.getElementById('registerModal').style.display = 'flex';
+        }
+
+        // 수동 등록 (신청 내역 없이)
+        function openRegisterModal() {
+            document.getElementById('registerForm').reset();
+            document.querySelectorAll('#registerForm input[readonly]').forEach(el => {
+                el.removeAttribute('readonly');
+                el.style.background = 'white';
+            });
+            delete document.getElementById('registerForm').dataset.appId;
+            document.getElementById('registerModal').style.display = 'flex';
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', function(e){
+            e.preventDefault();
+            const appId = this.dataset.appId ? parseInt(this.dataset.appId) : null;
+            
+            const newUser = {
+                id: users.length+1, 
+                userId: document.getElementById('newUserId').value,
+                name: document.getElementById('newUserName').value, 
+                phone: document.getElementById('newUserPhone').value,
+                email: document.getElementById('newUserEmail').value,
+                region: document.getElementById('newUserRegion').value,
+                company: document.getElementById('newUserCompany').value, 
+                jobTitle: document.getElementById('newUserTitle').value,
+                type: document.getElementById('newUserType').value, 
+                monthlyFee: parseInt(document.getElementById('newUserFee').value),
+                feeStatus: document.getElementById('regFeeStatus').value, 
+                status: 'active'
+            };
+            
+            users.unshift(newUser); 
+
+            if(appId) {
+                pendingApps = pendingApps.filter(a => a.id !== appId);
+            }
+
+            renderUsers();
+            document.getElementById('registerModal').style.display='none';
+            alert('회원 계정이 생성되었습니다.');
+        });
+
+        // --- 기타 렌더링 함수들 ---
         function renderNotices() {
             state.notices.search = document.getElementById('noticeSearch').value;
             const res = filterAndPaginate(notices, 'notices');
             document.getElementById('noticeTableBody').innerHTML = res.paged.map(n => `<tr><td>${n.id}</td><td style="font-weight:600; cursor:pointer;" onclick="openEditNotice(${n.id})">${n.title}</td><td>${n.date}</td><td>${n.file?n.file:'-'}</td><td><button class="btn btn-outline btn-sm" onclick="openEditNotice(${n.id})">수정</button></td></tr>`).join('');
             renderPaginationControls('noticePagination', 'notices', res.totalPages, renderNotices);
         }
-
         function renderSuggestions() {
             state.suggestions.search = document.getElementById('suggestionSearch').value;
             const res = filterAndPaginate(suggestions, 'suggestions');
             document.getElementById('suggestionTableBody').innerHTML = res.paged.map(s => `<tr><td>${s.id}</td><td>${s.title}</td><td>${s.writer}</td><td>${s.date}</td><td><span class="badge badge-warning">${s.status}</span></td><td><button class="btn btn-outline btn-sm">보기</button></td></tr>`).join('');
             renderPaginationControls('suggestionPagination', 'suggestions', res.totalPages, renderSuggestions);
         }
-
         function renderAdmins() {
             state.admins.search = document.getElementById('adminSearch').value;
             const res = filterAndPaginate(admins, 'admins');
             document.getElementById('adminTableBody').innerHTML = res.paged.map(a => `<tr><td>${a.id}</td><td>${a.name}</td><td>${a.role}</td><td>-</td></tr>`).join('');
             renderPaginationControls('adminPagination', 'admins', res.totalPages, renderAdmins);
         }
-
         function renderPaymentHistory() {
             state.payments.search = document.getElementById('paymentSearch').value;
             const res = filterAndPaginate(payments, 'payments');
             document.getElementById('paymentHistoryBody').innerHTML = res.paged.map(p => `<tr><td>${p.date}</td><td>${p.userId}</td><td>${p.name}</td><td>${p.amount.toLocaleString()}</td><td>${p.type}</td><td>${p.result}</td></tr>`).join('');
             renderPaginationControls('paymentPagination', 'payments', res.totalPages, renderPaymentHistory);
         }
-
         function renderPointLogs() {
             state.points.search = document.getElementById('pointSearch').value;
             const res = filterAndPaginate(pointLogs, 'points');
@@ -571,9 +630,7 @@
             renderPaginationControls('pointPagination', 'points', res.totalPages, renderPointLogs);
         }
 
-        // --- 기타 로직 (기존 유지) ---
-        function openIssueIdModal(id) { alert('ID 발급 모달 오픈: ' + id); }
-        function openRegisterModal() { document.getElementById('registerModal').style.display='flex'; }
+        // --- 기타 공통 로직 ---
         function openNoticeModal() { document.getElementById('noticeModal').style.display='flex'; }
         function openEditNotice(id) { document.getElementById('noticeModal').style.display='flex'; }
         function execCmd(cmd) { document.execCommand(cmd, false, null); }
