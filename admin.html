@@ -514,6 +514,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
 
     <script>
         // --- 1. Firebase 초기화 ---
@@ -529,6 +530,7 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
+        const functions = firebase.functions();  // ★ Cloud Functions 초기화
 
         // --- 2. 엑셀 다운로드 기능 ---
         function exportTableToExcel(tableId, filename = '') {
@@ -937,19 +939,33 @@
             if (!confirm(`비밀번호를 "${newPassword}"로 변경하시겠습니까?`)) return;
             
             try {
-                // Firestore 업데이트
-                await db.collection('users').doc(docId).update({
-                    password: newPassword,
-                    isPasswordChanged: true,
-                    passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                // ★ Cloud Function 호출하여 Firebase Auth + Firestore 동시 변경
+                const changePassword = functions.httpsCallable('changeUserPassword');
+                const result = await changePassword({ uid: docId, newPassword: newPassword });
                 
-                alert(`✅ Firestore 비밀번호가 "${newPassword}"로 변경되었습니다.\n\n` +
-                      `⚠️ Firebase Auth 비밀번호는 Console에서 직접 변경해주세요:\n` +
-                      `Authentication > Users > ${user.userId}@system.local > 비밀번호 재설정`);
+                alert(`✅ 비밀번호가 "${newPassword}"로 변경되었습니다.\n\n이제 새 비밀번호로 로그인할 수 있습니다.`);
+                
             } catch (err) {
                 console.error('비밀번호 변경 오류:', err);
-                alert('오류 발생: ' + err.message);
+                
+                // Cloud Functions가 없으면 Firestore만 업데이트 (폴백)
+                if (err.code === 'functions/not-found' || err.message.includes('not found')) {
+                    try {
+                        await db.collection('users').doc(docId).update({
+                            password: newPassword,
+                            isPasswordChanged: true,
+                            passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        alert(`⚠️ Cloud Functions가 배포되지 않아 Firestore만 업데이트되었습니다.\n\n` +
+                              `실제 로그인을 위해 Firebase Console에서 비밀번호를 변경하거나,\n` +
+                              `Cloud Functions를 배포해주세요.`);
+                    } catch (e) {
+                        alert('오류 발생: ' + e.message);
+                    }
+                } else {
+                    alert('오류 발생: ' + (err.message || err));
+                }
             }
         }
         
@@ -957,22 +973,37 @@
         async function resetUserPassword(docId, user) {
             if (!confirm(`[${user.name}] 회원의 비밀번호를 123456으로 초기화하시겠습니까?`)) return;
             
-            // 클라이언트에서 다른 사용자의 비밀번호 변경은 Firebase Admin SDK 필요
-            // 여기서는 Firestore에 비밀번호와 플래그를 설정
             try {
+                // ★ Cloud Function 호출
+                const changePassword = functions.httpsCallable('changeUserPassword');
+                await changePassword({ uid: docId, newPassword: '123456' });
+                
+                // isPasswordChanged를 false로 설정 (첫 로그인 시 변경 유도)
                 await db.collection('users').doc(docId).update({
-                    password: '123456',  // ★ Firestore 비밀번호 업데이트
-                    isPasswordChanged: false,
-                    passwordResetRequested: true,
-                    passwordResetAt: firebase.firestore.FieldValue.serverTimestamp()
+                    isPasswordChanged: false
                 });
                 
-                alert(`✅ 비밀번호가 123456으로 초기화되었습니다.\n\n` +
-                      `⚠️ 참고: Firebase Auth 비밀번호는 Firebase Console에서 직접 변경해주세요.\n` +
-                      `(Authentication > Users > 해당 사용자 > 비밀번호 재설정)`);
+                alert(`✅ 비밀번호가 123456으로 초기화되었습니다.\n\n회원이 로그인 시 비밀번호 변경을 요청받습니다.`);
+                
             } catch (err) {
                 console.error('비밀번호 초기화 오류:', err);
-                alert('오류 발생: ' + err.message);
+                
+                // Cloud Functions 없으면 Firestore만 업데이트
+                if (err.code === 'functions/not-found' || err.message.includes('not found')) {
+                    try {
+                        await db.collection('users').doc(docId).update({
+                            password: '123456',
+                            isPasswordChanged: false,
+                            passwordResetAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        alert(`⚠️ Cloud Functions가 배포되지 않아 Firestore만 업데이트되었습니다.\n\n` +
+                              `실제 로그인을 위해 Firebase Console에서 비밀번호를 변경해주세요.`);
+                    } catch (e) {
+                        alert('오류 발생: ' + e.message);
+                    }
+                } else {
+                    alert('오류 발생: ' + (err.message || err));
+                }
             }
         }
         
@@ -982,16 +1013,29 @@
             if (!confirm(`마지막 확인: [${user.userId}] 계정을 삭제합니다.`)) return;
             
             try {
-                // Firestore에서 삭제
-                await db.collection('users').doc(docId).delete();
+                // ★ Cloud Function 호출 (Firebase Auth + Firestore 동시 삭제)
+                const deleteUserFn = functions.httpsCallable('deleteUser');
+                await deleteUserFn({ uid: docId });
                 
-                alert(`✅ Firestore에서 회원 정보가 삭제되었습니다.\n\n` +
-                      `⚠️ 참고: Firebase Auth 계정은 Firebase Console에서 직접 삭제해주세요.\n` +
-                      `(Authentication > Users > 해당 사용자 삭제)`);
+                alert(`✅ 회원이 완전히 삭제되었습니다.`);
                       
             } catch (err) {
                 console.error('회원 삭제 오류:', err);
-                alert('오류 발생: ' + err.message);
+                
+                // Cloud Functions 없으면 Firestore만 삭제
+                if (err.code === 'functions/not-found' || err.message.includes('not found')) {
+                    try {
+                        await db.collection('users').doc(docId).delete();
+                        alert(`⚠️ Cloud Functions가 배포되지 않아 Firestore만 삭제되었습니다.\n\n` +
+                              `Firebase Auth 계정은 Console에서 직접 삭제해주세요.`);
+                    } catch (e) {
+                        alert('오류 발생: ' + e.message);
+                    }
+                } else {
+                    alert('오류 발생: ' + (err.message || err));
+                }
+            }
+        }
             }
         }
 
@@ -1210,8 +1254,11 @@
                 }
             });
             
-            if (allAdmins.length > 0) {
-                html += allAdmins.map(a => {
+            // ★ 하드코딩된 'admin'과 중복되는 항목 제외
+            const filteredAdmins = allAdmins.filter(a => a.userId !== 'admin');
+            
+            if (filteredAdmins.length > 0) {
+                html += filteredAdmins.map(a => {
                     const dateStr = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString() : '-';
                     const roleBadge = a.role === 'super_admin' 
                         ? '<span class="badge badge-purple">최고관리자</span>' 
@@ -1259,21 +1306,34 @@
             if (!confirm(`비밀번호를 "${newPassword}"로 변경하시겠습니까?`)) return;
             
             try {
-                // admins 컬렉션 업데이트
+                // ★ Cloud Function 호출
+                const changePassword = functions.httpsCallable('changeUserPassword');
+                await changePassword({ uid: docId, newPassword: newPassword });
+                
+                // admins 컬렉션도 업데이트
                 await db.collection('admins').doc(docId).update({
                     password: newPassword
                 }).catch(() => {});
                 
-                // users 컬렉션도 업데이트
-                await db.collection('users').doc(docId).update({
-                    password: newPassword
-                }).catch(() => {});
+                alert(`✅ 비밀번호가 "${newPassword}"로 변경되었습니다.`);
                 
-                alert(`✅ 비밀번호가 "${newPassword}"로 변경되었습니다.\n\n` +
-                      `⚠️ Firebase Auth 비밀번호는 Console에서 직접 변경해주세요.`);
             } catch (err) {
                 console.error('비밀번호 변경 오류:', err);
-                alert('오류 발생: ' + err.message);
+                
+                // Cloud Functions 없으면 Firestore만 업데이트
+                if (err.code === 'functions/not-found' || err.message.includes('not found')) {
+                    try {
+                        await db.collection('admins').doc(docId).update({ password: newPassword }).catch(() => {});
+                        await db.collection('users').doc(docId).update({ password: newPassword }).catch(() => {});
+                        
+                        alert(`⚠️ Cloud Functions가 배포되지 않아 Firestore만 업데이트되었습니다.\n\n` +
+                              `실제 로그인을 위해 Firebase Console에서 비밀번호를 변경해주세요.`);
+                    } catch (e) {
+                        alert('오류 발생: ' + e.message);
+                    }
+                } else {
+                    alert('오류 발생: ' + (err.message || err));
+                }
             }
         }
         
