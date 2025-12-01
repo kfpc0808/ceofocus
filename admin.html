@@ -582,10 +582,10 @@
                         <div class="form-group">
                             <label>회원 유형</label>
                             <select id="editUserType" class="form-control">
-                                <option value="inner">이너(소속)</option>
-                                <option value="ga">GA</option>
-                                <option value="org">법인</option>
-                                <option value="other">기타</option>
+                                <option value="지사">지사</option>
+                                <option value="이너">이너</option>
+                                <option value="컨홈">컨홈</option>
+                                <option value="비회원">비회원</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -812,8 +812,27 @@
             const uRes = filterAndPaginate(nonAdminUsers, 'users');
             
             uBody.innerHTML = uRes.paged.map((u, idx) => {
-                const feeBadge = u.feeStatus === 'paid' ? '<span class="badge badge-green">납부</span>' : '<span class="badge badge-red">미납</span>';
-                const typeMap = {'inner': '이너', 'branch': '지사장', 'consultant_home': '컨홈', 'non_member': '비회원', 'general': '일반'};
+                // ★ 가입비 상태 (regFeeStatus 사용)
+                let feeBadge = '<span class="badge badge-red">미납</span>';
+                if (u.regFeeStatus === 'paid') {
+                    feeBadge = '<span class="badge badge-green">납부</span>';
+                } else if (u.regFeeStatus === 'exempt') {
+                    feeBadge = '<span class="badge badge-gray">면제</span>';
+                }
+                
+                // ★ 상태 한글 표시
+                const statusMap = {'active': '활성', 'inactive': '비활성', 'suspended': '정지'};
+                const statusText = statusMap[u.status] || u.status || '-';
+                let statusBadge = '<span class="badge badge-green">' + statusText + '</span>';
+                if (u.status === 'inactive') {
+                    statusBadge = '<span class="badge badge-gray">' + statusText + '</span>';
+                } else if (u.status === 'suspended') {
+                    statusBadge = '<span class="badge badge-red">' + statusText + '</span>';
+                }
+                
+                // ★ 유형 표시 (한글 그대로 또는 매핑)
+                const typeDisplay = u.type || '-';
+                
                 const fee = u.monthlyFee ? u.monthlyFee.toLocaleString() : '0';
                 
                 // 비밀번호 표시: 저장된 비밀번호가 있으면 표시, 없으면 초기값 또는 "변경됨"
@@ -834,11 +853,11 @@
                     <td>${pwDisplay}</td>
                     <td>${u.company || ''} ${u.jobTitle || ''}</td>
                     <td>${u.region || '-'}</td>
-                    <td><span class="badge badge-gray">${typeMap[u.type] || u.type || '-'}</span></td>
+                    <td><span class="badge badge-gray">${typeDisplay}</span></td>
                     <td>${u.phone || '-'}<br><span style="color:#888;font-size:0.8rem">${u.email || '-'}</span></td>
                     <td>${feeBadge}</td>
                     <td style="font-weight:bold; color:var(--accent-color);">${fee}</td>
-                    <td><span class="badge badge-green">${u.status || '-'}</span></td>
+                    <td>${statusBadge}</td>
                     <td><button class="btn btn-outline btn-sm" onclick="openUserEditModal('${u.id}')"><i class="ph ph-pencil-simple"></i> 수정</button></td>
                 </tr>`;
             }).join('');
@@ -1045,7 +1064,7 @@
             document.getElementById('editUserCompany').value = user.company || '';
             document.getElementById('editUserJobTitle').value = user.jobTitle || '';
             document.getElementById('editUserRegion').value = user.region || '';
-            document.getElementById('editUserType').value = user.type || 'inner';
+            document.getElementById('editUserType').value = user.type || '이너';
             document.getElementById('editUserStatus').value = user.status || 'active';
             document.getElementById('editRegFeeStatus').value = user.regFeeStatus || 'unpaid';
             document.getElementById('editMonthlyFee').value = user.monthlyFee || 0;
