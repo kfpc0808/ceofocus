@@ -652,6 +652,7 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
         const functions = firebase.app().functions('us-central1');  // ★ Cloud Functions 초기화 (region 지정)
+        const ADMIN_SECRET = 'finmaster-admin-2024';  // ★ 관리자 비밀키
 
         // --- 2. 엑셀 다운로드 기능 ---
         function exportTableToExcel(tableId, filename = '') {
@@ -1082,7 +1083,7 @@
             
             try {
                 const deleteUserFn = functions.httpsCallable('deleteUser');
-                await deleteUserFn({ uid: currentEditUserId });
+                await deleteUserFn({ uid: currentEditUserId, adminSecret: ADMIN_SECRET });
                 
                 alert(`✅ 회원이 삭제되었습니다.`);
                 closeUserEditModal();
@@ -1132,7 +1133,7 @@
                 if (newPassword) {
                     try {
                         const changePassword = functions.httpsCallable('changeUserPassword');
-                        await changePassword({ uid: docId, newPassword: newPassword });
+                        await changePassword({ uid: docId, newPassword: newPassword, adminSecret: ADMIN_SECRET });
                         updateData.password = newPassword;
                         updateData.isPasswordChanged = true;
                     } catch (pwErr) {
@@ -1216,7 +1217,7 @@
             try {
                 // ★ Cloud Function 호출하여 Firebase Auth + Firestore 동시 변경
                 const changePassword = functions.httpsCallable('changeUserPassword');
-                const result = await changePassword({ uid: docId, newPassword: newPassword });
+                const result = await changePassword({ uid: docId, newPassword: newPassword, adminSecret: ADMIN_SECRET });
                 
                 alert(`✅ 비밀번호가 "${newPassword}"로 변경되었습니다.\n\n이제 새 비밀번호로 로그인할 수 있습니다.`);
                 
@@ -1251,7 +1252,7 @@
             try {
                 // ★ Cloud Function 호출
                 const changePassword = functions.httpsCallable('changeUserPassword');
-                await changePassword({ uid: docId, newPassword: '123456' });
+                await changePassword({ uid: docId, newPassword: '123456', adminSecret: ADMIN_SECRET });
                 
                 // isPasswordChanged를 false로 설정 (첫 로그인 시 변경 유도)
                 await db.collection('users').doc(docId).update({
@@ -1290,7 +1291,7 @@
             try {
                 // ★ Cloud Function 호출 (Firebase Auth + Firestore 동시 삭제)
                 const deleteUserFn = functions.httpsCallable('deleteUser');
-                await deleteUserFn({ uid: docId });
+                await deleteUserFn({ uid: docId, adminSecret: ADMIN_SECRET });
                 
                 alert(`✅ 회원이 완전히 삭제되었습니다.`);
                       
@@ -1581,7 +1582,7 @@
             try {
                 // ★ Cloud Function 호출
                 const changePassword = functions.httpsCallable('changeUserPassword');
-                await changePassword({ uid: docId, newPassword: newPassword });
+                await changePassword({ uid: docId, newPassword: newPassword, adminSecret: ADMIN_SECRET });
                 
                 // admins 컬렉션도 업데이트
                 await db.collection('admins').doc(docId).update({
