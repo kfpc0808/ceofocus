@@ -175,14 +175,14 @@
     <nav class="sidebar">
         <a href="#" class="logo"><i class="ph ph-briefcase-metal"></i> Fin.Master</a>
         <ul class="nav-menu">
-            <li class="nav-item"><a class="nav-link active" onclick="switchTab('dashboard')"><i class="ph ph-squares-four"></i> 대시보드</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="switchTab('users')"><i class="ph ph-users"></i> 회원 관리</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="switchTab('payment')"><i class="ph ph-credit-card"></i> 결제·포인트</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="switchTab('prompts')"><i class="ph ph-robot"></i> AI 프롬프트</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="switchTab('suggestions')"><i class="ph ph-mailbox"></i> 제안/건의</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="switchTab('notices')"><i class="ph ph-megaphone"></i> 공지사항</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="switchTab('admins')"><i class="ph ph-user-gear"></i> 관리자 관리</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="switchTab('terms')"><i class="ph ph-scroll"></i> 약관 및 정책</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link active" data-tab="dashboard" onclick="switchTab('dashboard')"><i class="ph ph-squares-four"></i> 대시보드</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="users" onclick="switchTab('users')"><i class="ph ph-users"></i> 회원 관리</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="payment" onclick="switchTab('payment')"><i class="ph ph-credit-card"></i> 결제·포인트</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="prompts" onclick="switchTab('prompts')"><i class="ph ph-robot"></i> AI 프롬프트</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="suggestions" onclick="switchTab('suggestions')"><i class="ph ph-mailbox"></i> 제안/건의</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="notices" onclick="switchTab('notices')"><i class="ph ph-megaphone"></i> 공지사항</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="admins" onclick="switchTab('admins')"><i class="ph ph-user-gear"></i> 관리자 관리</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="terms" onclick="switchTab('terms')"><i class="ph ph-scroll"></i> 약관 및 정책</a></li>
         </ul>
         <div class="admin-profile">
             <i class="ph ph-user-circle" style="font-size: 2rem;"></i>
@@ -547,10 +547,21 @@
         }
 
         function switchTab(tabId) {
-            document.querySelectorAll('.nav-menu .nav-link').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelector(`.nav-link[onclick="switchTab('${tabId}')"]`).classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+            try {
+                console.log('switchTab 호출:', tabId);
+                // 모든 nav-link에서 active 제거
+                document.querySelectorAll('.nav-menu .nav-link').forEach(el => el.classList.remove('active'));
+                // 모든 tab-content에서 active 제거
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                // 클릭한 메뉴에 active 추가
+                const clickedLink = document.querySelector('.nav-link[data-tab="' + tabId + '"]');
+                if (clickedLink) clickedLink.classList.add('active');
+                // 해당 탭 콘텐츠 표시
+                const tabContent = document.getElementById(tabId);
+                if (tabContent) tabContent.classList.add('active');
+            } catch(e) {
+                console.error('switchTab 오류:', e);
+            }
         }
         function switchSubTab(element, viewId) {
             element.parentElement.querySelectorAll('.sub-nav-item').forEach(el => el.classList.remove('active'));
@@ -568,42 +579,52 @@
         
         // ★ 관리자 인증 체크 및 Firebase 리스너 초기화
         function checkAdminAndInitialize() {
-            // 1. sessionStorage 관리자 로그인 체크
-            if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
-                alert('관리자 로그인이 필요합니다.');
-                location.href = 'login.html';
-                return;
+            try {
+                // 1. sessionStorage 관리자 로그인 체크
+                if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
+                    alert('관리자 로그인이 필요합니다.');
+                    location.href = 'login.html';
+                    return;
+                }
+                
+                console.log('✅ 관리자 인증 확인됨');
+                
+                // 2. Firebase 실시간 리스너 시작
+                initializeFirebaseListeners();
+            } catch(e) {
+                console.error('checkAdminAndInitialize 오류:', e);
             }
-            
-            console.log('✅ 관리자 인증 확인됨');
-            
-            // 2. Firebase 실시간 리스너 시작
-            initializeFirebaseListeners();
         }
         
         function initializeFirebaseListeners() {
-            // [실시간 리스너] 가입 신청 내역 (account_requests)
-            db.collection('account_requests').orderBy('requestedAt', 'desc').onSnapshot((snapshot) => {
-                pendingApps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderUsers();
-                document.getElementById('statPending').innerText = pendingApps.length;
-            }, (error) => {
-                console.error('account_requests 리스너 오류:', error);
-            });
+            try {
+                // [실시간 리스너] 가입 신청 내역 (account_requests)
+                db.collection('account_requests').orderBy('requestedAt', 'desc').onSnapshot((snapshot) => {
+                    pendingApps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderUsers();
+                    const statPending = document.getElementById('statPending');
+                    if (statPending) statPending.innerText = pendingApps.length;
+                }, (error) => {
+                    console.error('account_requests 리스너 오류:', error);
+                });
 
-            // [실시간 리스너] 회원 목록 (users)
-            db.collection('users').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-                users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderUsers();
-                document.getElementById('statTotalUsers').innerText = users.length;
-            }, (error) => {
-                console.error('users 리스너 오류:', error);
-            });
-            
-            // ★ 추가 리스너들
-            initNoticesListener();  // 공지사항
-            initAdminsListener();   // 관리자
-            loadPrompts();          // AI 프롬프트 로드
+                // [실시간 리스너] 회원 목록 (users)
+                db.collection('users').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+                    users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderUsers();
+                    const statTotalUsers = document.getElementById('statTotalUsers');
+                    if (statTotalUsers) statTotalUsers.innerText = users.length;
+                }, (error) => {
+                    console.error('users 리스너 오류:', error);
+                });
+                
+                // ★ 추가 리스너들
+                initNoticesListener();  // 공지사항
+                initAdminsListener();   // 관리자
+                loadPrompts();          // AI 프롬프트 로드
+            } catch(e) {
+                console.error('initializeFirebaseListeners 오류:', e);
+            }
         }
 
         // --- 렌더링 함수 (페이징/검색 포함) ---
@@ -1036,8 +1057,6 @@
                 }
             }
         }
-            }
-        }
 
         // ==================== AI 프롬프트 관리 ====================
         let prompts = {};
@@ -1445,8 +1464,13 @@
 
         // 초기화
         window.onload = function() {
-            // ★ 관리자 인증 체크 후 Firebase 리스너 시작
-            checkAdminAndInitialize();
+            try {
+                console.log('✅ 페이지 로드 완료');
+                // ★ 관리자 인증 체크 후 Firebase 리스너 시작
+                checkAdminAndInitialize();
+            } catch(e) {
+                console.error('window.onload 오류:', e);
+            }
         }
     </script>
 </body>
