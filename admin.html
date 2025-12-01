@@ -255,13 +255,14 @@
                 <div class="table-controls">
                     <h3>전체 회원 목록</h3>
                     <div style="display:flex; gap:0.5rem;">
+                        <button class="btn btn-danger btn-sm" onclick="deleteSelectedUsers()"><i class="ph ph-trash"></i> 선택 삭제</button>
                         <div class="search-box"><input type="text" id="userSearch" placeholder="아이디, 이름 검색" onkeyup="renderUsers()"></div>
                         <button class="btn btn-success btn-sm" onclick="exportTableToExcel('userTable', '전체회원목록')"><i class="ph ph-file-xls"></i> 엑셀</button>
                     </div>
                 </div>
                 <div class="table-container">
                     <table id="userTable">
-                        <thead><tr><th>No</th><th>아이디</th><th>성명</th><th>소속/직함</th><th>지역</th><th>유형</th><th>연락처/메일</th><th>가입비</th><th>월 결제액</th><th>상태</th><th>관리</th></tr></thead>
+                        <thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers()"></th><th>No</th><th>아이디</th><th>성명</th><th>비밀번호</th><th>소속/직함</th><th>지역</th><th>유형</th><th>연락처/메일</th><th>가입비</th><th>월 결제액</th><th>상태</th><th>관리</th></tr></thead>
                         <tbody id="userTableBody"></tbody>
                     </table>
                 </div>
@@ -397,7 +398,7 @@
             <div class="page-header"><h1 class="page-title">관리자 계정 관리</h1><button class="btn btn-primary" onclick="openAdminModal()"><i class="ph ph-plus"></i> 추가</button></div>
             <div class="card">
                 <p style="margin-bottom:1rem; color:#666; font-size:0.9rem;">⚠️ 관리자 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.</p>
-                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>생성일</th><th>관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>비밀번호</th><th>관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
             </div>
         </div>
 
@@ -658,19 +659,34 @@
             }
             renderPaginationControls('pendingPagination', 'pending', pRes.totalPages, renderUsers);
 
-            // 2. 전체 회원 목록
+            // 2. 전체 회원 목록 (관리자 제외)
             state.users.search = userSearchEl ? userSearchEl.value : '';
-            const uRes = filterAndPaginate(users, 'users');
+            
+            // ★ 관리자(admin)는 회원 목록에서 제외
+            const nonAdminUsers = users.filter(u => u.type !== 'admin' && u.role !== 'admin' && !u.isAdmin);
+            const uRes = filterAndPaginate(nonAdminUsers, 'users');
             
             uBody.innerHTML = uRes.paged.map((u, idx) => {
                 const feeBadge = u.feeStatus === 'paid' ? '<span class="badge badge-green">납부</span>' : '<span class="badge badge-red">미납</span>';
                 const typeMap = {'inner': '이너', 'branch': '지사장', 'consultant_home': '컨홈', 'non_member': '비회원', 'general': '일반'};
                 const fee = u.monthlyFee ? u.monthlyFee.toLocaleString() : '0';
                 
+                // 비밀번호 표시: 저장된 비밀번호가 있으면 표시, 없으면 초기값 또는 "변경됨"
+                let pwDisplay = '-';
+                if (u.password) {
+                    pwDisplay = `<span class="password-display">${u.password}</span>`;
+                } else if (u.isPasswordChanged === false) {
+                    pwDisplay = '<span class="password-display">123456</span>';
+                } else {
+                    pwDisplay = '<span style="color:#888; font-size:0.8rem;">변경됨</span>';
+                }
+                
                 return `<tr>
+                    <td><input type="checkbox" class="user-checkbox" value="${u.id}" data-userid="${u.userId}"></td>
                     <td>${idx+1}</td>
                     <td class="clickable-cell">${u.userId || '-'}</td>
                     <td>${u.name || '-'}</td>
+                    <td>${pwDisplay}</td>
                     <td>${u.company || ''} ${u.jobTitle || ''}</td>
                     <td>${u.region || '-'}</td>
                     <td><span class="badge badge-gray">${typeMap[u.type] || u.type || '-'}</span></td>
@@ -682,6 +698,13 @@
                 </tr>`;
             }).join('');
             renderPaginationControls('userPagination', 'users', uRes.totalPages, renderUsers);
+            
+            // 전체 선택 체크박스 상태 초기화
+            const selectAllEl = document.getElementById('selectAllUsers');
+            if (selectAllEl) selectAllEl.checked = false;
+            
+            // 대시보드 회원 수 업데이트 (관리자 제외)
+            document.getElementById('statTotalUsers').innerText = nonAdminUsers.length;
         }
 
         // --- 5. 로직 함수: 승인 및 등록 ---
@@ -754,6 +777,7 @@
                 // ★ 2. Firestore users 컬렉션에 저장 (UID를 문서 ID로 사용)
                 const newUser = {
                     userId: userId,
+                    password: password,  // ★ 비밀번호 저장 (관리자 조회용)
                     name: document.getElementById('newUserName').value, 
                     phone: document.getElementById('newUserPhone').value,
                     email: document.getElementById('newUserEmail').value,
@@ -812,6 +836,48 @@
         function loadTerm(t) { document.getElementById('termEditor').value = t + ' 내용...'; }
         function saveTerms() { alert('저장됨'); }
         
+        // ★ 전체 선택/해제
+        function toggleSelectAllUsers() {
+            const selectAll = document.getElementById('selectAllUsers');
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        }
+        
+        // ★ 선택된 회원 삭제
+        async function deleteSelectedUsers() {
+            const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('삭제할 회원을 선택해주세요.');
+                return;
+            }
+            
+            const userIds = Array.from(checkboxes).map(cb => cb.dataset.userid).join(', ');
+            
+            if (!confirm(`선택한 ${checkboxes.length}명의 회원을 삭제하시겠습니까?\n\n대상: ${userIds}`)) return;
+            if (!confirm(`⚠️ 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+            
+            try {
+                const batch = db.batch();
+                
+                checkboxes.forEach(cb => {
+                    const docRef = db.collection('users').doc(cb.value);
+                    batch.delete(docRef);
+                });
+                
+                await batch.commit();
+                
+                alert(`✅ ${checkboxes.length}명의 회원이 삭제되었습니다.\n\n⚠️ Firebase Auth 계정은 Console에서 직접 삭제해주세요.`);
+                
+                // 전체 선택 해제
+                document.getElementById('selectAllUsers').checked = false;
+                
+            } catch (err) {
+                console.error('일괄 삭제 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
         // ★ 회원 관리 모달 (비밀번호 초기화, 삭제 등)
         function openUserManageModal(docId) {
             const user = users.find(u => u.id === docId);
@@ -820,11 +886,22 @@
                 return;
             }
             
+            // 비밀번호 표시
+            let pwInfo = '미저장';
+            if (user.password) {
+                pwInfo = user.password;
+            } else if (user.isPasswordChanged === false) {
+                pwInfo = '123456 (초기값)';
+            } else {
+                pwInfo = '변경됨 (확인불가)';
+            }
+            
             const action = prompt(
                 `[${user.name}] 회원 관리\n\n` +
                 `아이디: ${user.userId}\n` +
-                `연락처: ${user.phone}\n` +
-                `이메일: ${user.email}\n\n` +
+                `비밀번호: ${pwInfo}\n` +
+                `연락처: ${user.phone || '-'}\n` +
+                `이메일: ${user.email || '-'}\n\n` +
                 `실행할 작업을 선택하세요:\n` +
                 `1 = 비밀번호 초기화 (123456)\n` +
                 `2 = 회원 삭제\n` +
@@ -843,18 +920,18 @@
             if (!confirm(`[${user.name}] 회원의 비밀번호를 123456으로 초기화하시겠습니까?`)) return;
             
             // 클라이언트에서 다른 사용자의 비밀번호 변경은 Firebase Admin SDK 필요
-            // 여기서는 Firestore에 플래그만 설정하고, 사용자에게 임시 비밀번호 안내
+            // 여기서는 Firestore에 비밀번호와 플래그를 설정
             try {
                 await db.collection('users').doc(docId).update({
+                    password: '123456',  // ★ Firestore 비밀번호 업데이트
                     isPasswordChanged: false,
                     passwordResetRequested: true,
                     passwordResetAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                alert(`✅ 비밀번호 초기화 요청이 완료되었습니다.\n\n` +
-                      `⚠️ 참고: Firebase Auth 비밀번호는 Firebase Console에서 직접 변경하거나,\n` +
-                      `회원에게 "비밀번호 찾기" 기능 사용을 안내해주세요.\n\n` +
-                      `회원 정보의 isPasswordChanged가 false로 설정되었습니다.`);
+                alert(`✅ 비밀번호가 123456으로 초기화되었습니다.\n\n` +
+                      `⚠️ 참고: Firebase Auth 비밀번호는 Firebase Console에서 직접 변경해주세요.\n` +
+                      `(Authentication > Users > 해당 사용자 > 비밀번호 재설정)`);
             } catch (err) {
                 console.error('비밀번호 초기화 오류:', err);
                 alert('오류 발생: ' + err.message);
@@ -1064,26 +1141,63 @@
             const tbody = document.getElementById('adminTableBody');
             if (!tbody) return;
             
-            if (admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">등록된 관리자가 없습니다.</td></tr>';
-                return;
-            }
-            
             const roleMap = { 'super_admin': '최고관리자', 'admin': '일반관리자' };
             
-            tbody.innerHTML = admins.map(a => {
-                const dateStr = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString() : '-';
-                const roleBadge = a.role === 'super_admin' 
-                    ? '<span class="badge badge-purple">최고관리자</span>' 
-                    : '<span class="badge badge-blue">일반관리자</span>';
-                return `<tr>
-                    <td><strong>${a.userId || '-'}</strong></td>
-                    <td>${a.name || '-'}</td>
-                    <td>${roleBadge}</td>
-                    <td>${dateStr}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}', '${a.userId}')">삭제</button></td>
-                </tr>`;
-            }).join('');
+            // ★ 하드코딩된 기본 관리자 (login.html에서 사용)
+            const defaultAdmin = {
+                userId: 'admin',
+                password: 'kfpc0808',
+                name: '기본 관리자',
+                role: 'super_admin',
+                isDefault: true
+            };
+            
+            let html = `<tr style="background:#fff8e1;">
+                <td><strong>${defaultAdmin.userId}</strong> <span class="badge badge-warning">기본</span></td>
+                <td>${defaultAdmin.name}</td>
+                <td><span class="badge badge-purple">최고관리자</span></td>
+                <td><span class="password-display">${defaultAdmin.password}</span></td>
+                <td><span style="color:#888; font-size:0.8rem;">삭제 불가</span></td>
+            </tr>`;
+            
+            // Firebase에서 가져온 관리자 목록 (admins 컬렉션 + users 컬렉션의 admin)
+            // users 컬렉션에서 admin 타입 사용자도 표시
+            const adminUsers = users.filter(u => u.type === 'admin' || u.role === 'admin' || u.isAdmin);
+            
+            // admins 컬렉션과 users 컬렉션 합치기 (중복 제거)
+            const allAdmins = [...admins];
+            adminUsers.forEach(au => {
+                if (!allAdmins.find(a => a.userId === au.userId)) {
+                    allAdmins.push(au);
+                }
+            });
+            
+            if (allAdmins.length > 0) {
+                html += allAdmins.map(a => {
+                    const dateStr = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString() : '-';
+                    const roleBadge = a.role === 'super_admin' 
+                        ? '<span class="badge badge-purple">최고관리자</span>' 
+                        : '<span class="badge badge-blue">일반관리자</span>';
+                    
+                    // ★ 비밀번호 표시
+                    let pwDisplay = '-';
+                    if (a.password) {
+                        pwDisplay = `<span class="password-display">${a.password}</span>`;
+                    } else {
+                        pwDisplay = '<span style="color:#888; font-size:0.8rem;">미저장</span>';
+                    }
+                    
+                    return `<tr>
+                        <td><strong>${a.userId || '-'}</strong></td>
+                        <td>${a.name || '-'}</td>
+                        <td>${roleBadge}</td>
+                        <td>${pwDisplay}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}', '${a.userId}')">삭제</button></td>
+                    </tr>`;
+                }).join('');
+            }
+            
+            tbody.innerHTML = html;
         }
         
         // 관리자 모달 열기
@@ -1102,7 +1216,12 @@
             if (!confirm(`관리자 [${userId}]를 삭제하시겠습니까?`)) return;
             
             try {
-                await db.collection('admins').doc(docId).delete();
+                // admins 컬렉션에서 삭제
+                await db.collection('admins').doc(docId).delete().catch(() => {});
+                
+                // users 컬렉션에서도 삭제
+                await db.collection('users').doc(docId).delete().catch(() => {});
+                
                 alert('✅ 관리자가 삭제되었습니다.\n\n⚠️ Firebase Auth 계정은 Console에서 직접 삭제해주세요.');
             } catch (err) {
                 console.error('관리자 삭제 오류:', err);
@@ -1145,6 +1264,7 @@
                 await db.collection('admins').doc(uid).set({
                     userId: userId,
                     name: name,
+                    password: password,  // ★ 비밀번호 저장
                     role: role,
                     isAdmin: true,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1154,6 +1274,7 @@
                 await db.collection('users').doc(uid).set({
                     userId: userId,
                     name: name,
+                    password: password,  // ★ 비밀번호 저장
                     role: 'admin',
                     type: 'admin',
                     isAdmin: true,
