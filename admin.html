@@ -443,8 +443,11 @@
         }
 
         // --- 3. 네비게이션 및 공통 ---
-        document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
-        function logout() { alert('로그아웃 되었습니다.'); location.href='login.html'; }
+        function logout() { 
+            sessionStorage.removeItem('adminLoggedIn');
+            alert('로그아웃 되었습니다.'); 
+            location.href='login.html'; 
+        }
 
         function switchTab(tabId) {
             document.querySelectorAll('.nav-menu .nav-link').forEach(el => el.classList.remove('active'));
@@ -465,24 +468,41 @@
         // (결제/로그 등은 아직 더미 유지 - 필요 시 DB 연결 가능)
         let payments = [];
         let pointLogs = [];
-
-        // [실시간 리스너] 가입 신청 내역 (account_requests)
-        db.collection('account_requests').orderBy('requestedAt', 'desc').onSnapshot((snapshot) => {
-            pendingApps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // 가입신청 목록이 갱신되면 화면 다시 그리기
-            if(document.getElementById('users').style.display !== 'none') renderUsers();
+        
+        // ★ 관리자 인증 체크 및 Firebase 리스너 초기화
+        function checkAdminAndInitialize() {
+            // 1. sessionStorage 관리자 로그인 체크
+            if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
+                alert('관리자 로그인이 필요합니다.');
+                location.href = 'login.html';
+                return;
+            }
             
-            // 대시보드 카운트 업데이트
-            document.getElementById('statPending').innerText = pendingApps.length;
-        });
-
-        // [실시간 리스너] 회원 목록 (users)
-        db.collection('users').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-            users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            if(document.getElementById('users').style.display !== 'none') renderUsers();
+            console.log('✅ 관리자 인증 확인됨');
             
-            document.getElementById('statTotalUsers').innerText = users.length;
-        });
+            // 2. Firebase 실시간 리스너 시작
+            initializeFirebaseListeners();
+        }
+        
+        function initializeFirebaseListeners() {
+            // [실시간 리스너] 가입 신청 내역 (account_requests)
+            db.collection('account_requests').orderBy('requestedAt', 'desc').onSnapshot((snapshot) => {
+                pendingApps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUsers();
+                document.getElementById('statPending').innerText = pendingApps.length;
+            }, (error) => {
+                console.error('account_requests 리스너 오류:', error);
+            });
+
+            // [실시간 리스너] 회원 목록 (users)
+            db.collection('users').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+                users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUsers();
+                document.getElementById('statTotalUsers').innerText = users.length;
+            }, (error) => {
+                console.error('users 리스너 오류:', error);
+            });
+        }
 
         // --- 렌더링 함수 (페이징/검색 포함) ---
         const PAGE_SIZE = 15;
@@ -508,10 +528,17 @@
         }
 
         function renderUsers() {
-            // 1. 대기자 목록
-            state.pending.search = document.getElementById('pendingSearch').value;
-            const pRes = filterAndPaginate(pendingApps, 'pending');
+            // 엘리먼트 존재 여부 체크
+            const pendingSearchEl = document.getElementById('pendingSearch');
+            const userSearchEl = document.getElementById('userSearch');
             const pBody = document.getElementById('pendingTableBody');
+            const uBody = document.getElementById('userTableBody');
+            
+            if (!pBody || !uBody) return; // 엘리먼트가 없으면 중단
+            
+            // 1. 대기자 목록
+            state.pending.search = pendingSearchEl ? pendingSearchEl.value : '';
+            const pRes = filterAndPaginate(pendingApps, 'pending');
             
             if(pRes.totalCount === 0) pBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">대기 내역 없음</td></tr>';
             else {
@@ -533,9 +560,8 @@
             renderPaginationControls('pendingPagination', 'pending', pRes.totalPages, renderUsers);
 
             // 2. 전체 회원 목록
-            state.users.search = document.getElementById('userSearch').value;
+            state.users.search = userSearchEl ? userSearchEl.value : '';
             const uRes = filterAndPaginate(users, 'users');
-            const uBody = document.getElementById('userTableBody');
             
             uBody.innerHTML = uRes.paged.map((u, idx) => {
                 const feeBadge = u.feeStatus === 'paid' ? '<span class="badge badge-green">납부</span>' : '<span class="badge badge-red">미납</span>';
@@ -544,16 +570,16 @@
                 
                 return `<tr>
                     <td>${idx+1}</td>
-                    <td class="clickable-cell">${u.userId}</td>
-                    <td>${u.name}</td>
-                    <td>${u.company} ${u.jobTitle}</td>
-                    <td>${u.region}</td>
-                    <td><span class="badge badge-gray">${typeMap[u.type] || u.type}</span></td>
-                    <td>${u.phone}<br><span style="color:#888;font-size:0.8rem">${u.email}</span></td>
+                    <td class="clickable-cell">${u.userId || '-'}</td>
+                    <td>${u.name || '-'}</td>
+                    <td>${u.company || ''} ${u.jobTitle || ''}</td>
+                    <td>${u.region || '-'}</td>
+                    <td><span class="badge badge-gray">${typeMap[u.type] || u.type || '-'}</span></td>
+                    <td>${u.phone || '-'}<br><span style="color:#888;font-size:0.8rem">${u.email || '-'}</span></td>
                     <td>${feeBadge}</td>
                     <td style="font-weight:bold; color:var(--accent-color);">${fee}</td>
-                    <td><span class="badge badge-green">${u.status}</span></td>
-                    <td><button class="btn btn-outline btn-sm">관리</button></td>
+                    <td><span class="badge badge-green">${u.status || '-'}</span></td>
+                    <td><button class="btn btn-outline btn-sm" onclick="openUserManageModal('${u.id}')">관리</button></td>
                 </tr>`;
             }).join('');
             renderPaginationControls('userPagination', 'users', uRes.totalPages, renderUsers);
@@ -572,7 +598,7 @@
             document.getElementById('newUserTitle').value = app.position; // position -> title 매핑
             
             document.getElementById('newUserId').value = ''; 
-            document.getElementById('newUserPw').value = '1234';
+            document.getElementById('newUserPw').value = '123456';
             document.getElementById('newUserType').value = 'inner'; 
             document.getElementById('regFeeStatus').value = 'unpaid'; 
             
@@ -686,10 +712,79 @@
         function runBatchSimulation() { alert('결제 시뮬레이션'); }
         function loadTerm(t) { document.getElementById('termEditor').value = t + ' 내용...'; }
         function saveTerms() { alert('저장됨'); }
+        
+        // ★ 회원 관리 모달 (비밀번호 초기화, 삭제 등)
+        function openUserManageModal(docId) {
+            const user = users.find(u => u.id === docId);
+            if (!user) {
+                alert('회원 정보를 찾을 수 없습니다.');
+                return;
+            }
+            
+            const action = prompt(
+                `[${user.name}] 회원 관리\n\n` +
+                `아이디: ${user.userId}\n` +
+                `연락처: ${user.phone}\n` +
+                `이메일: ${user.email}\n\n` +
+                `실행할 작업을 선택하세요:\n` +
+                `1 = 비밀번호 초기화 (123456)\n` +
+                `2 = 회원 삭제\n` +
+                `3 = 취소`
+            );
+            
+            if (action === '1') {
+                resetUserPassword(docId, user);
+            } else if (action === '2') {
+                deleteUser(docId, user);
+            }
+        }
+        
+        // 비밀번호 초기화
+        async function resetUserPassword(docId, user) {
+            if (!confirm(`[${user.name}] 회원의 비밀번호를 123456으로 초기화하시겠습니까?`)) return;
+            
+            // 클라이언트에서 다른 사용자의 비밀번호 변경은 Firebase Admin SDK 필요
+            // 여기서는 Firestore에 플래그만 설정하고, 사용자에게 임시 비밀번호 안내
+            try {
+                await db.collection('users').doc(docId).update({
+                    isPasswordChanged: false,
+                    passwordResetRequested: true,
+                    passwordResetAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert(`✅ 비밀번호 초기화 요청이 완료되었습니다.\n\n` +
+                      `⚠️ 참고: Firebase Auth 비밀번호는 Firebase Console에서 직접 변경하거나,\n` +
+                      `회원에게 "비밀번호 찾기" 기능 사용을 안내해주세요.\n\n` +
+                      `회원 정보의 isPasswordChanged가 false로 설정되었습니다.`);
+            } catch (err) {
+                console.error('비밀번호 초기화 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
+        // 회원 삭제
+        async function deleteUser(docId, user) {
+            if (!confirm(`⚠️ 정말로 [${user.name}] 회원을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+            if (!confirm(`마지막 확인: [${user.userId}] 계정을 삭제합니다.`)) return;
+            
+            try {
+                // Firestore에서 삭제
+                await db.collection('users').doc(docId).delete();
+                
+                alert(`✅ Firestore에서 회원 정보가 삭제되었습니다.\n\n` +
+                      `⚠️ 참고: Firebase Auth 계정은 Firebase Console에서 직접 삭제해주세요.\n` +
+                      `(Authentication > Users > 해당 사용자 삭제)`);
+                      
+            } catch (err) {
+                console.error('회원 삭제 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
 
         // 초기화
         window.onload = function() {
-            // 리스너가 데이터를 가져오면 자동으로 렌더링함
+            // ★ 관리자 인증 체크 후 Firebase 리스너 시작
+            checkAdminAndInitialize();
         }
     </script>
 </body>
