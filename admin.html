@@ -334,8 +334,42 @@
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'prompt-guarantee')">보장분석</div>
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'prompt-ff')">FF</div>
             </div>
-            <div id="prompt-company" class="sub-tab-content active"><div class="card"><h3>🏭 기업마당</h3><div class="form-group"><textarea class="form-control" style="min-height: 400px; font-family: monospace;">System Instruction...</textarea></div><button class="btn btn-primary">저장</button></div></div>
-            <!-- 나머지 탭 동일 -->
+            <div id="prompt-company" class="sub-tab-content active">
+                <div class="card">
+                    <h3>🏭 기업마당</h3>
+                    <div class="form-group">
+                        <textarea id="promptCompanyText" class="form-control" style="min-height: 400px; font-family: monospace;" placeholder="기업마당 AI 프롬프트를 입력하세요..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="savePrompt('company')"><i class="ph ph-floppy-disk"></i> 저장</button>
+                </div>
+            </div>
+            <div id="prompt-ceo" class="sub-tab-content">
+                <div class="card">
+                    <h3>👔 CEO Focus</h3>
+                    <div class="form-group">
+                        <textarea id="promptCeoText" class="form-control" style="min-height: 400px; font-family: monospace;" placeholder="CEO Focus AI 프롬프트를 입력하세요..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="savePrompt('ceo')"><i class="ph ph-floppy-disk"></i> 저장</button>
+                </div>
+            </div>
+            <div id="prompt-guarantee" class="sub-tab-content">
+                <div class="card">
+                    <h3>🛡️ 보장분석</h3>
+                    <div class="form-group">
+                        <textarea id="promptGuaranteeText" class="form-control" style="min-height: 400px; font-family: monospace;" placeholder="보장분석 AI 프롬프트를 입력하세요..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="savePrompt('guarantee')"><i class="ph ph-floppy-disk"></i> 저장</button>
+                </div>
+            </div>
+            <div id="prompt-ff" class="sub-tab-content">
+                <div class="card">
+                    <h3>📊 FF (Fact Finding)</h3>
+                    <div class="form-group">
+                        <textarea id="promptFfText" class="form-control" style="min-height: 400px; font-family: monospace;" placeholder="FF AI 프롬프트를 입력하세요..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="savePrompt('ff')"><i class="ph ph-floppy-disk"></i> 저장</button>
+                </div>
+            </div>
         </div>
 
         <!-- 5. 제안/건의 -->
@@ -350,7 +384,7 @@
 
         <!-- 6. 공지사항 -->
         <div id="notices" class="tab-content">
-            <div class="page-header"><h1 class="page-title">공지사항 관리</h1><button class="btn btn-primary" onclick="openNoticeModal()">새 공지 등록</button></div>
+            <div class="page-header"><h1 class="page-title">공지사항 관리</h1><button class="btn btn-primary" onclick="openNoticeModal()"><i class="ph ph-plus"></i> 새 공지 등록</button></div>
             <div class="card">
                 <div class="table-controls"><h3>등록된 공지사항</h3><div class="search-box"><input type="text" id="noticeSearch" placeholder="제목 검색" onkeyup="renderNotices()"></div></div>
                 <div class="table-container"><table id="noticeTable"><thead><tr><th style="width: 50px;">No</th><th>제목</th><th>등록일자</th><th>첨부파일</th><th>관리</th></tr></thead><tbody id="noticeTableBody"></tbody></table></div>
@@ -360,9 +394,10 @@
 
         <!-- 7. 관리자 관리 -->
         <div id="admins" class="tab-content">
-            <div class="page-header"><h1 class="page-title">관리자 계정 관리</h1><button class="btn btn-primary">추가</button></div>
+            <div class="page-header"><h1 class="page-title">관리자 계정 관리</h1><button class="btn btn-primary" onclick="openAdminModal()"><i class="ph ph-plus"></i> 추가</button></div>
             <div class="card">
-                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+                <p style="margin-bottom:1rem; color:#666; font-size:0.9rem;">⚠️ 관리자 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.</p>
+                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>생성일</th><th>관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
             </div>
         </div>
 
@@ -411,6 +446,65 @@
                     <div class="form-group"><label>월 결제액</label><input type="number" id="newUserFee" class="form-control" value="10000"></div>
                 </div>
                 <div class="flex-between" style="margin-top:1rem;"><button type="button" class="btn btn-outline" onclick="document.getElementById('registerModal').style.display='none'">취소</button><button type="submit" class="btn btn-primary">승인 및 생성</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 모달: 공지사항 등록/수정 -->
+    <div id="noticeModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 id="noticeModalTitle">📢 새 공지 등록</h3>
+            <form id="noticeForm">
+                <input type="hidden" id="noticeDocId">
+                <div class="form-group">
+                    <label>제목 *</label>
+                    <input type="text" id="noticeTitle" class="form-control" placeholder="공지사항 제목" required>
+                </div>
+                <div class="form-group">
+                    <label>내용 *</label>
+                    <textarea id="noticeContent" class="form-control" style="min-height: 200px;" placeholder="공지사항 내용을 입력하세요..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>첨부파일 URL (선택)</label>
+                    <input type="text" id="noticeFileUrl" class="form-control" placeholder="https://...">
+                </div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                    <button type="button" class="btn btn-outline" onclick="closeNoticeModal()">취소</button>
+                    <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 모달: 관리자 추가 -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3>🔐 관리자 계정 추가</h3>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:1rem;">관리자 계정은 모든 프로그램을 <b style="color:#27ae60;">무료/무제한</b>으로 사용할 수 있습니다.</p>
+            <form id="adminForm">
+                <div class="form-group">
+                    <label>아이디 *</label>
+                    <input type="text" id="adminUserId" class="form-control" placeholder="관리자 아이디" required>
+                </div>
+                <div class="form-group">
+                    <label>이름 *</label>
+                    <input type="text" id="adminUserName" class="form-control" placeholder="관리자 이름" required>
+                </div>
+                <div class="form-group">
+                    <label>비밀번호 * (6자 이상)</label>
+                    <input type="text" id="adminUserPw" class="form-control" value="admin123" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>권한</label>
+                    <select id="adminRole" class="form-control">
+                        <option value="super_admin">최고관리자</option>
+                        <option value="admin">일반관리자</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                    <button type="button" class="btn btn-outline" onclick="closeAdminModal()">취소</button>
+                    <button type="submit" class="btn btn-primary"><i class="ph ph-user-plus"></i> 생성</button>
+                </div>
             </form>
         </div>
     </div>
@@ -502,6 +596,11 @@
             }, (error) => {
                 console.error('users 리스너 오류:', error);
             });
+            
+            // ★ 추가 리스너들
+            initNoticesListener();  // 공지사항
+            initAdminsListener();   // 관리자
+            loadPrompts();          // AI 프롬프트 로드
         }
 
         // --- 렌더링 함수 (페이징/검색 포함) ---
@@ -780,6 +879,311 @@
                 alert('오류 발생: ' + err.message);
             }
         }
+
+        // ==================== AI 프롬프트 관리 ====================
+        let prompts = {};
+        
+        // 프롬프트 로드
+        async function loadPrompts() {
+            try {
+                const doc = await db.collection('settings').doc('prompts').get();
+                if (doc.exists) {
+                    prompts = doc.data();
+                    document.getElementById('promptCompanyText').value = prompts.company || '';
+                    document.getElementById('promptCeoText').value = prompts.ceo || '';
+                    document.getElementById('promptGuaranteeText').value = prompts.guarantee || '';
+                    document.getElementById('promptFfText').value = prompts.ff || '';
+                }
+            } catch (err) {
+                console.error('프롬프트 로드 오류:', err);
+            }
+        }
+        
+        // 프롬프트 저장
+        async function savePrompt(type) {
+            const textareaId = {
+                'company': 'promptCompanyText',
+                'ceo': 'promptCeoText',
+                'guarantee': 'promptGuaranteeText',
+                'ff': 'promptFfText'
+            };
+            
+            const content = document.getElementById(textareaId[type]).value;
+            
+            try {
+                await db.collection('settings').doc('prompts').set({
+                    ...prompts,
+                    [type]: content,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                
+                prompts[type] = content;
+                alert('✅ 프롬프트가 저장되었습니다.');
+            } catch (err) {
+                console.error('프롬프트 저장 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+
+        // ==================== 공지사항 관리 ====================
+        let notices = [];
+        
+        // 공지사항 리스너
+        function initNoticesListener() {
+            db.collection('notices').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+                notices = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderNotices();
+            }, (error) => {
+                console.error('notices 리스너 오류:', error);
+            });
+        }
+        
+        // 공지사항 렌더링
+        function renderNotices() {
+            const searchEl = document.getElementById('noticeSearch');
+            const tbody = document.getElementById('noticeTableBody');
+            if (!tbody) return;
+            
+            const search = searchEl ? searchEl.value.toLowerCase() : '';
+            const filtered = notices.filter(n => !search || (n.title && n.title.toLowerCase().includes(search)));
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">등록된 공지사항이 없습니다.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map((n, idx) => {
+                const dateStr = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleDateString() : '-';
+                const fileLink = n.fileUrl ? `<a href="${n.fileUrl}" target="_blank" class="btn btn-outline btn-sm">📎 보기</a>` : '-';
+                return `<tr>
+                    <td>${filtered.length - idx}</td>
+                    <td style="text-align:left; max-width:300px; overflow:hidden; text-overflow:ellipsis;">${n.title || '-'}</td>
+                    <td>${dateStr}</td>
+                    <td>${fileLink}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editNotice('${n.id}')">수정</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteNotice('${n.id}')">삭제</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        // 공지사항 모달 열기
+        function openNoticeModal() {
+            document.getElementById('noticeModalTitle').textContent = '📢 새 공지 등록';
+            document.getElementById('noticeForm').reset();
+            document.getElementById('noticeDocId').value = '';
+            document.getElementById('noticeModal').style.display = 'flex';
+        }
+        
+        function closeNoticeModal() {
+            document.getElementById('noticeModal').style.display = 'none';
+        }
+        
+        // 공지사항 수정
+        function editNotice(docId) {
+            const notice = notices.find(n => n.id === docId);
+            if (!notice) return;
+            
+            document.getElementById('noticeModalTitle').textContent = '📢 공지 수정';
+            document.getElementById('noticeDocId').value = docId;
+            document.getElementById('noticeTitle').value = notice.title || '';
+            document.getElementById('noticeContent').value = notice.content || '';
+            document.getElementById('noticeFileUrl').value = notice.fileUrl || '';
+            document.getElementById('noticeModal').style.display = 'flex';
+        }
+        
+        // 공지사항 삭제
+        async function deleteNotice(docId) {
+            if (!confirm('이 공지사항을 삭제하시겠습니까?')) return;
+            
+            try {
+                await db.collection('notices').doc(docId).delete();
+                alert('✅ 공지사항이 삭제되었습니다.');
+            } catch (err) {
+                console.error('공지사항 삭제 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
+        // 공지사항 폼 제출
+        document.getElementById('noticeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const docId = document.getElementById('noticeDocId').value;
+            const title = document.getElementById('noticeTitle').value.trim();
+            const content = document.getElementById('noticeContent').value.trim();
+            const fileUrl = document.getElementById('noticeFileUrl').value.trim();
+            
+            if (!title || !content) {
+                alert('제목과 내용을 입력해주세요.');
+                return;
+            }
+            
+            try {
+                const data = {
+                    title: title,
+                    content: content,
+                    fileUrl: fileUrl || null,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (docId) {
+                    // 수정
+                    await db.collection('notices').doc(docId).update(data);
+                    alert('✅ 공지사항이 수정되었습니다.');
+                } else {
+                    // 신규 등록
+                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('notices').add(data);
+                    alert('✅ 공지사항이 등록되었습니다.');
+                }
+                
+                closeNoticeModal();
+            } catch (err) {
+                console.error('공지사항 저장 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        });
+
+        // ==================== 관리자 관리 ====================
+        let admins = [];
+        
+        // 관리자 리스너
+        function initAdminsListener() {
+            db.collection('admins').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+                admins = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderAdmins();
+            }, (error) => {
+                console.error('admins 리스너 오류:', error);
+            });
+        }
+        
+        // 관리자 렌더링
+        function renderAdmins() {
+            const tbody = document.getElementById('adminTableBody');
+            if (!tbody) return;
+            
+            if (admins.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">등록된 관리자가 없습니다.</td></tr>';
+                return;
+            }
+            
+            const roleMap = { 'super_admin': '최고관리자', 'admin': '일반관리자' };
+            
+            tbody.innerHTML = admins.map(a => {
+                const dateStr = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString() : '-';
+                const roleBadge = a.role === 'super_admin' 
+                    ? '<span class="badge badge-purple">최고관리자</span>' 
+                    : '<span class="badge badge-blue">일반관리자</span>';
+                return `<tr>
+                    <td><strong>${a.userId || '-'}</strong></td>
+                    <td>${a.name || '-'}</td>
+                    <td>${roleBadge}</td>
+                    <td>${dateStr}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}', '${a.userId}')">삭제</button></td>
+                </tr>`;
+            }).join('');
+        }
+        
+        // 관리자 모달 열기
+        function openAdminModal() {
+            document.getElementById('adminForm').reset();
+            document.getElementById('adminUserPw').value = 'admin123';
+            document.getElementById('adminModal').style.display = 'flex';
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('adminModal').style.display = 'none';
+        }
+        
+        // 관리자 삭제
+        async function deleteAdmin(docId, userId) {
+            if (!confirm(`관리자 [${userId}]를 삭제하시겠습니까?`)) return;
+            
+            try {
+                await db.collection('admins').doc(docId).delete();
+                alert('✅ 관리자가 삭제되었습니다.\n\n⚠️ Firebase Auth 계정은 Console에서 직접 삭제해주세요.');
+            } catch (err) {
+                console.error('관리자 삭제 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
+        // 관리자 폼 제출
+        document.getElementById('adminForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('adminUserId').value.trim();
+            const name = document.getElementById('adminUserName').value.trim();
+            const password = document.getElementById('adminUserPw').value;
+            const role = document.getElementById('adminRole').value;
+            
+            if (!userId || !name) {
+                alert('아이디와 이름을 입력해주세요.');
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('비밀번호는 6자 이상이어야 합니다.');
+                return;
+            }
+            
+            try {
+                // 1. Firebase Auth에 사용자 생성
+                const secondaryApp = firebase.initializeApp(firebaseConfig, 'SecondaryAdmin');
+                const secondaryAuth = secondaryApp.auth();
+                
+                const authEmail = `${userId}@system.local`;
+                const userCredential = await secondaryAuth.createUserWithEmailAndPassword(authEmail, password);
+                const uid = userCredential.user.uid;
+                
+                await secondaryAuth.signOut();
+                await secondaryApp.delete();
+                
+                // 2. admins 컬렉션에 저장
+                await db.collection('admins').doc(uid).set({
+                    userId: userId,
+                    name: name,
+                    role: role,
+                    isAdmin: true,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // 3. users 컬렉션에도 저장 (role: admin으로)
+                await db.collection('users').doc(uid).set({
+                    userId: userId,
+                    name: name,
+                    role: 'admin',
+                    type: 'admin',
+                    isAdmin: true,
+                    isPasswordChanged: true,
+                    status: 'active',
+                    pointBalance: 999999999, // 무제한 포인트
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                closeAdminModal();
+                alert(`✅ 관리자 계정이 생성되었습니다.\n\n아이디: ${userId}\n비밀번호: ${password}\n\n이 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.`);
+                
+            } catch (err) {
+                console.error('관리자 생성 오류:', err);
+                
+                try {
+                    const secondaryApp = firebase.app('SecondaryAdmin');
+                    if (secondaryApp) {
+                        await secondaryApp.auth().signOut();
+                        await secondaryApp.delete();
+                    }
+                } catch(e) {}
+                
+                let errorMsg = '오류 발생: ' + err.message;
+                if (err.code === 'auth/email-already-in-use') {
+                    errorMsg = '이미 사용 중인 아이디입니다.';
+                }
+                alert(errorMsg);
+            }
+        });
 
         // 초기화
         window.onload = function() {
