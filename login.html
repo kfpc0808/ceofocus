@@ -664,6 +664,7 @@
             try {
                 await user.updatePassword(newPw);
                 await db.collection('users').doc(user.uid).update({
+                    password: newPw,  // ★ 비밀번호를 Firestore에도 저장 (관리자 조회용)
                     isPasswordChanged: true,
                     passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
