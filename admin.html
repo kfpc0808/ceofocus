@@ -510,6 +510,127 @@
         </div>
     </div>
 
+    <!-- ★ 회원 정보 수정 모달 -->
+    <div id="userEditModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h3><i class="ph ph-user-gear"></i> 회원 정보 수정</h3>
+            <form id="userEditForm">
+                <input type="hidden" id="editUserId">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <!-- 왼쪽 컬럼 -->
+                    <div>
+                        <div class="form-group">
+                            <label>아이디</label>
+                            <input type="text" id="editUserLoginId" class="form-control" readonly style="background:#f5f5f5;">
+                        </div>
+                        <div class="form-group">
+                            <label>이름 *</label>
+                            <input type="text" id="editUserName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>비밀번호</label>
+                            <div style="display:flex; gap:0.5rem;">
+                                <input type="text" id="editUserPassword" class="form-control" placeholder="변경 시 입력 (6자 이상)">
+                                <button type="button" class="btn btn-sm btn-outline" onclick="resetEditPassword()">초기화</button>
+                            </div>
+                            <small style="color:#888;">비워두면 기존 비밀번호 유지</small>
+                        </div>
+                        <div class="form-group">
+                            <label>연락처</label>
+                            <input type="text" id="editUserPhone" class="form-control" placeholder="010-0000-0000">
+                        </div>
+                        <div class="form-group">
+                            <label>이메일</label>
+                            <input type="email" id="editUserEmail" class="form-control" placeholder="email@example.com">
+                        </div>
+                    </div>
+                    
+                    <!-- 오른쪽 컬럼 -->
+                    <div>
+                        <div class="form-group">
+                            <label>소속</label>
+                            <input type="text" id="editUserCompany" class="form-control" placeholder="회사/소속">
+                        </div>
+                        <div class="form-group">
+                            <label>직함</label>
+                            <input type="text" id="editUserJobTitle" class="form-control" placeholder="직함/직책">
+                        </div>
+                        <div class="form-group">
+                            <label>지역</label>
+                            <select id="editUserRegion" class="form-control">
+                                <option value="">선택</option>
+                                <option value="서울">서울</option>
+                                <option value="경기">경기</option>
+                                <option value="인천">인천</option>
+                                <option value="부산">부산</option>
+                                <option value="대구">대구</option>
+                                <option value="광주">광주</option>
+                                <option value="대전">대전</option>
+                                <option value="울산">울산</option>
+                                <option value="세종">세종</option>
+                                <option value="강원">강원</option>
+                                <option value="충북">충북</option>
+                                <option value="충남">충남</option>
+                                <option value="전북">전북</option>
+                                <option value="전남">전남</option>
+                                <option value="경북">경북</option>
+                                <option value="경남">경남</option>
+                                <option value="제주">제주</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>회원 유형</label>
+                            <select id="editUserType" class="form-control">
+                                <option value="inner">이너(소속)</option>
+                                <option value="ga">GA</option>
+                                <option value="org">법인</option>
+                                <option value="other">기타</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>상태</label>
+                            <select id="editUserStatus" class="form-control">
+                                <option value="active">활성</option>
+                                <option value="inactive">비활성</option>
+                                <option value="suspended">정지</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 하단 결제 정보 -->
+                <div style="border-top: 1px solid #eee; padding-top: 1rem; margin-top: 1rem;">
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.8rem;"><i class="ph ph-credit-card"></i> 결제 정보</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>가입비 상태</label>
+                            <select id="editRegFeeStatus" class="form-control">
+                                <option value="unpaid">미납</option>
+                                <option value="paid">납부</option>
+                                <option value="exempt">면제</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>월 결제액</label>
+                            <input type="number" id="editMonthlyFee" class="form-control" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>보유 포인트</label>
+                            <input type="number" id="editPoints" class="form-control" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-danger" onclick="deleteUserFromModal()" style="margin-right:auto;"><i class="ph ph-trash"></i> 삭제</button>
+                    <button type="button" class="btn btn-outline" onclick="closeUserEditModal()">취소</button>
+                    <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -717,7 +838,7 @@
                     <td>${feeBadge}</td>
                     <td style="font-weight:bold; color:var(--accent-color);">${fee}</td>
                     <td><span class="badge badge-green">${u.status || '-'}</span></td>
-                    <td><button class="btn btn-outline btn-sm" onclick="openUserManageModal('${u.id}')">관리</button></td>
+                    <td><button class="btn btn-outline btn-sm" onclick="openUserEditModal('${u.id}')"><i class="ph ph-pencil-simple"></i> 수정</button></td>
                 </tr>`;
             }).join('');
             renderPaginationControls('userPagination', 'users', uRes.totalPages, renderUsers);
@@ -901,7 +1022,140 @@
             }
         }
         
-        // ★ 회원 관리 모달 (비밀번호 조회/수정, 삭제 등)
+        // ==================== 회원 정보 수정 모달 ====================
+        let currentEditUserId = null;
+        
+        function openUserEditModal(docId) {
+            const user = users.find(u => u.id === docId);
+            if (!user) {
+                alert('회원 정보를 찾을 수 없습니다.');
+                return;
+            }
+            
+            currentEditUserId = docId;
+            
+            // 폼에 데이터 채우기
+            document.getElementById('editUserId').value = docId;
+            document.getElementById('editUserLoginId').value = user.userId || '';
+            document.getElementById('editUserName').value = user.name || '';
+            document.getElementById('editUserPassword').value = ''; // 비밀번호는 비워둠
+            document.getElementById('editUserPhone').value = user.phone || '';
+            document.getElementById('editUserEmail').value = user.email || '';
+            document.getElementById('editUserCompany').value = user.company || '';
+            document.getElementById('editUserJobTitle').value = user.jobTitle || '';
+            document.getElementById('editUserRegion').value = user.region || '';
+            document.getElementById('editUserType').value = user.type || 'inner';
+            document.getElementById('editUserStatus').value = user.status || 'active';
+            document.getElementById('editRegFeeStatus').value = user.regFeeStatus || 'unpaid';
+            document.getElementById('editMonthlyFee').value = user.monthlyFee || 0;
+            document.getElementById('editPoints').value = user.points || 0;
+            
+            // 비밀번호 힌트 표시
+            let pwHint = '';
+            if (user.password) {
+                pwHint = `현재: ${user.password}`;
+            } else if (user.isPasswordChanged === false) {
+                pwHint = '현재: 123456 (초기값)';
+            } else {
+                pwHint = '현재: 변경됨';
+            }
+            document.getElementById('editUserPassword').placeholder = pwHint;
+            
+            document.getElementById('userEditModal').style.display = 'flex';
+        }
+        
+        function closeUserEditModal() {
+            document.getElementById('userEditModal').style.display = 'none';
+            currentEditUserId = null;
+        }
+        
+        function resetEditPassword() {
+            document.getElementById('editUserPassword').value = '123456';
+        }
+        
+        async function deleteUserFromModal() {
+            const user = users.find(u => u.id === currentEditUserId);
+            if (!user) return;
+            
+            if (!confirm(`⚠️ [${user.name}] 회원을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+            if (!confirm(`마지막 확인: [${user.userId}] 계정을 삭제합니다.`)) return;
+            
+            try {
+                const deleteUserFn = functions.httpsCallable('deleteUser');
+                await deleteUserFn({ uid: currentEditUserId });
+                
+                alert(`✅ 회원이 삭제되었습니다.`);
+                closeUserEditModal();
+            } catch (err) {
+                console.error('회원 삭제 오류:', err);
+                // 폴백: Firestore만 삭제
+                try {
+                    await db.collection('users').doc(currentEditUserId).delete();
+                    alert(`✅ 회원 정보가 삭제되었습니다.`);
+                    closeUserEditModal();
+                } catch (e) {
+                    alert('오류 발생: ' + e.message);
+                }
+            }
+        }
+        
+        async function saveUserEdit(e) {
+            e.preventDefault();
+            
+            const docId = document.getElementById('editUserId').value;
+            const newPassword = document.getElementById('editUserPassword').value.trim();
+            
+            // 비밀번호 유효성 검사
+            if (newPassword && newPassword.length < 6) {
+                alert('비밀번호는 6자 이상이어야 합니다.');
+                return;
+            }
+            
+            try {
+                // 업데이트할 데이터 준비
+                const updateData = {
+                    name: document.getElementById('editUserName').value.trim(),
+                    phone: document.getElementById('editUserPhone').value.trim(),
+                    email: document.getElementById('editUserEmail').value.trim(),
+                    company: document.getElementById('editUserCompany').value.trim(),
+                    jobTitle: document.getElementById('editUserJobTitle').value.trim(),
+                    region: document.getElementById('editUserRegion').value,
+                    type: document.getElementById('editUserType').value,
+                    status: document.getElementById('editUserStatus').value,
+                    regFeeStatus: document.getElementById('editRegFeeStatus').value,
+                    monthlyFee: parseInt(document.getElementById('editMonthlyFee').value) || 0,
+                    points: parseInt(document.getElementById('editPoints').value) || 0,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // 비밀번호가 입력되었으면 변경
+                if (newPassword) {
+                    try {
+                        const changePassword = functions.httpsCallable('changeUserPassword');
+                        await changePassword({ uid: docId, newPassword: newPassword });
+                        updateData.password = newPassword;
+                        updateData.isPasswordChanged = true;
+                    } catch (pwErr) {
+                        console.error('비밀번호 변경 오류:', pwErr);
+                        // 폴백: Firestore만 업데이트
+                        updateData.password = newPassword;
+                        updateData.isPasswordChanged = true;
+                    }
+                }
+                
+                // Firestore 업데이트
+                await db.collection('users').doc(docId).update(updateData);
+                
+                alert('✅ 회원 정보가 저장되었습니다.');
+                closeUserEditModal();
+                
+            } catch (err) {
+                console.error('회원 정보 저장 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
+        // ★ 회원 관리 모달 (비밀번호 조회/수정, 삭제 등) - 기존 유지
         function openUserManageModal(docId) {
             const user = users.find(u => u.id === docId);
             if (!user) {
@@ -1468,6 +1722,10 @@
                 console.log('✅ 페이지 로드 완료');
                 // ★ 관리자 인증 체크 후 Firebase 리스너 시작
                 checkAdminAndInitialize();
+                
+                // ★ 회원 수정 폼 이벤트 핸들러
+                document.getElementById('userEditForm').addEventListener('submit', saveUserEdit);
+                
             } catch(e) {
                 console.error('window.onload 오류:', e);
             }
