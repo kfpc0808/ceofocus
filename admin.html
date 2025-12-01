@@ -398,7 +398,7 @@
             <div class="page-header"><h1 class="page-title">관리자 계정 관리</h1><button class="btn btn-primary" onclick="openAdminModal()"><i class="ph ph-plus"></i> 추가</button></div>
             <div class="card">
                 <p style="margin-bottom:1rem; color:#666; font-size:0.9rem;">⚠️ 관리자 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.</p>
-                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>비밀번호</th><th>관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>비밀번호</th><th style="width:120px;">관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
             </div>
         </div>
 
@@ -878,7 +878,7 @@
             }
         }
         
-        // ★ 회원 관리 모달 (비밀번호 초기화, 삭제 등)
+        // ★ 회원 관리 모달 (비밀번호 조회/수정, 삭제 등)
         function openUserManageModal(docId) {
             const user = users.find(u => u.id === docId);
             if (!user) {
@@ -899,19 +899,57 @@
             const action = prompt(
                 `[${user.name}] 회원 관리\n\n` +
                 `아이디: ${user.userId}\n` +
-                `비밀번호: ${pwInfo}\n` +
+                `현재 비밀번호: ${pwInfo}\n` +
                 `연락처: ${user.phone || '-'}\n` +
                 `이메일: ${user.email || '-'}\n\n` +
                 `실행할 작업을 선택하세요:\n` +
-                `1 = 비밀번호 초기화 (123456)\n` +
-                `2 = 회원 삭제\n` +
-                `3 = 취소`
+                `1 = 비밀번호 수정 (직접 입력)\n` +
+                `2 = 비밀번호 초기화 (123456)\n` +
+                `3 = 회원 삭제\n` +
+                `4 = 취소`
             );
             
             if (action === '1') {
-                resetUserPassword(docId, user);
+                changeUserPassword(docId, user);
             } else if (action === '2') {
+                resetUserPassword(docId, user);
+            } else if (action === '3') {
                 deleteUser(docId, user);
+            }
+        }
+        
+        // ★ 비밀번호 직접 수정
+        async function changeUserPassword(docId, user) {
+            const newPassword = prompt(
+                `[${user.name}] 새 비밀번호 입력\n\n` +
+                `현재 아이디: ${user.userId}\n` +
+                `현재 비밀번호: ${user.password || '미저장'}\n\n` +
+                `새 비밀번호를 입력하세요 (6자 이상):`
+            );
+            
+            if (!newPassword) return;
+            
+            if (newPassword.length < 6) {
+                alert('비밀번호는 6자 이상이어야 합니다.');
+                return;
+            }
+            
+            if (!confirm(`비밀번호를 "${newPassword}"로 변경하시겠습니까?`)) return;
+            
+            try {
+                // Firestore 업데이트
+                await db.collection('users').doc(docId).update({
+                    password: newPassword,
+                    isPasswordChanged: true,
+                    passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert(`✅ Firestore 비밀번호가 "${newPassword}"로 변경되었습니다.\n\n` +
+                      `⚠️ Firebase Auth 비밀번호는 Console에서 직접 변경해주세요:\n` +
+                      `Authentication > Users > ${user.userId}@system.local > 비밀번호 재설정`);
+            } catch (err) {
+                console.error('비밀번호 변경 오류:', err);
+                alert('오류 발생: ' + err.message);
             }
         }
         
@@ -1179,12 +1217,12 @@
                         ? '<span class="badge badge-purple">최고관리자</span>' 
                         : '<span class="badge badge-blue">일반관리자</span>';
                     
-                    // ★ 비밀번호 표시
+                    // ★ 비밀번호 표시 (클릭 시 수정 가능)
                     let pwDisplay = '-';
                     if (a.password) {
-                        pwDisplay = `<span class="password-display">${a.password}</span>`;
+                        pwDisplay = `<span class="password-display" style="cursor:pointer;" onclick="editAdminPassword('${a.id}', '${a.userId}', '${a.password}')" title="클릭하여 수정">${a.password}</span>`;
                     } else {
-                        pwDisplay = '<span style="color:#888; font-size:0.8rem;">미저장</span>';
+                        pwDisplay = `<button class="btn btn-outline btn-sm" onclick="editAdminPassword('${a.id}', '${a.userId}', '')">설정</button>`;
                     }
                     
                     return `<tr>
@@ -1192,12 +1230,51 @@
                         <td>${a.name || '-'}</td>
                         <td>${roleBadge}</td>
                         <td>${pwDisplay}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}', '${a.userId}')">삭제</button></td>
+                        <td>
+                            <button class="btn btn-outline btn-sm" onclick="editAdminPassword('${a.id}', '${a.userId}', '${a.password || ''}')">수정</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}', '${a.userId}')">삭제</button>
+                        </td>
                     </tr>`;
                 }).join('');
             }
             
             tbody.innerHTML = html;
+        }
+        
+        // ★ 관리자 비밀번호 수정
+        async function editAdminPassword(docId, userId, currentPassword) {
+            const newPassword = prompt(
+                `[${userId}] 관리자 비밀번호 수정\n\n` +
+                `현재 비밀번호: ${currentPassword || '미설정'}\n\n` +
+                `새 비밀번호를 입력하세요 (6자 이상):`
+            );
+            
+            if (!newPassword) return;
+            
+            if (newPassword.length < 6) {
+                alert('비밀번호는 6자 이상이어야 합니다.');
+                return;
+            }
+            
+            if (!confirm(`비밀번호를 "${newPassword}"로 변경하시겠습니까?`)) return;
+            
+            try {
+                // admins 컬렉션 업데이트
+                await db.collection('admins').doc(docId).update({
+                    password: newPassword
+                }).catch(() => {});
+                
+                // users 컬렉션도 업데이트
+                await db.collection('users').doc(docId).update({
+                    password: newPassword
+                }).catch(() => {});
+                
+                alert(`✅ 비밀번호가 "${newPassword}"로 변경되었습니다.\n\n` +
+                      `⚠️ Firebase Auth 비밀번호는 Console에서 직접 변경해주세요.`);
+            } catch (err) {
+                console.error('비밀번호 변경 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
         }
         
         // 관리자 모달 열기
