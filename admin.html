@@ -403,7 +403,7 @@
                 <!-- 관리자 설정 -->
                 <div style="padding:1rem; border:1px solid #dee2e6; border-radius:6px;">
                     <h4 style="margin-bottom:0.5rem; font-size:0.9rem; color:var(--accent-color);">[관리자 설정]</h4>
-                    <div class="form-row"><div class="form-group"><label>아이디 (생성)</label><input type="text" id="newUserId" class="form-control" placeholder="예: FP2025001" required></div><div class="form-group"><label>비밀번호</label><input type="text" id="newUserPw" class="form-control" value="1234" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>아이디 (생성)</label><input type="text" id="newUserId" class="form-control" placeholder="예: FP2025001" required></div><div class="form-group"><label>비밀번호 (6자 이상)</label><input type="text" id="newUserPw" class="form-control" value="123456" required minlength="6"></div></div>
                     <div class="form-row">
                         <div class="form-group"><label>회원 유형</label><select id="newUserType" class="form-control"><option value="inner">이너</option><option value="branch">지사장</option><option value="consultant_home">컨홈</option><option value="non_member">비회원</option></select></div>
                         <div class="form-group"><label>가입비</label><select id="regFeeStatus" class="form-control"><option value="unpaid" selected style="color:red;">미입금</option><option value="paid" style="color:green;">입금완료</option></select></div>
@@ -594,40 +594,89 @@
             e.preventDefault();
             const docId = this.dataset.docId;
             
-            const newUser = {
-                userId: document.getElementById('newUserId').value,
-                password: document.getElementById('newUserPw').value, // 실제론 암호화 필요하지만 여기선 저장
-                name: document.getElementById('newUserName').value, 
-                phone: document.getElementById('newUserPhone').value,
-                email: document.getElementById('newUserEmail').value,
-                region: document.getElementById('newUserRegion').value,
-                company: document.getElementById('newUserCompany').value, 
-                jobTitle: document.getElementById('newUserTitle').value,
-                type: document.getElementById('newUserType').value, 
-                monthlyFee: parseInt(document.getElementById('newUserFee').value),
-                feeStatus: document.getElementById('regFeeStatus').value, 
-                status: 'active',
-                pointBalance: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
+            const userId = document.getElementById('newUserId').value.trim();
+            const password = document.getElementById('newUserPw').value;
+            
+            // 유효성 검사
+            if (!userId) {
+                alert('아이디를 입력해주세요.');
+                return;
+            }
+            if (password.length < 6) {
+                alert('비밀번호는 6자 이상이어야 합니다.');
+                return;
+            }
             
             try {
-                // 1. users 컬렉션에 추가 (ID 중복 체크 등 생략, 바로 추가)
-                // 실제론 auth.createUser 등 필요하지만, DB 관리 위주로 구현
-                await db.collection('users').add(newUser);
+                // ★ 1. Secondary Firebase App으로 Auth 사용자 생성 (관리자 세션 유지)
+                const secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary');
+                const secondaryAuth = secondaryApp.auth();
+                
+                // 이메일 형식으로 변환 (login.html과 동일한 방식)
+                const authEmail = `${userId}@system.local`;
+                
+                // Firebase Auth에 사용자 생성
+                const userCredential = await secondaryAuth.createUserWithEmailAndPassword(authEmail, password);
+                const createdUser = userCredential.user;
+                const uid = createdUser.uid;
+                
+                console.log('✅ Firebase Auth 사용자 생성 완료:', uid);
+                
+                // Secondary 앱 로그아웃 (관리자 세션에 영향 없음)
+                await secondaryAuth.signOut();
+                await secondaryApp.delete();
+                
+                // ★ 2. Firestore users 컬렉션에 저장 (UID를 문서 ID로 사용)
+                const newUser = {
+                    userId: userId,
+                    name: document.getElementById('newUserName').value, 
+                    phone: document.getElementById('newUserPhone').value,
+                    email: document.getElementById('newUserEmail').value,
+                    region: document.getElementById('newUserRegion').value,
+                    company: document.getElementById('newUserCompany').value, 
+                    jobTitle: document.getElementById('newUserTitle').value,
+                    type: document.getElementById('newUserType').value, 
+                    monthlyFee: parseInt(document.getElementById('newUserFee').value) || 0,
+                    feeStatus: document.getElementById('regFeeStatus').value, 
+                    status: 'active',
+                    pointBalance: 0,
+                    isPasswordChanged: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // UID를 문서 ID로 사용하여 저장 (login.html과 연동)
+                await db.collection('users').doc(uid).set(newUser);
+                console.log('✅ Firestore users 저장 완료');
 
-                // 2. 승인 건이면 요청 내역 삭제
+                // ★ 3. 승인 건이면 요청 내역 삭제
                 if(docId) {
                     await db.collection('account_requests').doc(docId).delete();
+                    console.log('✅ account_requests 삭제 완료');
                 }
 
                 document.getElementById('registerModal').style.display='none';
-                alert('회원 계정이 생성되었습니다.');
-                // 리스너가 있어서 renderUsers 자동 호출됨
+                alert('✅ 회원 계정이 생성되었습니다.\n\n아이디: ' + userId + '\n임시 비밀번호: ' + password + '\n\n회원에게 안내해주세요.');
                 
             } catch(err) {
-                console.error(err);
-                alert('오류 발생: ' + err.message);
+                console.error('회원 생성 오류:', err);
+                
+                // Secondary App 정리
+                try {
+                    const secondaryApp = firebase.app('Secondary');
+                    if (secondaryApp) {
+                        await secondaryApp.auth().signOut();
+                        await secondaryApp.delete();
+                    }
+                } catch(e) {}
+                
+                // 에러 메시지 처리
+                let errorMsg = '오류 발생: ' + err.message;
+                if (err.code === 'auth/email-already-in-use') {
+                    errorMsg = '이미 사용 중인 아이디입니다.';
+                } else if (err.code === 'auth/weak-password') {
+                    errorMsg = '비밀번호가 너무 약합니다. 6자 이상 입력해주세요.';
+                }
+                alert(errorMsg);
             }
         });
 
