@@ -8,10 +8,10 @@
   <!-- CryptoJS for AES-256 encryption -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   
-  <!-- Firebase SDKs - 버전 9.22.0으로 통일 (login.html, index.html과 동일) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
   
   <!-- Google API for Drive -->
   <script src="https://apis.google.com/js/api.js"></script>
@@ -1591,7 +1591,7 @@
     const functions = firebase.app().functions('asia-northeast3');
     
     // Google API 클라이언트 초기화
-    const CLIENT_ID = '1012609333373-a1mclfpsvgnt079nmrp34ja0mc53i00h.apps.googleusercontent.com';
+    const CLIENT_ID = '1012609333373-5d223e3cqp6fo28i8bi85i9ae0p7ohen.apps.googleusercontent.com';
     
     // ⚠️ Gemini API 키 설정
     // 키 발급: https://aistudio.google.com/apikey
@@ -1670,12 +1670,12 @@
     // ==================== KSIC 데이터 및 계층형 드롭다운 ====================
     let ksicData = [];
     
-    // KSIC 데이터 로드
+    // KSIC 데이터 로드 (Firebase Functions 사용)
     async function loadKsicData() {
       try {
-        const response = await fetch('./ksic_data.json');
-        if (!response.ok) throw new Error('KSIC 데이터 로드 실패');
-        ksicData = await response.json();
+        const getKsicData = firebase.functions().httpsCallable('getKsicData');
+        const result = await getKsicData();
+        ksicData = result.data;
         console.log(`✅ KSIC 데이터 로드 완료: ${ksicData.length}개`);
         initKsicLevel2();
       } catch (error) {
@@ -4791,7 +4791,7 @@
       if (!canProceed) return;
       
       try {
-        showLoadingOverlay('📄 AI 상세분석 중...', `⭐ 신규 ${newProgramsToAnalyze.length}개 공고문을 Gemini AI가 분석하고 있습니다... (기존 ${existingPrograms.length}개 유지)`, newProgramsToAnalyze.length);
+        showLoadingOverlay('📄 AI PDF 상세분석 중...', `⭐ 신규 ${newProgramsToAnalyze.length}개 공고문을 Gemini AI가 분석하고 있습니다... (기존 ${existingPrograms.length}개 유지)`, newProgramsToAnalyze.length);
         
         const newDetailResults = [];
         
@@ -4859,20 +4859,20 @@
           await deductCredits('detail');
           
           alert(
-            `✅ AI 상세분석이 완료되었습니다!\n\n` +
+            `✅ AI PDF 상세분석이 완료되었습니다!\n\n` +
             `${detailMsg}\n` +
             `총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n` +
             `💳 차감 포인트: 2,000P\n` +
             `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
           );
         } else {
-          alert(`✅ AI 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.`);
+          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.`);
         }
         
       } catch (error) {
         hideLoadingOverlay();
-        console.error('❌ 상세분석 오류:', error);
-        alert('상세분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n잠시 후 다시 시도해주세요.');
+        console.error('❌ PDF 상세분석 오류:', error);
+        alert('PDF 상세분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n잠시 후 다시 시도해주세요.');
       }
     }
     
@@ -4885,7 +4885,7 @@
     }
     
     /**
-     * 상세분석 결과를 화면에 표시
+     * PDF 상세분석 결과를 화면에 표시
      */
     function updateResultsWithPDFDetail(pdfResults) {
       const resultCards = document.querySelectorAll('.result-card');
@@ -4919,54 +4919,9 @@
           existingDetail.remove();
         }
         
-        // 공고문 상세분석 결과 박스 생성
+        // PDF 상세분석 결과 박스 생성
         const detailBox = document.createElement('div');
         detailBox.className = 'ai-detail-box';
-        
-        // 파일 타입 확인 (HWP, 이미지, PDF)
-        const fileType = result.fileType || 'pdf';
-        
-        // HWP 또는 이미지 파일인 경우 안내 메시지 표시
-        if (fileType === 'hwp' || fileType === 'image') {
-          const isHwp = fileType === 'hwp';
-          const borderColor = isHwp ? '#6c757d' : '#ffc107';
-          const bgColor = isHwp ? '#f8f9fa' : '#fffbeb';
-          const iconEmoji = isHwp ? '📝' : '🖼️';
-          const titleText = isHwp ? '아래한글 공고문' : '이미지 공고문';
-          const messageText = isHwp 
-            ? '아래한글 공고문은 AI가 읽어들일 수 없습니다.\n상세내용은 공고문을 다운로드하여 참고 바랍니다.'
-            : '이미지 파일로 분석에 제한이 있습니다.\n상세 내용은 공고문을 참고해 주세요.';
-          
-          detailBox.style.cssText = `
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background: ${bgColor};
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-            border: 2px solid ${borderColor};
-          `;
-          
-          detailBox.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
-              <span style="font-size: 1.5rem;">${iconEmoji}</span>
-              <h5 style="color: ${borderColor}; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 상세분석 - ${titleText}</h5>
-            </div>
-            <div style="text-align: center; padding: 2rem 1rem;">
-              <div style="font-size: 3rem; margin-bottom: 1rem;">${iconEmoji}</div>
-              <p style="color: #333; font-size: 1rem; line-height: 1.8; white-space: pre-line; margin: 0;">
-                ${messageText}
-              </p>
-              <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
-                👆 위의 <strong>"공고문"</strong> 버튼을 클릭하여 원본 파일을 확인하세요.
-              </p>
-            </div>
-          `;
-          
-          targetCard.appendChild(detailBox);
-          return; // 다음 결과로 이동
-        }
-        
-        // PDF 파일인 경우 - 기존 상세분석 표시
         detailBox.style.cssText = `
           margin-top: 1.5rem;
           padding: 1.5rem;
@@ -4985,7 +4940,7 @@
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="font-size: 1.5rem;">📄</span>
-              <h5 style="color: #28a745; margin: 0; font-size: 1.1rem; font-weight: 700;">AI 상세분석</h5>
+              <h5 style="color: #28a745; margin: 0; font-size: 1.1rem; font-weight: 700;">AI PDF 상세분석</h5>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="background: ${eligible ? '#d4edda' : '#f8d7da'}; color: ${eligible ? '#155724' : '#721c24'}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
@@ -5281,8 +5236,8 @@
                 ${rec.printFileUrl ? `
                 <a href="${rec.printFileUrl}" target="_blank" download
                    style="display:inline-block;padding:0.7rem 1.5rem;background:#dc3545;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;transition:all 0.3s;"
-                   title="${rec.printFileName || '공고문'}">
-                  📄 공고문 ↓
+                   title="${rec.printFileName || '공고문 PDF'}">
+                  📄 공고문PDF ↓
                 </a>
                 ` : ''}
               </div>
@@ -6386,20 +6341,20 @@
       <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.5rem; border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1;">
         <button onclick="closeDetailSample()" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;">✕</button>
         <h2 style="margin: 0; font-size: 1.3rem;">👁️ 상세분석 샘플 미리보기</h2>
-        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">실제 AI 상세분석 결과와 동일한 형태입니다</p>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">실제 AI PDF 상세분석 결과와 동일한 형태입니다</p>
       </div>
       
       <!-- 샘플 내용 (실제 분석 형태) -->
       <div style="padding: 1.5rem;">
         
-        <!-- AI 상세분석 박스 -->
+        <!-- AI PDF 상세분석 박스 -->
         <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px solid #667eea; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(102,126,234,0.15);">
           
           <!-- 헤더 -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px dashed rgba(102,126,234,0.3);">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <span style="font-size: 1.8rem;">📄</span>
-              <h3 style="color: #667eea; margin: 0; font-size: 1.2rem; font-weight: 700;">AI 상세분석</h3>
+              <h3 style="color: #667eea; margin: 0; font-size: 1.2rem; font-weight: 700;">AI PDF 상세분석</h3>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">✅ 지원 가능</span>
