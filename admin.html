@@ -179,6 +179,11 @@
         .badge-warning { background: var(--warning-bg); color: var(--warning-text); }
         .badge-point { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; }
         .badge-purple { background: #f3e5f5; color: #7b1fa2; }
+        
+        /* 정렬 아이콘 */
+        .sort-icon { color: #999; font-size: 0.8rem; margin-left: 2px; transition: color 0.2s; }
+        th[onclick]:hover { background: #f0f0f0; }
+        th[onclick]:hover .sort-icon { color: var(--primary-color); }
         .password-display { font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 3px; border: 1px solid #dee2e6; color: #d63384; font-weight: bold; font-size: 0.85rem; }
         .status-card { display: flex; align-items: center; gap: 0.8rem; background: #fff; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .status-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
@@ -526,13 +531,13 @@
                             <tr>
                                 <th style="width: 50px;">No</th>
                                 <th style="min-width: 250px;">공고명</th>
-                                <th style="width: 120px;">주관기관</th>
-                                <th style="width: 120px;">수행기관</th>
-                                <th style="width: 80px;">지원분야</th>
-                                <th style="width: 130px;">신청기간</th>
-                                <th style="width: 90px;">등록일</th>
+                                <th style="width: 120px; cursor: pointer;" onclick="sortCachePrograms('organization')">주관기관 <span id="sort-organization" class="sort-icon">↕</span></th>
+                                <th style="width: 120px; cursor: pointer;" onclick="sortCachePrograms('executor')">수행기관 <span id="sort-executor" class="sort-icon">↕</span></th>
+                                <th style="width: 80px; cursor: pointer;" onclick="sortCachePrograms('category')">지원분야 <span id="sort-category" class="sort-icon">↕</span></th>
+                                <th style="width: 130px; cursor: pointer;" onclick="sortCachePrograms('applicationPeriod')">신청기간 <span id="sort-applicationPeriod" class="sort-icon">↕</span></th>
+                                <th style="width: 90px; cursor: pointer;" onclick="sortCachePrograms('registeredDate')">등록일 <span id="sort-registeredDate" class="sort-icon">↕</span></th>
                                 <th style="width: 50px;">📄</th>
-                                <th style="width: 70px;">상태</th>
+                                <th style="width: 70px; cursor: pointer;" onclick="sortCachePrograms('isOpen')">상태 <span id="sort-isOpen" class="sort-icon">↕</span></th>
                             </tr>
                         </thead>
                         <tbody id="cache-programs-tbody">
@@ -2369,8 +2374,11 @@
             
             let html = '';
             
+            // 처음 버튼
+            html += `<button class="btn btn-outline" onclick="goToCachePage(1)" ${cacheProgramsPage === 1 ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">« 처음</button>`;
+            
             // 이전 버튼
-            html += `<button class="btn btn-outline" onclick="goToCachePage(${cacheProgramsPage - 1})" ${cacheProgramsPage === 1 ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">이전</button>`;
+            html += `<button class="btn btn-outline" onclick="goToCachePage(${cacheProgramsPage - 1})" ${cacheProgramsPage === 1 ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">‹ 이전</button>`;
             
             // 페이지 번호
             const startPage = Math.max(1, cacheProgramsPage - 2);
@@ -2381,9 +2389,12 @@
             }
             
             // 다음 버튼
-            html += `<button class="btn btn-outline" onclick="goToCachePage(${cacheProgramsPage + 1})" ${cacheProgramsPage === totalPages ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">다음</button>`;
+            html += `<button class="btn btn-outline" onclick="goToCachePage(${cacheProgramsPage + 1})" ${cacheProgramsPage === totalPages ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">다음 ›</button>`;
             
-            html += `<span style="color: #666; font-size: 0.85rem; margin-left: 0.5rem;">총 ${filteredCachePrograms.length}개</span>`;
+            // 끝 버튼
+            html += `<button class="btn btn-outline" onclick="goToCachePage(${totalPages})" ${cacheProgramsPage === totalPages ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">끝 »</button>`;
+            
+            html += `<span style="color: #666; font-size: 0.85rem; margin-left: 0.5rem;">${cacheProgramsPage}/${totalPages} (총 ${filteredCachePrograms.length}개)</span>`;
             
             pagination.innerHTML = html;
         }
@@ -2392,6 +2403,58 @@
             const totalPages = Math.ceil(filteredCachePrograms.length / cacheProgramsPerPage);
             if (page < 1 || page > totalPages) return;
             cacheProgramsPage = page;
+            renderCacheProgramsTable();
+        }
+        
+        // 정렬 상태 관리
+        let currentSortField = null;
+        let currentSortOrder = 'asc'; // 'asc' or 'desc'
+        
+        function sortCachePrograms(field) {
+            // 같은 필드 클릭 시 정렬 방향 토글
+            if (currentSortField === field) {
+                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortOrder = 'asc';
+            }
+            
+            // 정렬 아이콘 업데이트
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.textContent = '↕';
+                icon.style.color = '#999';
+            });
+            const activeIcon = document.getElementById('sort-' + field);
+            if (activeIcon) {
+                activeIcon.textContent = currentSortOrder === 'asc' ? '↑' : '↓';
+                activeIcon.style.color = 'var(--primary-color)';
+            }
+            
+            // 정렬 실행
+            filteredCachePrograms.sort((a, b) => {
+                let valA, valB;
+                
+                if (field === 'isOpen') {
+                    // 상태: 접수중(true) > 마감(false)
+                    valA = a.isOpen ? 1 : 0;
+                    valB = b.isOpen ? 1 : 0;
+                } else if (field === 'registeredDate' || field === 'applicationPeriod') {
+                    // 날짜 필드
+                    valA = (a[field] || '').replace(/[^0-9]/g, '');
+                    valB = (b[field] || '').replace(/[^0-9]/g, '');
+                } else {
+                    // 문자열 필드
+                    valA = (a[field] || '').toLowerCase();
+                    valB = (b[field] || '').toLowerCase();
+                }
+                
+                if (valA < valB) return currentSortOrder === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            // 첫 페이지로 이동 후 테이블 다시 렌더링
+            cacheProgramsPage = 1;
             renderCacheProgramsTable();
         }
         
