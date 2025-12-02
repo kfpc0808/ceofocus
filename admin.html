@@ -504,11 +504,12 @@
                                 <th style="width: 120px;">주관기관</th>
                                 <th style="width: 100px;">지원분야</th>
                                 <th style="width: 150px;">신청기간</th>
+                                <th style="width: 130px;">수집일시</th>
                                 <th style="width: 70px;">상태</th>
                             </tr>
                         </thead>
                         <tbody id="cache-programs-tbody">
-                            <tr><td colspan="6" style="text-align: center; color: #999; padding: 2rem;">공고를 불러오려면 위의 새로고침 버튼을 클릭하세요.</td></tr>
+                            <tr><td colspan="7" style="text-align: center; color: #999; padding: 2rem;">공고를 불러오려면 위의 새로고침 버튼을 클릭하세요.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2219,7 +2220,7 @@
             const pageData = filteredCachePrograms.slice(startIdx, endIdx);
             
             if (pageData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 2rem;">검색 결과가 없습니다.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 2rem;">검색 결과가 없습니다.</td></tr>';
                 document.getElementById('cache-pagination').innerHTML = '';
                 return;
             }
@@ -2230,12 +2231,23 @@
                     ? '<span style="background: #27ae60; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">접수중</span>'
                     : '<span style="background: #999; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">마감</span>';
                 
+                // 수집일시 포맷팅
+                let updatedAtStr = '-';
+                if (p.updatedAt) {
+                    const date = p.updatedAt.toDate ? p.updatedAt.toDate() : new Date(p.updatedAt);
+                    updatedAtStr = date.toLocaleString('ko-KR', { 
+                        month: '2-digit', day: '2-digit', 
+                        hour: '2-digit', minute: '2-digit' 
+                    });
+                }
+                
                 return `<tr onclick="openProgramDetailModal('${p.id}')" style="cursor: pointer;">
                     <td>${startIdx + idx + 1}</td>
                     <td style="color: var(--accent-color); font-weight: 500;">${(p.name || '').substring(0, 50)}${(p.name || '').length > 50 ? '...' : ''}</td>
                     <td>${(p.organization || '').substring(0, 15)}${(p.organization || '').length > 15 ? '...' : ''}</td>
                     <td>${p.category || '-'}</td>
                     <td style="font-size: 0.8rem;">${p.applicationPeriod || '-'}</td>
+                    <td style="font-size: 0.75rem; color: #666;">${updatedAtStr}</td>
                     <td>${statusBadge}</td>
                 </tr>`;
             }).join('');

@@ -5315,19 +5315,12 @@
         
         // 적합/부적합 이유 HTML 생성
         let reasonHtml = '';
-        if (isEligible && result.eligibleReason) {
+        const reasonText = result.reason || result.eligibleReason || result.ineligibleReason || '';
+        if (reasonText) {
           reasonHtml = `
             <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
               <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ${grade.icon} 적합 이유: <span style="font-weight: normal;">${result.eligibleReason}</span>
-              </p>
-            </div>
-          `;
-        } else if (!isEligible && result.ineligibleReason) {
-          reasonHtml = `
-            <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
-              <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ${grade.icon} 참고 이유: <span style="font-weight: normal;">${result.ineligibleReason}</span>
+                ${grade.icon} ${isEligible ? '적합' : '참고'} 이유: <span style="font-weight: normal;">${reasonText}</span>
               </p>
             </div>
           `;
