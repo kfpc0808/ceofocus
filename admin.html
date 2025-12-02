@@ -451,6 +451,9 @@
                     <button class="btn btn-success" onclick="downloadCacheExcel()" id="btn-download-excel" style="background: #27ae60;">
                         <i class="ph ph-microsoft-excel-logo"></i> 엑셀 다운로드
                     </button>
+                    <button class="btn" onclick="deleteClosedPrograms()" id="btn-delete-closed" style="background: #e74c3c; color: white;">
+                        <i class="ph ph-trash"></i> 마감 공고 삭제
+                    </button>
                 </div>
                 <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
                     <i class="ph ph-info"></i> 자동 수집은 1시간마다 실행됩니다. 수동 수집은 즉시 기업마당에서 최신 공고를 가져옵니다.
@@ -2007,6 +2010,94 @@
                 console.error('엑셀 다운로드 오류:', error);
                 addCacheLog('❌ 엑셀 다운로드 오류: ' + error.message, 'error');
                 alert('다운로드 오류: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        
+        // 마감 공고 삭제 함수
+        async function deleteClosedPrograms() {
+            if (!confirm('마감된 공고를 모두 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
+                return;
+            }
+            
+            const btn = document.getElementById('btn-delete-closed');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 삭제 중...';
+            
+            try {
+                addCacheLog('마감 공고 조회 중...', 'info');
+                
+                // 모든 공고 가져오기
+                const snapshot = await db.collection('bizinfo_cache').get();
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                let closedIds = [];
+                
+                snapshot.forEach(doc => {
+                    if (doc.id === '_meta') return;
+                    
+                    const data = doc.data();
+                    const period = data.applicationPeriod || '';
+                    
+                    if (!period || !period.includes('~')) {
+                        closedIds.push(doc.id); // 기간 없으면 마감으로 간주
+                        return;
+                    }
+                    
+                    const endDateStr = period.split('~')[1].trim();
+                    if (endDateStr.length >= 8) {
+                        const endDate = new Date(
+                            endDateStr.substring(0, 4) + '-' +
+                            endDateStr.substring(4, 6) + '-' +
+                            endDateStr.substring(6, 8)
+                        );
+                        
+                        if (endDate < today) {
+                            closedIds.push(doc.id);
+                        }
+                    }
+                });
+                
+                if (closedIds.length === 0) {
+                    addCacheLog('삭제할 마감 공고가 없습니다.', 'info');
+                    alert('삭제할 마감 공고가 없습니다.');
+                    return;
+                }
+                
+                addCacheLog(`마감 공고 ${closedIds.length}개 삭제 시작...`, 'info');
+                
+                // Batch로 삭제 (450개씩)
+                let batch = db.batch();
+                let deletedCount = 0;
+                
+                for (const docId of closedIds) {
+                    batch.delete(db.collection('bizinfo_cache').doc(docId));
+                    deletedCount++;
+                    
+                    if (deletedCount % 450 === 0) {
+                        await batch.commit();
+                        addCacheLog(`${deletedCount}개 삭제 완료...`, 'info');
+                        batch = db.batch();
+                    }
+                }
+                
+                await batch.commit();
+                
+                addCacheLog(`✅ 마감 공고 ${deletedCount}개 삭제 완료!`, 'success');
+                alert(`마감 공고 ${deletedCount}개가 삭제되었습니다.`);
+                
+                // 목록 새로고침
+                await refreshCacheStatus();
+                
+            } catch (error) {
+                console.error('마감 공고 삭제 오류:', error);
+                addCacheLog('❌ 삭제 오류: ' + error.message, 'error');
+                alert('삭제 오류: ' + error.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
