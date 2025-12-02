@@ -451,8 +451,11 @@
                     <button class="btn btn-success" onclick="downloadCacheExcel()" id="btn-download-excel" style="background: #27ae60;">
                         <i class="ph ph-microsoft-excel-logo"></i> 엑셀 다운로드
                     </button>
-                    <button class="btn" onclick="deleteClosedPrograms()" id="btn-delete-closed" style="background: #e74c3c; color: white;">
+                    <button class="btn" onclick="deleteClosedPrograms()" id="btn-delete-closed" style="background: #fd7e14; color: white;">
                         <i class="ph ph-trash"></i> 마감 공고 삭제
+                    </button>
+                    <button class="btn" onclick="deleteAllPrograms()" id="btn-delete-all" style="background: #e74c3c; color: white;">
+                        <i class="ph ph-trash"></i> 전체 공고 삭제
                     </button>
                 </div>
                 <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
@@ -505,11 +508,12 @@
                                 <th style="width: 100px;">지원분야</th>
                                 <th style="width: 150px;">신청기간</th>
                                 <th style="width: 130px;">수집일시</th>
+                                <th style="width: 50px;">📄</th>
                                 <th style="width: 70px;">상태</th>
                             </tr>
                         </thead>
                         <tbody id="cache-programs-tbody">
-                            <tr><td colspan="7" style="text-align: center; color: #999; padding: 2rem;">공고를 불러오려면 위의 새로고침 버튼을 클릭하세요.</td></tr>
+                            <tr><td colspan="8" style="text-align: center; color: #999; padding: 2rem;">공고를 불러오려면 위의 새로고침 버튼을 클릭하세요.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1920,7 +1924,8 @@
                 btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 수집 중...';
                 addCacheLog('수동 수집 시작...', 'warning');
                 
-                const manualBizinfoFetch = functions.httpsCallable('manualBizinfoFetch');
+                // 🔥 타임아웃 10분 설정 (기본값 70초 → 600초)
+                const manualBizinfoFetch = functions.httpsCallable('manualBizinfoFetch', { timeout: 600000 });
                 const result = await manualBizinfoFetch();
                 
                 if (result.data.success) {
@@ -2105,6 +2110,77 @@
             }
         }
         
+        // 전체 공고 삭제 함수
+        async function deleteAllPrograms() {
+            const confirmText = prompt('⚠️ 경고: 모든 공고를 삭제합니다!\n\n이 작업은 되돌릴 수 없습니다.\n\n삭제하려면 "전체삭제"를 입력하세요:');
+            
+            if (confirmText !== '전체삭제') {
+                alert('취소되었습니다.');
+                return;
+            }
+            
+            const btn = document.getElementById('btn-delete-all');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 삭제 중...';
+            
+            try {
+                addCacheLog('전체 공고 삭제 시작...', 'warning');
+                
+                // 모든 공고 가져오기
+                const snapshot = await db.collection('bizinfo_cache').get();
+                
+                let allIds = [];
+                snapshot.forEach(doc => {
+                    if (doc.id !== '_meta') {
+                        allIds.push(doc.id);
+                    }
+                });
+                
+                if (allIds.length === 0) {
+                    addCacheLog('삭제할 공고가 없습니다.', 'info');
+                    alert('삭제할 공고가 없습니다.');
+                    return;
+                }
+                
+                addCacheLog(`전체 공고 ${allIds.length}개 삭제 시작...`, 'warning');
+                
+                // Batch로 삭제 (450개씩)
+                let batch = db.batch();
+                let deletedCount = 0;
+                
+                for (const docId of allIds) {
+                    batch.delete(db.collection('bizinfo_cache').doc(docId));
+                    deletedCount++;
+                    
+                    if (deletedCount % 450 === 0) {
+                        await batch.commit();
+                        addCacheLog(`${deletedCount}개 삭제 완료...`, 'info');
+                        batch = db.batch();
+                    }
+                }
+                
+                await batch.commit();
+                
+                // _meta 문서도 삭제
+                await db.collection('bizinfo_cache').doc('_meta').delete();
+                
+                addCacheLog(`✅ 전체 공고 ${deletedCount}개 삭제 완료!`, 'success');
+                alert(`전체 공고 ${deletedCount}개가 삭제되었습니다.\n\n수동 수집을 실행하여 최신 공고를 가져오세요.`);
+                
+                // 목록 새로고침
+                await refreshCacheStatus();
+                
+            } catch (error) {
+                console.error('전체 공고 삭제 오류:', error);
+                addCacheLog('❌ 삭제 오류: ' + error.message, 'error');
+                alert('삭제 오류: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        
         // ============================================================
         // 공고 목록 관리 함수들
         // ============================================================
@@ -2220,7 +2296,7 @@
             const pageData = filteredCachePrograms.slice(startIdx, endIdx);
             
             if (pageData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 2rem;">검색 결과가 없습니다.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999; padding: 2rem;">검색 결과가 없습니다.</td></tr>';
                 document.getElementById('cache-pagination').innerHTML = '';
                 return;
             }
@@ -2241,6 +2317,12 @@
                     });
                 }
                 
+                // 공고문 유무 표시
+                const hasPDF = p.printFileUrl || p.attachmentUrl;
+                const pdfIcon = hasPDF 
+                    ? '<span title="공고문 있음" style="color: #27ae60;">📄</span>'
+                    : '<span title="공고문 없음" style="color: #ccc;">-</span>';
+                
                 return `<tr onclick="openProgramDetailModal('${p.id}')" style="cursor: pointer;">
                     <td>${startIdx + idx + 1}</td>
                     <td style="color: var(--accent-color); font-weight: 500;">${(p.name || '').substring(0, 50)}${(p.name || '').length > 50 ? '...' : ''}</td>
@@ -2248,6 +2330,7 @@
                     <td>${p.category || '-'}</td>
                     <td style="font-size: 0.8rem;">${p.applicationPeriod || '-'}</td>
                     <td style="font-size: 0.75rem; color: #666;">${updatedAtStr}</td>
+                    <td>${pdfIcon}</td>
                     <td>${statusBadge}</td>
                 </tr>`;
             }).join('');
@@ -2346,8 +2429,17 @@
             `;
             
             const detailLink = document.getElementById('programDetailLink');
-            if (program.detailUrl) {
-                detailLink.href = program.detailUrl;
+            // detailUrl이 있고 http로 시작하는 유효한 URL인 경우만 표시
+            let validDetailUrl = null;
+            if (program.detailUrl && program.detailUrl.startsWith('http')) {
+                validDetailUrl = program.detailUrl;
+            } else if (program.id) {
+                // detailUrl이 없으면 기업마당 기본 URL로 생성
+                validDetailUrl = `https://www.bizinfo.go.kr/web/lay1/bbs/S1T122C128/AS/74/view.do?pblancId=${program.id}`;
+            }
+            
+            if (validDetailUrl) {
+                detailLink.href = validDetailUrl;
                 detailLink.style.display = 'inline-flex';
             } else {
                 detailLink.style.display = 'none';
