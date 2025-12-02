@@ -183,6 +183,7 @@
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="notices" onclick="switchTab('notices')"><i class="ph ph-megaphone"></i> 공지사항</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="admins" onclick="switchTab('admins')"><i class="ph ph-user-gear"></i> 관리자 관리</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="terms" onclick="switchTab('terms')"><i class="ph ph-scroll"></i> 약관 및 정책</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="bizinfo-cache" onclick="switchTab('bizinfo-cache')"><i class="ph ph-database"></i> 기업마당 캐시</a></li>
         </ul>
         <div class="admin-profile">
             <i class="ph ph-user-circle" style="font-size: 2rem;"></i>
@@ -409,6 +410,59 @@
                 <div class="tab-btn-group"><button class="btn btn-primary active" id="btn-term-service" onclick="loadTerm('service')">서비스 이용약관</button><button class="btn btn-outline" id="btn-term-privacy" onclick="loadTerm('privacy')">개인정보 처리방침</button><button class="btn btn-outline" id="btn-term-marketing" onclick="loadTerm('marketing')">마케팅 수신동의</button></div>
                 <div class="form-group"><textarea class="form-control" id="termEditor" style="min-height: 500px; font-family: monospace; line-height: 1.6;"></textarea></div>
                 <button class="btn btn-primary" onclick="saveTerms()">저장</button>
+            </div>
+        </div>
+
+        <!-- 기업마당 캐시 관리 -->
+        <div id="bizinfo-cache" class="tab-content">
+            <div class="page-header">
+                <h1 class="page-title">기업마당 캐시 관리</h1>
+                <div class="top-buttons">
+                    <button class="btn btn-outline" onclick="refreshCacheStatus()"><i class="ph ph-arrows-clockwise"></i> 새로고침</button>
+                </div>
+            </div>
+            
+            <!-- 캐시 상태 카드 -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-chart-bar"></i> 캐시 현황</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="background: #e8f5e9; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #27ae60;" id="cache-total-count">-</div>
+                        <div style="font-size: 0.85rem; color: #666;">저장된 공고 수</div>
+                    </div>
+                    <div style="background: #e3f2fd; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1rem; font-weight: 600; color: #1976d2;" id="cache-last-updated">-</div>
+                        <div style="font-size: 0.85rem; color: #666;">마지막 수집 시간</div>
+                    </div>
+                    <div style="background: #fff3e0; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1rem; font-weight: 600; color: #f57c00;" id="cache-triggered-by">-</div>
+                        <div style="font-size: 0.85rem; color: #666;">수집 방식</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 액션 버튼 카드 -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-gear"></i> 캐시 관리</h3>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="manualFetchBizinfo()" id="btn-manual-fetch">
+                        <i class="ph ph-cloud-arrow-down"></i> 수동 수집 실행
+                    </button>
+                    <button class="btn btn-success" onclick="downloadCacheExcel()" id="btn-download-excel" style="background: #27ae60;">
+                        <i class="ph ph-microsoft-excel-logo"></i> 엑셀 다운로드
+                    </button>
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
+                    <i class="ph ph-info"></i> 자동 수집은 1시간마다 실행됩니다. 수동 수집은 즉시 기업마당에서 최신 공고를 가져옵니다.
+                </p>
+            </div>
+            
+            <!-- 수집 로그 -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-list-bullets"></i> 최근 작업 로그</h3>
+                <div id="cache-log" style="background: #f8f9fa; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                    <div style="color: #666;">로그가 없습니다. 수동 수집을 실행해보세요.</div>
+                </div>
             </div>
         </div>
     </main>
@@ -681,6 +735,11 @@
                 // 해당 탭 콘텐츠 표시
                 const tabContent = document.getElementById(tabId);
                 if (tabContent) tabContent.classList.add('active');
+                
+                // 기업마당 캐시 탭 진입 시 자동 상태 조회
+                if (tabId === 'bizinfo-cache') {
+                    refreshCacheStatus();
+                }
             } catch(e) {
                 console.error('switchTab 오류:', e);
             }
@@ -1735,6 +1794,157 @@
                 alert(errorMsg);
             }
         });
+
+        // ============================================================
+        // 기업마당 캐시 관리 함수들
+        // ============================================================
+        
+        let cacheLogMessages = [];
+        
+        function addCacheLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            const colors = {
+                'info': '#666',
+                'success': '#27ae60',
+                'error': '#e74c3c',
+                'warning': '#f39c12'
+            };
+            cacheLogMessages.unshift(`<div style="color: ${colors[type]};">[${timestamp}] ${message}</div>`);
+            if (cacheLogMessages.length > 20) cacheLogMessages.pop();
+            document.getElementById('cache-log').innerHTML = cacheLogMessages.join('');
+        }
+        
+        async function refreshCacheStatus() {
+            try {
+                addCacheLog('캐시 상태 조회 중...', 'info');
+                
+                const getBizinfoCacheStatus = functions.httpsCallable('getBizinfoCacheStatus');
+                const result = await getBizinfoCacheStatus();
+                
+                if (result.data.success) {
+                    const status = result.data.status;
+                    document.getElementById('cache-total-count').textContent = (status.totalCount || 0).toLocaleString() + '개';
+                    document.getElementById('cache-last-updated').textContent = status.lastUpdated || '정보없음';
+                    document.getElementById('cache-triggered-by').textContent = status.triggeredBy || '자동수집';
+                    addCacheLog(`캐시 상태 조회 완료: ${status.totalCount}개 공고`, 'success');
+                } else {
+                    addCacheLog('캐시 상태 조회 실패: ' + (result.data.error || '알 수 없는 오류'), 'error');
+                }
+            } catch (error) {
+                console.error('캐시 상태 조회 오류:', error);
+                addCacheLog('캐시 상태 조회 오류: ' + error.message, 'error');
+            }
+        }
+        
+        async function manualFetchBizinfo() {
+            const btn = document.getElementById('btn-manual-fetch');
+            const originalText = btn.innerHTML;
+            
+            if (!confirm('기업마당에서 공고를 수동으로 수집하시겠습니까?\n\n수집에 1~2분 정도 소요될 수 있습니다.')) {
+                return;
+            }
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 수집 중...';
+                addCacheLog('수동 수집 시작...', 'warning');
+                
+                const manualBizinfoFetch = functions.httpsCallable('manualBizinfoFetch');
+                const result = await manualBizinfoFetch();
+                
+                if (result.data.success) {
+                    addCacheLog(`✅ 수동 수집 완료: ${result.data.count}개 공고 저장`, 'success');
+                    alert(`수집 완료!\n\n${result.data.count}개 공고가 저장되었습니다.`);
+                    refreshCacheStatus();
+                } else {
+                    addCacheLog('❌ 수동 수집 실패: ' + (result.data.error || '알 수 없는 오류'), 'error');
+                    alert('수집 실패: ' + (result.data.error || '알 수 없는 오류'));
+                }
+            } catch (error) {
+                console.error('수동 수집 오류:', error);
+                addCacheLog('❌ 수동 수집 오류: ' + error.message, 'error');
+                alert('오류 발생: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        
+        async function downloadCacheExcel() {
+            const btn = document.getElementById('btn-download-excel');
+            const originalText = btn.innerHTML;
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 준비 중...';
+                addCacheLog('엑셀 데이터 준비 중...', 'info');
+                
+                const getCachedPrograms = functions.httpsCallable('getCachedPrograms');
+                const result = await getCachedPrograms();
+                
+                if (!result.data.success || !result.data.programs || result.data.programs.length === 0) {
+                    addCacheLog('다운로드할 공고가 없습니다.', 'warning');
+                    alert('저장된 공고가 없습니다.\n\n먼저 수동 수집을 실행해주세요.');
+                    return;
+                }
+                
+                const programs = result.data.programs;
+                addCacheLog(`${programs.length}개 공고 엑셀 변환 중...`, 'info');
+                
+                // 엑셀용 데이터 변환
+                const excelData = programs.map((p, idx) => ({
+                    '번호': idx + 1,
+                    '공고명': p.name || '',
+                    '주관기관': p.organization || '',
+                    '수행기관': p.executor || '',
+                    '지원분야': p.category || '',
+                    '지원대상': p.target || '',
+                    '사업개요': p.description || '',
+                    '신청기간': p.applicationPeriod || '',
+                    '접수중': p.isOpen ? 'O' : 'X',
+                    '해시태그': p.hashTags || '',
+                    '상세URL': p.detailUrl || '',
+                    '신청URL': p.applicationUrl || '',
+                    '첨부파일URL': p.attachmentUrl || ''
+                }));
+                
+                // SheetJS로 엑셀 생성
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '기업마당공고');
+                
+                // 열 너비 설정
+                ws['!cols'] = [
+                    { wch: 5 },   // 번호
+                    { wch: 50 },  // 공고명
+                    { wch: 20 },  // 주관기관
+                    { wch: 20 },  // 수행기관
+                    { wch: 15 },  // 지원분야
+                    { wch: 20 },  // 지원대상
+                    { wch: 60 },  // 사업개요
+                    { wch: 25 },  // 신청기간
+                    { wch: 8 },   // 접수중
+                    { wch: 30 },  // 해시태그
+                    { wch: 50 },  // 상세URL
+                    { wch: 50 },  // 신청URL
+                    { wch: 50 }   // 첨부파일URL
+                ];
+                
+                // 다운로드
+                const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                XLSX.writeFile(wb, `기업마당공고_${today}.xlsx`);
+                
+                addCacheLog(`✅ 엑셀 다운로드 완료: ${programs.length}개 공고`, 'success');
+                
+            } catch (error) {
+                console.error('엑셀 다운로드 오류:', error);
+                addCacheLog('❌ 엑셀 다운로드 오류: ' + error.message, 'error');
+                alert('다운로드 오류: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
 
         // 초기화
         window.onload = function() {
