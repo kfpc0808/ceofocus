@@ -369,6 +369,13 @@
       grid-column: 1 / -1;
     }
     
+    /* 모바일에서만 전체 너비 */
+    @media (max-width: 599px) {
+      .form-grid .mobile-full-width {
+        grid-column: 1 / -1;
+      }
+    }
+    
     @media (min-width: 600px) {
       .form-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -962,7 +969,7 @@
           </div>
         </div>
         
-        <div class="form-group">
+        <div class="form-group mobile-full-width">
           <label>개업연월일(사업자등록증) <span class="required">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <input type="date" id="establish-date" required onchange="calculateBusinessAge()" style="flex: 1; min-width: 150px;">
@@ -2237,9 +2244,9 @@
       try {
         console.log('📡 기업마당 API 호출 중...');
         
-        // Firebase Functions를 통해 기업마당 데이터 가져오기
-        const getBizInfoPrograms = functions.httpsCallable('getBizInfoPrograms');
-        const result = await getBizInfoPrograms();
+        // Firebase Functions를 통해 캐시된 기업마당 데이터 가져오기
+        const getCachedPrograms = functions.httpsCallable('getCachedPrograms');
+        const result = await getCachedPrograms();
         const data = result.data;
         
         if (data.success && data.programs) {
@@ -5736,15 +5743,15 @@
         };
         
         updateAIProgress(10);
-        updateAILoading('기업마당 API 조회 중...', '공고 불러오는 중...');
+        updateAILoading('캐시된 공고 조회 중...', '공고 불러오는 중...');
         
-        // Step 1: 기업마당 API 조회 (Firebase Functions 사용)
-        const getBizinfoPrograms = functions.httpsCallable('getBizInfoPrograms');
-        const result1 = await getBizinfoPrograms({ filters: {} });
+        // Step 1: 캐시된 기업마당 데이터 조회 (Firebase Functions 사용)
+        const getCachedPrograms = functions.httpsCallable('getCachedPrograms');
+        const result1 = await getCachedPrograms({ filters: {} });
         const data1 = result1.data;
         
         if (!data1.success) {
-          throw new Error('기업마당 API 조회 실패');
+          throw new Error('공고 데이터 조회 실패');
         }
         
         const programs = data1.programs || [];
