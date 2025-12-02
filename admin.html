@@ -769,7 +769,7 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-        const functions = firebase.app().functions('us-central1');  // ★ Cloud Functions 초기화 (region 지정)
+        const functions = firebase.app().functions('asia-northeast3');  // ★ Cloud Functions 초기화 (region 지정)
         const ADMIN_SECRET = 'finmaster-admin-2024';  // ★ 관리자 비밀키
 
         // --- 2. 엑셀 다운로드 기능 ---
