@@ -460,12 +460,76 @@
             <!-- 수집 로그 -->
             <div class="card">
                 <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-list-bullets"></i> 최근 작업 로그</h3>
-                <div id="cache-log" style="background: #f8f9fa; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                <div id="cache-log" style="background: #f8f9fa; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; max-height: 150px; overflow-y: auto;">
                     <div style="color: #666;">로그가 없습니다. 수동 수집을 실행해보세요.</div>
                 </div>
             </div>
+            
+            <!-- 공고 목록 -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 style="color: var(--primary-color); margin: 0;"><i class="ph ph-list-dashes"></i> 공고 목록</h3>
+                    <button class="btn btn-outline" onclick="loadCachePrograms()" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;"><i class="ph ph-arrows-clockwise"></i> 목록 새로고침</button>
+                </div>
+                
+                <!-- 검색 필터 영역 -->
+                <div style="background: #f8f9fa; padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                        <input type="text" id="cache-search" placeholder="🔍 통합검색 (공고명, 기관, 내용)" oninput="filterCachePrograms()" style="padding: 0.4rem 0.8rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.85rem; flex: 1; min-width: 200px;">
+                        <select id="cache-category-filter" onchange="filterCachePrograms()" style="padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.85rem;">
+                            <option value="">전체 분야</option>
+                        </select>
+                        <select id="cache-org-filter" onchange="filterCachePrograms()" style="padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.85rem;">
+                            <option value="">전체 기관</option>
+                        </select>
+                        <select id="cache-status-filter" onchange="filterCachePrograms()" style="padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.85rem;">
+                            <option value="">전체 상태</option>
+                            <option value="open">접수중</option>
+                            <option value="closed">마감</option>
+                        </select>
+                        <button class="btn btn-outline" onclick="resetCacheFilters()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">초기화</button>
+                    </div>
+                    <div id="cache-filter-info" style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;"></div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="cache-programs-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No</th>
+                                <th style="min-width: 250px;">공고명</th>
+                                <th style="width: 120px;">주관기관</th>
+                                <th style="width: 100px;">지원분야</th>
+                                <th style="width: 150px;">신청기간</th>
+                                <th style="width: 70px;">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cache-programs-tbody">
+                            <tr><td colspan="6" style="text-align: center; color: #999; padding: 2rem;">공고를 불러오려면 위의 새로고침 버튼을 클릭하세요.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="cache-pagination" style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; align-items: center;"></div>
+            </div>
         </div>
     </main>
+    
+    <!-- 모달: 공고 상세보기 -->
+    <div id="programDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--primary-color);"><i class="ph ph-file-text"></i> 공고 상세정보</h3>
+                <button onclick="document.getElementById('programDetailModal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+            </div>
+            <div id="programDetailContent" style="max-height: 70vh; overflow-y: auto;">
+                <!-- 동적으로 채워짐 -->
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button class="btn btn-outline" onclick="document.getElementById('programDetailModal').style.display='none'">닫기</button>
+                <a id="programDetailLink" href="#" target="_blank" class="btn btn-primary"><i class="ph ph-arrow-square-out"></i> 상세페이지 바로가기</a>
+            </div>
+        </div>
+    </div>
 
     <!-- 모달: ID 발급 및 가입 승인 (수정됨) -->
     <div id="registerModal" class="modal">
@@ -1827,6 +1891,9 @@
                     document.getElementById('cache-last-updated').textContent = status.lastUpdated || '정보없음';
                     document.getElementById('cache-triggered-by').textContent = status.triggeredBy || '자동수집';
                     addCacheLog(`캐시 상태 조회 완료: ${status.totalCount}개 공고`, 'success');
+                    
+                    // 공고 목록도 함께 로드
+                    await loadCachePrograms();
                 } else {
                     addCacheLog('캐시 상태 조회 실패: ' + (result.data.error || '알 수 없는 오류'), 'error');
                 }
@@ -1944,6 +2011,246 @@
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
+        }
+        
+        // ============================================================
+        // 공고 목록 관리 함수들
+        // ============================================================
+        
+        let allCachePrograms = [];
+        let filteredCachePrograms = [];
+        let cacheProgramsPage = 1;
+        const cacheProgramsPerPage = 15;
+        
+        async function loadCachePrograms() {
+            try {
+                addCacheLog('공고 목록 로딩 중...', 'info');
+                
+                const getCachedPrograms = functions.httpsCallable('getCachedPrograms');
+                const result = await getCachedPrograms();
+                
+                if (result.data.success && result.data.programs) {
+                    allCachePrograms = result.data.programs;
+                    filteredCachePrograms = [...allCachePrograms];
+                    
+                    // 분야 필터 옵션 생성
+                    const categories = [...new Set(allCachePrograms.map(p => p.category || '').filter(c => c))].sort();
+                    const categorySelect = document.getElementById('cache-category-filter');
+                    categorySelect.innerHTML = '<option value="">전체 분야</option>' + 
+                        categories.map(c => `<option value="${c}">${c}</option>`).join('');
+                    
+                    // 주관기관 필터 옵션 생성
+                    const orgs = [...new Set(allCachePrograms.map(p => p.organization || '').filter(o => o))].sort();
+                    const orgSelect = document.getElementById('cache-org-filter');
+                    orgSelect.innerHTML = '<option value="">전체 기관</option>' + 
+                        orgs.slice(0, 50).map(o => `<option value="${o}">${o.length > 15 ? o.substring(0, 15) + '...' : o}</option>`).join('');
+                    
+                    cacheProgramsPage = 1;
+                    renderCacheProgramsTable();
+                    updateFilterInfo();
+                    addCacheLog(`✅ 공고 목록 로드 완료: ${allCachePrograms.length}개`, 'success');
+                } else {
+                    document.getElementById('cache-programs-tbody').innerHTML = 
+                        '<tr><td colspan="6" style="text-align: center; color: #999; padding: 2rem;">공고가 없습니다. 수동 수집을 실행해주세요.</td></tr>';
+                    addCacheLog('공고 없음', 'warning');
+                }
+            } catch (error) {
+                console.error('공고 목록 로드 오류:', error);
+                addCacheLog('❌ 공고 목록 로드 오류: ' + error.message, 'error');
+            }
+        }
+        
+        function filterCachePrograms() {
+            const searchText = document.getElementById('cache-search').value.toLowerCase().trim();
+            const category = document.getElementById('cache-category-filter').value;
+            const org = document.getElementById('cache-org-filter').value;
+            const status = document.getElementById('cache-status-filter').value;
+            
+            filteredCachePrograms = allCachePrograms.filter(p => {
+                // 통합 검색 (공고명, 기관, 사업개요, 해시태그)
+                const matchSearch = !searchText || 
+                    (p.name || '').toLowerCase().includes(searchText) ||
+                    (p.organization || '').toLowerCase().includes(searchText) ||
+                    (p.executor || '').toLowerCase().includes(searchText) ||
+                    (p.description || '').toLowerCase().includes(searchText) ||
+                    (p.target || '').toLowerCase().includes(searchText) ||
+                    (p.hashTags || '').toLowerCase().includes(searchText);
+                
+                // 분야 필터
+                const matchCategory = !category || (p.category || '') === category;
+                
+                // 주관기관 필터
+                const matchOrg = !org || (p.organization || '') === org;
+                
+                // 상태 필터 (접수중/마감)
+                let matchStatus = true;
+                if (status === 'open') matchStatus = p.isOpen === true;
+                else if (status === 'closed') matchStatus = p.isOpen === false;
+                
+                return matchSearch && matchCategory && matchOrg && matchStatus;
+            });
+            
+            cacheProgramsPage = 1;
+            renderCacheProgramsTable();
+            updateFilterInfo();
+        }
+        
+        function resetCacheFilters() {
+            document.getElementById('cache-search').value = '';
+            document.getElementById('cache-category-filter').value = '';
+            document.getElementById('cache-org-filter').value = '';
+            document.getElementById('cache-status-filter').value = '';
+            filteredCachePrograms = [...allCachePrograms];
+            cacheProgramsPage = 1;
+            renderCacheProgramsTable();
+            updateFilterInfo();
+        }
+        
+        function updateFilterInfo() {
+            const total = allCachePrograms.length;
+            const filtered = filteredCachePrograms.length;
+            const openCount = filteredCachePrograms.filter(p => p.isOpen).length;
+            const closedCount = filtered - openCount;
+            
+            let infoText = `전체 ${total.toLocaleString()}개`;
+            if (filtered !== total) {
+                infoText += ` 중 <strong>${filtered.toLocaleString()}개</strong> 표시`;
+            }
+            infoText += ` (접수중: ${openCount}개, 마감: ${closedCount}개)`;
+            
+            document.getElementById('cache-filter-info').innerHTML = infoText;
+        }
+        
+        function renderCacheProgramsTable() {
+            const tbody = document.getElementById('cache-programs-tbody');
+            const startIdx = (cacheProgramsPage - 1) * cacheProgramsPerPage;
+            const endIdx = startIdx + cacheProgramsPerPage;
+            const pageData = filteredCachePrograms.slice(startIdx, endIdx);
+            
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 2rem;">검색 결과가 없습니다.</td></tr>';
+                document.getElementById('cache-pagination').innerHTML = '';
+                return;
+            }
+            
+            tbody.innerHTML = pageData.map((p, idx) => {
+                const isOpen = p.isOpen;
+                const statusBadge = isOpen 
+                    ? '<span style="background: #27ae60; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">접수중</span>'
+                    : '<span style="background: #999; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">마감</span>';
+                
+                return `<tr onclick="openProgramDetailModal('${p.id}')" style="cursor: pointer;">
+                    <td>${startIdx + idx + 1}</td>
+                    <td style="color: var(--accent-color); font-weight: 500;">${(p.name || '').substring(0, 50)}${(p.name || '').length > 50 ? '...' : ''}</td>
+                    <td>${(p.organization || '').substring(0, 15)}${(p.organization || '').length > 15 ? '...' : ''}</td>
+                    <td>${p.category || '-'}</td>
+                    <td style="font-size: 0.8rem;">${p.applicationPeriod || '-'}</td>
+                    <td>${statusBadge}</td>
+                </tr>`;
+            }).join('');
+            
+            renderCachePagination();
+        }
+        
+        function renderCachePagination() {
+            const totalPages = Math.ceil(filteredCachePrograms.length / cacheProgramsPerPage);
+            const pagination = document.getElementById('cache-pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = `<span style="color: #666; font-size: 0.85rem;">총 ${filteredCachePrograms.length}개</span>`;
+                return;
+            }
+            
+            let html = '';
+            
+            // 이전 버튼
+            html += `<button class="btn btn-outline" onclick="goToCachePage(${cacheProgramsPage - 1})" ${cacheProgramsPage === 1 ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">이전</button>`;
+            
+            // 페이지 번호
+            const startPage = Math.max(1, cacheProgramsPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="btn ${i === cacheProgramsPage ? 'btn-primary' : 'btn-outline'}" onclick="goToCachePage(${i})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">${i}</button>`;
+            }
+            
+            // 다음 버튼
+            html += `<button class="btn btn-outline" onclick="goToCachePage(${cacheProgramsPage + 1})" ${cacheProgramsPage === totalPages ? 'disabled' : ''} style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">다음</button>`;
+            
+            html += `<span style="color: #666; font-size: 0.85rem; margin-left: 0.5rem;">총 ${filteredCachePrograms.length}개</span>`;
+            
+            pagination.innerHTML = html;
+        }
+        
+        function goToCachePage(page) {
+            const totalPages = Math.ceil(filteredCachePrograms.length / cacheProgramsPerPage);
+            if (page < 1 || page > totalPages) return;
+            cacheProgramsPage = page;
+            renderCacheProgramsTable();
+        }
+        
+        function openProgramDetailModal(programId) {
+            const program = allCachePrograms.find(p => p.id === programId);
+            if (!program) return;
+            
+            const content = document.getElementById('programDetailContent');
+            content.innerHTML = `
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color); font-size: 1.1rem;">${program.name || '공고명 없음'}</h4>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        ${program.isOpen 
+                            ? '<span style="background: #27ae60; color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">접수중</span>'
+                            : '<span style="background: #999; color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">마감</span>'}
+                        <span style="background: var(--accent-color); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">${program.category || '분야 없음'}</span>
+                    </div>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666; width: 100px;">주관기관</td>
+                        <td style="padding: 0.7rem;">${program.organization || '-'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666;">수행기관</td>
+                        <td style="padding: 0.7rem;">${program.executor || '-'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666;">지원대상</td>
+                        <td style="padding: 0.7rem;">${program.target || '-'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666;">신청기간</td>
+                        <td style="padding: 0.7rem;">${program.applicationPeriod || '-'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666; vertical-align: top;">사업개요</td>
+                        <td style="padding: 0.7rem; line-height: 1.6;">${program.description || '-'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666;">해시태그</td>
+                        <td style="padding: 0.7rem;">${program.hashTags || '-'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666;">조회수</td>
+                        <td style="padding: 0.7rem;">${(program.views || 0).toLocaleString()}회</td>
+                    </tr>
+                    ${program.attachmentUrl ? `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.7rem; font-weight: 600; color: #666;">첨부파일</td>
+                        <td style="padding: 0.7rem;"><a href="${program.attachmentUrl}" target="_blank" style="color: var(--accent-color);">📎 ${program.attachmentName || '첨부파일 다운로드'}</a></td>
+                    </tr>` : ''}
+                </table>
+            `;
+            
+            const detailLink = document.getElementById('programDetailLink');
+            if (program.detailUrl) {
+                detailLink.href = program.detailUrl;
+                detailLink.style.display = 'inline-flex';
+            } else {
+                detailLink.style.display = 'none';
+            }
+            
+            document.getElementById('programDetailModal').style.display = 'flex';
         }
 
         // 초기화
