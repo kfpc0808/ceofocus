@@ -426,8 +426,8 @@
         <div id="admins" class="tab-content">
             <div class="page-header"><h1 class="page-title">관리자 계정 관리</h1><button class="btn btn-primary" onclick="openAdminModal()"><i class="ph ph-plus"></i> 추가</button></div>
             <div class="card">
-                <p style="margin-bottom:1rem; color:#666; font-size:0.9rem;">⚠️ 관리자 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.</p>
-                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>비밀번호</th><th style="width:120px;">관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+                <p style="margin-bottom:1rem; color:#666; font-size:0.9rem;">⚠️ 관리자 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다. 무료사용자는 유효기간 내 무제한 사용 가능합니다.</p>
+                <div class="table-container"><table><thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>유효기간</th><th>비밀번호</th><th style="width:120px;">관리</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
             </div>
         </div>
 
@@ -705,27 +705,38 @@
     <!-- 모달: 관리자 추가 -->
     <div id="adminModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
-            <h3>🔐 관리자 계정 추가</h3>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:1rem;">관리자 계정은 모든 프로그램을 <b style="color:#27ae60;">무료/무제한</b>으로 사용할 수 있습니다.</p>
+            <h3>🔐 관리자/무료사용자 추가</h3>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:1rem;">관리자는 모든 기능 사용, 무료사용자는 <b style="color:#27ae60;">API 무제한</b> (유효기간 내)</p>
             <form id="adminForm">
                 <div class="form-group">
                     <label>아이디 *</label>
-                    <input type="text" id="adminUserId" class="form-control" placeholder="관리자 아이디" required>
+                    <input type="text" id="adminUserId" class="form-control" placeholder="아이디 입력" required>
                 </div>
                 <div class="form-group">
                     <label>이름 *</label>
-                    <input type="text" id="adminUserName" class="form-control" placeholder="관리자 이름" required>
+                    <input type="text" id="adminUserName" class="form-control" placeholder="이름 입력" required>
                 </div>
                 <div class="form-group">
                     <label>비밀번호 * (6자 이상)</label>
                     <input type="text" id="adminUserPw" class="form-control" value="admin123" required minlength="6">
                 </div>
                 <div class="form-group">
-                    <label>권한</label>
-                    <select id="adminRole" class="form-control">
-                        <option value="super_admin">최고관리자</option>
-                        <option value="admin">일반관리자</option>
+                    <label>권한 *</label>
+                    <select id="adminRole" class="form-control" onchange="toggleExpireDateField()">
+                        <option value="super_admin">최고관리자 (모든 권한 + 무제한)</option>
+                        <option value="admin">일반관리자 (관리 권한 + 무제한)</option>
+                        <option value="freeuser">무료사용자 (API 무제한만)</option>
                     </select>
+                </div>
+                <div class="form-group" id="expireDateGroup" style="display: none;">
+                    <label>유효기간</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="date" id="adminExpireDate" class="form-control" style="flex: 1;">
+                        <label style="display: flex; align-items: center; gap: 0.3rem; margin: 0; cursor: pointer;">
+                            <input type="checkbox" id="adminNoExpire" onchange="toggleExpireDateInput()"> 무제한
+                        </label>
+                    </div>
+                    <small style="color: #888; margin-top: 0.3rem; display: block;">유효기간이 지나면 일반 회원처럼 10회/일 제한이 적용됩니다.</small>
                 </div>
                 <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
                     <button type="button" class="btn btn-outline" onclick="closeAdminModal()">취소</button>
@@ -1746,7 +1757,11 @@
             const tbody = document.getElementById('adminTableBody');
             if (!tbody) return;
             
-            const roleMap = { 'super_admin': '최고관리자', 'admin': '일반관리자' };
+            const roleMap = { 
+                'super_admin': '최고관리자', 
+                'admin': '일반관리자',
+                'freeuser': '무료사용자'
+            };
             
             // ★ 하드코딩된 기본 관리자 (login.html에서 사용)
             const defaultAdmin = {
@@ -1761,6 +1776,7 @@
                 <td><strong>${defaultAdmin.userId}</strong> <span class="badge badge-warning">기본</span></td>
                 <td>${defaultAdmin.name}</td>
                 <td><span class="badge badge-purple">최고관리자</span></td>
+                <td><span style="color:#27ae60; font-weight:600;">무제한</span></td>
                 <td><span class="password-display">${defaultAdmin.password}</span></td>
                 <td><span style="color:#888; font-size:0.8rem;">삭제 불가</span></td>
             </tr>`;
@@ -1783,9 +1799,34 @@
             if (filteredAdmins.length > 0) {
                 html += filteredAdmins.map(a => {
                     const dateStr = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString() : '-';
-                    const roleBadge = a.role === 'super_admin' 
-                        ? '<span class="badge badge-purple">최고관리자</span>' 
-                        : '<span class="badge badge-blue">일반관리자</span>';
+                    
+                    // 권한 배지
+                    let roleBadge = '';
+                    if (a.role === 'super_admin') {
+                        roleBadge = '<span class="badge badge-purple">최고관리자</span>';
+                    } else if (a.role === 'freeuser') {
+                        roleBadge = '<span class="badge badge-success" style="background:#27ae60;">무료사용자</span>';
+                    } else {
+                        roleBadge = '<span class="badge badge-blue">일반관리자</span>';
+                    }
+                    
+                    // 유효기간 표시
+                    let expireDisplay = '<span style="color:#27ae60; font-weight:600;">무제한</span>';
+                    if (a.role === 'freeuser' && a.expireDate) {
+                        const expireDate = new Date(a.expireDate);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        if (expireDate < today) {
+                            expireDisplay = `<span style="color:#e74c3c; font-weight:600; text-decoration:line-through;">${a.expireDate}</span> <span class="badge badge-danger" style="font-size:0.7rem;">만료</span>`;
+                        } else {
+                            const diffDays = Math.ceil((expireDate - today) / (1000 * 60 * 60 * 24));
+                            expireDisplay = `<span style="color:#1976d2; font-weight:600;">${a.expireDate}</span>`;
+                            if (diffDays <= 7) {
+                                expireDisplay += ` <span style="color:#f57c00; font-size:0.75rem;">(${diffDays}일 남음)</span>`;
+                            }
+                        }
+                    }
                     
                     // ★ 비밀번호 표시 (클릭 시 수정 가능)
                     let pwDisplay = '-';
@@ -1799,9 +1840,10 @@
                         <td><strong>${a.userId || '-'}</strong></td>
                         <td>${a.name || '-'}</td>
                         <td>${roleBadge}</td>
+                        <td>${expireDisplay}</td>
                         <td>${pwDisplay}</td>
                         <td>
-                            <button class="btn btn-outline btn-sm" onclick="editAdminPassword('${a.id}', '${a.userId}', '${a.password || ''}')">수정</button>
+                            <button class="btn btn-outline btn-sm" onclick="editAdmin('${a.id}', '${a.userId}')">수정</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}', '${a.userId}')">삭제</button>
                         </td>
                     </tr>`;
@@ -1864,11 +1906,99 @@
         function openAdminModal() {
             document.getElementById('adminForm').reset();
             document.getElementById('adminUserPw').value = 'admin123';
+            document.getElementById('adminRole').value = 'super_admin';
+            document.getElementById('expireDateGroup').style.display = 'none';
+            document.getElementById('adminExpireDate').value = '';
+            document.getElementById('adminNoExpire').checked = false;
             document.getElementById('adminModal').style.display = 'flex';
+        }
+        
+        // 권한 선택에 따라 유효기간 필드 표시/숨김
+        function toggleExpireDateField() {
+            const role = document.getElementById('adminRole').value;
+            const expireGroup = document.getElementById('expireDateGroup');
+            
+            if (role === 'freeuser') {
+                expireGroup.style.display = 'block';
+                // 기본값: 30일 후
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() + 30);
+                document.getElementById('adminExpireDate').value = defaultDate.toISOString().split('T')[0];
+            } else {
+                expireGroup.style.display = 'none';
+            }
+        }
+        
+        // 무제한 체크박스 토글
+        function toggleExpireDateInput() {
+            const noExpire = document.getElementById('adminNoExpire').checked;
+            const dateInput = document.getElementById('adminExpireDate');
+            
+            if (noExpire) {
+                dateInput.disabled = true;
+                dateInput.value = '';
+            } else {
+                dateInput.disabled = false;
+                // 기본값: 30일 후
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() + 30);
+                dateInput.value = defaultDate.toISOString().split('T')[0];
+            }
         }
         
         function closeAdminModal() {
             document.getElementById('adminModal').style.display = 'none';
+        }
+        
+        // 관리자/무료사용자 수정
+        async function editAdmin(docId, userId) {
+            try {
+                const doc = await db.collection('admins').doc(docId).get();
+                if (!doc.exists) {
+                    alert('해당 계정을 찾을 수 없습니다.');
+                    return;
+                }
+                
+                const data = doc.data();
+                const currentRole = data.role || 'admin';
+                const currentExpire = data.expireDate || '';
+                
+                // 수정할 내용 확인
+                let newExpire = currentExpire;
+                
+                if (currentRole === 'freeuser') {
+                    const choice = prompt(
+                        `[${userId}] 무료사용자 수정\n\n` +
+                        `현재 유효기간: ${currentExpire || '무제한'}\n\n` +
+                        `새 유효기간을 입력하세요 (YYYY-MM-DD 형식)\n` +
+                        `무제한으로 설정하려면 "무제한" 입력:`
+                    );
+                    
+                    if (choice === null) return; // 취소
+                    
+                    if (choice === '무제한' || choice === '') {
+                        newExpire = null;
+                    } else if (/^\d{4}-\d{2}-\d{2}$/.test(choice)) {
+                        newExpire = choice;
+                    } else {
+                        alert('날짜 형식이 올바르지 않습니다. (예: 2025-12-31)');
+                        return;
+                    }
+                    
+                    // 업데이트
+                    await db.collection('admins').doc(docId).update({ expireDate: newExpire });
+                    await db.collection('users').doc(docId).update({ expireDate: newExpire }).catch(() => {});
+                    
+                    alert(`✅ 유효기간이 ${newExpire || '무제한'}으로 변경되었습니다.`);
+                } else {
+                    // 관리자는 비밀번호 수정
+                    editAdminPassword(docId, userId, data.password || '');
+                }
+                
+            } catch (err) {
+                console.error('수정 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
         }
         
         // 관리자 삭제
@@ -1897,6 +2027,8 @@
             const name = document.getElementById('adminUserName').value.trim();
             const password = document.getElementById('adminUserPw').value;
             const role = document.getElementById('adminRole').value;
+            const noExpire = document.getElementById('adminNoExpire').checked;
+            const expireDate = document.getElementById('adminExpireDate').value;
             
             if (!userId || !name) {
                 alert('아이디와 이름을 입력해주세요.');
@@ -1905,6 +2037,12 @@
             
             if (password.length < 6) {
                 alert('비밀번호는 6자 이상이어야 합니다.');
+                return;
+            }
+            
+            // 무료사용자인데 유효기간이 없고 무제한도 아닌 경우
+            if (role === 'freeuser' && !expireDate && !noExpire) {
+                alert('무료사용자는 유효기간을 설정하거나 무제한을 선택해주세요.');
                 return;
             }
             
@@ -1921,34 +2059,58 @@
                 await secondaryApp.delete();
                 
                 // 2. admins 컬렉션에 저장
-                await db.collection('admins').doc(uid).set({
+                const adminData = {
                     userId: userId,
                     name: name,
-                    password: password,  // ★ 비밀번호 저장
+                    password: password,
                     role: role,
-                    isAdmin: true,
+                    isAdmin: role !== 'freeuser',  // 무료사용자는 관리권한 없음
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                };
                 
-                // 3. users 컬렉션에도 저장 (role: admin으로)
-                await db.collection('users').doc(uid).set({
+                // 무료사용자인 경우 유효기간 추가
+                if (role === 'freeuser') {
+                    adminData.expireDate = noExpire ? null : expireDate;
+                }
+                
+                await db.collection('admins').doc(uid).set(adminData);
+                
+                // 3. users 컬렉션에도 저장
+                const userData = {
                     userId: userId,
                     name: name,
-                    password: password,  // ★ 비밀번호 저장
-                    role: 'admin',
-                    type: 'admin',
-                    isAdmin: true,
+                    password: password,
+                    role: role === 'freeuser' ? 'freeuser' : 'admin',
+                    type: role === 'freeuser' ? 'freeuser' : 'admin',
+                    isAdmin: role !== 'freeuser',
                     isPasswordChanged: true,
                     status: 'active',
-                    pointBalance: 999999999, // 무제한 포인트
+                    pointBalance: role === 'freeuser' ? 0 : 999999999,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                };
+                
+                if (role === 'freeuser') {
+                    userData.expireDate = noExpire ? null : expireDate;
+                }
+                
+                await db.collection('users').doc(uid).set(userData);
                 
                 closeAdminModal();
-                alert(`✅ 관리자 계정이 생성되었습니다.\n\n아이디: ${userId}\n비밀번호: ${password}\n\n이 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.`);
+                
+                // 성공 메시지
+                let successMsg = `✅ 계정이 생성되었습니다.\n\n아이디: ${userId}\n비밀번호: ${password}\n권한: ${role === 'freeuser' ? '무료사용자' : (role === 'super_admin' ? '최고관리자' : '일반관리자')}`;
+                
+                if (role === 'freeuser') {
+                    successMsg += `\n유효기간: ${noExpire ? '무제한' : expireDate}`;
+                    successMsg += `\n\n이 계정은 유효기간 내 API를 무제한으로 사용할 수 있습니다.`;
+                } else {
+                    successMsg += `\n\n이 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.`;
+                }
+                
+                alert(successMsg);
                 
             } catch (err) {
-                console.error('관리자 생성 오류:', err);
+                console.error('계정 생성 오류:', err);
                 
                 try {
                     const secondaryApp = firebase.app('SecondaryAdmin');
