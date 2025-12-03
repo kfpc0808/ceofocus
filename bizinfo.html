@@ -2375,6 +2375,12 @@
         provider.addScope('https://www.googleapis.com/auth/drive');
         provider.addScope('https://www.googleapis.com/auth/drive.file');
         
+        // ★ 핵심: 항상 권한 동의 화면 표시 (기존 로그인 사용자도 새 권한 요청)
+        provider.setCustomParameters({ 
+          prompt: 'consent',
+          access_type: 'offline'
+        });
+        
         const result = await auth.signInWithPopup(provider);
         console.log('✅ Firebase 로그인 성공:', result.user.email);
         
@@ -2458,24 +2464,25 @@
     }
     
     // Drive 권한 요청 (필요시 팝업)
-    async function requestDriveAccess() {
-      if (accessToken) {
-        return accessToken; // 이미 토큰 있음
+    async function requestDriveAccess(forceConsent = false) {
+      // forceConsent가 false이고 토큰이 있으면 재사용
+      if (!forceConsent && accessToken) {
+        return accessToken;
       }
       
       if (!gisInited) {
         throw new Error('GIS가 초기화되지 않았습니다');
       }
       
-      console.log('🔐 Drive 권한 요청 중...');
+      console.log('🔐 Drive 권한 요청 중... (forceConsent:', forceConsent, ')');
       
       // Promise로 감싸기
       return new Promise((resolve, reject) => {
         window._tokenPromiseResolve = resolve;
         window._tokenPromiseReject = reject;
         
-        // GIS 팝업 띄우기
-        tokenClient.requestAccessToken({ prompt: '' }); // prompt: '' = 자동 (이전 선택 기억)
+        // forceConsent=true면 항상 동의 화면, 아니면 자동 (이전 동의 기억)
+        tokenClient.requestAccessToken({ prompt: forceConsent ? 'consent' : '' });
       });
     }
     
@@ -2600,6 +2607,30 @@
           return false;
         }
         
+        // 403 에러 체크 (권한 부족)
+        if (searchResponse.result.error && searchResponse.result.error.code === 403) {
+          console.log('⚠️ Drive 권한 부족 (403) - GIS로 토큰 재요청...');
+          localStorage.removeItem('driveAccessToken');
+          accessToken = null;
+          
+          // 재귀 호출 방지
+          if (!window._driveRetrying) {
+            window._driveRetrying = true;
+            try {
+              await requestDriveAccess(true); // 403은 권한 부족이므로 forceConsent=true
+              const result = await loadFromDrive();
+              window._driveRetrying = false;
+              return result;
+            } catch (e) {
+              console.error('❌ 토큰 재요청 실패');
+              window._driveRetrying = false;
+              updateConnectionStatus('disconnected');
+              return false;
+            }
+          }
+          return false;
+        }
+        
         const files = searchResponse.result.files;
         if (!files || files.length === 0) {
           console.log('📁 저장된 파일이 없습니다 (새로운 사용자)');
@@ -2614,23 +2645,31 @@
           }
         );
         
-        // 401 에러 처리 (토큰 만료)
-        if (getResponse.status === 401) {
-          console.log('⚠️ Access Token 만료, 토큰 갱신 시도...');
+        // 401 또는 403 에러 처리 (토큰 만료 또는 권한 부족)
+        if (getResponse.status === 401 || getResponse.status === 403) {
+          console.log('⚠️ Access Token 문제 (' + getResponse.status + '), 토큰 갱신 시도...');
           localStorage.removeItem('driveAccessToken');
           accessToken = null;
           
-          // 토큰 갱신 시도
-          try {
-            await requestDriveAccess();
-            // 토큰 갱신 후 재시도
-            return await loadFromDrive();
-          } catch (e) {
-            console.error('❌ 토큰 갱신 실패, 재로그인 필요');
-            updateConnectionStatus('disconnected', false);
-            alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
-            return false;
+          // 토큰 갱신 시도 (재귀 호출 방지)
+          if (!window._driveRetrying) {
+            window._driveRetrying = true;
+            try {
+              // 403은 권한 부족이므로 forceConsent=true로 새 권한 요청
+              await requestDriveAccess(getResponse.status === 403);
+              // 토큰 갱신 후 재시도
+              const result = await loadFromDrive();
+              window._driveRetrying = false;
+              return result;
+            } catch (e) {
+              console.error('❌ 토큰 갱신 실패, 재로그인 필요');
+              window._driveRetrying = false;
+              updateConnectionStatus('disconnected', false);
+              alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
+              return false;
+            }
           }
+          return false;
         }
         
         if (getResponse.ok) {
@@ -2655,11 +2694,32 @@
       } catch (error) {
         console.error('❌ Drive 로드 실패:', error);
         
-        // 401 관련 에러 메시지 확인
-        if (error.status === 401 || (error.result && error.result.error && error.result.error.code === 401)) {
-          console.log('⚠️ 인증 오류 - 토큰 초기화');
+        // 401 또는 403 에러 처리 (인증/권한 오류)
+        const errorCode = error.status || (error.result && error.result.error && error.result.error.code);
+        
+        if (errorCode === 401 || errorCode === 403) {
+          console.log('⚠️ 인증/권한 오류 (' + errorCode + ') - 토큰 초기화 후 GIS로 재시도...');
           localStorage.removeItem('driveAccessToken');
           accessToken = null;
+          
+          // 재귀 호출 방지를 위한 플래그 체크
+          if (!window._driveRetrying) {
+            window._driveRetrying = true;
+            try {
+              // 403은 권한 부족이므로 forceConsent=true로 새 권한 요청
+              await requestDriveAccess(errorCode === 403);
+              const result = await loadFromDrive();
+              window._driveRetrying = false;
+              if (result) {
+                updateConnectionStatus('connected');
+                return true;
+              }
+            } catch (e) {
+              console.error('❌ 재시도 실패:', e);
+            }
+            window._driveRetrying = false;
+          }
+          
           updateConnectionStatus('disconnected');
         }
         
