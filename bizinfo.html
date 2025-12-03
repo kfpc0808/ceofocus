@@ -2600,16 +2600,6 @@
           return false;
         }
         
-        // 403 에러 체크 (권한 부족) - gapi.client.drive.files.list 에러
-        if (searchResponse.result.error && searchResponse.result.error.code === 403) {
-          console.log('⚠️ Drive 권한 부족 (403)');
-          localStorage.removeItem('driveAccessToken');
-          accessToken = null;
-          updateConnectionStatus('disconnected');
-          alert('Google Drive 권한이 필요합니다.\n로그아웃 후 다시 로그인해주세요.');
-          return false;
-        }
-        
         const files = searchResponse.result.files;
         if (!files || files.length === 0) {
           console.log('📁 저장된 파일이 없습니다 (새로운 사용자)');
@@ -2624,9 +2614,9 @@
           }
         );
         
-        // 401 또는 403 에러 처리 (토큰 만료 또는 권한 부족)
-        if (getResponse.status === 401 || getResponse.status === 403) {
-          console.log('⚠️ Access Token 문제 (' + getResponse.status + '), 토큰 갱신 시도...');
+        // 401 에러 처리 (토큰 만료)
+        if (getResponse.status === 401) {
+          console.log('⚠️ Access Token 만료, 토큰 갱신 시도...');
           localStorage.removeItem('driveAccessToken');
           accessToken = null;
           
@@ -2638,7 +2628,7 @@
           } catch (e) {
             console.error('❌ 토큰 갱신 실패, 재로그인 필요');
             updateConnectionStatus('disconnected', false);
-            alert('Google Drive 권한이 필요합니다.\n로그아웃 후 다시 로그인해주세요.');
+            alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
             return false;
           }
         }
@@ -2665,18 +2655,12 @@
       } catch (error) {
         console.error('❌ Drive 로드 실패:', error);
         
-        // 401 또는 403 관련 에러 메시지 확인
-        const errorCode = error.status || (error.result && error.result.error && error.result.error.code);
-        if (errorCode === 401 || errorCode === 403) {
-          console.log('⚠️ 인증/권한 오류 (' + errorCode + ') - 토큰 초기화');
+        // 401 관련 에러 메시지 확인
+        if (error.status === 401 || (error.result && error.result.error && error.result.error.code === 401)) {
+          console.log('⚠️ 인증 오류 - 토큰 초기화');
           localStorage.removeItem('driveAccessToken');
           accessToken = null;
           updateConnectionStatus('disconnected');
-          
-          // 403이면 로그아웃 후 재로그인 안내
-          if (errorCode === 403) {
-            alert('Google Drive 권한이 필요합니다.\n로그아웃 후 다시 로그인해주세요.');
-          }
         }
         
         return false;
@@ -2845,19 +2829,13 @@
                 }
               }
               
-              // 토큰이 없거나 만료되었으면 계정 선택 팝업 표시
+              // 토큰이 없거나 만료되었으면 자동으로 GIS 토큰 요청
               if (!accessToken && gisInited) {
-                console.log('🔑 Drive 연결을 위해 계정 선택 필요...');
-                updateConnectionStatus('disconnected', false); // 자동 재연결 팝업 방지 (아래서 직접 처리)
+                console.log('🔑 Drive 연결을 위해 자동 토큰 요청...');
+                updateConnectionStatus('disconnected', false);
                 
-                // 사용자에게 연결 필요 알림 후 계정 선택 팝업
-                setTimeout(() => {
-                  if (confirm('Google Drive 연결이 필요합니다.\n\n계정을 선택하여 연결하시겠습니까?')) {
-                    tokenClient.requestAccessToken({ prompt: 'select_account' });
-                  } else {
-                    hideLoading();
-                  }
-                }, 500);
+                // confirm 없이 자동으로 토큰 요청
+                tokenClient.requestAccessToken({ prompt: '' });
                 
                 return new Promise((resolve) => {
                   window._tokenPromiseResolve = async () => {
