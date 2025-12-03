@@ -206,6 +206,7 @@
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="admins" onclick="switchTab('admins')"><i class="ph ph-user-gear"></i> 관리자 관리</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="terms" onclick="switchTab('terms')"><i class="ph ph-scroll"></i> 약관 및 정책</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="bizinfo-cache" onclick="switchTab('bizinfo-cache')"><i class="ph ph-database"></i> 기업마당 캐시</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="api-usage" onclick="switchTab('api-usage')"><i class="ph ph-chart-line-up"></i> API 사용현황</a></li>
         </ul>
         <div class="admin-profile">
             <i class="ph ph-user-circle" style="font-size: 2rem;"></i>
@@ -546,6 +547,76 @@
                     </table>
                 </div>
                 <div id="cache-pagination" style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; align-items: center;"></div>
+            </div>
+        </div>
+
+        <!-- 10. API 사용현황 탭 -->
+        <div id="api-usage" class="tab-content">
+            <div class="page-header">
+                <h1 class="page-title">API 사용현황 (정부지원자금)</h1>
+                <div class="top-buttons">
+                    <button class="btn btn-outline" onclick="loadApiUsage()"><i class="ph ph-arrows-clockwise"></i> 새로고침</button>
+                    <button class="btn btn-success" onclick="exportApiUsageToExcel()" style="background: #27ae60;"><i class="ph ph-microsoft-excel-logo"></i> 엑셀 다운로드</button>
+                </div>
+            </div>
+            
+            <!-- 오늘 날짜 및 요약 -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-calendar-check"></i> 오늘의 사용 현황</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <div style="background: #e3f2fd; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.3rem;">조회 기준일</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #1976d2;" id="usage-date">-</div>
+                    </div>
+                    <div style="background: #e8f5e9; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.3rem;">오늘 사용 회원</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: #27ae60;" id="usage-user-count">-</div>
+                    </div>
+                    <div style="background: #fff3e0; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.3rem;">요약분석 총 횟수</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: #f57c00;" id="usage-summary-total">-</div>
+                    </div>
+                    <div style="background: #fce4ec; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.3rem;">상세분석 총 횟수</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: #e91e63;" id="usage-detail-total">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 날짜 선택 -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-funnel"></i> 조회 조건</h3>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.85rem;">조회 날짜</label>
+                        <input type="date" id="usage-date-filter" class="form-control" style="width: 180px;">
+                    </div>
+                    <button class="btn btn-primary" onclick="loadApiUsageByDate()"><i class="ph ph-magnifying-glass"></i> 조회</button>
+                    <button class="btn btn-outline" onclick="loadApiUsage()">오늘 보기</button>
+                </div>
+            </div>
+            
+            <!-- 회원별 사용 현황 테이블 -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-users"></i> 회원별 사용 현황</h3>
+                <div class="table-container">
+                    <table id="apiUsageTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No</th>
+                                <th>회원명</th>
+                                <th>이메일 (ID)</th>
+                                <th style="width: 100px;">요약분석</th>
+                                <th style="width: 100px;">상세분석</th>
+                                <th style="width: 100px;">합계</th>
+                                <th style="width: 80px;">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="apiUsageBody">
+                            <tr><td colspan="7" style="text-align: center; color: #999; padding: 2rem;">조회 버튼을 눌러주세요.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -2529,6 +2600,136 @@
             }
             
             document.getElementById('programDetailModal').style.display = 'flex';
+        }
+
+        // ============================================================
+        // API 사용현황 (정부지원자금) 관련 함수
+        // ============================================================
+        
+        // 한국 시간 기준 오늘 날짜
+        function getKoreanToday() {
+            const now = new Date();
+            const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+            return koreaTime.toISOString().split('T')[0];
+        }
+        
+        // 오늘 API 사용현황 로드
+        async function loadApiUsage() {
+            const today = getKoreanToday();
+            document.getElementById('usage-date-filter').value = today;
+            await loadApiUsageByDate();
+        }
+        
+        // 특정 날짜 API 사용현황 로드
+        async function loadApiUsageByDate() {
+            const dateFilter = document.getElementById('usage-date-filter').value;
+            if (!dateFilter) {
+                alert('날짜를 선택해주세요.');
+                return;
+            }
+            
+            document.getElementById('usage-date').textContent = dateFilter;
+            document.getElementById('apiUsageBody').innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;"><i class="ph ph-spinner ph-spin"></i> 로딩 중...</td></tr>';
+            
+            try {
+                // 1. userUsage 컬렉션에서 해당 날짜 데이터 조회
+                const usageSnapshot = await db.collection('userUsage')
+                    .where('date', '==', dateFilter)
+                    .get();
+                
+                if (usageSnapshot.empty) {
+                    document.getElementById('usage-user-count').textContent = '0';
+                    document.getElementById('usage-summary-total').textContent = '0';
+                    document.getElementById('usage-detail-total').textContent = '0';
+                    document.getElementById('apiUsageBody').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 2rem;">해당 날짜에 사용 기록이 없습니다.</td></tr>';
+                    return;
+                }
+                
+                // 2. 사용자 정보와 함께 데이터 조합
+                const usageData = [];
+                let totalSummary = 0;
+                let totalDetail = 0;
+                
+                for (const doc of usageSnapshot.docs) {
+                    const uid = doc.id;
+                    const data = doc.data();
+                    
+                    // users 컬렉션에서 회원 정보 가져오기
+                    let userName = '-';
+                    let userEmail = uid;  // 기본값은 UID
+                    
+                    try {
+                        const userDoc = await db.collection('users').doc(uid).get();
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            userName = userData.name || userData.displayName || '-';
+                            userEmail = userData.email || userData.id || uid;
+                        }
+                    } catch (e) {
+                        console.warn('사용자 정보 조회 실패:', uid, e);
+                    }
+                    
+                    const summaryCount = data.summaryCount || 0;
+                    const detailCount = data.detailCount || 0;
+                    
+                    usageData.push({
+                        uid,
+                        userName,
+                        userEmail,
+                        summaryCount,
+                        detailCount,
+                        total: summaryCount + detailCount
+                    });
+                    
+                    totalSummary += summaryCount;
+                    totalDetail += detailCount;
+                }
+                
+                // 3. 합계 기준 정렬 (많이 사용한 순)
+                usageData.sort((a, b) => b.total - a.total);
+                
+                // 4. 요약 정보 표시
+                document.getElementById('usage-user-count').textContent = usageData.length + '명';
+                document.getElementById('usage-summary-total').textContent = totalSummary + '회';
+                document.getElementById('usage-detail-total').textContent = totalDetail + '회';
+                
+                // 5. 테이블 렌더링
+                let html = '';
+                usageData.forEach((item, index) => {
+                    const isMaxed = item.summaryCount >= 10 || item.detailCount >= 10;
+                    const statusBadge = isMaxed 
+                        ? '<span style="background: #ffebee; color: #c62828; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">한도도달</span>'
+                        : '<span style="background: #e8f5e9; color: #2e7d32; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">정상</span>';
+                    
+                    html += `
+                        <tr>
+                            <td style="text-align: center;">${index + 1}</td>
+                            <td>${item.userName}</td>
+                            <td style="font-size: 0.85rem; color: #666;">${item.userEmail}</td>
+                            <td style="text-align: center; font-weight: 600; color: #f57c00;">${item.summaryCount} / 10</td>
+                            <td style="text-align: center; font-weight: 600; color: #e91e63;">${item.detailCount} / 10</td>
+                            <td style="text-align: center; font-weight: 700;">${item.total}</td>
+                            <td style="text-align: center;">${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('apiUsageBody').innerHTML = html || '<tr><td colspan="7" style="text-align: center; color: #999; padding: 2rem;">데이터가 없습니다.</td></tr>';
+                
+            } catch (error) {
+                console.error('API 사용현황 로드 오류:', error);
+                document.getElementById('apiUsageBody').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #e74c3c; padding: 2rem;">오류: ' + error.message + '</td></tr>';
+            }
+        }
+        
+        // API 사용현황 엑셀 다운로드
+        function exportApiUsageToExcel() {
+            const table = document.getElementById('apiUsageTable');
+            if (!table) return;
+            
+            const dateFilter = document.getElementById('usage-date-filter').value || getKoreanToday();
+            const wb = XLSX.utils.table_to_book(table, { sheet: "API사용현황" });
+            XLSX.writeFile(wb, `API사용현황_${dateFilter}.xlsx`);
         }
 
         // 초기화

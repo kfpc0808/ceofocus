@@ -1930,6 +1930,11 @@
     let accessToken = localStorage.getItem('driveAccessToken') || null;
     let currentUser = null;
     
+    // 🆕 URL에서 본사 발행 ID 추출 (일일 사용 제한용)
+    const urlParams = new URLSearchParams(window.location.search);
+    const agentId = urlParams.get('agentId') || 'unknown';
+    console.log('👤 본사 ID:', agentId);
+    
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive';
     
@@ -4521,7 +4526,8 @@
             const geminiSummary = functions.httpsCallable('geminiSummary');
             const result = await geminiSummary({
               companyData: lastCompanyData,
-              programs: newPrograms
+              programs: newPrograms,
+              agentId: agentId  // 🆕 본사 ID 전달
             });
             
             const data = result.data;
@@ -4580,7 +4586,13 @@
       } catch (error) {
         hideLoadingOverlay();
         console.error('❌ 지원사업+분석 오류:', error);
-        alert('지원사업+분석 중 오류가 발생했습니다: ' + error.message);
+        
+        // 🆕 한도 초과 에러인 경우 구분 표시
+        if (error.message && error.message.includes('한도')) {
+          alert('⚠️ ' + error.message);
+        } else {
+          alert('지원사업+분석 중 오류가 발생했습니다: ' + error.message);
+        }
       }
     }
     
@@ -4708,7 +4720,8 @@
         const geminiSummary = functions.httpsCallable('geminiSummary');
         const result = await geminiSummary({
           companyData: lastCompanyData,
-          programs: allPrograms
+          programs: allPrograms,
+          agentId: agentId  // 🆕 본사 ID 전달
         });
         
         const data = result.data;
@@ -4816,7 +4829,8 @@
             const analyzeProgramPDF = functions.httpsCallable('analyzeProgramPDF');
             const result = await analyzeProgramPDF({
               pdfUrl: pdfUrl,
-              companyData: lastCompanyData
+              companyData: lastCompanyData,
+              agentId: agentId  // 🆕 본사 ID 전달
             });
             
             const data = result.data;
@@ -4872,7 +4886,13 @@
       } catch (error) {
         hideLoadingOverlay();
         console.error('❌ PDF 상세분석 오류:', error);
-        alert('PDF 상세분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n잠시 후 다시 시도해주세요.');
+        
+        // 🆕 한도 초과 에러인 경우 구분 표시
+        if (error.message && error.message.includes('한도')) {
+          alert('⚠️ ' + error.message);
+        } else {
+          alert('PDF 상세분석 중 오류가 발생했습니다.\n\n' + error.message + '\n\n잠시 후 다시 시도해주세요.');
+        }
       }
     }
     
