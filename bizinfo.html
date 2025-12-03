@@ -2480,189 +2480,60 @@
     }
     
     // Google Drive에 저장
+    // 로컬 저장소에 저장 (기존 saveToDrive 대체)
     async function saveToDrive(data) {
       try {
-        // Access Token 없으면 자동으로 요청
-        if (!accessToken) {
-          console.log('🔐 Drive 권한이 필요합니다...');
-          try {
-            await requestDriveAccess();
-          } catch (error) {
-            console.error('❌ Drive 권한 획득 실패:', error);
-            alert('Google Drive 권한이 필요합니다. 다시 시도해주세요.');
-            return false;
-          }
-        }
+        console.log('💾 로컬 저장소에 저장 중...');
         
-        console.log('💾 Google Drive에 저장 중...');
-        
-        // 데이터 암호화 (기업 정보만 저장, 크레딧은 Firestore에서 관리)
+        // 데이터 암호화
         const encryptedData = encryptData(data);
-        
-        // 기존 파일 검색 (루트 폴더)
-        const searchResponse = await gapi.client.drive.files.list({
-          q: "name='kfpc-bizinfo-data.json' and trashed=false",
-          fields: 'files(id, name)',
+        const fileContent = JSON.stringify({ 
+          encryptedData, 
+          timestamp: new Date().toISOString() 
         });
         
-        // 안전한 null 체크
-        const files = searchResponse?.result?.files || [];
-        const fileContent = JSON.stringify({ encryptedData, timestamp: new Date().toISOString() });
-        const file = new Blob([fileContent], { type: 'application/json' });
+        // localStorage에 저장
+        localStorage.setItem('kfpc-bizinfo-data', fileContent);
         
-        if (files && files.length > 0) {
-          // 기존 파일 업데이트
-          const fileId = files[0].id;
-          const form = new FormData();
-          form.append('metadata', new Blob([JSON.stringify({})], { type: 'application/json' }));
-          form.append('file', file);
-          
-          const updateResponse = await fetch(
-            `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
-            {
-              method: 'PATCH',
-              headers: { Authorization: `Bearer ${accessToken}` },
-              body: form,
-            }
-          );
-          
-          if (updateResponse.ok) {
-            console.log('✅ Drive 업데이트 완료');
-            return true;
-          }
-        } else {
-          // 새 파일 생성 (루트 폴더)
-          const metadata = {
-            name: 'kfpc-bizinfo-data.json',
-            mimeType: 'application/json',
-          };
-          
-          const form = new FormData();
-          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-          form.append('file', file);
-          
-          const createResponse = await fetch(
-            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-            {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${accessToken}` },
-              body: form,
-            }
-          );
-          
-          if (createResponse.ok) {
-            console.log('✅ Drive 저장 완료');
-            return true;
-          }
-        }
-        
-        return false;
+        console.log('✅ 로컬 저장 완료');
+        return true;
       } catch (error) {
-        console.error('❌ Drive 저장 실패:', error);
+        console.error('❌ 로컬 저장 실패:', error);
         return false;
       }
     }
     
-    // Google Drive에서 불러오기
+    // 로컬 저장소에서 불러오기 (기존 loadFromDrive 대체)
     async function loadFromDrive() {
       try {
-        // Access Token 없으면 조용히 스킵 (최초 로그인 시)
-        if (!accessToken) {
-          console.log('ℹ️ Drive 권한 없음 (나중에 저장 시 요청됨)');
+        console.log('📥 로컬 저장소에서 불러오는 중...');
+        
+        const fileContent = localStorage.getItem('kfpc-bizinfo-data');
+        
+        if (!fileContent) {
+          console.log('📁 저장된 데이터가 없습니다 (새로운 사용자)');
           return false;
         }
         
-        console.log('📥 Google Drive에서 불러오는 중...');
+        const fileData = JSON.parse(fileContent);
+        const decryptedData = decryptData(fileData.encryptedData);
         
-        // GAPI 클라이언트 초기화 확인
-        if (!gapiInited || !gapi.client) {
-          console.log('⚠️ GAPI 클라이언트가 초기화되지 않음, 초기화 시도...');
-          await initGapi();
-        }
-        
-        // Drive API 로드 확인
-        if (!gapi.client.drive) {
-          console.log('⚠️ Drive API 로드 중...');
-          await gapi.client.load('drive', 'v3');
-        }
-        
-        // GAPI 클라이언트에 토큰 설정
-        gapi.client.setToken({ access_token: accessToken });
-        
-        const searchResponse = await gapi.client.drive.files.list({
-          q: "name='kfpc-bizinfo-data.json' and trashed=false",
-          fields: 'files(id, name)',
-        });
-        
-        // 안전한 null 체크
-        if (!searchResponse || !searchResponse.result) {
-          console.log('📁 Drive 응답 없음');
-          return false;
-        }
-        
-        const files = searchResponse.result.files;
-        if (!files || files.length === 0) {
-          console.log('📁 저장된 파일이 없습니다 (새로운 사용자)');
-          return false;
-        }
-        
-        const fileId = files[0].id;
-        const getResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
+        if (decryptedData) {
+          // 하위 호환성: 새 형식(companies 포함)이면 companies만 추출
+          if (decryptedData.companies) {
+            savedCompanies = decryptedData.companies;
+          } else {
+            savedCompanies = decryptedData;
           }
-        );
-        
-        // 401 에러 처리 (토큰 만료)
-        if (getResponse.status === 401) {
-          console.log('⚠️ Access Token 만료, 토큰 갱신 시도...');
-          localStorage.removeItem('driveAccessToken');
-          accessToken = null;
           
-          // 토큰 갱신 시도
-          try {
-            await requestDriveAccess();
-            // 토큰 갱신 후 재시도
-            return await loadFromDrive();
-          } catch (e) {
-            console.error('❌ 토큰 갱신 실패, 재로그인 필요');
-            updateConnectionStatus('disconnected', false);
-            alert('Google Drive 연결이 만료되었습니다.\n로그아웃 후 다시 로그인해주세요.');
-            return false;
-          }
-        }
-        
-        if (getResponse.ok) {
-          const fileData = await getResponse.json();
-          const decryptedData = decryptData(fileData.encryptedData);
-          
-          if (decryptedData) {
-            // 하위 호환성: 새 형식(companies 포함)이면 companies만 추출
-            if (decryptedData.companies) {
-              savedCompanies = decryptedData.companies;
-            } else {
-              savedCompanies = decryptedData;
-            }
-            
-            updateCompanySelect();
-            console.log('✅ Drive 로드 완료:', Object.keys(savedCompanies).length, '개 고객사');
-            return true;
-          }
+          updateCompanySelect();
+          console.log('✅ 로컬 로드 완료:', Object.keys(savedCompanies).length, '개 고객사');
+          return true;
         }
         
         return false;
       } catch (error) {
-        console.error('❌ Drive 로드 실패:', error);
-        
-        // 401 관련 에러 메시지 확인
-        if (error.status === 401 || (error.result && error.result.error && error.result.error.code === 401)) {
-          console.log('⚠️ 인증 오류 - 토큰 초기화');
-          localStorage.removeItem('driveAccessToken');
-          accessToken = null;
-          updateConnectionStatus('disconnected');
-        }
-        
+        console.error('❌ 로컬 로드 실패:', error);
         return false;
       }
     }
@@ -2803,69 +2674,16 @@
             // 숫자 포맷팅 활성화
             attachNumberFormatting();
             
-            // ★ 핵심: Firebase에서 새로운 Access Token 자동 발급 (팝업 없음!)
+            // 로컬 저장소에서 데이터 로드 (Drive 토큰 불필요)
             try {
-              // Firebase Auth에서 credential 재발급 시도
-              const credential = firebase.auth.GoogleAuthProvider.credential(
-                await user.getIdToken(true)
-              );
-              
-              // reauthenticateWithCredential은 access token을 제공하지 않으므로
-              // 저장된 토큰으로 시도 후, 실패하면 조용히 재인증 요청
-              if (accessToken) {
-                console.log('🔑 저장된 토큰으로 연결 시도...');
-                gapi.client.setToken({ access_token: accessToken });
-                
-                try {
-                  await loadFromDrive();
-                  updateConnectionStatus('connected');
-                  console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-                  hideLoading();
-                  return;
-                } catch (error) {
-                  console.log('⚠️ 저장된 토큰 만료됨 - 재연결 필요');
-                  accessToken = null;
-                  localStorage.removeItem('driveAccessToken');
-                }
-              }
-              
-              // 토큰이 없거나 만료되었으면 자동으로 GIS 토큰 요청
-              if (!accessToken && gisInited) {
-                console.log('🔑 Drive 연결을 위해 자동 토큰 요청...');
-                updateConnectionStatus('disconnected', false);
-                
-                // consent로 권한 동의 화면 표시 (Drive 권한 포함)
-                tokenClient.requestAccessToken({ prompt: 'consent' });
-                
-                return new Promise((resolve) => {
-                  window._tokenPromiseResolve = async () => {
-                    try {
-                      await loadFromDrive();
-                      updateConnectionStatus('connected', false);
-                      console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-                    } catch (error) {
-                      console.error('Drive 로드 실패:', error);
-                      updateConnectionStatus('disconnected', false);
-                    }
-                    hideLoading();
-                    resolve();
-                  };
-                  window._tokenPromiseReject = () => {
-                    console.log('⚠️ 연결 취소됨');
-                    updateConnectionStatus('disconnected', false);
-                    hideLoading();
-                    resolve();
-                  };
-                });
-              }
-              
-              hideLoading();
-              
+              await loadFromDrive();
+              updateConnectionStatus('connected');
+              console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
             } catch (error) {
-              console.log('⚠️ 자동 토큰 발급 실패:', error.message);
-              updateConnectionStatus('disconnected'); // 자동 재연결 팝업 허용
-              hideLoading();
+              console.error('로컬 로드 실패:', error);
             }
+            
+            hideLoading();
           } else {
             console.log('⚠️ 로그인 필요');
             updateConnectionStatus('disconnected', false); // 로그인 화면 표시하므로 팝업 불필요
@@ -2886,7 +2704,7 @@
     }
     
     /**
-     * 연결 상태 버튼 업데이트
+     * 연결 상태 버튼 업데이트 (로컬 저장소용으로 단순화)
      */
     function updateConnectionStatus(status, autoReconnect = true) {
       const btn = document.getElementById('connection-status-btn');
@@ -2894,13 +2712,13 @@
       
       switch(status) {
         case 'connecting':
-          btn.innerHTML = '<span style="font-size: 0.9rem;">⏳</span> 연결 중...';
+          btn.innerHTML = '<span style="font-size: 0.9rem;">⏳</span> 로딩 중...';
           btn.style.background = '#6c757d';
           btn.style.color = '#fff';
           btn.style.cursor = 'default';
           break;
         case 'connected':
-          btn.innerHTML = '<span style="font-size: 0.9rem;">✓</span> 연결됨';
+          btn.innerHTML = '<span style="font-size: 0.9rem;">✓</span> 로컬저장';
           btn.style.background = '#28a745';
           btn.style.color = '#fff';
           btn.style.cursor = 'default';
@@ -2908,71 +2726,20 @@
         case 'disconnected':
         case 'no-data':
         case 'error':
-          btn.innerHTML = '<span style="font-size: 0.9rem;">✗</span> 미연결';
-          btn.style.background = '#dc3545';
+          btn.innerHTML = '<span style="font-size: 0.9rem;">ℹ</span> 로컬저장';
+          btn.style.background = '#17a2b8';
           btn.style.color = '#fff';
-          btn.style.cursor = 'pointer';
-          
-          // 미연결 시 자동으로 계정 선택 팝업 (중복 방지)
-          if (autoReconnect && gisInited && !window._reconnectInProgress) {
-            window._reconnectInProgress = true;
-            setTimeout(() => {
-              if (confirm('Google Drive 연결이 필요합니다.\n\n계정을 선택하여 연결하시겠습니까?')) {
-                window._tokenPromiseResolve = async () => {
-                  try {
-                    await loadFromDrive();
-                    updateConnectionStatus('connected', false);
-                    console.log('✅ 재연결 성공');
-                  } catch (error) {
-                    console.error('재연결 실패:', error);
-                  }
-                  window._reconnectInProgress = false;
-                };
-                window._tokenPromiseReject = () => {
-                  console.log('연결 취소됨');
-                  window._reconnectInProgress = false;
-                };
-                tokenClient.requestAccessToken({ prompt: 'select_account' });
-              } else {
-                window._reconnectInProgress = false;
-              }
-            }, 300);
-          }
+          btn.style.cursor = 'default';
           break;
       }
     }
     
     /**
-     * Drive 연결 (미연결 버튼 클릭 시)
+     * connectDrive (로컬 저장소용으로 단순화)
      */
     async function connectDrive() {
-      const btn = document.getElementById('connection-status-btn');
-      
-      // 이미 연결된 상태면 무시
-      if (accessToken) {
-        console.log('✅ 이미 연결됨');
-        return;
-      }
-      
-      // 연결 중 상태로 변경
-      updateConnectionStatus('connecting');
-      
-      try {
-        // Drive 권한 요청
-        await requestDriveAccess();
-        
-        // Drive 데이터 로드
-        await loadFromDrive();
-        
-        // 연결 성공
-        updateConnectionStatus('connected');
-        console.log('✅ Drive 연결 성공:', Object.keys(savedCompanies).length, '개 기업');
-        
-      } catch (error) {
-        console.error('❌ Drive 연결 실패:', error);
-        updateConnectionStatus('disconnected', false); // 이미 alert 표시하므로 팝업 불필요
-        alert('Drive 연결에 실패했습니다. 다시 시도해주세요.');
-      }
+      // 로컬 저장소 사용 - 별도 연결 불필요
+      console.log('ℹ️ 로컬 저장소 사용 중');
     }
     
     function hideLoading() {
