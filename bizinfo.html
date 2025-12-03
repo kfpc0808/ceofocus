@@ -1673,7 +1673,7 @@
     // KSIC 데이터 로드 (Firebase Functions 사용)
     async function loadKsicData() {
       try {
-        const getKsicData = firebase.functions().httpsCallable('getKsicData');
+        const getKsicData = firebase.app().functions('asia-northeast3').httpsCallable('getKsicData');
         const result = await getKsicData();
         ksicData = result.data;
         console.log(`✅ KSIC 데이터 로드 완료: ${ksicData.length}개`);
