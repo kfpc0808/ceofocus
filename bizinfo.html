@@ -2240,11 +2240,11 @@
       }
       
       try {
-        console.log('📡 기업마당 API 호출 중...');
+        console.log('📡 Firestore 캐시에서 공고 조회 중...');
         
-        // Firebase Functions를 통해 기업마당 데이터 가져오기
-        const getBizInfoPrograms = functions.httpsCallable('getBizInfoPrograms');
-        const result = await getBizInfoPrograms();
+        // Firestore 캐시에서 공고 데이터 가져오기 (admin에서 수집한 데이터)
+        const getCachedPrograms = functions.httpsCallable('getCachedPrograms');
+        const result = await getCachedPrograms();
         const data = result.data;
         
         if (data.success && data.programs) {
@@ -5819,15 +5819,15 @@
         };
         
         updateAIProgress(10);
-        updateAILoading('기업마당 API 조회 중...', '공고 불러오는 중...');
+        updateAILoading('공고 데이터 조회 중...', '캐시에서 공고 불러오는 중...');
         
-        // Step 1: 기업마당 API 조회 (Firebase Functions 사용)
-        const getBizinfoPrograms = functions.httpsCallable('getBizInfoPrograms');
-        const result1 = await getBizinfoPrograms({ filters: {} });
+        // Step 1: Firestore 캐시에서 공고 조회 (admin에서 수집한 데이터)
+        const getCachedPrograms = functions.httpsCallable('getCachedPrograms');
+        const result1 = await getCachedPrograms();
         const data1 = result1.data;
         
         if (!data1.success) {
-          throw new Error('기업마당 API 조회 실패');
+          throw new Error('공고 데이터 조회 실패');
         }
         
         const programs = data1.programs || [];
