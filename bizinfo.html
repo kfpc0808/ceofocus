@@ -1607,24 +1607,11 @@
     /**
      * 점수를 관련도 등급으로 변환
      * @param {number} score - 점수 (0~100)
-     * @param {boolean} isEligible - 적합 여부
      * @returns {object} { text: '매우높음', color: '#28a745', bgColor: '...' }
      */
-    function getRelevanceGrade(score, isEligible = true) {
-      // 부적합이거나 80점 이하면 "참고"
-      if (!isEligible || score <= 80) {
-        return {
-          text: '참고',
-          color: '#333',
-          bgColor: 'linear-gradient(135deg, #ffc107, #ffda6a)',
-          borderColor: '#ffc107',
-          headerBg: '#fff3cd',
-          headerText: '#856404',
-          icon: '🟡'
-        };
-      }
-      
-      if (score >= 96) {
+    function getRelevanceGrade(score) {
+      // 90~100: 매우높음 (강력 추천)
+      if (score >= 90) {
         return {
           text: '매우높음',
           color: '#fff',
@@ -1634,7 +1621,9 @@
           headerText: '#155724',
           icon: '🟢'
         };
-      } else if (score >= 91) {
+      }
+      // 80~89: 높음 (추천)
+      else if (score >= 80) {
         return {
           text: '높음',
           color: '#fff',
@@ -1644,7 +1633,9 @@
           headerText: '#0c5460',
           icon: '🔵'
         };
-      } else if (score >= 86) {
+      }
+      // 70~79: 보통 (검토 권장)
+      else if (score >= 70) {
         return {
           text: '보통',
           color: '#fff',
@@ -1654,15 +1645,29 @@
           headerText: '#4a2c7c',
           icon: '🟣'
         };
-      } else { // 81~85
+      }
+      // 60~69: 낮음 (조건 확인 필요)
+      else if (score >= 60) {
         return {
-          text: '도전',
+          text: '낮음',
           color: '#333',
           bgColor: 'linear-gradient(135deg, #fd7e14, #ffc107)',
           borderColor: '#fd7e14',
           headerBg: '#fff3cd',
           headerText: '#856404',
           icon: '🟠'
+        };
+      }
+      // 60 미만: 참고 (협력사 추천)
+      else {
+        return {
+          text: '참고',
+          color: '#333',
+          bgColor: 'linear-gradient(135deg, #ffc107, #ffda6a)',
+          borderColor: '#ffc107',
+          headerBg: '#fff3cd',
+          headerText: '#856404',
+          icon: '🟡'
         };
       }
     }
@@ -4564,15 +4569,23 @@
           
           hideLoadingOverlay();
           
-          // 완료 메시지 (적합/부적합 구분)
-          const eligibleCount = allSummaryResults.filter(r => r.eligible === true).length;
-          const ineligibleCount = allSummaryResults.filter(r => r.eligible === false).length;
-          let summaryMsg = `• AI 요약분석: 적합 ${eligibleCount}개`;
-          if (ineligibleCount > 0) {
-            summaryMsg += ` + 참고 ${ineligibleCount}개`;
-          }
+          // 완료 메시지 (등급별 구분)
+          const veryHighCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 90).length;
+          const highCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 80 && (r.fitScore || 0) < 90).length;
+          const mediumCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 80).length;
+          const lowCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 60 && (r.fitScore || 0) < 70).length;
+          const refCount = allSummaryResults.filter(r => (r.fitScore || 0) < 60).length;
           
-          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 적합: 신청 권장\n🟡 참고: 협력사/관계사에 추천`);
+          let summaryMsg = '• AI 요약분석: ';
+          const parts = [];
+          if (veryHighCount > 0) parts.push(`매우높음 ${veryHighCount}개`);
+          if (highCount > 0) parts.push(`높음 ${highCount}개`);
+          if (mediumCount > 0) parts.push(`보통 ${mediumCount}개`);
+          if (lowCount > 0) parts.push(`낮음 ${lowCount}개`);
+          if (refCount > 0) parts.push(`참고 ${refCount}개`);
+          summaryMsg += parts.join(' + ');
+          
+          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 매우높음/🔵 높음: 신청 권장\n🟣 보통/🟠 낮음: 검토 필요\n🟡 참고: 협력사 추천`);
           
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
           if (newPrograms.length > 0) {
@@ -4771,9 +4784,19 @@
       }
       
       // PDF URL이 있는 프로그램만 필터링 후 상위 10개
+      console.log('📋 lastMatchedPrograms:', lastMatchedPrograms.length, '개');
+      console.log('📋 첫번째 프로그램 샘플:', lastMatchedPrograms[0] ? {
+        id: lastMatchedPrograms[0].id,
+        name: lastMatchedPrograms[0].name?.substring(0, 30),
+        printFileUrl: lastMatchedPrograms[0].printFileUrl || '없음',
+        attachmentUrl: lastMatchedPrograms[0].attachmentUrl || '없음'
+      } : '없음');
+      
       const programsWithPDF = lastMatchedPrograms
         .filter(p => p.printFileUrl || p.attachmentUrl)
         .slice(0, 10);
+      
+      console.log('📄 PDF URL 있는 공고:', programsWithPDF.length, '개');
       
       if (programsWithPDF.length === 0) {
         alert('⚠️ PDF 공고문이 있는 지원사업이 없습니다.\n\n요약분석을 이용해주세요.');
@@ -4951,10 +4974,9 @@
           border: 2px solid #28a745;
         `;
         
-        // 적합도 점수에 따른 색상
+        // 점수에 따른 등급 및 색상
         const fitScore = result.companyFit?.fitScore || 0;
-        const scoreColor = fitScore >= 80 ? '#28a745' : fitScore >= 60 ? '#ffc107' : '#dc3545';
-        const eligible = result.companyFit?.eligible;
+        const grade = getRelevanceGrade(fitScore);
         
         detailBox.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
@@ -4963,11 +4985,11 @@
               <h5 style="color: #28a745; margin: 0; font-size: 1.1rem; font-weight: 700;">AI PDF 상세분석</h5>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="background: ${eligible ? '#d4edda' : '#f8d7da'}; color: ${eligible ? '#155724' : '#721c24'}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                ${eligible ? '✅ 지원 가능' : '⚠️ 자격 미달'}
+              <span style="background: ${grade.headerBg}; color: ${grade.headerText}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                ${grade.icon} 관련도: ${grade.text}
               </span>
-              <span style="background: ${scoreColor}; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                적합도 ${fitScore}점
+              <span style="background: ${grade.bgColor}; color: ${grade.color}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                ${fitScore}점
               </span>
             </div>
           </div>
@@ -5057,51 +5079,38 @@
         
         targetCard.appendChild(detailBox);
         
-        // 🔥 상세분석 결과가 자격미달이면 요약분석 카드도 "참고"로 변경
-        if (!eligible) {
-          // 순위 뱃지 변경
-          const rankSpan = targetCard.querySelector('.rank');
-          if (rankSpan) {
-            rankSpan.innerHTML = `🟡 참고`;
-            rankSpan.style.background = 'linear-gradient(135deg, #ffc107, #ffda6a)';
-            rankSpan.style.color = '#333';
-          }
-          
-          // 관련도 뱃지 변경
-          const scoreSpan = targetCard.querySelector('.match-score');
-          if (scoreSpan) {
-            const refGrade = getRelevanceGrade(0, false);
-            scoreSpan.style.background = refGrade.bgColor;
-            scoreSpan.style.color = refGrade.color;
-            scoreSpan.textContent = `관련도: ${refGrade.text}`;
-          }
-          
-          // 요약분석 박스 상태 변경
-          const summaryBox = targetCard.querySelector('.ai-summary-box');
-          if (summaryBox) {
-            summaryBox.style.border = '2px solid #ffc107';
-            const statusSpan = summaryBox.querySelector('span[style*="border-radius: 20px"]');
-            if (statusSpan && !statusSpan.textContent.includes('상세분석')) {
-              statusSpan.style.background = '#fff3cd';
-              statusSpan.style.color = '#856404';
-              statusSpan.innerHTML = '🟡 참고 (상세분석 결과)';
-            }
-          }
-          
-          // rank 클래스 제거
-          targetCard.classList.remove('rank-1', 'rank-2', 'rank-3');
-          
-          console.log(`⚠️ 상세분석 자격미달: ${result.programId} → 요약분석도 "참고"로 변경`);
+        // 관련도 뱃지를 상세분석 점수로 업데이트
+        const scoreSpan = targetCard.querySelector('.match-score');
+        if (scoreSpan) {
+          const grade = getRelevanceGrade(fitScore);
+          scoreSpan.style.background = grade.bgColor;
+          scoreSpan.style.color = grade.color;
+          scoreSpan.textContent = `관련도: ${grade.text}`;
         }
+        
+        // 요약분석 박스 상태도 점수에 맞게 변경
+        const summaryBox = targetCard.querySelector('.ai-summary-box');
+        if (summaryBox) {
+          const grade = getRelevanceGrade(fitScore);
+          summaryBox.style.border = `2px solid ${grade.borderColor}`;
+          const statusSpan = summaryBox.querySelector('span[style*="border-radius: 20px"]');
+          if (statusSpan && !statusSpan.textContent.includes('상세분석')) {
+            statusSpan.style.background = grade.headerBg;
+            statusSpan.style.color = grade.headerText;
+            statusSpan.innerHTML = `${grade.icon} ${grade.text} (상세분석)`;
+          }
+        }
+        
+        console.log(`✅ 상세분석 완료: ${result.programId} → 적합도 ${fitScore}점`);
         });
         
-        // 🆕 상세분석 완료 후 카드 순서 재정렬 (적합 → 참고)
+        // 🆕 상세분석 완료 후 카드 순서 재정렬 (점수순)
         reorderCardsAfterDetailAnalysis(pdfResults);
       });
     }
     
     /**
-     * 상세분석 후 카드 순서 재정렬 (지원가능 → 자격미달)
+     * 상세분석 후 카드 순서 재정렬 (점수 높은 순)
      */
     function reorderCardsAfterDetailAnalysis(pdfResults) {
       const resultsSection = document.getElementById('results-section');
@@ -5112,52 +5121,49 @@
       
       if (resultCards.length === 0) return;
       
-      // 상세분석 결과 기준으로 분류
-      const eligibleCards = [];
-      const ineligibleCards = [];
-      const noAnalysisCards = [];
-      
-      resultCards.forEach(card => {
+      // 모든 카드를 점수와 함께 수집
+      const scoredCards = resultCards.map(card => {
         const cardId = card.getAttribute('data-program-id');
         const detailResult = pdfResults.find(r => r.programId === cardId);
         
-        if (detailResult) {
-          if (detailResult.companyFit?.eligible === true) {
-            eligibleCards.push({ card, score: detailResult.companyFit?.fitScore || 0 });
-          } else {
-            ineligibleCards.push({ card, score: detailResult.companyFit?.fitScore || 0 });
-          }
-        } else {
-          // 상세분석 없는 카드는 요약분석 결과로 판단
-          const rankSpan = card.querySelector('.rank');
-          if (rankSpan && rankSpan.textContent.includes('참고')) {
-            ineligibleCards.push({ card, score: 0 });
-          } else {
-            noAnalysisCards.push({ card, score: parseInt(card.getAttribute('data-match-score') || '0') });
-          }
-        }
+        // 상세분석 점수 우선, 없으면 기본 매칭 점수
+        const fitScore = detailResult?.companyFit?.fitScore || parseInt(card.getAttribute('data-match-score') || '0');
+        
+        return { card, score: fitScore };
       });
       
-      // 점수순 정렬
-      eligibleCards.sort((a, b) => b.score - a.score);
-      ineligibleCards.sort((a, b) => b.score - a.score);
-      noAnalysisCards.sort((a, b) => b.score - a.score);
+      // 점수순 정렬 (높은 점수 → 낮은 점수)
+      scoredCards.sort((a, b) => b.score - a.score);
       
-      // 순서: 적합 → 미분석 → 참고
-      const orderedCards = [...eligibleCards, ...noAnalysisCards, ...ineligibleCards];
-      
-      // DOM 재배치
-      orderedCards.forEach(({ card }, index) => {
+      // DOM 재배치 및 순위 업데이트
+      scoredCards.forEach(({ card, score }, index) => {
         resultsSection.appendChild(card);
         
         // 순위 업데이트
         const rankSpan = card.querySelector('.rank');
-        if (rankSpan && !rankSpan.textContent.includes('참고')) {
-          rankSpan.textContent = `${index + 1}위`;
+        if (rankSpan) {
+          const rank = index + 1;
+          const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+          rankSpan.innerHTML = `${rankEmoji} ${rank}위`;
         }
+        
+        // 관련도 업데이트
+        const scoreSpan = card.querySelector('.match-score');
+        if (scoreSpan) {
+          const grade = getRelevanceGrade(score);
+          scoreSpan.style.background = grade.bgColor;
+          scoreSpan.style.color = grade.color;
+          scoreSpan.textContent = `관련도: ${grade.text}`;
+        }
+        
+        // rank 클래스 업데이트
+        card.classList.remove('rank-1', 'rank-2', 'rank-3');
+        if (index === 0) card.classList.add('rank-1');
+        else if (index === 1) card.classList.add('rank-2');
+        else if (index === 2) card.classList.add('rank-3');
       });
       
-      console.log(`✅ 상세분석 후 카드 재정렬: 적합 ${eligibleCards.length}개 → 미분석 ${noAnalysisCards.length}개 → 참고 ${ineligibleCards.length}개`);
+      console.log(`✅ 상세분석 후 카드 재정렬 (점수순): ${scoredCards.length}개`);
     }
     
     function showLoadingOverlay(title, subtitle, analysisCount = null) {
@@ -5271,7 +5277,7 @@
       result.recommendations.forEach((rec, index) => {
         const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-        const initialGrade = getRelevanceGrade(rec.matchScore, true);
+        const initialGrade = getRelevanceGrade(rec.matchScore);
         
         html += `
           <div class="result-card ${rankClass}" data-program-id="${rec.id || ''}" data-match-score="${rec.matchScore || 0}">
@@ -5366,7 +5372,7 @@
         // 적합/부적합 여부 및 관련도 등급 결정
         const isEligible = result.eligible === true;
         const fitScore = result.fitScore || (isEligible ? 85 : 55);
-        const grade = getRelevanceGrade(fitScore, isEligible);
+        const grade = getRelevanceGrade(fitScore);
         
         // 관련도 업데이트 (카드 헤더의 점수)
         const scoreSpan = targetCard.querySelector('.match-score');
@@ -5389,13 +5395,13 @@
           animation: slideIn 0.5s ease-out;
         `;
         
-        // 적합/부적합 이유 HTML 생성
+        // 분석 이유 HTML 생성
         let reasonHtml = '';
         if (isEligible && result.eligibleReason) {
           reasonHtml = `
             <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
               <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ${grade.icon} 적합 이유: <span style="font-weight: normal;">${result.eligibleReason}</span>
+                ${grade.icon} 분석: <span style="font-weight: normal;">${result.eligibleReason}</span>
               </p>
             </div>
           `;
@@ -5403,14 +5409,14 @@
           reasonHtml = `
             <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
               <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ${grade.icon} 참고 이유: <span style="font-weight: normal;">${result.ineligibleReason}</span>
+                ${grade.icon} 분석: <span style="font-weight: normal;">${result.ineligibleReason}</span>
               </p>
             </div>
           `;
         }
         
-        // 상태 텍스트 결정
-        const statusText = isEligible ? (fitScore >= 86 ? '적합' : '검토') : '참고';
+        // 상태 텍스트 = 관련도 등급
+        const statusText = grade.text;
         
         summaryDiv.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee; flex-wrap: wrap; gap: 0.5rem;">
@@ -5465,12 +5471,12 @@
       
       console.log('✅ AI 요약분석 결과 표시 완료:', summaryResults.length, '개');
       
-      // 카드 순서 재정렬 (적합 → 부적합 순)
+      // 카드 순서 재정렬 (점수 높은 순)
       reorderResultCards(summaryResults);
     }
     
     /**
-     * Gemini 분석 결과에 따라 카드 순서 재정렬
+     * Gemini 분석 결과에 따라 카드 순서 재정렬 (점수 높은 순)
      */
     function reorderResultCards(summaryResults) {
       const resultsSection = document.getElementById('results-section');
@@ -5479,22 +5485,16 @@
       
       if (resultCards.length === 0) return;
       
-      // 🔥 적합/참고 분리 (eligible=true AND fitScore > 80 이어야 적합)
-      const eligibleResults = summaryResults.filter(r => {
-        const score = r.fitScore || 0;
-        return r.eligible === true && score > 80;
+      // 🔥 점수 순으로 정렬 (높은 점수 → 낮은 점수)
+      const sortedResults = [...summaryResults].sort((a, b) => {
+        const scoreA = a.fitScore || 0;
+        const scoreB = b.fitScore || 0;
+        return scoreB - scoreA; // 내림차순
       });
-      const referenceResults = summaryResults.filter(r => {
-        const score = r.fitScore || 0;
-        return r.eligible === false || score <= 80;
-      });
-      
-      // 적합 먼저, 참고 나중 순서로 합치기
-      const orderedResults = [...eligibleResults, ...referenceResults];
       
       // 정렬된 순서대로 카드 배치
       const sortedCards = [];
-      orderedResults.forEach(result => {
+      sortedResults.forEach(result => {
         const card = resultCards.find(c => {
           const cardId = c.getAttribute('data-program-id');
           return cardId === result.programId || cardId === result.id;
@@ -5514,88 +5514,75 @@
       });
       
       // 카드 재배치 및 순위 업데이트
-      let eligibleRank = 0; // 적합 카드 순위
       sortedCards.forEach(({ card, result }, index) => {
         // 순위 업데이트
         const rankSpan = card.querySelector('.rank');
         const scoreSpan = card.querySelector('.match-score');
+        const fitScore = result?.fitScore || 0;
         
-        if (rankSpan) {
-          const isEligible = result?.eligible === true;
-          const fitScore = result?.fitScore || 0;
-          const isActuallyEligible = isEligible && fitScore > 80;
+        if (rankSpan && result) {
+          const rank = index + 1;
+          const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+          rankSpan.innerHTML = `${rankEmoji} ${rank}위`;
+          rankSpan.style.background = '';
+          rankSpan.style.color = '';
           
-          if (isActuallyEligible) {
-            eligibleRank++;
-            const rankEmoji = eligibleRank === 1 ? '🥇' : eligibleRank === 2 ? '🥈' : eligibleRank === 3 ? '🥉' : '';
-            rankSpan.innerHTML = `${rankEmoji} ${eligibleRank}위`;
-            rankSpan.style.background = '';
-            rankSpan.style.color = '';
-          } else if (result) {
-            // 참고 공고 (부적합 또는 80점 이하)
-            rankSpan.innerHTML = `🟡 참고`;
-            rankSpan.style.background = 'linear-gradient(135deg, #ffc107, #ffda6a)';
-            rankSpan.style.color = '#333';
-            
-            // 관련도도 참고로 변경
-            if (scoreSpan) {
-              const grade = getRelevanceGrade(fitScore, isEligible);
-              scoreSpan.style.background = grade.bgColor;
-              scoreSpan.style.color = grade.color;
-              scoreSpan.textContent = `관련도: ${grade.text}`;
-            }
+          // 관련도 등급 업데이트
+          if (scoreSpan) {
+            const grade = getRelevanceGrade(fitScore);
+            scoreSpan.style.background = grade.bgColor;
+            scoreSpan.style.color = grade.color;
+            scoreSpan.textContent = `관련도: ${grade.text}`;
           }
         }
         
         // rank 클래스 업데이트
         card.classList.remove('rank-1', 'rank-2', 'rank-3');
-        const isActuallyEligible = result?.eligible === true && (result?.fitScore || 0) > 80;
-        if (isActuallyEligible) {
-          if (eligibleRank === 1) card.classList.add('rank-1');
-          else if (eligibleRank === 2) card.classList.add('rank-2');
-          else if (eligibleRank === 3) card.classList.add('rank-3');
+        if (result) {
+          const rank = index + 1;
+          if (rank === 1) card.classList.add('rank-1');
+          else if (rank === 2) card.classList.add('rank-2');
+          else if (rank === 3) card.classList.add('rank-3');
         }
         
         // DOM에서 순서 변경
         resultsSection.appendChild(card);
       });
       
-      console.log('✅ 카드 순서 재정렬 완료: 적합', sortedCards.filter(s => s.result?.eligible === true).length, '개 → 부적합', sortedCards.filter(s => s.result?.eligible === false).length, '개');
+      console.log('✅ 카드 순서 재정렬 완료 (점수순):', sortedCards.length, '개');
       
       // 헤더 카드 문구 업데이트
       updateResultsHeader(summaryResults);
     }
     
     /**
-     * 결과 헤더 문구 업데이트 (적합/참고 개수 표시)
+     * 결과 헤더 문구 업데이트 (등급별 개수 표시)
      */
     function updateResultsHeader(summaryResults) {
       const headerCard = document.querySelector('#results-section .card');
       if (!headerCard) return;
       
-      // 적합: eligible=true AND fitScore > 80
-      const eligibleCount = summaryResults.filter(r => {
-        const score = r.fitScore || 0;
-        return r.eligible === true && score > 80;
-      }).length;
-      const referenceCount = summaryResults.length - eligibleCount;
+      // 등급별 개수 계산
+      const veryHighCount = summaryResults.filter(r => (r.fitScore || 0) >= 90).length; // 매우높음
+      const highCount = summaryResults.filter(r => (r.fitScore || 0) >= 80 && (r.fitScore || 0) < 90).length; // 높음
+      const mediumCount = summaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 80).length; // 보통
+      const lowCount = summaryResults.filter(r => (r.fitScore || 0) >= 60 && (r.fitScore || 0) < 70).length; // 낮음
+      const refCount = summaryResults.filter(r => (r.fitScore || 0) < 60).length; // 참고
       
       let headerHtml = `<h2>📊 맞춤형 지원사업 추천 결과</h2>`;
       
-      if (eligibleCount > 0 && referenceCount > 0) {
+      // 등급별 표시
+      const grades = [];
+      if (veryHighCount > 0) grades.push(`🟢 매우높음 ${veryHighCount}개`);
+      if (highCount > 0) grades.push(`🔵 높음 ${highCount}개`);
+      if (mediumCount > 0) grades.push(`🟣 보통 ${mediumCount}개`);
+      if (lowCount > 0) grades.push(`🟠 낮음 ${lowCount}개`);
+      if (refCount > 0) grades.push(`🟡 참고 ${refCount}개`);
+      
+      if (grades.length > 0) {
         headerHtml += `
           <p style="color: #666; margin-top: 0.5rem;">
-            🟢 <strong style="color: #28a745;">적합 ${eligibleCount}개</strong> + 
-            🟡 <strong style="color: #d39e00;">참고 ${referenceCount}개</strong> (총 ${summaryResults.length}개)
-          </p>
-          <p style="color: #888; font-size: 0.85rem; margin-top: 0.3rem;">
-            ※ 참고 공고는 협력사/관계사에 추천해보세요
-          </p>
-        `;
-      } else if (eligibleCount > 0) {
-        headerHtml += `
-          <p style="color: #666; margin-top: 0.5rem;">
-            총 <strong style="color: #28a745;">${eligibleCount}개</strong>의 지원사업이 귀사에 적합합니다.
+            ${grades.join(' | ')} (총 ${summaryResults.length}개)
           </p>
         `;
       } else {
@@ -6440,8 +6427,8 @@
               <h3 style="color: #667eea; margin: 0; font-size: 1.2rem; font-weight: 700;">AI PDF 상세분석</h3>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">✅ 지원 가능</span>
-              <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">적합도 70점</span>
+              <span style="background: linear-gradient(135deg, #6f42c1, #e83e8c); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">🟣 관련도: 보통</span>
+              <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">70점</span>
             </div>
           </div>
           
