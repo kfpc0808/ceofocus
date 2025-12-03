@@ -2375,12 +2375,6 @@
         provider.addScope('https://www.googleapis.com/auth/drive');
         provider.addScope('https://www.googleapis.com/auth/drive.file');
         
-        // ★ 핵심: 항상 권한 동의 화면 표시 (기존 로그인 사용자도 새 권한 요청)
-        provider.setCustomParameters({ 
-          prompt: 'consent',
-          access_type: 'offline'
-        });
-        
         const result = await auth.signInWithPopup(provider);
         console.log('✅ Firebase 로그인 성공:', result.user.email);
         
