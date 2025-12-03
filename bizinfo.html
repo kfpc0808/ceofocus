@@ -13,12 +13,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
   
-  <!-- Google API for Drive -->
-  <script src="https://apis.google.com/js/api.js"></script>
-  
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client"></script>
-  
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     
@@ -817,53 +811,85 @@
     }
   </style>
 
-  <!-- Google 로그인 화면 (로그인 필요할 때만 표시) -->
+  <!-- 로그인 필요 시 리디렉션 안내 화면 -->
   <div id="login-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0c2c54 0%, #2a5a8a 100%); z-index: 9999; align-items: center; justify-content: center;">
     <div style="background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%;">
-      <div style="font-size: 4rem; margin-bottom: 1rem;">🏢</div>
-      <h2 style="color: #0c2c54; margin-bottom: 0.5rem; font-size: 1.8rem;">기업 지원사업 AI 매칭</h2>
-      <p style="color: #666; margin-bottom: 2rem; font-size: 0.95rem;">구글 드라이브에 안전하게 저장됩니다</p>
+      <div style="font-size: 4rem; margin-bottom: 1rem;">🔐</div>
+      <h2 style="color: #0c2c54; margin-bottom: 0.5rem; font-size: 1.8rem;">로그인이 필요합니다</h2>
+      <p style="color: #666; margin-bottom: 2rem; font-size: 0.95rem;">로그인 페이지로 이동합니다...</p>
       
-      <button id="google-signin-btn" onclick="signInWithGoogle()" style="
-        width: 100%;
-        padding: 1rem;
-        background: white;
-        border: 2px solid #ddd;
+      <div style="margin-top: 1rem;">
+        <div class="spinner" style="margin: 0 auto 1rem; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #0c2c54; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
+      
+      <button onclick="window.location.href='login.html'" style="
+        margin-top: 1rem;
+        padding: 0.8rem 2rem;
+        background: #0c2c54;
+        border: none;
         border-radius: 8px;
         font-size: 1rem;
         font-weight: 600;
-        color: #333;
+        color: white;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        transition: all 0.2s;
-      " onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='none'">
-        <svg width="20" height="20" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Google 계정으로 시작하기
+      ">
+        로그인 페이지로 이동
       </button>
       
-      <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: left; font-size: 0.85rem; color: #666;">
-        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #0c2c54;">🔒 정보보호</div>
-        <div style="line-height: 1.6;">
-          • 데이터는 사용자의 구글 드라이브에 암호화 저장<br>
-          • 언제든 수정/삭제 가능
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
+  </div>
+
+  <!-- 데이터 저장 안내 팝업 -->
+  <div id="storage-notice-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); text-align: center; max-width: 420px; width: 90%; margin: 1rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+      <h2 style="color: #0c2c54; margin-bottom: 1rem; font-size: 1.4rem;">데이터 저장 안내</h2>
+      
+      <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: left;">
+        <div style="color: #856404; font-size: 0.95rem; line-height: 1.7;">
+          <div style="margin-bottom: 0.8rem;">
+            <strong>📱 기기별 저장</strong><br>
+            데이터는 <u>현재 기기/브라우저</u>에만 저장됩니다.
+          </div>
+          <div style="margin-bottom: 0.8rem;">
+            <strong>🔄 다른 기기</strong><br>
+            PC ↔ 스마트폰 간 데이터가 <u>동기화되지 않습니다</u>.
+          </div>
+          <div>
+            <strong>🗑️ 데이터 삭제 주의</strong><br>
+            브라우저 데이터/캐시 삭제 시 <u>저장된 정보가 사라집니다</u>.
+          </div>
         </div>
       </div>
+      
+      <button id="storage-notice-confirm" style="
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #0c2c54, #2a5a8a);
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.2s;
+      " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        확인
+      </button>
     </div>
   </div>
 
   <div class="container" id="main-content" style="display: none;">
     <div class="header">
       <div class="header-left">
-        <button id="connection-status-btn" class="btn-main btn-small" style="background: #6c757d;" onclick="connectDrive()">
-          <span style="font-size: 0.9rem;">⏳</span> 연결 중...
+        <button id="connection-status-btn" class="btn-main btn-small" style="background: #28a745;">
+          <span style="font-size: 0.9rem;">✓</span> 로컬저장
         </button>
         <button class="btn-main btn-small" onclick="signOut()">로그아웃</button>
       </div>
@@ -1569,7 +1595,7 @@
   </div>
 
   <script>
-    // ==================== Firebase & Google Drive 설정 ====================
+    // ==================== Firebase 설정 ====================
     
     // Firebase 설정
     const firebaseConfig = {
@@ -1590,17 +1616,8 @@
     // Firebase Functions 초기화 (서울 리전)
     const functions = firebase.app().functions('asia-northeast3');
     
-    // Google API 클라이언트 초기화
-    const CLIENT_ID = '1012609333373-5d223e3cqp6fo28i8bi85i9ae0p7ohen.apps.googleusercontent.com';
-    
-    // ⚠️ Gemini API 키 설정
-    // 키 발급: https://aistudio.google.com/apikey
-    // ⚠️ Gemini API 키는 Netlify Function에서 안전하게 사용됩니다.
-    // 브라우저에 노출되지 않습니다.
-    
-    let gapiInited = false;
-    let gisInited = false;
-    let tokenClient = null;
+    // 사용자 정보
+    let currentUser = null;
     let hasCompletedSearch = false; // 맞춤찾기 완료 플래그
     
     // ==================== 관련도 등급 변환 ====================
@@ -1932,16 +1949,11 @@
     let lastCompanyData = null; // 마지막 검색 기업 데이터
     let lastDetailResults = []; // PDF 상세분석 결과 저장 (programId 기반)
     let lastSummaryResults = []; // AI 요약분석 결과 저장 (programId 기반)
-    let accessToken = localStorage.getItem('driveAccessToken') || null;
-    let currentUser = null;
     
     // 🆕 URL에서 본사 발행 ID 추출 (일일 사용 제한용)
     const urlParams = new URLSearchParams(window.location.search);
     const agentId = urlParams.get('agentId') || 'unknown';
     console.log('👤 본사 ID:', agentId);
-    
-    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    const SCOPES = 'https://www.googleapis.com/auth/drive';
     
     // ==================== 유틸리티 함수 ====================
     
@@ -2271,215 +2283,34 @@
     // 기존 하드코딩 데이터는 삭제되었습니다.
     // 이제 fetchBizInfoPrograms()로 실제 데이터를 사용합니다.
     
-    // ==================== Google API 초기화 ====================
-    function gapiLoaded() {
-      gapi.load('client', initializeGapiClient);
-      // KSIC 데이터 로드
-      loadKsicData();
+    // ==================== 인증 관련 함수 ====================
+    
+    // 로그인 페이지로 이동 (기존 signInWithGoogle 대체)
+    function signInWithGoogle() {
+      // 이미 login.html에서 로그인하고 왔어야 함
+      // 만약 여기 도달하면 login.html로 리디렉션
+      console.log('🔐 로그인 필요 - login.html로 이동');
+      window.location.href = 'login.html';
     }
     
-    async function initializeGapiClient() {
-      await gapi.client.init({
-        discoveryDocs: [DISCOVERY_DOC],
-      });
-      gapiInited = true;
-      console.log('✅ GAPI 클라이언트 초기화 완료');
-      maybeEnableButtons();
-    }
-    
-    // Google Identity Services 초기화
-    function gisLoaded() {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: handleTokenResponse,
-      });
-      gisInited = true;
-      console.log('✅ GIS 토큰 클라이언트 초기화 완료');
-      maybeEnableButtons();
-    }
-    
-    function maybeEnableButtons() {
-      if (gapiInited && gisInited) {
-        console.log('✅ Google API 준비 완료');
-        // 자동 로그인은 auth.onAuthStateChanged에서 처리
-      }
-    }
-    
-    // 토큰 응답 처리
-    async function handleTokenResponse(resp) {
-      if (resp.error !== undefined) {
-        console.error('❌ 토큰 획득 실패:', resp);
-        alert('Google 인증에 실패했습니다. 다시 시도해주세요.');
-        
-        // Promise 거부 (requestDriveAccess에서 catch 가능)
-        if (window._tokenPromiseReject) {
-          window._tokenPromiseReject(resp.error);
-        }
-        return;
-      }
-      
-      accessToken = resp.access_token;
-      localStorage.setItem('driveAccessToken', accessToken);
-      console.log('🔑 Access Token 획득 및 저장 성공');
-      
-      // Promise 이행 (requestDriveAccess에서 await 가능)
-      if (window._tokenPromiseResolve) {
-        window._tokenPromiseResolve(accessToken);
-      }
-      
-      // Google API 클라이언트에 토큰 설정
-      gapi.client.setToken({ access_token: accessToken });
-      
-      // 사용자 정보 가져오기
-      try {
-        const userInfo = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }).then(res => res.json());
-        
-        currentUser = userInfo;
-        console.log('✅ 로그인 성공:', userInfo.email);
-      } catch (e) {
-        console.error('사용자 정보 가져오기 실패:', e);
-      }
-      
-      // 로그인 화면 숨기고 메인 화면 표시
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('main-content').style.display = 'block';
-      
-      // Google Drive에서 데이터 로드
-      try {
-        await loadFromDrive();
-        updateConnectionStatus('connected');
-        console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-      } catch (error) {
-        console.error('Drive 로드 실패:', error);
-        updateConnectionStatus('disconnected');
-      }
-      
-      // 숫자 포맷팅 활성화
-      attachNumberFormatting();
-    }
-    
-    // Google 로그인
-    async function signInWithGoogle() {
-      try {
-        console.log('🔐 Google 로그인 시작...');
-        
-        // 기존 토큰 초기화
-        localStorage.removeItem('driveAccessToken');
-        accessToken = null;
-        
-        // Firebase Auth 로그인 (Drive 권한 포함)
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('https://www.googleapis.com/auth/drive');
-        provider.addScope('https://www.googleapis.com/auth/drive.file');
-        
-        const result = await auth.signInWithPopup(provider);
-        console.log('✅ Firebase 로그인 성공:', result.user.email);
-        
-        // Firebase credential에서 직접 access token 획득
-        const credential = result.credential;
-        if (credential && credential.accessToken) {
-          accessToken = credential.accessToken;
-          localStorage.setItem('driveAccessToken', accessToken);
-          console.log('🔑 Firebase credential에서 Access Token 획득 성공');
-          
-          // GAPI 클라이언트에 토큰 설정
-          if (gapiInited && gapi.client) {
-            gapi.client.setToken({ access_token: accessToken });
-            console.log('🔑 GAPI 클라이언트에 토큰 설정 완료');
-          }
-        } else {
-          console.log('⚠️ Firebase credential에서 토큰을 받지 못함, GIS로 재시도...');
-          // GIS를 통해 토큰 요청
-          try {
-            await requestDriveAccess();
-            console.log('🔑 GIS에서 Access Token 획득 성공');
-          } catch (e) {
-            console.error('❌ GIS 토큰 획득 실패:', e);
-          }
-        }
-        
-        currentUser = { email: result.user.email };
-        
-        // 로그인 화면 및 로딩 화면 숨기고 메인 화면 표시
-        const authLoadingScreen = document.getElementById('auth-loading-screen');
-        if (authLoadingScreen) authLoadingScreen.style.display = 'none';
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        
-        // Google Drive에서 데이터 로드
-        try {
-          await loadFromDrive();
-          updateConnectionStatus('connected');
-          console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-        } catch (error) {
-          console.error('Drive 로드 실패:', error);
-          updateConnectionStatus('disconnected');
-        }
-        
-        // 숫자 포맷팅 활성화
-        attachNumberFormatting();
-        
-      } catch (error) {
-        console.error('❌ 로그인 실패:', error);
-        alert('로그인에 실패했습니다. 다시 시도해주세요.');
-      }
-    }
-    
-    // Google 로그아웃
+    // 로그아웃
     async function signOut() {
       try {
-        // GIS 토큰 취소
-        if (accessToken) {
-          google.accounts.oauth2.revoke(accessToken, () => {
-            console.log('✅ GIS 토큰 취소 완료');
-          });
-        }
-        
         // Firebase 로그아웃
         await auth.signOut();
         
-        accessToken = null;
-        localStorage.removeItem('driveAccessToken');
         currentUser = null;
         savedCompanies = {};
         
-        gapi.client.setToken(null);
-        
-        document.getElementById('main-content').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'flex';
-        
-        console.log('✅ 로그아웃 완료');
+        console.log('✅ 로그아웃 완료 - login.html로 이동');
+        window.location.href = 'login.html';
       } catch (error) {
         console.error('❌ 로그아웃 실패:', error);
+        // 오류가 나도 login.html로 이동
+        window.location.href = 'login.html';
       }
     }
     
-    // Drive 권한 요청 (필요시 팝업)
-    async function requestDriveAccess() {
-      if (accessToken) {
-        return accessToken; // 이미 토큰 있음
-      }
-      
-      if (!gisInited) {
-        throw new Error('GIS가 초기화되지 않았습니다');
-      }
-      
-      console.log('🔐 Drive 권한 요청 중...');
-      
-      // Promise로 감싸기
-      return new Promise((resolve, reject) => {
-        window._tokenPromiseResolve = resolve;
-        window._tokenPromiseReject = reject;
-        
-        // GIS 팝업 띄우기
-        tokenClient.requestAccessToken({ prompt: '' }); // prompt: '' = 자동 (이전 선택 기억)
-      });
-    }
-    
-    // Google Drive에 저장
     // 로컬 저장소에 저장 (기존 saveToDrive 대체)
     async function saveToDrive(data) {
       try {
@@ -2644,19 +2475,18 @@
         // 연결 상태 버튼 초기화
         updateConnectionStatus('connecting');
         
-        // GAPI 로드
-        gapiLoaded();
+        // KSIC 데이터 로드
+        loadKsicData();
         
-        // GIS 로드
-        gisLoaded();
-        
-        // Firebase 인증 상태 확인 (자동 로그인)
+        // Firebase 인증 상태 확인 (login.html에서 이미 로그인됨)
         auth.onAuthStateChanged(async (user) => {
           const authLoadingScreen = document.getElementById('auth-loading-screen');
           const authStatusText = document.getElementById('auth-status-text');
           
           if (user) {
-            console.log('✅ Firebase 세션 유지:', user.email);
+            // login.html에서 로그인 완료된 상태
+            const userId = user.email.split('@')[0]; // user123@system.local → user123
+            console.log('✅ 로그인 확인:', userId);
             
             // 상태 텍스트 업데이트
             if (authStatusText) {
@@ -2664,35 +2494,55 @@
             }
             
             // 사용자 정보 저장
-            currentUser = { email: user.email };
+            currentUser = { 
+              email: user.email,
+              userId: userId,
+              uid: user.uid
+            };
             
-            // 로딩 화면 숨기고 메인 화면 표시
+            // 로딩 화면 숨기기
             if (authLoadingScreen) authLoadingScreen.style.display = 'none';
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            
-            // 숫자 포맷팅 활성화
-            attachNumberFormatting();
-            
-            // 로컬 저장소에서 데이터 로드 (Drive 토큰 불필요)
-            try {
-              await loadFromDrive();
-              updateConnectionStatus('connected');
-              console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
-            } catch (error) {
-              console.error('로컬 로드 실패:', error);
-            }
-            
             hideLoading();
+            
+            // 저장 안내 팝업 표시
+            const storagePopup = document.getElementById('storage-notice-popup');
+            storagePopup.style.display = 'flex';
+            
+            // 확인 버튼 클릭 시 메인 화면 표시
+            document.getElementById('storage-notice-confirm').onclick = async function() {
+              // 팝업 숨기기
+              storagePopup.style.display = 'none';
+              
+              // 메인 화면 표시
+              document.getElementById('main-content').style.display = 'block';
+              
+              // 숫자 포맷팅 활성화
+              attachNumberFormatting();
+              
+              // 로컬 저장소에서 데이터 로드
+              try {
+                await loadFromDrive();
+                updateConnectionStatus('connected');
+                console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+              } catch (error) {
+                console.error('로컬 로드 실패:', error);
+                updateConnectionStatus('connected'); // 데이터 없어도 연결됨
+              }
+            };
           } else {
-            console.log('⚠️ 로그인 필요');
-            updateConnectionStatus('disconnected', false); // 로그인 화면 표시하므로 팝업 불필요
+            // 로그인 안 됨 → login.html로 이동
+            console.log('⚠️ 로그인 필요 - login.html로 이동');
             
-            // 로딩 화면 숨기고 로그인 화면 표시
+            // 로딩 화면 숨기기
             if (authLoadingScreen) authLoadingScreen.style.display = 'none';
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('main-content').style.display = 'none';
             hideLoading();
+            
+            // 잠시 대기 후 리디렉션 (스피너 보여주기)
+            document.getElementById('login-screen').style.display = 'flex';
+            setTimeout(() => {
+              window.location.href = 'login.html';
+            }, 1500);
           }
         });
         
@@ -2950,57 +2800,36 @@
     }
     
     /**
-     * 새로고침 버튼 - Google Drive 재연결
+     * 새로고침 버튼 - 로컬 저장소 다시 로드
      */
     async function refreshDriveConnection() {
       try {
         // 로딩 표시
         const refreshBtn = event.target.closest('button');
         const originalText = refreshBtn.innerHTML;
-        refreshBtn.innerHTML = '⏳ 연결 중...';
+        refreshBtn.innerHTML = '⏳ 로딩 중...';
         refreshBtn.disabled = true;
         
-        // 기존 토큰 제거
-        accessToken = null;
-        localStorage.removeItem('driveAccessToken');
-        
-        // GIS를 통해 새로운 토큰 요청 (계정 선택 팝업)
-        if (gisInited && tokenClient) {
-          tokenClient.requestAccessToken({ prompt: 'select_account' });
+        // 로컬 저장소에서 다시 로드
+        try {
+          await loadFromDrive();
+          updateConnectionStatus('connected');
+          renderModalCompanyList();
           
-          // 토큰 획득 후 콜백
-          window._tokenPromiseResolve = async () => {
-            try {
-              await loadFromDrive();
-              updateConnectionStatus('connected');
-              renderModalCompanyList();
-              
-              // 성공 알림
-              alert('✅ Google Drive 연결 성공!\n\n' + Object.keys(savedCompanies).length + '개 고객사를 불러왔습니다.');
-            } catch (error) {
-              console.error('Drive 로드 실패:', error);
-              alert('❌ 데이터 로드 실패\n\n다시 시도해주세요.');
-            }
-            
-            // 버튼 복원
-            refreshBtn.innerHTML = originalText;
-            refreshBtn.disabled = false;
-          };
-          
-          window._tokenPromiseReject = () => {
-            console.log('⚠️ 연결 취소됨');
-            refreshBtn.innerHTML = originalText;
-            refreshBtn.disabled = false;
-          };
-        } else {
-          alert('⚠️ Google 인증이 초기화되지 않았습니다.\n\n페이지를 새로고침 후 다시 시도해주세요.');
-          refreshBtn.innerHTML = originalText;
-          refreshBtn.disabled = false;
+          // 성공 알림
+          alert('✅ 데이터 새로고침 완료!\n\n' + Object.keys(savedCompanies).length + '개 고객사를 불러왔습니다.');
+        } catch (error) {
+          console.error('로드 실패:', error);
+          alert('❌ 데이터 로드 실패\n\n다시 시도해주세요.');
         }
+        
+        // 버튼 복원
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
         
       } catch (error) {
         console.error('새로고침 오류:', error);
-        alert('❌ 연결 중 오류가 발생했습니다.\n\n' + error.message);
+        alert('❌ 새로고침 중 오류가 발생했습니다.\n\n' + error.message);
       }
     }
     
@@ -3126,11 +2955,11 @@
         // 로컬 객체에서 삭제
         delete savedCompanies[companyId];
         
-        // Google Drive에 저장 (삭제 반영)
+        // 로컬 저장소에 저장 (삭제 반영)
         const success = await saveToDrive(savedCompanies);
         
         if (!success) {
-          throw new Error('Google Drive 저장 실패');
+          throw new Error('로컬 저장 실패');
         }
         
         // 현재 선택된 회사인 경우 폼 초기화
@@ -3406,7 +3235,7 @@
         savedAt: new Date().toISOString()
       };
       
-      // Google Drive에 암호화하여 저장
+      // 로컬 저장소에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
       
       // 🆕 저장 중 표시 제거
@@ -3423,7 +3252,7 @@
         document.getElementById('company-name-search').value = companyData.companyName;
         
         alert('✅ 기업정보가 저장되었습니다.');
-        console.log('💾 고객사 저장 완료 (Google Drive + 암호화)');
+        console.log('💾 고객사 저장 완료 (로컬 저장소 + 암호화)');
       } else {
         alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
       }
@@ -3470,7 +3299,7 @@
         savedAt: new Date().toISOString()
       };
       
-      // Google Drive에 암호화하여 저장
+      // 로컬 저장소에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
       
       // 🆕 저장 중 표시 제거
@@ -3545,7 +3374,7 @@
         savedAt: new Date().toISOString()
       };
       
-      // Google Drive에 암호화하여 저장
+      // 로컬 저장소에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
       
       // 🆕 저장 중 표시 제거
@@ -5451,7 +5280,7 @@
     }
     
     function goHome() {
-      window.location.href = 'https://ceofocus123.netlify.app/index.html';
+      window.location.href = 'index.html';
     }
     
     
@@ -5935,7 +5764,9 @@
       freeRemaining: 10,
       paidBalance: 0,
       lastResetMonth: '',
-      isLoaded: false
+      isLoaded: false,
+      unlimited: false,        // 🆕 무제한 사용자 여부
+      unlimitedReason: ''      // 🆕 무제한 사유
     };
     
     /**
@@ -5949,9 +5780,14 @@
         if (result.data.success) {
           userCredits = {
             ...result.data.credits,
-            isLoaded: true
+            isLoaded: true,
+            unlimited: result.data.unlimited || false,           // 🆕
+            unlimitedReason: result.data.unlimitedReason || ''   // 🆕
           };
           console.log('💰 크레딧 로드:', userCredits);
+          if (userCredits.unlimited) {
+            console.log('👑 무제한 사용자:', userCredits.unlimitedReason);
+          }
           return true;
         }
         return false;
@@ -6013,14 +5849,22 @@
      * @returns {Promise<boolean>} - 진행 여부
      */
     async function checkAndConfirmCredits(type) {
-      // 관리자 이메일 (무제한 사용 가능)
-      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com', 'polarislkh@gmail.com'];
+      // 관리자 ID (무제한 사용 가능) - login.html에서 로그인한 userId 기준
+      const adminUserIds = ['admin', 'kfpcenter', 'polarislkh'];
       const user = firebase.auth().currentUser;
       
-      // 관리자는 무제한 사용
-      if (user && adminEmails.includes(user.email)) {
+      // 현재 로그인한 userId 추출 (admin@system.local → admin)
+      const currentUserId = user ? user.email.split('@')[0] : '';
+      
+      // 크레딧 정보 로드 (아직 안 되었으면) - 🆕 먼저 로드해서 unlimited 확인
+      if (!userCredits.isLoaded) {
+        await loadCreditsFromServer();
+      }
+      
+      // 🆕 서버에서 확인된 무제한 사용자 (관리자/무료사용자)
+      if (userCredits.unlimited) {
         const confirmed = confirm(
-          `👑 관리자 모드\n\n` +
+          `👑 ${userCredits.unlimitedReason || '무제한 사용자'}\n\n` +
           `${type === 'summary' ? '요약분석' : '상세분석'}을 시작합니다.\n` +
           `(포인트 차감 없음)\n\n` +
           `계속 진행하시겠습니까?`
@@ -6028,9 +5872,15 @@
         return confirmed;
       }
       
-      // 크레딧 정보 로드 (아직 안 되었으면)
-      if (!userCredits.isLoaded) {
-        await loadCreditsFromServer();
+      // 하드코딩된 관리자 ID 체크 (백업)
+      if (user && adminUserIds.includes(currentUserId)) {
+        const confirmed = confirm(
+          `👑 관리자 모드\n\n` +
+          `${type === 'summary' ? '요약분석' : '상세분석'}을 시작합니다.\n` +
+          `(포인트 차감 없음)\n\n` +
+          `계속 진행하시겠습니까?`
+        );
+        return confirmed;
       }
       
       if (type === 'summary') {
@@ -6103,10 +5953,18 @@
      * @returns {Promise<boolean>} - 성공 여부
      */
     async function deductCredits(type) {
-      // 관리자는 차감 안 함
-      const adminEmails = ['polarislkh@naver.com', 'kfp_center@naver.com', 'polarislkh@gmail.com'];
+      // 🆕 서버에서 확인된 무제한 사용자는 차감 안 함
+      if (userCredits.unlimited) {
+        console.log('👑 무제한 사용자: 포인트 차감 없음 -', userCredits.unlimitedReason);
+        return true;
+      }
+      
+      // 하드코딩된 관리자 ID 체크 (백업)
+      const adminUserIds = ['admin', 'kfpcenter', 'polarislkh'];
       const user = firebase.auth().currentUser;
-      if (user && adminEmails.includes(user.email)) {
+      const currentUserId = user ? user.email.split('@')[0] : '';
+      
+      if (user && adminUserIds.includes(currentUserId)) {
         console.log('👑 관리자 모드: 포인트 차감 없음');
         return true;
       }
@@ -6119,7 +5977,9 @@
           // 로컬 캐시 업데이트
           userCredits = {
             ...result.data.credits,
-            isLoaded: true
+            isLoaded: true,
+            unlimited: userCredits.unlimited,           // 🆕 기존 무제한 상태 유지
+            unlimitedReason: userCredits.unlimitedReason
           };
           console.log(`💰 크레딧 차감 완료:`, userCredits);
           return true;
