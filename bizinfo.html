@@ -2834,8 +2834,8 @@
                 console.log('🔑 Drive 연결을 위해 자동 토큰 요청...');
                 updateConnectionStatus('disconnected', false);
                 
-                // confirm 없이 자동으로 토큰 요청
-                tokenClient.requestAccessToken({ prompt: '' });
+                // consent로 권한 동의 화면 표시 (Drive 권한 포함)
+                tokenClient.requestAccessToken({ prompt: 'consent' });
                 
                 return new Promise((resolve) => {
                   window._tokenPromiseResolve = async () => {
