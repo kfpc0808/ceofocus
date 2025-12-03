@@ -5074,7 +5074,70 @@
           console.log(`⚠️ 상세분석 자격미달: ${result.programId} → 요약분석도 "참고"로 변경`);
         }
         });
+        
+        // 🆕 상세분석 완료 후 카드 순서 재정렬 (적합 → 참고)
+        reorderCardsAfterDetailAnalysis(pdfResults);
       });
+    }
+    
+    /**
+     * 상세분석 후 카드 순서 재정렬 (지원가능 → 자격미달)
+     */
+    function reorderCardsAfterDetailAnalysis(pdfResults) {
+      const resultsSection = document.getElementById('results-section');
+      if (!resultsSection) return;
+      
+      const headerCard = resultsSection.querySelector('.card:not(.result-card)');
+      const resultCards = Array.from(resultsSection.querySelectorAll('.result-card'));
+      
+      if (resultCards.length === 0) return;
+      
+      // 상세분석 결과 기준으로 분류
+      const eligibleCards = [];
+      const ineligibleCards = [];
+      const noAnalysisCards = [];
+      
+      resultCards.forEach(card => {
+        const cardId = card.getAttribute('data-program-id');
+        const detailResult = pdfResults.find(r => r.programId === cardId);
+        
+        if (detailResult) {
+          if (detailResult.companyFit?.eligible === true) {
+            eligibleCards.push({ card, score: detailResult.companyFit?.fitScore || 0 });
+          } else {
+            ineligibleCards.push({ card, score: detailResult.companyFit?.fitScore || 0 });
+          }
+        } else {
+          // 상세분석 없는 카드는 요약분석 결과로 판단
+          const rankSpan = card.querySelector('.rank');
+          if (rankSpan && rankSpan.textContent.includes('참고')) {
+            ineligibleCards.push({ card, score: 0 });
+          } else {
+            noAnalysisCards.push({ card, score: parseInt(card.getAttribute('data-match-score') || '0') });
+          }
+        }
+      });
+      
+      // 점수순 정렬
+      eligibleCards.sort((a, b) => b.score - a.score);
+      ineligibleCards.sort((a, b) => b.score - a.score);
+      noAnalysisCards.sort((a, b) => b.score - a.score);
+      
+      // 순서: 적합 → 미분석 → 참고
+      const orderedCards = [...eligibleCards, ...noAnalysisCards, ...ineligibleCards];
+      
+      // DOM 재배치
+      orderedCards.forEach(({ card }, index) => {
+        resultsSection.appendChild(card);
+        
+        // 순위 업데이트
+        const rankSpan = card.querySelector('.rank');
+        if (rankSpan && !rankSpan.textContent.includes('참고')) {
+          rankSpan.textContent = `${index + 1}위`;
+        }
+      });
+      
+      console.log(`✅ 상세분석 후 카드 재정렬: 적합 ${eligibleCards.length}개 → 미분석 ${noAnalysisCards.length}개 → 참고 ${ineligibleCards.length}개`);
     }
     
     function showLoadingOverlay(title, subtitle, analysisCount = null) {
