@@ -13,6 +13,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
   
+  <!-- INNOPAY PG SDK -->
+  <script src="https://pg.innopay.co.kr/tpay/js/innopay.js"></script>
+  
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     
@@ -1565,8 +1568,8 @@
         <button class="btn-action-secondary" onclick="showDetailSample()">
           👁️ 상세분석 샘플
         </button>
-        <button class="btn-action-secondary" onclick="showMyPoints()">
-          💰 포인트 조회
+        <button class="btn-action-secondary" onclick="showPointChargeModal()">
+          💰 포인트충전/조회
         </button>
         <button class="btn-action-secondary" onclick="deleteCompany()" style="background: linear-gradient(135deg, #718096 0%, #4a5568 100%);" title="※ 기업정보는 목록에서 삭제">
           🗑️ 삭제(지원정보)
@@ -5932,49 +5935,240 @@
     }
     
     /**
-     * 포인트 조회 버튼 클릭
+     * 포인트 조회 버튼 클릭 (기존 호환용)
      */
     async function showMyPoints() {
-      // 로그인 확인
+      showPointChargeModal();
+    }
+    
+    // 선택된 충전 금액
+    let selectedChargeAmount = 0;
+    
+    /**
+     * 포인트 충전/조회 모달 열기
+     */
+    async function showPointChargeModal() {
       const user = firebase.auth().currentUser;
       if (!user) {
-        alert('⚠️ 로그인이 필요합니다.\n\n포인트 조회를 위해 먼저 로그인해주세요.');
+        alert('⚠️ 로그인이 필요합니다.\n\n포인트 충전/조회를 위해 먼저 로그인해주세요.');
         return;
       }
       
+      // 모달 표시
+      const modal = document.getElementById('point-charge-modal');
+      modal.style.display = 'flex';
+      
+      // 초기화
+      selectedChargeAmount = 0;
+      document.getElementById('custom-charge-amount').value = '';
+      updateChargeUI();
+      
+      // 포인트 조회
+      await refreshPoints();
+    }
+    
+    /**
+     * 포인트 충전/조회 모달 닫기
+     */
+    function closePointChargeModal() {
+      document.getElementById('point-charge-modal').style.display = 'none';
+      selectedChargeAmount = 0;
+    }
+    
+    /**
+     * 포인트 새로고침
+     */
+    async function refreshPoints() {
       try {
-        // 서버에서 최신 정보 조회
         await loadCreditsFromServer();
         
-        // 현재 월 계산
+        // 포인트 표시 업데이트
+        const pointsDisplay = document.getElementById('current-points-display');
+        pointsDisplay.textContent = `${(userCredits?.paidBalance || 0).toLocaleString()} P`;
+        
+        // 무료 사용 현황 표시
         const now = new Date();
-        const currentMonth = now.toISOString().slice(0, 7);
         const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
         const displayMonth = monthNames[now.getMonth()];
-        
-        // 무료 사용 현황
         const freeUsed = 10 - userCredits.freeRemaining;
         const freeStatus = userCredits.freeRemaining > 0 
           ? `✅ ${freeUsed}/10회 사용 (잔여 ${userCredits.freeRemaining}회)`
-          : `❌ 10/10회 사용 (소진)`;
+          : `❌ 10/10회 소진`;
         
-        alert(
-          `💰 내 포인트 현황\n` +
-          `━━━━━━━━━━━━━━━━━━━━\n\n` +
-          `👤 ${user.email}\n\n` +
-          `📊 ${displayMonth} 무료 사용\n` +
-          `    ${freeStatus}\n\n` +
-          `💎 보유 포인트\n` +
-          `    ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `📌 요약분석: 무료 10회/월, 이후 500P\n` +
-          `📌 상세분석: 2,000P/회`
-        );
+        const freeDisplay = document.getElementById('free-usage-display');
+        freeDisplay.innerHTML = `📊 ${displayMonth} 무료 요약분석: ${freeStatus}`;
         
       } catch (error) {
         console.error('❌ 포인트 조회 오류:', error);
-        alert('포인트 조회 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
+        alert('포인트 조회 중 오류가 발생했습니다.');
       }
+    }
+    
+    /**
+     * 충전 금액 선택
+     */
+    function selectChargeAmount(amount) {
+      selectedChargeAmount = amount;
+      document.getElementById('custom-charge-amount').value = '';
+      updateChargeUI();
+    }
+    
+    /**
+     * 직접 입력 금액 처리
+     */
+    function onCustomAmountInput() {
+      const input = document.getElementById('custom-charge-amount');
+      let value = parseInt(input.value) || 0;
+      
+      // 1000원 단위로 조정
+      value = Math.floor(value / 1000) * 1000;
+      
+      // 범위 제한
+      if (value < 10000) value = 0;
+      if (value > 1000000) value = 1000000;
+      
+      selectedChargeAmount = value;
+      updateChargeUI();
+    }
+    
+    /**
+     * 충전 UI 업데이트
+     */
+    function updateChargeUI() {
+      // 버튼 선택 상태 업데이트
+      document.querySelectorAll('.charge-amount-btn').forEach(btn => {
+        const btnAmount = parseInt(btn.dataset.amount);
+        if (btnAmount === selectedChargeAmount) {
+          btn.style.background = 'linear-gradient(135deg, #FF8802, #FF6B00)';
+          btn.style.borderColor = '#FF8802';
+          btn.style.fontWeight = '700';
+        } else {
+          btn.style.background = 'rgba(255,255,255,0.1)';
+          btn.style.borderColor = 'rgba(255,255,255,0.3)';
+          btn.style.fontWeight = 'normal';
+        }
+      });
+      
+      // 선택된 금액 표시
+      const displayDiv = document.getElementById('selected-amount-display');
+      const submitBtn = document.getElementById('charge-submit-btn');
+      
+      if (selectedChargeAmount >= 10000) {
+        displayDiv.style.display = 'block';
+        document.getElementById('selected-amount-text').textContent = `${selectedChargeAmount.toLocaleString()}원`;
+        document.getElementById('selected-points-text').textContent = `+${selectedChargeAmount.toLocaleString()} P`;
+        
+        submitBtn.disabled = false;
+        submitBtn.style.background = 'linear-gradient(135deg, #FF8802, #FF6B00)';
+        submitBtn.style.color = 'white';
+        submitBtn.style.cursor = 'pointer';
+      } else {
+        displayDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.style.background = 'linear-gradient(135deg, #666, #555)';
+        submitBtn.style.color = '#999';
+        submitBtn.style.cursor = 'not-allowed';
+      }
+    }
+    
+    /**
+     * 결제 요청 (INNOPAY)
+     */
+    function requestPayment() {
+      if (selectedChargeAmount < 10000) {
+        alert('충전 금액을 선택해주세요.');
+        return;
+      }
+      
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+      
+      // 주문번호 생성
+      const moid = 'BIZINFO_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      
+      // INNOPAY 결제창 호출
+      if (typeof innopay === 'undefined') {
+        alert('결제 모듈을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      
+      innopay.goPay({
+        PayMethod: 'CARD',
+        MID: 'pgkfpcen5m',
+        MerchantKey: 'c/odh029sWya/US4LINs89lb/8PD0qlbZjEkckW5L3toSMCpD4TQ8IWquueuKFpZm8XY/mVuxrsygQD9P9CooQ==',
+        GoodsName: '포인트 충전 ' + selectedChargeAmount.toLocaleString() + 'P',
+        Amt: selectedChargeAmount,
+        Moid: moid,
+        BuyerName: user.displayName || user.email.split('@')[0],
+        BuyerEmail: user.email,
+        BuyerTel: '01000000000',
+        ReturnURL: window.location.origin + '/payment-result.html',
+        ResultYN: 'Y'
+      }, function(result) {
+        // 결제 결과 처리
+        handlePaymentResult(result);
+      });
+    }
+    
+    /**
+     * 결제 결과 처리
+     */
+    async function handlePaymentResult(result) {
+      console.log('💳 결제 결과:', result);
+      
+      if (result.ResultCode === '0000' || result.ResultCode === '00') {
+        // 결제 성공 - 서버에 포인트 적립 요청
+        try {
+          const chargePoints = firebase.app().functions('asia-northeast3').httpsCallable('chargePoints');
+          const response = await chargePoints({
+            amount: selectedChargeAmount,
+            tid: result.TID || result.tid,
+            moid: result.Moid || result.moid,
+            authCode: result.AuthCode || result.authCode || ''
+          });
+          
+          if (response.data.success) {
+            // 포인트 새로고침
+            await loadCreditsFromServer();
+            
+            // 충전 완료 모달 표시
+            showChargeCompleteModal(selectedChargeAmount, response.data.newBalance);
+            
+            // 충전 모달 닫기
+            closePointChargeModal();
+          } else {
+            alert('포인트 적립 중 오류가 발생했습니다.\n고객센터에 문의해주세요.\n\n' + (response.data.message || ''));
+          }
+        } catch (error) {
+          console.error('❌ 포인트 적립 오류:', error);
+          alert('결제는 완료되었으나 포인트 적립 중 오류가 발생했습니다.\n고객센터에 문의해주세요.');
+        }
+      } else {
+        // 결제 실패 또는 취소
+        if (result.ResultCode !== 'U000') { // U000은 사용자 취소
+          alert('결제가 완료되지 않았습니다.\n\n' + (result.ResultMsg || result.resultMsg || ''));
+        }
+      }
+    }
+    
+    /**
+     * 충전 완료 모달 표시
+     */
+    function showChargeCompleteModal(amount, newBalance) {
+      document.getElementById('complete-amount').textContent = amount.toLocaleString() + '원';
+      document.getElementById('complete-points').textContent = '+' + amount.toLocaleString() + ' P';
+      document.getElementById('complete-balance').textContent = (newBalance || userCredits?.paidBalance || 0).toLocaleString() + ' P';
+      document.getElementById('charge-complete-modal').style.display = 'flex';
+    }
+    
+    /**
+     * 충전 완료 모달 닫기
+     */
+    function closeChargeCompleteModal() {
+      document.getElementById('charge-complete-modal').style.display = 'none';
     }
     
     /**
@@ -6339,6 +6533,131 @@
         </button>
         <button onclick="closeDetailSample(); analyzeProgramsDetail();" style="flex: 2; min-width: 200px; padding: 0.9rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
           📊 상세분석 시작 (2,000P)
+        </button>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- 포인트 충전/조회 모달 -->
+  <div id="point-charge-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; padding: 1rem; overflow-y: auto;">
+    <div style="background: linear-gradient(135deg, #1a365d 0%, #2d4a77 100%); border-radius: 16px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.4); max-height: 90vh; overflow-y: auto; margin: auto;">
+      
+      <!-- 헤더 -->
+      <div style="background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-radius: 16px 16px 0 0;">
+        <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>💰</span> 포인트 충전/조회
+        </h3>
+        <button onclick="closePointChargeModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0; line-height: 1;">✕</button>
+      </div>
+      
+      <!-- 내용 -->
+      <div style="padding: 1.5rem;">
+        
+        <!-- 현재 보유 포인트 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <p style="color: #aaa; font-size: 0.85rem; margin: 0 0 0.3rem 0;">현재 보유 포인트</p>
+              <p id="current-points-display" style="color: #FFD700; font-size: 1.8rem; font-weight: 700; margin: 0;">0 P</p>
+            </div>
+            <button onclick="refreshPoints()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.3rem;">
+              🔄 조회
+            </button>
+          </div>
+          <div id="free-usage-display" style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; color: #aaa;"></div>
+        </div>
+        
+        <!-- 충전 금액 선택 -->
+        <div style="margin-bottom: 1.5rem;">
+          <p style="color: #ccc; font-size: 0.9rem; margin: 0 0 0.8rem 0; font-weight: 600;">💳 충전 금액 선택</p>
+          
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.8rem;">
+            <button class="charge-amount-btn" data-amount="10000" onclick="selectChargeAmount(10000)" style="padding: 0.7rem 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">1만원</button>
+            <button class="charge-amount-btn" data-amount="30000" onclick="selectChargeAmount(30000)" style="padding: 0.7rem 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">3만원</button>
+            <button class="charge-amount-btn" data-amount="50000" onclick="selectChargeAmount(50000)" style="padding: 0.7rem 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">5만원</button>
+            <button class="charge-amount-btn" data-amount="100000" onclick="selectChargeAmount(100000)" style="padding: 0.7rem 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">10만원</button>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+            <button class="charge-amount-btn" data-amount="300000" onclick="selectChargeAmount(300000)" style="padding: 0.7rem 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">30만원</button>
+            <button class="charge-amount-btn" data-amount="500000" onclick="selectChargeAmount(500000)" style="padding: 0.7rem 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">50만원</button>
+            <button class="charge-amount-btn" data-amount="1000000" onclick="selectChargeAmount(1000000)" style="padding: 0.7rem 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">100만원</button>
+          </div>
+          
+          <!-- 직접 입력 -->
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span style="color: #aaa; font-size: 0.85rem; white-space: nowrap;">직접입력:</span>
+            <input type="number" id="custom-charge-amount" placeholder="금액 입력" min="10000" max="1000000" step="1000" oninput="onCustomAmountInput()" style="flex: 1; padding: 0.7rem; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 0.9rem; color: #333;">
+            <span style="color: #aaa; font-size: 0.85rem;">원</span>
+          </div>
+          <p style="color: #888; font-size: 0.75rem; margin: 0.5rem 0 0 0; text-align: right;">※ 1만원 ~ 100만원 (1,000원 단위)</p>
+        </div>
+        
+        <!-- 선택된 금액 표시 -->
+        <div id="selected-amount-display" style="background: rgba(255,136,2,0.2); padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,136,2,0.5); display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: #ccc; font-size: 0.9rem;">결제 금액</span>
+            <span id="selected-amount-text" style="color: #FF8802; font-size: 1.3rem; font-weight: 700;">0원</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+            <span style="color: #ccc; font-size: 0.9rem;">적립 포인트</span>
+            <span id="selected-points-text" style="color: #FFD700; font-size: 1.3rem; font-weight: 700;">+0 P</span>
+          </div>
+        </div>
+        
+        <!-- 충전하기 버튼 -->
+        <button id="charge-submit-btn" onclick="requestPayment()" disabled style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #666, #555); color: #999; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: not-allowed; margin-bottom: 1rem; transition: all 0.3s;">
+          💳 충전하기
+        </button>
+        
+        <!-- 안내 사항 -->
+        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border-left: 3px solid #667eea;">
+          <p style="color: #aaa; font-size: 0.8rem; margin: 0; line-height: 1.6;">
+            📌 <strong style="color: #ccc;">포인트 안내</strong><br>
+            • 요약분석: 무료 10회/월, 이후 500P/회<br>
+            • 상세분석: 2,000P/회<br>
+            • 충전 금액은 1:1로 포인트 적립<br>
+            • 결제 완료 후 즉시 사용 가능
+          </p>
+        </div>
+        
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- 충전 완료 모달 -->
+  <div id="charge-complete-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10002; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background: white; border-radius: 16px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.4); overflow: hidden;">
+      
+      <!-- 헤더 -->
+      <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 2rem; text-align: center;">
+        <span style="font-size: 4rem; display: block; margin-bottom: 0.5rem;">✅</span>
+        <h3 style="margin: 0; font-size: 1.4rem;">충전 완료!</h3>
+      </div>
+      
+      <!-- 내용 -->
+      <div style="padding: 1.5rem;">
+        <div style="background: #f8f9fa; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+            <span style="color: #666;">충전 금액</span>
+            <span id="complete-amount" style="color: #333; font-weight: 600;">0원</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+            <span style="color: #666;">적립 포인트</span>
+            <span id="complete-points" style="color: #10b981; font-weight: 600;">+0 P</span>
+          </div>
+          <div style="border-top: 1px solid #ddd; padding-top: 0.8rem; margin-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #333; font-weight: 600;">현재 잔액</span>
+              <span id="complete-balance" style="color: #FF8802; font-weight: 700; font-size: 1.2rem;">0 P</span>
+            </div>
+          </div>
+        </div>
+        
+        <button onclick="closeChargeCompleteModal()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
+          확인
         </button>
       </div>
       
