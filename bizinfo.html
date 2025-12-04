@@ -6114,10 +6114,10 @@
     /**
      * INNOPAY 결제 결과 콜백 (전역 함수 - SDK가 호출)
      */
-    function innopay_result(rtn) {
+    window.innopay_result = function(rtn) {
       console.log('💳 INNOPAY 결과:', rtn);
       handlePaymentResult(rtn);
-    }
+    };
     
     /**
      * 결제 결과 처리
