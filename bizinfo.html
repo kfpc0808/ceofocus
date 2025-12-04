@@ -4440,15 +4440,30 @@
           try {
             // Firebase Functions를 통해 PDF 분석 (API 키 보호)
             const analyzeProgramPDF = functions.httpsCallable('analyzeProgramPDF');
-            const result = await analyzeProgramPDF({
-              pdfUrl: pdfUrl,
-              companyData: lastCompanyData,
-              agentId: agentId  // 🆕 본사 ID 전달
-            });
             
-            const data = result.data;
+            // 🔥 최대 2회 재시도
+            let data = null;
+            let lastError = null;
             
-            if (data.success && data.analysis) {
+            for (let retry = 0; retry < 2; retry++) {
+              try {
+                const result = await analyzeProgramPDF({
+                  pdfUrl: pdfUrl,
+                  companyData: lastCompanyData,
+                  agentId: agentId
+                });
+                data = result.data;
+                if (data.success && data.analysis) {
+                  break; // 성공하면 반복 종료
+                }
+              } catch (retryError) {
+                lastError = retryError;
+                console.log(`⚠️ [${retry + 1}/2] 재시도 중: ${program.name}`);
+                await new Promise(r => setTimeout(r, 1000)); // 1초 대기 후 재시도
+              }
+            }
+            
+            if (data && data.success && data.analysis) {
               newDetailResults.push({
                 index: i,
                 programId: program.id,
@@ -4456,10 +4471,69 @@
                 ...data.analysis
               });
               console.log(`✅ PDF 분석 완료: ${program.name}`);
+            } else {
+              // 🔥 분석 실패해도 결과에 포함 (참고용)
+              console.warn(`⚠️ PDF 분석 실패 (결과 포함): ${program.name}`);
+              newDetailResults.push({
+                index: i,
+                programId: program.id,
+                programName: program.name,
+                programSummary: '📌 PDF 분석에 실패했습니다. 공고문을 직접 확인해주세요.',
+                eligibility: {
+                  companySize: '공고문 직접 확인 필요',
+                  businessAge: '공고문 직접 확인 필요',
+                  requiredCerts: [],
+                  regionLimit: '공고문 직접 확인 필요',
+                  otherRequirements: ['PDF 분석 오류로 자동 분석이 불가합니다', '공고문 PDF를 직접 다운로드하여 확인해주세요']
+                },
+                budget: {
+                  totalBudget: '공고문 확인 필요',
+                  perCompany: '공고문 확인 필요',
+                  selectedCount: '공고문 확인 필요',
+                  supportDetails: '공고문 확인 필요'
+                },
+                documents: { required: ['공고문 직접 확인'], optional: [] },
+                schedule: { applicationPeriod: '공고문 확인 필요', applicationMethod: '공고문 확인 필요' },
+                evaluation: { stages: [], criteria: [], bonusPoints: [] },
+                companyFit: {
+                  eligible: false,
+                  fitScore: 50,
+                  strengths: ['공고문을 직접 검토하여 판단 필요'],
+                  weaknesses: ['자동 분석 실패'],
+                  recommendation: '⚠️ PDF 분석에 실패했습니다. 공고문을 직접 다운로드하여 자격요건과 지원내용을 확인해주세요.'
+                },
+                analysisError: true
+              });
             }
             
           } catch (pdfError) {
-            console.error(`PDF 처리 오류 (${program.name}):`, pdfError);
+            // 🔥 최종 오류 발생 시에도 결과에 포함
+            console.error(`❌ PDF 처리 오류 (${program.name}):`, pdfError);
+            newDetailResults.push({
+              index: i,
+              programId: program.id,
+              programName: program.name,
+              programSummary: '📌 PDF 분석 중 오류가 발생했습니다. 공고문을 직접 확인해주세요.',
+              eligibility: {
+                companySize: '공고문 직접 확인 필요',
+                businessAge: '공고문 직접 확인 필요',
+                requiredCerts: [],
+                regionLimit: '공고문 직접 확인 필요',
+                otherRequirements: ['PDF 분석 오류: ' + (pdfError.message || '알 수 없는 오류')]
+              },
+              budget: { totalBudget: '-', perCompany: '-', selectedCount: '-', supportDetails: '-' },
+              documents: { required: ['공고문 직접 확인'], optional: [] },
+              schedule: { applicationPeriod: '-', applicationMethod: '-' },
+              evaluation: { stages: [], criteria: [], bonusPoints: [] },
+              companyFit: {
+                eligible: false,
+                fitScore: 50,
+                strengths: ['공고문을 직접 검토하여 판단 필요'],
+                weaknesses: ['자동 분석 오류 발생'],
+                recommendation: '⚠️ ' + (pdfError.message || 'PDF 분석 오류') + ' - 공고문을 직접 확인해주세요.'
+              },
+              analysisError: true
+            });
           }
         }
         
@@ -4471,14 +4545,23 @@
         // 전체 결과를 화면에 표시
         updateResultsWithPDFDetail(lastDetailResults);
         
+        // 🔥 성공/실패 개수 계산
+        const successCount = newDetailResults.filter(r => !r.analysisError).length;
+        const failCount = newDetailResults.filter(r => r.analysisError).length;
+        
         // 완료 메시지 (신규 분석 vs 기존 결과 구분)
         const existingCount = existingPrograms.length;
         const newCount = newDetailResults.length;
         let detailMsg = '';
         if (existingCount > 0 && newCount > 0) {
-          detailMsg = `기존 ${existingCount}개 유지 + 신규 ${newCount}개 완료`;
+          detailMsg = `기존 ${existingCount}개 유지 + 신규 ${newCount}개 분석`;
         } else {
-          detailMsg = `${newCount}개 완료`;
+          detailMsg = `${newCount}개 분석 완료`;
+        }
+        
+        // 🔥 실패한 것이 있으면 안내
+        if (failCount > 0) {
+          detailMsg += `\n(✅ 성공 ${successCount}개 / ⚠️ 실패 ${failCount}개)`;
         }
         
         // 🆕 신규 분석이 있었을 때만 크레딧 차감
@@ -4489,6 +4572,7 @@
             `✅ AI PDF 상세분석이 완료되었습니다!\n\n` +
             `${detailMsg}\n` +
             `총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n` +
+            (failCount > 0 ? `⚠️ 실패한 ${failCount}개는 공고문을 직접 확인해주세요.\n\n` : '') +
             `💳 차감 포인트: 2,000P\n` +
             `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
           );
@@ -4555,38 +4639,50 @@
         // PDF 상세분석 결과 박스 생성
         const detailBox = document.createElement('div');
         detailBox.className = 'ai-detail-box';
+        
+        // 🔥 분석 오류 여부에 따라 스타일 변경
+        const hasError = result.analysisError === true;
+        const borderColor = hasError ? '#ffc107' : '#28a745';
+        
         detailBox.style.cssText = `
           margin-top: 1.5rem;
           padding: 1.5rem;
           background: #ffffff;
           border-radius: 12px;
           box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-          border: 2px solid #28a745;
+          border: 2px solid ${borderColor};
         `;
         
         // 점수에 따른 등급 및 색상
-        const fitScore = result.companyFit?.fitScore || 0;
+        const isEligibleDetail = result.companyFit?.eligible === true;
+        const rawScoreDetail = result.companyFit?.fitScore || 0;
+        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
+        const fitScore = isEligibleDetail ? rawScoreDetail : Math.min(rawScoreDetail, 59);
         const grade = getRelevanceGrade(fitScore);
+        
+        // 🔥 오류 시 제목 변경
+        const headerTitle = hasError ? '⚠️ PDF 분석 실패 (공고문 직접 확인 필요)' : 'AI PDF 상세분석';
+        const headerColor = hasError ? '#856404' : '#28a745';
         
         detailBox.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 1.5rem;">📄</span>
-              <h5 style="color: #28a745; margin: 0; font-size: 1.1rem; font-weight: 700;">AI PDF 상세분석</h5>
+              <span style="font-size: 1.5rem;">${hasError ? '⚠️' : '📄'}</span>
+              <h5 style="color: ${headerColor}; margin: 0; font-size: 1.1rem; font-weight: 700;">${headerTitle}</h5>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="background: ${grade.headerBg}; color: ${grade.headerText}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
                 ${grade.icon} 관련도: ${grade.text}
               </span>
               <span style="background: ${grade.bgColor}; color: ${grade.color}; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                ${fitScore}점
+                ${hasError ? '직접확인' : fitScore + '점'}
               </span>
             </div>
           </div>
           
           <!-- 사업 요약 -->
-          <div style="background: #f0fff4; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
-            <h6 style="color: #155724; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">📋 사업 요약</h6>
+          <div style="background: ${hasError ? '#fff8e6' : '#f0fff4'}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid ${hasError ? '#ffc107' : '#28a745'};">
+            <h6 style="color: ${hasError ? '#856404' : '#155724'}; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">📋 사업 요약</h6>
             <p style="color: #333; margin: 0; line-height: 1.6; font-size: 0.95rem;">${result.programSummary || '정보 없음'}</p>
           </div>
           
@@ -4961,7 +5057,9 @@
         
         // 적합/부적합 여부 및 관련도 등급 결정
         const isEligible = result.eligible === true;
-        const fitScore = result.fitScore || (isEligible ? 85 : 55);
+        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
+        const rawScore = result.fitScore || (isEligible ? 85 : 55);
+        const fitScore = isEligible ? rawScore : Math.min(rawScore, 59);
         const grade = getRelevanceGrade(fitScore);
         
         // 관련도 업데이트 (카드 헤더의 점수)
