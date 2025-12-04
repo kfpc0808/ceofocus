@@ -523,7 +523,7 @@
 
             // [관리자 접속 체크]
             if (userId === 'admin' && userPw === 'kfpc0808') {
-                sessionStorage.setItem('adminLoggedIn', 'true');
+                localStorage.setItem('adminLoggedIn', 'true');
                 alert('관리자 모드로 접속합니다.');
                 window.location.href = 'admin.html'; 
                 return;
@@ -622,7 +622,7 @@
                 const userData = userDoc.data();
                 
                 if (userData.role === 'admin') {
-                    sessionStorage.setItem('adminLoggedIn', 'true');
+                    localStorage.setItem('adminLoggedIn', 'true');
                     window.location.href = 'admin.html';
                     return;
                 }

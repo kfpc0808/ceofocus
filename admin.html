@@ -899,7 +899,7 @@
 
         // --- 3. 네비게이션 및 공통 ---
         function logout() { 
-            sessionStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('adminLoggedIn');
             alert('로그아웃 되었습니다.'); 
             location.href='login.html'; 
         }
@@ -943,8 +943,8 @@
         // ★ 관리자 인증 체크 및 Firebase 리스너 초기화
         function checkAdminAndInitialize() {
             try {
-                // 1. sessionStorage 관리자 로그인 체크
-                if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
+                // 1. localStorage 관리자 로그인 체크
+                if (localStorage.getItem('adminLoggedIn') !== 'true') {
                     alert('관리자 로그인이 필요합니다.');
                     location.href = 'login.html';
                     return;
