@@ -6088,7 +6088,7 @@
       }
       
       // 주문번호 생성
-      const moid = 'BIZINFO_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      const moid = 'BIZINFO' + Date.now() + Math.random().toString(36).substr(2, 9);
       
       // INNOPAY 결제창 호출
       if (typeof innopay === 'undefined') {
