@@ -6101,7 +6101,7 @@
         MID: 'pgkfpcen5m',
         MerchantKey: 'c/odh029sWya/US4LINs89lb/8PD0qlbZjEkckW5L3toSMCpD4TQ8IWquueuKFpZm8XY/mVuxrsygQD9P9CooQ==',
         GoodsName: '포인트 충전 ' + selectedChargeAmount.toLocaleString() + 'P',
-        Amt: parseInt(selectedChargeAmount),
+        Amt: String(selectedChargeAmount),
         Moid: moid,
         BuyerName: user.displayName || user.email.split('@')[0],
         BuyerEmail: user.email,
