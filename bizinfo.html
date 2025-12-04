@@ -4565,10 +4565,7 @@
         `;
         
         // 점수에 따른 등급 및 색상
-        const isEligibleDetail = result.companyFit?.eligible === true;
-        const rawScoreDetail = result.companyFit?.fitScore || 0;
-        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
-        const fitScore = isEligibleDetail ? rawScoreDetail : Math.min(rawScoreDetail, 59);
+        const fitScore = result.companyFit?.fitScore || 0;
         const grade = getRelevanceGrade(fitScore);
         
         detailBox.innerHTML = `
@@ -4964,9 +4961,7 @@
         
         // 적합/부적합 여부 및 관련도 등급 결정
         const isEligible = result.eligible === true;
-        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
-        const rawScore = result.fitScore || (isEligible ? 85 : 55);
-        const fitScore = isEligible ? rawScore : Math.min(rawScore, 59);
+        const fitScore = result.fitScore || (isEligible ? 85 : 55);
         const grade = getRelevanceGrade(fitScore);
         
         // 관련도 업데이트 (카드 헤더의 점수)
