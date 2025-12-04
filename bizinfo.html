@@ -4426,6 +4426,39 @@
           const pdfUrl = program.printFileUrl || program.attachmentUrl;
           
           console.log(`📄 [${i + 1}/${newProgramsToAnalyze.length}] PDF 분석 중: ${program.name}`);
+          console.log(`   → PDF URL: ${pdfUrl || '없음'}`);
+          
+          // 🔥 pdfUrl이 없으면 바로 실패 처리
+          if (!pdfUrl) {
+            console.warn(`⚠️ PDF URL 없음 - 실패 처리: ${program.name}`);
+            newDetailResults.push({
+              index: i,
+              programId: program.id,
+              programName: program.name,
+              programSummary: '📌 공고문 파일(PDF)이 없습니다. 상세보기에서 직접 확인해주세요.',
+              eligibility: {
+                companySize: '공고문 직접 확인 필요',
+                businessAge: '공고문 직접 확인 필요',
+                requiredCerts: [],
+                regionLimit: '공고문 직접 확인 필요',
+                otherRequirements: ['공고문 PDF 파일이 제공되지 않았습니다', '상세보기 버튼을 클릭하여 직접 확인해주세요']
+              },
+              budget: { totalBudget: '-', perCompany: '-', selectedCount: '-', supportDetails: '-' },
+              documents: { required: ['공고문 직접 확인'], optional: [] },
+              schedule: { applicationPeriod: '공고문 확인 필요', applicationMethod: '공고문 확인 필요' },
+              evaluation: { stages: [], criteria: [], bonusPoints: [] },
+              companyFit: {
+                eligible: false,
+                fitScore: 50,
+                strengths: ['공고문을 직접 검토하여 판단 필요'],
+                weaknesses: ['PDF 공고문 없음'],
+                recommendation: '⚠️ 공고문 PDF 파일이 없습니다. 상세보기에서 직접 확인해주세요.'
+              },
+              analysisError: true,
+              noPdfUrl: true
+            });
+            continue;
+          }
           
           // 로딩 상태 업데이트 - 실제 진행률 표시
           const percent = Math.round(((i + 1) / newProgramsToAnalyze.length) * 100);
