@@ -1599,13 +1599,14 @@
     
     // Firebase 설정
     const firebaseConfig = {
-      apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
+      apiKey: "AIzaSyBHiLDRhm7j5gs2MMZuffH4Fs1xDx2OL9I",
       authDomain: "kfpc-company-support-project.firebaseapp.com",
       databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "kfpc-company-support-project",
       storageBucket: "kfpc-company-support-project.firebasestorage.app",
-      messagingSenderId: "101260933373",
-      appId: "1:101260933373:web:3436176f9ca2560056d914"
+      messagingSenderId: "1012609333373",
+      appId: "1:1012609333373:web:5453ab357b06015d56d914",
+      measurementId: "G-5BDZFX0SC6"
     };
     
     // Firebase 초기화
@@ -4573,7 +4574,7 @@
             `총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n` +
             (failCount > 0 ? `⚠️ 실패한 ${failCount}개는 공고문을 직접 확인해주세요.\n\n` : '') +
             `💳 차감 포인트: 2,000P\n` +
-            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
+            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P`
           );
         } else {
           alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.`);
@@ -5928,7 +5929,7 @@
           `📊 ${displayMonth} 무료 사용\n` +
           `    ${freeStatus}\n\n` +
           `💎 보유 포인트\n` +
-          `    ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+          `    ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `📌 요약분석: 무료 10회/월, 이후 500P\n` +
           `📌 상세분석: 2,000P/회`
@@ -5987,7 +5988,7 @@
           const confirmed = confirm(
             `✅ 요약분석을 시작합니다.\n\n` +
             `📊 이번 달 무료 사용: ${10 - userCredits.freeRemaining + 1}/10회\n` +
-            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
             `계속 진행하시겠습니까?`
           );
           return confirmed;
@@ -5997,8 +5998,8 @@
             const confirmed = confirm(
               `⚠️ 이번 달 무료 10회를 모두 사용했습니다.\n\n` +
               `💳 차감 포인트: 500P\n` +
-              `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n` +
-              `    → 사용 후: ${(userCredits.paidBalance - 500).toLocaleString()}P\n\n` +
+              `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n` +
+              `    → 사용 후: ${((userCredits?.paidBalance || 0) - 500).toLocaleString()}P\n\n` +
               `계속 진행하시겠습니까?`
             );
             return confirmed;
@@ -6007,7 +6008,7 @@
               `❌ 포인트가 부족합니다.\n\n` +
               `📊 무료 사용: 10/10회 (소진)\n` +
               `💳 필요 포인트: 500P\n` +
-              `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+              `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
               `포인트를 충전해주세요.`
             );
             return false;
@@ -6020,8 +6021,8 @@
             `💰 상세분석을 시작합니다.\n\n` +
             `PDF 공고문 최대 10개를 AI가 상세 분석합니다.\n\n` +
             `💳 차감 포인트: 2,000P\n` +
-            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n` +
-            `    → 분석 후: ${(userCredits.paidBalance - 2000).toLocaleString()}P\n\n` +
+            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n` +
+            `    → 분석 후: ${((userCredits?.paidBalance || 0) - 2000).toLocaleString()}P\n\n` +
             `계속 진행하시겠습니까?`
           );
           return confirmed;
@@ -6030,7 +6031,7 @@
           const showSample = confirm(
             `❌ 포인트가 부족합니다.\n\n` +
             `💳 필요 포인트: 2,000P\n` +
-            `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P\n\n` +
+            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
             `[확인] 상세분석 샘플 보기\n` +
             `[취소] 닫기`
           );
@@ -6105,14 +6106,14 @@
           `✅ 요약분석이 완료되었습니다!\n\n` +
           `• 분석 완료: ${resultCount}개 공고\n\n` +
           `${freeMsg}\n` +
-          `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
+          `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P`
         );
       } else if (type === 'detail') {
         alert(
           `✅ 상세분석이 완료되었습니다!\n\n` +
           `• 분석 완료: ${resultCount}개 공고\n` +
           `• 차감 포인트: 2,000P\n\n` +
-          `💰 보유 포인트: ${userCredits.paidBalance.toLocaleString()}P`
+          `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P`
         );
       }
     }
