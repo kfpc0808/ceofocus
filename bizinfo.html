@@ -1599,14 +1599,13 @@
     
     // Firebase 설정
     const firebaseConfig = {
-      apiKey: "AIzaSyBHiLDRhm7j5gs2MMZuffH4Fs1xDx2OL9I",
+      apiKey: "AIzaSyDbufefZCVqCY8QQppcdQFoqVFpMriv1m0",
       authDomain: "kfpc-company-support-project.firebaseapp.com",
       databaseURL: "https://kfpc-company-support-project-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "kfpc-company-support-project",
       storageBucket: "kfpc-company-support-project.firebasestorage.app",
-      messagingSenderId: "1012609333373",
-      appId: "1:1012609333373:web:5453ab357b06015d56d914",
-      measurementId: "G-5BDZFX0SC6"
+      messagingSenderId: "101260933373",
+      appId: "1:101260933373:web:3436176f9ca2560056d914"
     };
     
     // Firebase 초기화
@@ -5060,6 +5059,10 @@
         // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
         const rawScore = result.fitScore || (isEligible ? 85 : 55);
         const fitScore = isEligible ? rawScore : Math.min(rawScore, 59);
+        
+        // 🔥 수정된 점수를 result 객체에 저장 (정렬에 사용)
+        result.fitScore = fitScore;
+        
         const grade = getRelevanceGrade(fitScore);
         
         // 관련도 업데이트 (카드 헤더의 점수)
