@@ -4177,6 +4177,9 @@
           if (refCount > 0) parts.push(`참고 ${refCount}개`);
           summaryMsg += parts.join(' + ');
           
+          // 🆕 먼저 로딩 닫기
+          hideLoadingOverlay();
+          
           alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 매우높음/🔵 높음: 신청 권장\n🟣 보통/🟠 낮음: 검토 필요\n🟡 참고: 협력사 추천`);
           
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
