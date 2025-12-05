@@ -13,9 +13,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
   
-  <!-- INNOPAY PG SDK -->
-  <script src="https://pg.innopay.co.kr/ipay/js/jquery-2.1.4.min.js"></script>
-  <script src="https://pg.innopay.co.kr/ipay/js/innopay-2.0.js"></script>
+  <!-- INNOPAY PG SDK (v1) -->
+  <script src="https://pg.innopay.co.kr/tpay/js/v1/innopay.js"></script>
   
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -5485,6 +5484,8 @@
     const originalInit = window.addEventListener;
     window.addEventListener('load', function(event) {
       initializeApp();
+      // 결제 결과 확인 (returnUrl에서 돌아온 경우)
+      checkPaymentResult();
     });
     
   </script>
@@ -6096,67 +6097,89 @@
         return;
       }
       
+      // 현재 페이지를 returnUrl로 설정 (결제 완료 후 돌아옴)
+      const returnUrl = window.location.origin + window.location.pathname + '?payment=result';
+      
       innopay.goPay({
-        PayMethod: 'CARD',
-        MID: 'pgkfpcen5m',
-        MerchantKey: 'c/odh029sWya/US4LINs89lb/8PD0qlbZjEkckW5L3toSMCpD4TQ8IWquueuKFpZm8XY/mVuxrsygQD9P9CooQ==',
-        GoodsName: '포인트 충전 ' + selectedChargeAmount.toLocaleString() + 'P',
-        Amt: String(selectedChargeAmount),
-        Moid: moid,
-        BuyerName: user.displayName || user.email.split('@')[0],
-        BuyerEmail: user.email,
-        BuyerTel: '01000000000',
-        ReturnURL: window.location.origin + '/payment-result.html',
-        ResultYN: 'Y'
+        payMethod: 'CARD',
+        mid: 'pgkfpcen5m',
+        moid: moid,
+        goodsName: '포인트 충전 ' + selectedChargeAmount.toLocaleString() + 'P',
+        goodsCnt: '1',
+        amt: String(selectedChargeAmount),
+        buyerName: user.displayName || user.email.split('@')[0],
+        buyerEmail: user.email,
+        buyerTel: '01000000000',
+        returnUrl: returnUrl,
+        mallUserId: user.uid
       });
     }
     
     /**
-     * INNOPAY 결제 결과 콜백 (전역 함수 - SDK가 호출)
+     * 페이지 로드 시 결제 결과 확인 (returnUrl 방식)
      */
-    window.innopay_result = function(rtn) {
-      console.log('💳 INNOPAY 결과:', rtn);
-      handlePaymentResult(rtn);
-    };
+    function checkPaymentResult() {
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // 결제 결과 파라미터가 있는지 확인
+      if (urlParams.get('payment') === 'result' && urlParams.get('paymentToken')) {
+        const paymentData = {
+          paymentToken: urlParams.get('paymentToken'),
+          tid: urlParams.get('tid'),
+          mid: urlParams.get('mid'),
+          amt: urlParams.get('amt'),
+          moid: urlParams.get('moid'),
+          resultCode: urlParams.get('resultCode'),
+          resultMsg: urlParams.get('resultMsg')
+        };
+        
+        console.log('💳 결제 결과 파라미터:', paymentData);
+        
+        // URL에서 결제 파라미터 제거 (새로고침 시 중복 처리 방지)
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // 결제 승인 처리
+        handlePaymentApproval(paymentData);
+      }
+    }
     
     /**
-     * 결제 결과 처리
+     * 결제 승인 처리 (서버에서 승인 API 호출)
      */
-    async function handlePaymentResult(result) {
-      console.log('💳 결제 결과:', result);
+    async function handlePaymentApproval(paymentData) {
+      console.log('💳 결제 승인 요청:', paymentData);
       
-      if (result.ResultCode === '0000' || result.ResultCode === '00') {
-        // 결제 성공 - 서버에 포인트 적립 요청
-        try {
-          const chargePoints = firebase.app().functions('asia-northeast3').httpsCallable('chargePoints');
-          const response = await chargePoints({
-            amount: selectedChargeAmount,
-            tid: result.TID || result.tid,
-            moid: result.Moid || result.moid,
-            authCode: result.AuthCode || result.authCode || ''
-          });
+      // 결제 실패 체크
+      if (paymentData.resultCode && paymentData.resultCode !== '0000') {
+        if (paymentData.resultCode !== 'U000') { // U000은 사용자 취소
+          alert('결제가 완료되지 않았습니다.\n\n' + (paymentData.resultMsg || ''));
+        }
+        return;
+      }
+      
+      try {
+        // Firebase Functions에서 승인 API 호출 + 포인트 적립
+        const approvePayment = firebase.app().functions('asia-northeast3').httpsCallable('approvePayment');
+        const response = await approvePayment({
+          paymentToken: paymentData.paymentToken,
+          tid: paymentData.tid,
+          mid: paymentData.mid,
+          amt: paymentData.amt,
+          moid: paymentData.moid
+        });
+        
+        if (response.data.success) {
+          // 포인트 새로고침
+          await loadCreditsFromServer();
           
-          if (response.data.success) {
-            // 포인트 새로고침
-            await loadCreditsFromServer();
-            
-            // 충전 완료 모달 표시
-            showChargeCompleteModal(selectedChargeAmount, response.data.newBalance);
-            
-            // 충전 모달 닫기
-            closePointChargeModal();
-          } else {
-            alert('포인트 적립 중 오류가 발생했습니다.\n고객센터에 문의해주세요.\n\n' + (response.data.message || ''));
-          }
-        } catch (error) {
-          console.error('❌ 포인트 적립 오류:', error);
-          alert('결제는 완료되었으나 포인트 적립 중 오류가 발생했습니다.\n고객센터에 문의해주세요.');
+          // 충전 완료 모달 표시
+          showChargeCompleteModal(parseInt(paymentData.amt), response.data.newBalance);
+        } else {
+          alert('결제 승인 중 오류가 발생했습니다.\n고객센터에 문의해주세요.\n\n' + (response.data.message || ''));
         }
-      } else {
-        // 결제 실패 또는 취소
-        if (result.ResultCode !== 'U000') { // U000은 사용자 취소
-          alert('결제가 완료되지 않았습니다.\n\n' + (result.ResultMsg || result.resultMsg || ''));
-        }
+      } catch (error) {
+        console.error('❌ 결제 승인 오류:', error);
+        alert('결제 처리 중 오류가 발생했습니다.\n고객센터에 문의해주세요.');
       }
     }
     
