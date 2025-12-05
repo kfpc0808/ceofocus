@@ -6114,13 +6114,65 @@
         BuyerName: user.displayName || user.email.split('@')[0],
         BuyerEmail: user.email,
         BuyerTel: '01000000000',
-        ReturnURL: returnUrl,
-        ResultYN: 'N'
+        ReturnURL: window.location.href,
+        ResultYN: 'Y'
       });
     }
     
     /**
-     * 페이지 로드 시 결제 결과 확인 (returnUrl 방식)
+     * INNOPAY 결제 결과 콜백 (전역 함수 - SDK가 호출)
+     */
+    window.innopay_result = function(rtn) {
+      console.log('💳 INNOPAY 결과:', rtn);
+      
+      if (rtn.ResultCode === '0000') {
+        // 결제 성공 - 포인트 적립
+        chargePointsAfterPayment({
+          tid: rtn.TID,
+          amt: rtn.Amt,
+          moid: rtn.Moid,
+          authCode: rtn.AuthCode || '',
+          cardNum: rtn.CardNum || '',
+          cardName: rtn.CardName || ''
+        });
+      } else if (rtn.ResultCode === 'U000') {
+        // 사용자 취소
+        console.log('💳 결제 취소됨');
+      } else {
+        // 결제 실패
+        alert('결제가 완료되지 않았습니다.\n\n' + (rtn.ResultMsg || ''));
+      }
+    };
+    
+    /**
+     * 결제 완료 후 포인트 적립 (chargePoints 함수 호출)
+     */
+    async function chargePointsAfterPayment(paymentData) {
+      try {
+        const chargePoints = firebase.app().functions('asia-northeast3').httpsCallable('chargePoints');
+        const response = await chargePoints({
+          amount: parseInt(paymentData.amt),
+          tid: paymentData.tid,
+          moid: paymentData.moid,
+          authCode: paymentData.authCode,
+          cardNum: paymentData.cardNum,
+          cardName: paymentData.cardName
+        });
+        
+        if (response.data.success) {
+          await loadCreditsFromServer();
+          showChargeCompleteModal(parseInt(paymentData.amt), response.data.newBalance);
+        } else {
+          alert('포인트 적립 중 오류가 발생했습니다.\n고객센터에 문의해주세요.');
+        }
+      } catch (error) {
+        console.error('❌ 포인트 적립 오류:', error);
+        alert('포인트 적립 중 오류가 발생했습니다.\n고객센터에 문의해주세요.');
+      }
+    }
+    
+    /**
+     * 페이지 로드 시 결제 결과 확인 (returnUrl 방식 - 백업용)
      */
     function checkPaymentResult() {
       const urlParams = new URLSearchParams(window.location.search);
