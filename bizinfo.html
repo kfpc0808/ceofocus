@@ -6139,8 +6139,8 @@
       console.log('💳 ResultCode:', data.ResultCode);
       console.log('💳 ResultMsg:', data.ResultMsg);
       
-      // 결과코드 확인 (0000: 성공, U000: 사용자 취소)
-      if (data.ResultCode === '0000') {
+      // 결과코드 확인 (0000, 3001: 성공, U000: 사용자 취소)
+      if (data.ResultCode === '0000' || data.ResultCode === '3001') {
         // 결제 성공 - 포인트 적립
         chargePointsAfterPayment({
           tid: data.TID,
