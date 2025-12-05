@@ -4050,6 +4050,10 @@
         return;
       }
       
+      // 🆕 먼저 크레딧 확인 (한 번만 물어봄)
+      const canProceed = await checkAndConfirmCredits('summary');
+      if (!canProceed) return;
+      
       try {
         // Step 1: 맞춤 지원사업 찾기
         showLoadingOverlay('🔍 지원사업+분석 진행 중...', '① 기업마당에서 맞춤 공고를 가져오고 있습니다...');
@@ -4102,12 +4106,7 @@
             return;
           }
           
-          // 🆕 크레딧 확인 (신규 공고가 있을 때만)
-          hideLoadingOverlay(); // 일단 로딩 숨기고
-          const canProceed = await checkAndConfirmCredits('summary');
-          if (!canProceed) return;
-          
-          // 다시 로딩 표시
+          // 🆕 로딩 메시지 업데이트 (크레딧은 이미 확인됨)
           showLoadingOverlay('🔍 지원사업+분석 진행 중...', '② AI 요약분석을 진행합니다...');
           
           let newSummaryResults = [];
@@ -6123,8 +6122,15 @@
      */
     window.innopay_result = function(rtn) {
       console.log('💳 INNOPAY 결과:', rtn);
+      console.log('💳 ResultCode:', rtn.ResultCode);
+      console.log('💳 ResultMsg:', rtn.ResultMsg);
       
-      if (rtn.ResultCode === '0000') {
+      // 성공 코드: '0000' 또는 '00' 또는 빈 값이 아닌 TID가 있으면 성공
+      const isSuccess = rtn.ResultCode === '0000' || 
+                        rtn.ResultCode === '00' || 
+                        (rtn.TID && rtn.TID.length > 0 && rtn.ResultCode !== 'U000');
+      
+      if (isSuccess) {
         // 결제 성공 - 포인트 적립
         chargePointsAfterPayment({
           tid: rtn.TID,
