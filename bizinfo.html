@@ -4388,11 +4388,23 @@
         attachmentUrl: lastMatchedPrograms[0].attachmentUrl || '없음'
       } : '없음');
       
-      const programsWithPDF = lastMatchedPrograms
+      // 🆕 요약분석 적합도(fitScore) 순으로 정렬 후 PDF 있는 것 선택
+      const programsWithFitScore = lastMatchedPrograms.map(p => {
+        const summaryResult = lastSummaryResults.find(s => s.programId === p.id || s.id === p.id);
+        return {
+          ...p,
+          fitScore: summaryResult ? (summaryResult.fitScore || 0) : 0
+        };
+      });
+      
+      // 적합도 높은 순으로 정렬 후 PDF 있는 것만 필터링하여 상위 10개
+      const programsWithPDF = programsWithFitScore
+        .sort((a, b) => b.fitScore - a.fitScore)
         .filter(p => p.printFileUrl || p.attachmentUrl)
         .slice(0, 10);
       
-      console.log('📄 PDF URL 있는 공고:', programsWithPDF.length, '개');
+      console.log('📄 PDF URL 있는 공고 (적합도순):', programsWithPDF.length, '개');
+      console.log('📄 상위 3개:', programsWithPDF.slice(0, 3).map(p => ({ name: p.name?.substring(0, 20), fitScore: p.fitScore })));
       
       if (programsWithPDF.length === 0) {
         alert('⚠️ PDF 공고문이 있는 지원사업이 없습니다.\n\n요약분석을 이용해주세요.');
