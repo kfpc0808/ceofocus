@@ -6131,36 +6131,34 @@
     }
     
     /**
-     * INNOPAY 결제 결과 콜백 (전역 함수 - SDK가 호출)
+     * 결제결과 수신 Javascript 함수
+     * ReturnURL이 없는 경우 아래 함수로 결과가 리턴됩니다 (함수명 변경불가!)
      */
-    window.innopay_result = function(rtn) {
-      console.log('💳 INNOPAY 결과:', rtn);
-      console.log('💳 ResultCode:', rtn.ResultCode);
-      console.log('💳 ResultMsg:', rtn.ResultMsg);
+    function innopay_result(data) {
+      console.log('💳 INNOPAY 결과:', data);
+      console.log('💳 ResultCode:', data.ResultCode);
+      console.log('💳 ResultMsg:', data.ResultMsg);
       
-      // 성공 코드: '0000' 또는 '00' 또는 빈 값이 아닌 TID가 있으면 성공
-      const isSuccess = rtn.ResultCode === '0000' || 
-                        rtn.ResultCode === '00' || 
-                        (rtn.TID && rtn.TID.length > 0 && rtn.ResultCode !== 'U000');
-      
-      if (isSuccess) {
+      // 결과코드 확인 (0000: 성공, U000: 사용자 취소)
+      if (data.ResultCode === '0000') {
         // 결제 성공 - 포인트 적립
         chargePointsAfterPayment({
-          tid: rtn.TID,
-          amt: rtn.Amt,
-          moid: rtn.Moid,
-          authCode: rtn.AuthCode || '',
-          cardNum: rtn.CardNum || '',
-          cardName: rtn.CardName || ''
+          tid: data.TID,
+          amt: data.Amt,
+          moid: data.MOID,
+          authCode: data.AuthCode || '',
+          authDate: data.AuthDate || '',
+          cardNum: data.CardNum || '',
+          cardName: data.fn_name || ''
         });
-      } else if (rtn.ResultCode === 'U000') {
+      } else if (data.ResultCode === 'U000') {
         // 사용자 취소
         console.log('💳 결제 취소됨');
       } else {
         // 결제 실패
-        alert('결제가 완료되지 않았습니다.\n\n' + (rtn.ResultMsg || ''));
+        alert('결제가 완료되지 않았습니다.\n\n[' + data.ResultCode + '] ' + (data.ResultMsg || ''));
       }
-    };
+    }
     
     /**
      * 결제 완료 후 포인트 적립 (chargePoints 함수 호출)
