@@ -5920,8 +5920,11 @@
           userCredits = {
             ...result.data.credits,
             isLoaded: true,
-            unlimited: result.data.unlimited || false,           // 🆕
-            unlimitedReason: result.data.unlimitedReason || ''   // 🆕
+            unlimited: result.data.unlimited || false,
+            unlimitedReason: result.data.unlimitedReason || '',
+            // 🆕 일일 사용량 정보
+            dailyUsage: result.data.dailyUsage || { summaryCount: 0, detailCount: 0 },
+            dailyLimit: result.data.dailyLimit || 10
           };
           console.log('💰 크레딧 로드:', userCredits);
           if (userCredits.unlimited) {
@@ -6111,7 +6114,7 @@
         buyerEmail: user.email,
         buyerTel: '01000000000',
         returnUrl: returnUrl,
-        mallUserId: user.uid
+        mallUserId: user.email.split('@')[0].substring(0, 20)
       });
     }
     
@@ -6242,11 +6245,25 @@
       
       if (type === 'summary') {
         // 요약분석: 무료 10회, 이후 500P
+        const dailySummaryUsed = userCredits.dailyUsage?.summaryCount || 0;
+        const dailySummaryRemaining = (userCredits.dailyLimit || 10) - dailySummaryUsed;
+        
+        // 일일 제한 체크
+        if (dailySummaryRemaining <= 0) {
+          alert(
+            `❌ 오늘 요약분석 횟수를 모두 사용했습니다.\n\n` +
+            `📅 오늘 사용: ${dailySummaryUsed}/${userCredits.dailyLimit || 10}회\n` +
+            `⏰ 내일 다시 이용해주세요.`
+          );
+          return false;
+        }
+        
         if (userCredits.freeRemaining > 0) {
           // 무료 사용 가능
           const confirmed = confirm(
             `✅ 요약분석을 시작합니다.\n\n` +
             `📊 이번 달 무료 사용: ${10 - userCredits.freeRemaining + 1}/10회\n` +
+            `📅 오늘 사용: ${dailySummaryUsed + 1}/${userCredits.dailyLimit || 10}회 (잔여 ${dailySummaryRemaining - 1}회)\n` +
             `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
             `계속 진행하시겠습니까?`
           );
@@ -6257,6 +6274,7 @@
             const confirmed = confirm(
               `⚠️ 이번 달 무료 10회를 모두 사용했습니다.\n\n` +
               `💳 차감 포인트: 500P\n` +
+              `📅 오늘 사용: ${dailySummaryUsed + 1}/${userCredits.dailyLimit || 10}회 (잔여 ${dailySummaryRemaining - 1}회)\n` +
               `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n` +
               `    → 사용 후: ${((userCredits?.paidBalance || 0) - 500).toLocaleString()}P\n\n` +
               `계속 진행하시겠습니까?`
@@ -6275,11 +6293,25 @@
         }
       } else if (type === 'detail') {
         // 상세분석: 항상 2,000P
+        const dailyDetailUsed = userCredits.dailyUsage?.detailCount || 0;
+        const dailyDetailRemaining = (userCredits.dailyLimit || 10) - dailyDetailUsed;
+        
+        // 일일 제한 체크
+        if (dailyDetailRemaining <= 0) {
+          alert(
+            `❌ 오늘 상세분석 횟수를 모두 사용했습니다.\n\n` +
+            `📅 오늘 사용: ${dailyDetailUsed}/${userCredits.dailyLimit || 10}회\n` +
+            `⏰ 내일 다시 이용해주세요.`
+          );
+          return false;
+        }
+        
         if (userCredits.paidBalance >= 2000) {
           const confirmed = confirm(
             `💰 상세분석을 시작합니다.\n\n` +
             `PDF 공고문 최대 10개를 AI가 상세 분석합니다.\n\n` +
             `💳 차감 포인트: 2,000P\n` +
+            `📅 오늘 사용: ${dailyDetailUsed + 1}/${userCredits.dailyLimit || 10}회 (잔여 ${dailyDetailRemaining - 1}회)\n` +
             `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n` +
             `    → 분석 후: ${((userCredits?.paidBalance || 0) - 2000).toLocaleString()}P\n\n` +
             `계속 진행하시겠습니까?`

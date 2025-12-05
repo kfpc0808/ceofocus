@@ -309,6 +309,7 @@
             <div class="sub-nav">
                 <div class="sub-nav-item active" onclick="switchSubTab(this, 'payment-status-view')">결제 현황 및 이력</div>
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'payment-points-view')">포인트 이용 내역</div>
+                <div class="sub-nav-item" onclick="switchSubTab(this, 'payment-daily-view')">일일 사용량 현황</div>
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'payment-usage_analysis-view')">포인트 사용 분석</div>
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'payment-expiration-view')">포인트 소멸 관리</div>
                 <div class="sub-nav-item" onclick="switchSubTab(this, 'payment-unpaid-view')">미결제/연체 관리</div>
@@ -339,6 +340,20 @@
                     </div>
                     <div class="table-container"><table id="pointTable"><thead><tr><th>일시</th><th>아이디</th><th>성명</th><th>구분</th><th>내용</th><th>변동</th><th>잔액</th></tr></thead><tbody id="pointLogsBody"></tbody></table></div>
                     <div id="pointPagination" class="pagination"></div>
+                </div>
+            </div>
+            
+            <div id="payment-daily-view" class="sub-tab-content">
+                <div class="card">
+                    <div class="table-controls">
+                        <h3>📅 오늘 회원별 사용량 현황</h3>
+                        <div style="display:flex; gap:0.5rem;">
+                            <div class="search-box"><input type="text" id="dailyUsageSearch" placeholder="검색..." onkeyup="renderDailyUsage()"></div>
+                            <button class="btn btn-success btn-sm" onclick="exportTableToExcel('dailyUsageTable', '일일사용량')"><i class="ph ph-file-xls"></i> 엑셀</button>
+                        </div>
+                    </div>
+                    <div class="table-container"><table id="dailyUsageTable"><thead><tr><th>아이디</th><th>성명</th><th>요약분석 사용</th><th>요약분석 잔여</th><th>상세분석 사용</th><th>상세분석 잔여</th><th>마지막 사용</th></tr></thead><tbody id="dailyUsageBody"></tbody></table></div>
+                    <div id="dailyUsagePagination" class="pagination"></div>
                 </div>
             </div>
             
@@ -939,6 +954,7 @@
         // (결제/로그 등은 아직 더미 유지 - 필요 시 DB 연결 가능)
         let payments = [];
         let pointLogs = [];
+        let dailyUsages = [];
         
         // ★ 관리자 인증 체크 및 Firebase 리스너 초기화
         function checkAdminAndInitialize() {
@@ -987,6 +1003,7 @@
                 loadPrompts();          // AI 프롬프트 로드
                 initPaymentsListener(); // 결제 내역
                 initPointLogsListener(); // 포인트 로그
+                initDailyUsageListener(); // 일일 사용량
             } catch(e) {
                 console.error('initializeFirebaseListeners 오류:', e);
             }
@@ -1010,6 +1027,23 @@
                 renderPointLogs();
             }, (error) => {
                 console.error('pointLogs 리스너 오류:', error);
+            });
+        }
+        
+        // ★ 일일 사용량 리스너
+        function initDailyUsageListener() {
+            // 오늘 날짜 (한국 시간)
+            const now = new Date();
+            const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+            const today = koreaTime.toISOString().split('T')[0];
+            
+            db.collection('userUsage').onSnapshot((snapshot) => {
+                dailyUsages = snapshot.docs
+                    .map(doc => ({ id: doc.id, oderId: doc.id, ...doc.data() }))
+                    .filter(u => u.date === today); // 오늘 데이터만
+                renderDailyUsage();
+            }, (error) => {
+                console.error('userUsage 리스너 오류:', error);
             });
         }
         
@@ -1039,7 +1073,7 @@
 
         // --- 렌더링 함수 (페이징/검색 포함) ---
         const PAGE_SIZE = 15;
-        const state = { users: {page:1, search:''}, pending: {page:1, search:''}, payments: {page:1, search:''}, points: {page:1, search:''} };
+        const state = { users: {page:1, search:''}, pending: {page:1, search:''}, payments: {page:1, search:''}, points: {page:1, search:''}, dailyUsage: {page:1, search:''} };
 
         function filterAndPaginate(data, stateKey) {
             const s = state[stateKey];
@@ -1372,6 +1406,53 @@
             renderPagination('pointPagination', totalPages, page, 'points');
         }
         
+        function renderDailyUsage() {
+            const tbody = document.getElementById('dailyUsageBody');
+            if (!tbody) return;
+            
+            // 검색 필터
+            const search = (document.getElementById('dailyUsageSearch')?.value || '').toLowerCase();
+            let filtered = dailyUsages;
+            if (search) {
+                filtered = dailyUsages.filter(u => {
+                    const id = (u.id || '').toLowerCase();
+                    return id.includes(search);
+                });
+            }
+            
+            // 페이지네이션
+            const page = state.dailyUsage?.page || 1;
+            const start = (page - 1) * PAGE_SIZE;
+            const pageData = filtered.slice(start, start + PAGE_SIZE);
+            
+            const DAILY_LIMIT = 10;
+            
+            tbody.innerHTML = pageData.map(u => {
+                const userId = u.id;
+                const userInfo = users.find(user => user.id === userId);
+                const userName = userInfo?.name || userId;
+                const summaryUsed = u.summaryCount || 0;
+                const summaryRemain = Math.max(0, DAILY_LIMIT - summaryUsed);
+                const detailUsed = u.detailCount || 0;
+                const detailRemain = Math.max(0, DAILY_LIMIT - detailUsed);
+                const lastUsed = u.date || '-';
+                
+                return `<tr>
+                    <td>${userId}</td>
+                    <td>${userName}</td>
+                    <td><span style="color:${summaryUsed >= DAILY_LIMIT ? 'red' : 'blue'}">${summaryUsed}회</span></td>
+                    <td>${summaryRemain}회</td>
+                    <td><span style="color:${detailUsed >= DAILY_LIMIT ? 'red' : 'blue'}">${detailUsed}회</span></td>
+                    <td>${detailRemain}회</td>
+                    <td>${lastUsed}</td>
+                </tr>`;
+            }).join('');
+            
+            // 페이지네이션 렌더링
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+            renderPagination('dailyUsagePagination', totalPages, page, 'dailyUsage');
+        }
+        
         // 페이지네이션 렌더링 헬퍼
         function renderPagination(containerId, totalPages, currentPage, stateKey) {
             const container = document.getElementById(containerId);
@@ -1389,6 +1470,7 @@
             state[stateKey].page = page;
             if (stateKey === 'payments') renderPaymentHistory();
             else if (stateKey === 'points') renderPointLogs();
+            else if (stateKey === 'dailyUsage') renderDailyUsage();
         }
         function runBatchSimulation() { alert('결제 시뮬레이션'); }
         function loadTerm(t) { document.getElementById('termEditor').value = t + ' 내용...'; }
