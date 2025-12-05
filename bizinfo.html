@@ -6100,9 +6100,6 @@
         return;
       }
       
-      // 현재 페이지를 returnUrl로 설정 (결제 완료 후 돌아옴)
-      const returnUrl = window.location.origin + window.location.pathname + '?payment=result';
-      
       innopay.goPay({
         PayMethod: 'CARD',
         MID: 'pgkfpcen5m',
