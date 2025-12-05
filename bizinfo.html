@@ -6134,13 +6134,16 @@
      * 결제결과 수신 Javascript 함수
      * ReturnURL이 없는 경우 아래 함수로 결과가 리턴됩니다 (함수명 변경불가!)
      */
-    function innopay_result(data) {
+    // 전역 스코프에 innopay_result 노출 (INNOPAY SDK가 호출할 수 있도록)
+    window.innopay_result = function(data) {
       console.log('💳 INNOPAY 결과:', data);
-      console.log('💳 ResultCode:', data.ResultCode);
+      console.log('💳 ResultCode:', data.ResultCode, '타입:', typeof data.ResultCode);
       console.log('💳 ResultMsg:', data.ResultMsg);
       
       // 결과코드 확인 (0000, 3001: 성공, U000: 사용자 취소)
-      if (data.ResultCode === '0000' || data.ResultCode === '3001') {
+      // 문자열/숫자 모두 처리, 공백 제거
+      const resultCode = String(data.ResultCode || '').trim();
+      if (resultCode === '0000' || resultCode === '3001') {
         // 결제 성공 - 포인트 적립
         chargePointsAfterPayment({
           tid: data.TID,
@@ -6151,14 +6154,14 @@
           cardNum: data.CardNum || '',
           cardName: data.fn_name || ''
         });
-      } else if (data.ResultCode === 'U000') {
+      } else if (resultCode === 'U000') {
         // 사용자 취소
         console.log('💳 결제 취소됨');
       } else {
         // 결제 실패
-        alert('결제가 완료되지 않았습니다.\n\n[' + data.ResultCode + '] ' + (data.ResultMsg || ''));
+        alert('결제가 완료되지 않았습니다.\n\n[' + resultCode + '] ' + (data.ResultMsg || ''));
       }
-    }
+    };
     
     /**
      * 결제 완료 후 포인트 적립 (chargePoints 함수 호출)
@@ -6230,9 +6233,10 @@
     async function handlePaymentApproval(paymentData) {
       console.log('💳 결제 승인 요청:', paymentData);
       
-      // 결제 실패 체크
-      if (paymentData.resultCode && paymentData.resultCode !== '0000') {
-        if (paymentData.resultCode !== 'U000') { // U000은 사용자 취소
+      // 결제 실패 체크 (0000, 3001은 성공)
+      const resultCode = String(paymentData.resultCode || '').trim();
+      if (paymentData.resultCode && resultCode !== '0000' && resultCode !== '3001') {
+        if (resultCode !== 'U000') { // U000은 사용자 취소
           alert('결제가 완료되지 않았습니다.\n\n' + (paymentData.resultMsg || ''));
         }
         return;
