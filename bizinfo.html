@@ -13,8 +13,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
   
-  <!-- INNOPAY PG SDK (v1) -->
-  <script src="https://pg.innopay.co.kr/tpay/js/v1/innopay.js"></script>
+  <!-- INNOPAY PG SDK (구버전) -->
+  <script src="https://pg.innopay.co.kr/ipay/js/innopay-2.0.js"></script>
   
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -6104,18 +6104,17 @@
       const returnUrl = window.location.origin + window.location.pathname + '?payment=result';
       
       innopay.goPay({
-        payMethod: 'CARD',
-        mid: 'pgkfpcen5m',
-        moid: moid,
-        goodsName: '포인트 충전 ' + selectedChargeAmount.toLocaleString() + 'P',
-        goodsCnt: '1',
-        amt: String(selectedChargeAmount),
-        taxFreeAmt: String(selectedChargeAmount),
-        buyerName: user.displayName || user.email.split('@')[0],
-        buyerEmail: user.email,
-        buyerTel: '01000000000',
-        returnUrl: returnUrl,
-        mallUserId: user.email.split('@')[0].substring(0, 20)
+        PayMethod: 'CARD',
+        MID: 'pgkfpcen5m',
+        MerchantKey: 'c/odh029sWya/US4LINs89lb/8PD0qlbZjEkckW5L3toSMCpD4TQ8IWquueuKFpZm8XY/mVuxrsygQD9P9CooQ==',
+        GoodsName: '포인트 충전 ' + selectedChargeAmount.toLocaleString() + 'P',
+        Amt: String(selectedChargeAmount),
+        Moid: moid,
+        BuyerName: user.displayName || user.email.split('@')[0],
+        BuyerEmail: user.email,
+        BuyerTel: '01000000000',
+        ReturnURL: returnUrl,
+        ResultYN: 'N'
       });
     }
     
@@ -6125,19 +6124,28 @@
     function checkPaymentResult() {
       const urlParams = new URLSearchParams(window.location.search);
       
-      // 결제 결과 파라미터가 있는지 확인
-      if (urlParams.get('payment') === 'result' && urlParams.get('paymentToken')) {
+      // 결제 결과 파라미터가 있는지 확인 (구버전/신버전 호환)
+      const hasPaymentResult = urlParams.get('payment') === 'result' || 
+                               urlParams.get('tid') || 
+                               urlParams.get('ResultCode');
+      
+      if (hasPaymentResult) {
         const paymentData = {
-          paymentToken: urlParams.get('paymentToken'),
-          tid: urlParams.get('tid'),
-          mid: urlParams.get('mid'),
-          amt: urlParams.get('amt'),
-          moid: urlParams.get('moid'),
-          resultCode: urlParams.get('resultCode'),
-          resultMsg: urlParams.get('resultMsg')
+          // 신버전 파라미터
+          paymentToken: urlParams.get('paymentToken') || urlParams.get('PaymentToken'),
+          tid: urlParams.get('tid') || urlParams.get('TID'),
+          mid: urlParams.get('mid') || urlParams.get('MID'),
+          amt: urlParams.get('amt') || urlParams.get('Amt'),
+          moid: urlParams.get('moid') || urlParams.get('Moid'),
+          resultCode: urlParams.get('resultCode') || urlParams.get('ResultCode'),
+          resultMsg: urlParams.get('resultMsg') || urlParams.get('ResultMsg'),
+          // 구버전 추가 파라미터
+          authCode: urlParams.get('authCode') || urlParams.get('AuthCode'),
+          cardNum: urlParams.get('cardNum') || urlParams.get('CardNum')
         };
         
         console.log('💳 결제 결과 파라미터:', paymentData);
+        console.log('💳 전체 URL:', window.location.href);
         
         // URL에서 결제 파라미터 제거 (새로고침 시 중복 처리 방지)
         window.history.replaceState({}, document.title, window.location.pathname);
