@@ -985,9 +985,56 @@
                 initNoticesListener();  // 공지사항
                 initAdminsListener();   // 관리자
                 loadPrompts();          // AI 프롬프트 로드
+                initPaymentsListener(); // 결제 내역
+                initPointLogsListener(); // 포인트 로그
             } catch(e) {
                 console.error('initializeFirebaseListeners 오류:', e);
             }
+        }
+        
+        // ★ 결제 내역 리스너
+        function initPaymentsListener() {
+            db.collection('payments').orderBy('createdAt', 'desc').limit(500).onSnapshot((snapshot) => {
+                payments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderPaymentHistory();
+                updatePaymentStats();
+            }, (error) => {
+                console.error('payments 리스너 오류:', error);
+            });
+        }
+        
+        // ★ 포인트 로그 리스너
+        function initPointLogsListener() {
+            db.collection('pointLogs').orderBy('createdAt', 'desc').limit(500).onSnapshot((snapshot) => {
+                pointLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderPointLogs();
+            }, (error) => {
+                console.error('pointLogs 리스너 오류:', error);
+            });
+        }
+        
+        // ★ 결제 통계 업데이트
+        function updatePaymentStats() {
+            // 이번달 결제 건수
+            const now = new Date();
+            const thisMonth = now.toISOString().slice(0, 7);
+            const thisMonthPayments = payments.filter(p => {
+                if (!p.createdAt) return false;
+                const payDate = p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt);
+                return payDate.toISOString().slice(0, 7) === thisMonth && p.status === 'success';
+            });
+            
+            // 총 발행 포인트
+            const totalPoints = payments.reduce((sum, p) => {
+                if (p.status === 'success') return sum + (p.points || 0);
+                return sum;
+            }, 0);
+            
+            // 대시보드 통계 업데이트
+            const statPayments = document.querySelector('.status-card:nth-child(3) div:last-child div:last-child');
+            const statPoints = document.querySelector('.status-card:nth-child(4) div:last-child div:last-child');
+            if (statPayments) statPayments.textContent = thisMonthPayments.length + '건';
+            if (statPoints) statPoints.textContent = totalPoints.toLocaleString() + ' P';
         }
 
         // --- 렌더링 함수 (페이징/검색 포함) ---
@@ -1234,9 +1281,115 @@
             }
         });
 
-        // --- 기타 로직 (결제, 포인트 등은 더미 유지) ---
-        function renderPaymentHistory() { /* 기존 로직 유지 */ }
-        function renderPointLogs() { /* 기존 로직 유지 */ }
+        // --- 기타 로직 (결제, 포인트 Firestore 연동) ---
+        function renderPaymentHistory() {
+            const tbody = document.getElementById('paymentHistoryBody');
+            if (!tbody) return;
+            
+            // 검색 필터
+            const search = (document.getElementById('paymentSearch')?.value || '').toLowerCase();
+            let filtered = payments;
+            if (search) {
+                filtered = payments.filter(p => {
+                    const email = (p.email || '').toLowerCase();
+                    const moid = (p.moid || '').toLowerCase();
+                    return email.includes(search) || moid.includes(search);
+                });
+            }
+            
+            // 페이지네이션
+            const page = state.payments.page || 1;
+            const start = (page - 1) * PAGE_SIZE;
+            const pageData = filtered.slice(start, start + PAGE_SIZE);
+            
+            tbody.innerHTML = pageData.map(p => {
+                const date = p.createdAt ? (p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt)) : new Date();
+                const dateStr = date.toLocaleString('ko-KR');
+                const userId = (p.email || '').split('@')[0];
+                const userName = users.find(u => u.id === p.uid)?.name || userId;
+                const amount = (p.amount || 0).toLocaleString() + '원';
+                const type = p.type === 'point_charge' ? '포인트충전' : (p.type || '-');
+                const status = p.status === 'success' ? '<span style="color:green">성공</span>' : '<span style="color:red">실패</span>';
+                
+                return `<tr>
+                    <td>${dateStr}</td>
+                    <td>${userId}</td>
+                    <td>${userName}</td>
+                    <td>${amount}</td>
+                    <td>${type}</td>
+                    <td>${status}</td>
+                </tr>`;
+            }).join('');
+            
+            // 페이지네이션 렌더링
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+            renderPagination('paymentPagination', totalPages, page, 'payments');
+        }
+        
+        function renderPointLogs() {
+            const tbody = document.getElementById('pointLogsBody');
+            if (!tbody) return;
+            
+            // 검색 필터
+            const search = (document.getElementById('pointSearch')?.value || '').toLowerCase();
+            let filtered = pointLogs;
+            if (search) {
+                filtered = pointLogs.filter(p => {
+                    const email = (p.email || '').toLowerCase();
+                    const desc = (p.description || '').toLowerCase();
+                    return email.includes(search) || desc.includes(search);
+                });
+            }
+            
+            // 페이지네이션
+            const page = state.points.page || 1;
+            const start = (page - 1) * PAGE_SIZE;
+            const pageData = filtered.slice(start, start + PAGE_SIZE);
+            
+            tbody.innerHTML = pageData.map(p => {
+                const date = p.createdAt ? (p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt)) : new Date();
+                const dateStr = date.toLocaleString('ko-KR');
+                const userId = (p.email || '').split('@')[0];
+                const userName = users.find(u => u.id === p.uid)?.name || userId;
+                const typeLabel = p.type === 'charge' ? '충전' : (p.type === 'use' ? '사용' : p.type);
+                const typeColor = p.type === 'charge' ? 'color:blue' : 'color:red';
+                const change = p.type === 'charge' ? `+${(p.amount || 0).toLocaleString()}` : `-${(p.amount || 0).toLocaleString()}`;
+                const balance = (p.balanceAfter || 0).toLocaleString() + 'P';
+                
+                return `<tr>
+                    <td>${dateStr}</td>
+                    <td>${userId}</td>
+                    <td>${userName}</td>
+                    <td><span style="${typeColor}">${typeLabel}</span></td>
+                    <td>${p.description || '-'}</td>
+                    <td style="${typeColor}">${change}P</td>
+                    <td>${balance}</td>
+                </tr>`;
+            }).join('');
+            
+            // 페이지네이션 렌더링
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+            renderPagination('pointPagination', totalPages, page, 'points');
+        }
+        
+        // 페이지네이션 렌더링 헬퍼
+        function renderPagination(containerId, totalPages, currentPage, stateKey) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'active' : '';
+                html += `<button class="page-btn ${activeClass}" onclick="goToPage('${stateKey}', ${i})">${i}</button>`;
+            }
+            container.innerHTML = html;
+        }
+        
+        function goToPage(stateKey, page) {
+            state[stateKey].page = page;
+            if (stateKey === 'payments') renderPaymentHistory();
+            else if (stateKey === 'points') renderPointLogs();
+        }
         function runBatchSimulation() { alert('결제 시뮬레이션'); }
         function loadTerm(t) { document.getElementById('termEditor').value = t + ' 내용...'; }
         function saveTerms() { alert('저장됨'); }
