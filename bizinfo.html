@@ -5456,7 +5456,7 @@
     // 이용가이드 표시
     async function showUsageGuide() {
       try {
-        const doc = await db.collection('settings').doc('terms').get();
+        const doc = await firebase.firestore().collection('settings').doc('terms').get();
         let guideContent = '';
         
         if (doc.exists && doc.data().usageGuide) {
