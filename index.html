@@ -1119,40 +1119,40 @@
         
         <!-- 충전내역 -->
         <div style="margin-bottom: 1rem;">
-          <div onclick="toggleSection('charge')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          <div onclick="toggleSection('charge')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600; color: #333;">
             <span>📥 충전내역</span>
             <span id="charge-arrow">▼</span>
           </div>
-          <div id="charge-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto;">
+          <div id="charge-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; background: #fff;">
             <div id="charge-list" style="font-size: 0.9rem; color: #555;">로딩 중...</div>
           </div>
         </div>
         
         <!-- 사용내역 -->
         <div style="margin-bottom: 1rem;">
-          <div onclick="toggleSection('usage')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          <div onclick="toggleSection('usage')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600; color: #333;">
             <span>📊 사용내역</span>
             <span id="usage-arrow">▼</span>
           </div>
-          <div id="usage-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto;">
+          <div id="usage-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; background: #fff;">
             <div id="usage-list" style="font-size: 0.9rem; color: #555;">로딩 중...</div>
           </div>
         </div>
         
         <!-- 정기결제 히스토리 -->
         <div style="margin-bottom: 1.5rem;">
-          <div onclick="toggleSection('subscription')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          <div onclick="toggleSection('subscription')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600; color: #333;">
             <span>💳 정기결제 히스토리</span>
             <span id="subscription-arrow">▼</span>
           </div>
-          <div id="subscription-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px;">
+          <div id="subscription-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; background: #fff;">
             <div style="font-size: 0.9rem; color: #999; text-align: center; padding: 1rem;">준비 중입니다.</div>
           </div>
         </div>
         
-        <!-- 회원 탈퇴 -->
-        <div style="border-top: 1px solid #eee; padding-top: 1rem;">
-          <button onclick="showWithdrawConfirm()" style="width: 100%; padding: 0.8rem; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem;">🚪 회원 탈퇴</button>
+        <!-- 탈퇴 링크 -->
+        <div style="text-align: left; padding-top: 0.5rem;">
+          <span onclick="showWithdrawConfirm()" style="font-size: 0.9rem; color: #999; cursor: pointer; text-decoration: underline;">탈퇴</span>
         </div>
       </div>
       <div class="sns-modal-footer">
@@ -1164,21 +1164,21 @@
   <!-- 탈퇴 확인 팝업 -->
   <div id="withdrawModal" class="sns-modal">
     <div class="sns-modal-content" style="max-width: 450px;">
-      <div class="sns-modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
-        <h2>⚠️ 회원 탈퇴 안내</h2>
+      <div class="sns-modal-header" style="background: #f8f9fa;">
+        <h2 style="color: #333;">회원 탈퇴 안내</h2>
       </div>
-      <div class="sns-modal-body" style="padding: 1.5rem;">
-        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; line-height: 1.7; font-size: 0.95rem;">
+      <div class="sns-modal-body" style="padding: 1.5rem; background: #fff;">
+        <div style="color: #333; line-height: 1.8; font-size: 0.95rem; margin-bottom: 1.5rem;">
           재가입시 가입시점의 등록비를 납부하여야 하며 사용했던 모든 이용기록과 잔여포인트는 즉시 삭제되며 환불되지 않습니다.
         </div>
-        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.95rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.95rem; color: #333;">
           <input type="checkbox" id="withdraw-agree" style="width: 18px; height: 18px; cursor: pointer;">
           <span>위 내용에 동의합니다.</span>
         </label>
       </div>
-      <div class="sns-modal-footer" style="display: flex; gap: 0.5rem; justify-content: center;">
-        <button onclick="closeWithdrawModal()" style="padding: 0.6rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">취소</button>
-        <button onclick="processWithdraw()" style="padding: 0.6rem 1.5rem; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;">탈퇴 진행</button>
+      <div class="sns-modal-footer" style="display: flex; gap: 0.5rem; justify-content: center; background: #f8f9fa;">
+        <button onclick="closeWithdrawModal()" style="padding: 0.6rem 1.5rem; background: #fff; color: #333; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">취소</button>
+        <button onclick="processWithdraw()" style="padding: 0.6rem 1.5rem; background: #fff; color: #333; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">탈퇴 진행</button>
       </div>
     </div>
   </div>
