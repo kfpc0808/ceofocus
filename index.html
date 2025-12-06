@@ -864,6 +864,7 @@
           <p>사용하실 프로그램을 선택해주세요.</p>
         </div>
         <div class="top-right-buttons">
+          <button class="btn btn-mypage" onclick="showMyPage()">My Page</button>
           <button class="btn btn-mypage" onclick="showNoticesPopup()">공지사항</button>
           <button class="btn btn-logout" onclick="logout()">로그아웃</button>
         </div>
@@ -1099,6 +1100,85 @@
       </div>
       <div class="sns-modal-footer">
         <button class="sns-btn-close" onclick="closeNoticesPopup()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Page 팝업 -->
+  <div id="myPageModal" class="sns-modal">
+    <div class="sns-modal-content" style="max-width: 600px;">
+      <div class="sns-modal-header" style="background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);">
+        <h2>👤 My Page</h2>
+      </div>
+      <div class="sns-modal-body" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+        <!-- 잔여 포인트 -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem; text-align: center;">
+          <div style="font-size: 0.9rem; opacity: 0.9;">💰 잔여 포인트</div>
+          <div id="mypage-balance" style="font-size: 2rem; font-weight: bold; margin-top: 0.3rem;">0 P</div>
+        </div>
+        
+        <!-- 충전내역 -->
+        <div style="margin-bottom: 1rem;">
+          <div onclick="toggleSection('charge')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            <span>📥 충전내역</span>
+            <span id="charge-arrow">▼</span>
+          </div>
+          <div id="charge-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto;">
+            <div id="charge-list" style="font-size: 0.9rem; color: #555;">로딩 중...</div>
+          </div>
+        </div>
+        
+        <!-- 사용내역 -->
+        <div style="margin-bottom: 1rem;">
+          <div onclick="toggleSection('usage')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            <span>📊 사용내역</span>
+            <span id="usage-arrow">▼</span>
+          </div>
+          <div id="usage-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto;">
+            <div id="usage-list" style="font-size: 0.9rem; color: #555;">로딩 중...</div>
+          </div>
+        </div>
+        
+        <!-- 정기결제 히스토리 -->
+        <div style="margin-bottom: 1.5rem;">
+          <div onclick="toggleSection('subscription')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            <span>💳 정기결제 히스토리</span>
+            <span id="subscription-arrow">▼</span>
+          </div>
+          <div id="subscription-section" style="display: none; padding: 0.8rem; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px;">
+            <div style="font-size: 0.9rem; color: #999; text-align: center; padding: 1rem;">준비 중입니다.</div>
+          </div>
+        </div>
+        
+        <!-- 회원 탈퇴 -->
+        <div style="border-top: 1px solid #eee; padding-top: 1rem;">
+          <button onclick="showWithdrawConfirm()" style="width: 100%; padding: 0.8rem; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem;">🚪 회원 탈퇴</button>
+        </div>
+      </div>
+      <div class="sns-modal-footer">
+        <button class="sns-btn-close" onclick="closeMyPage()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탈퇴 확인 팝업 -->
+  <div id="withdrawModal" class="sns-modal">
+    <div class="sns-modal-content" style="max-width: 450px;">
+      <div class="sns-modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+        <h2>⚠️ 회원 탈퇴 안내</h2>
+      </div>
+      <div class="sns-modal-body" style="padding: 1.5rem;">
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; line-height: 1.7; font-size: 0.95rem;">
+          재가입시 가입시점의 등록비를 납부하여야 하며 사용했던 모든 이용기록과 잔여포인트는 즉시 삭제되며 환불되지 않습니다.
+        </div>
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.95rem;">
+          <input type="checkbox" id="withdraw-agree" style="width: 18px; height: 18px; cursor: pointer;">
+          <span>위 내용에 동의합니다.</span>
+        </label>
+      </div>
+      <div class="sns-modal-footer" style="display: flex; gap: 0.5rem; justify-content: center;">
+        <button onclick="closeWithdrawModal()" style="padding: 0.6rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">취소</button>
+        <button onclick="processWithdraw()" style="padding: 0.6rem 1.5rem; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;">탈퇴 진행</button>
       </div>
     </div>
   </div>
@@ -1462,11 +1542,163 @@
       document.getElementById('noticesModal').style.display = 'none';
     }
     
+    // ==================== My Page 기능 ====================
+    
+    // My Page 열기
+    async function showMyPage() {
+      console.log('👤 My Page 열기');
+      const modal = document.getElementById('myPageModal');
+      modal.style.display = 'flex';
+      
+      // 데이터 로드
+      await loadMyPageData();
+    }
+    
+    // My Page 닫기
+    function closeMyPage() {
+      document.getElementById('myPageModal').style.display = 'none';
+      // 섹션 초기화
+      ['charge', 'usage', 'subscription'].forEach(id => {
+        document.getElementById(id + '-section').style.display = 'none';
+        document.getElementById(id + '-arrow').textContent = '▼';
+      });
+    }
+    
+    // My Page 데이터 로드
+    async function loadMyPageData() {
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+      
+      try {
+        // 잔여 포인트 조회
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          const balance = userDoc.data().paidBalance || 0;
+          document.getElementById('mypage-balance').textContent = balance.toLocaleString() + ' P';
+        }
+        
+        // 충전내역 조회
+        const chargeSnapshot = await db.collection('pointLogs')
+          .where('uid', '==', user.uid)
+          .where('type', '==', 'charge')
+          .orderBy('createdAt', 'desc')
+          .limit(20)
+          .get();
+        
+        if (!chargeSnapshot.empty) {
+          const chargeHtml = chargeSnapshot.docs.map(doc => {
+            const d = doc.data();
+            const date = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString('ko-KR') : '';
+            return `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #f0f0f0;">
+              <span>${date}</span>
+              <span style="color:#28a745;font-weight:600;">+${(d.amount || 0).toLocaleString()}P</span>
+            </div>`;
+          }).join('');
+          document.getElementById('charge-list').innerHTML = chargeHtml;
+        } else {
+          document.getElementById('charge-list').innerHTML = '<div style="text-align:center;color:#999;padding:1rem;">충전내역이 없습니다.</div>';
+        }
+        
+        // 사용내역 조회
+        const usageSnapshot = await db.collection('pointLogs')
+          .where('uid', '==', user.uid)
+          .where('type', 'in', ['summary_use', 'detail_use'])
+          .orderBy('createdAt', 'desc')
+          .limit(20)
+          .get();
+        
+        if (!usageSnapshot.empty) {
+          const usageHtml = usageSnapshot.docs.map(doc => {
+            const d = doc.data();
+            const date = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString('ko-KR') : '';
+            const typeLabel = d.type === 'summary_use' ? '요약분석' : '상세분석';
+            return `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #f0f0f0;">
+              <span>${date} - ${typeLabel}</span>
+              <span style="color:#dc3545;font-weight:600;">${(d.amount || 0).toLocaleString()}P</span>
+            </div>`;
+          }).join('');
+          document.getElementById('usage-list').innerHTML = usageHtml;
+        } else {
+          document.getElementById('usage-list').innerHTML = '<div style="text-align:center;color:#999;padding:1rem;">사용내역이 없습니다.</div>';
+        }
+        
+      } catch (error) {
+        console.error('My Page 데이터 로드 오류:', error);
+      }
+    }
+    
+    // 섹션 토글
+    function toggleSection(id) {
+      const section = document.getElementById(id + '-section');
+      const arrow = document.getElementById(id + '-arrow');
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        arrow.textContent = '▲';
+      } else {
+        section.style.display = 'none';
+        arrow.textContent = '▼';
+      }
+    }
+    
+    // 탈퇴 확인 팝업 열기
+    function showWithdrawConfirm() {
+      document.getElementById('withdraw-agree').checked = false;
+      document.getElementById('withdrawModal').style.display = 'flex';
+    }
+    
+    // 탈퇴 팝업 닫기
+    function closeWithdrawModal() {
+      document.getElementById('withdrawModal').style.display = 'none';
+    }
+    
+    // 탈퇴 처리
+    async function processWithdraw() {
+      const agreed = document.getElementById('withdraw-agree').checked;
+      if (!agreed) {
+        alert('탈퇴를 진행하려면 동의 체크를 해주세요.');
+        return;
+      }
+      
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert('로그인 정보를 확인할 수 없습니다.');
+        return;
+      }
+      
+      try {
+        // 사용자 상태를 withdrawn으로 변경
+        await db.collection('users').doc(user.uid).update({
+          status: 'withdrawn',
+          withdrawnAt: firebase.firestore.FieldValue.serverTimestamp(),
+          withdrawnEmail: user.email
+        });
+        
+        // 팝업 닫기
+        closeWithdrawModal();
+        closeMyPage();
+        
+        // 완료 메시지
+        alert('탈퇴 처리가 완료되었습니다.\n\n그동안 이용해 주셔서 감사합니다.');
+        
+        // 로그아웃
+        await firebase.auth().signOut();
+        location.reload();
+        
+      } catch (error) {
+        console.error('탈퇴 처리 오류:', error);
+        alert('탈퇴 처리 중 오류가 발생했습니다.\n관리자에게 문의해 주세요.');
+      }
+    }
+    
+    // ==================== 팝업 외부 클릭 처리 ====================
+    
     // 팝업 외부 클릭 시 닫기
     window.onclick = function(event) {
       const snsModal = document.getElementById('snsBackupModal');
       const videoModal = document.getElementById('videoLibraryModal');
       const noticesModal = document.getElementById('noticesModal');
+      const myPageModal = document.getElementById('myPageModal');
+      const withdrawModal = document.getElementById('withdrawModal');
       if (event.target === snsModal) {
         closeSNSBackupPopup();
       }
@@ -1475,6 +1707,12 @@
       }
       if (event.target === noticesModal) {
         closeNoticesPopup();
+      }
+      if (event.target === myPageModal) {
+        closeMyPage();
+      }
+      if (event.target === withdrawModal) {
+        closeWithdrawModal();
       }
     }
     
