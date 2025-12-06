@@ -1036,6 +1036,7 @@
             db.collection('pointLogs').orderBy('createdAt', 'desc').limit(500).onSnapshot((snapshot) => {
                 pointLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderPointLogs();
+                renderUsageStats();  // 사용 분석도 함께 업데이트
             }, (error) => {
                 console.error('pointLogs 리스너 오류:', error);
             });
@@ -1396,9 +1397,10 @@
                 const dateStr = date.toLocaleString('ko-KR');
                 const userId = (p.email || '').split('@')[0];
                 const userName = users.find(u => u.id === p.uid)?.name || userId;
-                const typeLabel = p.type === 'charge' ? '충전' : (p.type === 'use' ? '사용' : p.type);
+                const typeLabels = { 'charge': '충전', 'summary_use': '요약분석', 'detail_use': '상세분석', 'use': '사용' };
+                const typeLabel = typeLabels[p.type] || p.type;
                 const typeColor = p.type === 'charge' ? 'color:blue' : 'color:red';
-                const change = p.type === 'charge' ? `+${(p.amount || 0).toLocaleString()}` : `-${(p.amount || 0).toLocaleString()}`;
+                const change = p.amount >= 0 ? `+${Math.abs(p.amount || 0).toLocaleString()}` : `-${Math.abs(p.amount || 0).toLocaleString()}`;
                 const balance = (p.balanceAfter || 0).toLocaleString() + 'P';
                 
                 return `<tr>
@@ -1475,6 +1477,73 @@
                 html += `<button class="page-btn ${activeClass}" onclick="goToPage('${stateKey}', ${i})">${i}</button>`;
             }
             container.innerHTML = html;
+        }
+        
+        // ★ 포인트 사용 분석 렌더링
+        function renderUsageStats() {
+            const tbody = document.getElementById('usageStatsBody');
+            if (!tbody) return;
+            
+            // pointLogs에서 summary_use, detail_use 타입만 필터링
+            const usageLogs = pointLogs.filter(p => 
+                p.type === 'summary_use' || p.type === 'detail_use'
+            );
+            
+            // 월별, 사용자별로 그룹핑
+            const grouped = {};
+            usageLogs.forEach(log => {
+                const date = log.createdAt ? (log.createdAt.toDate ? log.createdAt.toDate() : new Date(log.createdAt)) : new Date();
+                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const key = `${log.uid}_${month}`;
+                
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        uid: log.uid,
+                        email: log.email || '',
+                        name: log.name || '',
+                        month: month,
+                        summaryCount: 0,
+                        summaryAmount: 0,
+                        detailCount: 0,
+                        detailAmount: 0
+                    };
+                }
+                
+                if (log.type === 'summary_use') {
+                    grouped[key].summaryCount++;
+                    grouped[key].summaryAmount += 500;
+                } else if (log.type === 'detail_use') {
+                    grouped[key].detailCount++;
+                    grouped[key].detailAmount += 2000;
+                }
+            });
+            
+            // 배열로 변환하고 정렬
+            const data = Object.values(grouped).sort((a, b) => {
+                if (a.month !== b.month) return b.month.localeCompare(a.month);
+                return a.email.localeCompare(b.email);
+            });
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">사용 내역이 없습니다.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.map(row => {
+                const userId = (row.email || '').split('@')[0] || row.uid;
+                const userName = row.name || users.find(u => u.id === row.uid)?.name || userId;
+                const total = row.summaryAmount + row.detailAmount;
+                
+                return `<tr>
+                    <td>${userId}<br><small style="color:#666">${userName}</small></td>
+                    <td>${row.month}</td>
+                    <td style="text-align:center">${row.summaryCount}회</td>
+                    <td style="text-align:right;color:red">${row.summaryAmount.toLocaleString()}P</td>
+                    <td style="text-align:center">${row.detailCount}회</td>
+                    <td style="text-align:right;color:red">${row.detailAmount.toLocaleString()}P</td>
+                    <td style="text-align:right;font-weight:bold;color:red">${total.toLocaleString()}P</td>
+                </tr>`;
+            }).join('');
         }
         
         function goToPage(stateKey, page) {
