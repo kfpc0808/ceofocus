@@ -291,7 +291,7 @@
                 </div>
                 <div class="table-container">
                     <table id="userTable">
-                        <thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers()"></th><th>No</th><th>아이디</th><th>성명</th><th>비밀번호</th><th>소속/직함</th><th>지역</th><th>유형</th><th>연락처/메일</th><th>가입비</th><th>월 결제액</th><th>상태</th><th>관리</th></tr></thead>
+                        <thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers()"></th><th>No</th><th>아이디</th><th>성명</th><th>비밀번호</th><th>소속/직함</th><th>지역</th><th>유형</th><th>연락처/메일</th><th>가입비</th><th>월 결제액</th><th>포인트</th><th>등록일자</th><th>상태</th><th>관리</th></tr></thead>
                         <tbody id="userTableBody"></tbody>
                     </table>
                 </div>
@@ -1197,6 +1197,12 @@
                 
                 const fee = u.monthlyFee ? u.monthlyFee.toLocaleString() : '0';
                 
+                // ★ 포인트 잔액
+                const pointBalance = u.paidBalance ? u.paidBalance.toLocaleString() : '0';
+                
+                // ★ 등록일자
+                const createdDate = u.createdAt ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('ko-KR') : '-';
+                
                 // 비밀번호 표시: 저장된 비밀번호가 있으면 표시, 없으면 초기값 또는 "변경됨"
                 let pwDisplay = '-';
                 if (u.password) {
@@ -1219,6 +1225,8 @@
                     <td>${u.phone || '-'}<br><span style="color:#888;font-size:0.8rem">${u.email || '-'}</span></td>
                     <td>${feeBadge}</td>
                     <td style="font-weight:bold; color:var(--accent-color);">${fee}</td>
+                    <td style="font-weight:bold; color:#2196F3;">${pointBalance} P</td>
+                    <td style="font-size:0.85rem; color:#666;">${createdDate}</td>
                     <td>${statusBadge}</td>
                     <td><button class="btn btn-outline btn-sm" onclick="openUserEditModal('${u.id}')"><i class="ph ph-pencil-simple"></i> 수정</button></td>
                 </tr>`;
