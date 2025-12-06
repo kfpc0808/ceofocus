@@ -1107,68 +1107,421 @@
 
   <!-- 제휴/건의 팝업 -->
   <div id="suggestionModal" class="sns-modal">
-    <div class="sns-modal-content" style="max-width: 600px;">
-      <span class="sns-modal-close" onclick="closeSuggestionModal()">&times;</span>
-      <h2>📮 제휴/건의</h2>
-      <p style="color: #666; font-size: 0.9rem; margin-bottom: 1.5rem;">제휴 문의나 서비스 개선 의견을 보내주세요.</p>
+    <div class="suggestion-modal-content">
+      <button class="suggestion-close-btn" onclick="closeSuggestionModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
       
-      <form id="suggestionForm" onsubmit="submitSuggestion(event)">
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">유형 <span style="color: #e74c3c;">*</span></label>
-          <select id="suggestType" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
-            <option value="">선택해주세요</option>
-            <option value="제휴 문의">제휴 문의</option>
-            <option value="건의사항">건의사항</option>
-            <option value="불편사항">불편사항</option>
-            <option value="기타">기타</option>
-          </select>
+      <div class="suggestion-header">
+        <div class="suggestion-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            <line x1="9" y1="9" x2="15" y2="9"></line>
+            <line x1="9" y1="13" x2="13" y2="13"></line>
+          </svg>
         </div>
-        
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">제목 <span style="color: #e74c3c;">*</span></label>
-          <input type="text" id="suggestTitle" required placeholder="제목을 입력해주세요" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+        <div class="suggestion-title-area">
+          <h2>제휴 · 건의</h2>
+          <p>소중한 의견을 보내주세요. 빠르게 검토 후 연락드리겠습니다.</p>
         </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-          <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">성명 <span style="color: #e74c3c;">*</span></label>
-            <input type="text" id="suggestName" required placeholder="성명" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+      </div>
+      
+      <form id="suggestionForm" onsubmit="submitSuggestion(event)" class="suggestion-form">
+        <div class="suggestion-form-grid">
+          <!-- 유형 선택 -->
+          <div class="form-field full-width">
+            <label class="field-label">
+              <span class="label-icon">📋</span> 문의 유형 <span class="required">*</span>
+            </label>
+            <div class="select-wrapper">
+              <select id="suggestType" required>
+                <option value="">유형을 선택해주세요</option>
+                <option value="제휴 문의">💼 제휴 문의</option>
+                <option value="건의사항">💡 건의사항</option>
+                <option value="불편사항">⚠️ 불편사항</option>
+                <option value="기타">📝 기타</option>
+              </select>
+              <span class="select-arrow">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </div>
           </div>
-          <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">회사명/소속 <span style="color: #e74c3c;">*</span></label>
-            <input type="text" id="suggestCompany" required placeholder="회사명 또는 소속" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+          
+          <!-- 제목 -->
+          <div class="form-field full-width">
+            <label class="field-label">
+              <span class="label-icon">✏️</span> 제목 <span class="required">*</span>
+            </label>
+            <input type="text" id="suggestTitle" required placeholder="문의 제목을 입력해주세요">
+          </div>
+          
+          <!-- 성명 & 회사명 -->
+          <div class="form-field">
+            <label class="field-label">
+              <span class="label-icon">👤</span> 성명 <span class="required">*</span>
+            </label>
+            <input type="text" id="suggestName" required placeholder="홍길동">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">
+              <span class="label-icon">🏢</span> 회사명/소속 <span class="required">*</span>
+            </label>
+            <input type="text" id="suggestCompany" required placeholder="회사명 또는 소속">
+          </div>
+          
+          <!-- 연락처 & 이메일 -->
+          <div class="form-field">
+            <label class="field-label">
+              <span class="label-icon">📱</span> 연락처 <span class="required">*</span>
+            </label>
+            <input type="tel" id="suggestPhone" required placeholder="010-0000-0000">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">
+              <span class="label-icon">📧</span> 이메일 <span class="optional">(선택)</span>
+            </label>
+            <input type="email" id="suggestEmail" placeholder="email@example.com">
+          </div>
+          
+          <!-- 내용 -->
+          <div class="form-field full-width">
+            <label class="field-label">
+              <span class="label-icon">📄</span> 문의 내용 <span class="required">*</span>
+            </label>
+            <textarea id="suggestContent" required placeholder="문의하실 내용을 상세히 작성해주세요.&#10;&#10;• 제휴 문의: 제안 내용, 협력 방안 등&#10;• 건의사항: 서비스 개선 아이디어&#10;• 불편사항: 문제 상황, 발생 시점 등"></textarea>
           </div>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-          <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">연락처 <span style="color: #e74c3c;">*</span></label>
-            <input type="tel" id="suggestPhone" required placeholder="010-0000-0000" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
-          </div>
-          <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">이메일</label>
-            <input type="email" id="suggestEmail" placeholder="email@example.com" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
-          </div>
-        </div>
-        
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">내용 <span style="color: #e74c3c;">*</span></label>
-          <textarea id="suggestContent" required placeholder="문의 내용을 상세히 작성해주세요" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; min-height: 150px; resize: vertical; box-sizing: border-box;"></textarea>
-        </div>
-        
-        <div style="margin-bottom: 1.5rem;">
-          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">첨부파일</label>
-          <input type="file" id="suggestFile" accept=".pdf,.doc,.docx,.hwp,.jpg,.jpeg,.png,.gif,.zip" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-          <p style="color: #999; font-size: 0.8rem; margin-top: 0.3rem;">PDF, DOC, HWP, 이미지, ZIP (최대 10MB)</p>
-        </div>
-        
-        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-          <button type="button" onclick="closeSuggestionModal()" style="padding: 0.7rem 1.5rem; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer;">취소</button>
-          <button type="submit" id="suggestSubmitBtn" style="padding: 0.7rem 1.5rem; background: #3182ce; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">제출하기</button>
+        <!-- 버튼 -->
+        <div class="suggestion-buttons">
+          <button type="button" class="btn-cancel" onclick="closeSuggestionModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            취소
+          </button>
+          <button type="submit" id="suggestSubmitBtn" class="btn-submit">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            제출하기
+          </button>
         </div>
       </form>
     </div>
   </div>
+  
+  <style>
+    /* 제휴/건의 모달 스타일 */
+    .suggestion-modal-content {
+      background: linear-gradient(145deg, #1a2a4a 0%, #0d1829 100%);
+      border-radius: 20px;
+      padding: 0;
+      max-width: 680px;
+      width: 94%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+      animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .suggestion-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.6);
+      transition: all 0.2s;
+      z-index: 10;
+    }
+    
+    .suggestion-close-btn:hover {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      transform: rotate(90deg);
+    }
+    
+    .suggestion-header {
+      background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border-radius: 20px 20px 0 0;
+    }
+    
+    .suggestion-icon {
+      width: 56px;
+      height: 56px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+    
+    .suggestion-title-area h2 {
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.5px;
+    }
+    
+    .suggestion-title-area p {
+      color: rgba(255,255,255,0.8);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    
+    .suggestion-form {
+      padding: 28px 32px 32px;
+    }
+    
+    .suggestion-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-field.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,0.9);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .label-icon {
+      font-size: 1rem;
+    }
+    
+    .field-label .required {
+      color: #fc8181;
+      font-weight: 700;
+    }
+    
+    .field-label .optional {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.8rem;
+      font-weight: 400;
+    }
+    
+    .suggestion-form input[type="text"],
+    .suggestion-form input[type="tel"],
+    .suggestion-form input[type="email"],
+    .suggestion-form select,
+    .suggestion-form textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      color: white;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+    
+    .suggestion-form input::placeholder,
+    .suggestion-form textarea::placeholder {
+      color: rgba(255,255,255,0.35);
+    }
+    
+    .suggestion-form input:focus,
+    .suggestion-form select:focus,
+    .suggestion-form textarea:focus {
+      outline: none;
+      border-color: #3182ce;
+      background: rgba(255,255,255,0.12);
+      box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+    }
+    
+    .select-wrapper {
+      position: relative;
+    }
+    
+    .select-wrapper select {
+      appearance: none;
+      cursor: pointer;
+      padding-right: 40px;
+    }
+    
+    .select-arrow {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.5);
+      pointer-events: none;
+    }
+    
+    .suggestion-form textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    
+    .suggestion-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .btn-cancel, .btn-submit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-cancel {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .btn-cancel:hover {
+      background: rgba(255,255,255,0.15);
+      color: white;
+    }
+    
+    .btn-submit {
+      background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+      border: none;
+      color: white;
+      box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4);
+    }
+    
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(49, 130, 206, 0.5);
+    }
+    
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    /* 모바일 반응형 */
+    @media (max-width: 640px) {
+      .suggestion-modal-content {
+        width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+      }
+      
+      .suggestion-header {
+        padding: 24px 20px;
+        border-radius: 0;
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .suggestion-icon {
+        width: 48px;
+        height: 48px;
+      }
+      
+      .suggestion-title-area h2 {
+        font-size: 1.3rem;
+      }
+      
+      .suggestion-form {
+        padding: 20px;
+      }
+      
+      .suggestion-form-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      
+      .form-field {
+        grid-column: 1 / -1 !important;
+      }
+      
+      .suggestion-buttons {
+        flex-direction: column-reverse;
+      }
+      
+      .btn-cancel, .btn-submit {
+        width: 100%;
+        justify-content: center;
+        padding: 16px;
+      }
+      
+      .suggestion-close-btn {
+        top: 12px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+      }
+    }
+    
+    /* 스크롤바 스타일 */
+    .suggestion-modal-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .suggestion-modal-content::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .suggestion-modal-content::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+    }
+    
+    .suggestion-modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
 
   <!-- My Page 팝업 -->
   <div id="myPageModal" class="sns-modal">
@@ -1607,7 +1960,6 @@
         const phone = document.getElementById('suggestPhone').value.trim();
         const email = document.getElementById('suggestEmail').value.trim();
         const content = document.getElementById('suggestContent').value.trim();
-        const fileInput = document.getElementById('suggestFile');
         
         // 필수값 검증
         if (!type || !title || !name || !company || !phone || !content) {
@@ -1615,29 +1967,6 @@
           submitBtn.disabled = false;
           submitBtn.textContent = '제출하기';
           return;
-        }
-        
-        // 첨부파일 처리
-        let fileUrl = '';
-        let fileName = '';
-        if (fileInput.files.length > 0) {
-          const file = fileInput.files[0];
-          
-          // 파일 크기 검증 (10MB)
-          if (file.size > 10 * 1024 * 1024) {
-            alert('파일 크기는 10MB 이하만 가능합니다.');
-            submitBtn.disabled = false;
-            submitBtn.textContent = '제출하기';
-            return;
-          }
-          
-          // Firebase Storage에 업로드
-          const timestamp = Date.now();
-          const storageRef = firebase.storage().ref();
-          const fileRef = storageRef.child(`suggestions/${timestamp}_${file.name}`);
-          await fileRef.put(file);
-          fileUrl = await fileRef.getDownloadURL();
-          fileName = file.name;
         }
         
         // Firestore에 저장
@@ -1649,8 +1978,6 @@
           phone: phone,
           email: email || '',
           content: content,
-          fileUrl: fileUrl,
-          fileName: fileName,
           status: '대기',
           userId: currentUser ? currentUser.uid : '',
           userLoginId: currentUserData ? currentUserData.userId : '',
