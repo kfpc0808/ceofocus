@@ -375,8 +375,11 @@
             <div id="payment-daily-view" class="sub-tab-content">
                 <div class="card">
                     <div class="table-controls">
-                        <h3>📅 오늘 회원별 사용량 현황</h3>
-                        <div style="display:flex; gap:0.5rem;">
+                        <h3>📅 회원별 사용량 현황</h3>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <input type="date" id="dailyUsageDateFilter" style="padding:0.4rem; border:1px solid #ddd; border-radius:4px;">
+                            <button class="btn btn-primary btn-sm" onclick="loadDailyUsageByDate()"><i class="ph ph-magnifying-glass"></i> 조회</button>
+                            <button class="btn btn-sm" onclick="loadDailyUsageToday()" style="background:#6c757d;color:white;">오늘</button>
                             <div class="search-box"><input type="text" id="dailyUsageSearch" placeholder="검색..." onkeyup="renderDailyUsage()"></div>
                             <button class="btn btn-success btn-sm" onclick="exportTableToExcel('dailyUsageTable', '일일사용량')"><i class="ph ph-file-xls"></i> 엑셀</button>
                         </div>
@@ -390,9 +393,14 @@
                 <div class="card">
                     <div class="table-controls">
                         <h3>📈 포인트 사용 분석</h3>
-                        <button class="btn btn-success btn-sm" onclick="exportTableToExcel('usageTable', '사용분석')"><i class="ph ph-file-xls"></i> 엑셀</button>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <input type="month" id="usageStatsMonthFilter" style="padding:0.4rem; border:1px solid #ddd; border-radius:4px;">
+                            <button class="btn btn-primary btn-sm" onclick="loadUsageStatsByMonth()"><i class="ph ph-magnifying-glass"></i> 조회</button>
+                            <button class="btn btn-sm" onclick="loadUsageStatsAll()" style="background:#6c757d;color:white;">전체</button>
+                            <button class="btn btn-success btn-sm" onclick="exportTableToExcel('usageTable', '사용분석')"><i class="ph ph-file-xls"></i> 엑셀</button>
+                        </div>
                     </div>
-                    <div class="table-container"><table id="usageTable" style="text-align: center;"><thead><tr><th rowspan="2">회원정보</th><th rowspan="2">대상 월</th><th colspan="2" style="background:#e3f2fd">요약분석(500P)</th><th colspan="2" style="background:#e8f5e9">상세분석(2000P)</th><th rowspan="2">총 포인트</th></tr><tr><th>횟수</th><th>차감액</th><th>횟수</th><th>차감액</th></tr></thead><tbody id="usageStatsBody"></tbody></table></div>
+                    <div class="table-container"><table id="usageTable" style="text-align: center;"><thead><tr><th rowspan="2">회원정보</th><th rowspan="2">대상 월</th><th colspan="2" style="background:#e3f2fd">요약분석(500P)</th><th colspan="2" style="background:#e8f5e9">상세분석(2000P)</th><th rowspan="2">총 포인트</th><th rowspan="2">포인트 잔액</th></tr><tr><th>횟수</th><th>차감액</th><th>횟수</th><th>차감액</th></tr></thead><tbody id="usageStatsBody"></tbody></table></div>
                 </div>
             </div>
             <div id="payment-expiration-view" class="sub-tab-content"><div class="card"><p>소멸 예정 목록 (준비중)</p></div></div>
@@ -1056,6 +1064,7 @@
                 initPaymentsListener(); // 결제 내역
                 initPointLogsListener(); // 포인트 로그
                 initDailyUsageListener(); // 일일 사용량
+                initUsageStats(); // 포인트 사용 분석
             } catch(e) {
                 console.error('initializeFirebaseListeners 오류:', e);
             }
@@ -1085,19 +1094,42 @@
         
         // ★ 일일 사용량 리스너
         function initDailyUsageListener() {
-            // 오늘 날짜 (한국 시간)
+            // 오늘 날짜 (한국 시간) 기본 설정
             const now = new Date();
             const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
             const today = koreaTime.toISOString().split('T')[0];
             
-            db.collection('userUsage').onSnapshot((snapshot) => {
-                dailyUsages = snapshot.docs
-                    .map(doc => ({ id: doc.id, oderId: doc.id, ...doc.data() }))
-                    .filter(u => u.date === today); // 오늘 데이터만
+            // 날짜 필터 기본값 설정
+            const dateFilter = document.getElementById('dailyUsageDateFilter');
+            if (dateFilter) dateFilter.value = today;
+            
+            // 오늘 데이터 로드
+            loadDailyUsageByDate();
+        }
+        
+        // 선택한 날짜로 일일 사용량 조회
+        function loadDailyUsageByDate() {
+            const dateFilter = document.getElementById('dailyUsageDateFilter');
+            const selectedDate = dateFilter?.value || new Date().toISOString().split('T')[0];
+            
+            db.collection('userUsage').where('date', '==', selectedDate).get().then((snapshot) => {
+                dailyUsages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderDailyUsage();
-            }, (error) => {
-                console.error('userUsage 리스너 오류:', error);
+            }).catch((error) => {
+                console.error('userUsage 조회 오류:', error);
             });
+        }
+        
+        // 오늘 날짜로 조회
+        function loadDailyUsageToday() {
+            const now = new Date();
+            const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+            const today = koreaTime.toISOString().split('T')[0];
+            
+            const dateFilter = document.getElementById('dailyUsageDateFilter');
+            if (dateFilter) dateFilter.value = today;
+            
+            loadDailyUsageByDate();
         }
         
         // ★ 결제 통계 업데이트
@@ -1623,72 +1655,137 @@
             container.innerHTML = html;
         }
         
-        // ★ 포인트 사용 분석 렌더링
-        function renderUsageStats() {
+        // ★ 포인트 사용 분석 - 월 선택 초기화
+        let usageStatsMonthFilter = null;
+        
+        function initUsageStats() {
+            // 이번달 기본값 설정
+            const now = new Date();
+            const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const monthFilter = document.getElementById('usageStatsMonthFilter');
+            if (monthFilter) monthFilter.value = thisMonth;
+            
+            loadUsageStatsAll();
+        }
+        
+        // 선택한 월로 조회
+        async function loadUsageStatsByMonth() {
+            const monthFilter = document.getElementById('usageStatsMonthFilter');
+            usageStatsMonthFilter = monthFilter?.value || null;
+            await loadUsageStatsData();
+        }
+        
+        // 전체 조회
+        async function loadUsageStatsAll() {
+            usageStatsMonthFilter = null;
+            const monthFilter = document.getElementById('usageStatsMonthFilter');
+            if (monthFilter) monthFilter.value = '';
+            await loadUsageStatsData();
+        }
+        
+        // 사용 분석 데이터 로드
+        async function loadUsageStatsData() {
             const tbody = document.getElementById('usageStatsBody');
             if (!tbody) return;
             
-            // pointLogs에서 summary_use, detail_use 타입만 필터링
-            const usageLogs = pointLogs.filter(p => 
-                p.type === 'summary_use' || p.type === 'detail_use'
-            );
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">로딩 중...</td></tr>';
             
-            // 월별, 사용자별로 그룹핑
-            const grouped = {};
-            usageLogs.forEach(log => {
-                const date = log.createdAt ? (log.createdAt.toDate ? log.createdAt.toDate() : new Date(log.createdAt)) : new Date();
-                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                const key = `${log.uid}_${month}`;
+            try {
+                // userUsage에서 모든 사용 기록 가져오기
+                const usageSnapshot = await db.collection('userUsage').get();
                 
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        uid: log.uid,
-                        email: log.email || '',
-                        name: log.name || '',
-                        month: month,
-                        summaryCount: 0,
-                        summaryAmount: 0,
-                        detailCount: 0,
-                        detailAmount: 0
-                    };
+                // 월별, 사용자별로 그룹핑
+                const grouped = {};
+                usageSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const uid = doc.id;
+                    const date = data.date || '';
+                    const month = date.substring(0, 7); // 'YYYY-MM'
+                    
+                    // 월 필터 적용
+                    if (usageStatsMonthFilter && month !== usageStatsMonthFilter) return;
+                    
+                    const key = `${uid}_${month}`;
+                    
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            uid: uid,
+                            month: month,
+                            summaryCount: 0,
+                            detailCount: 0
+                        };
+                    }
+                    
+                    grouped[key].summaryCount += data.summaryCount || 0;
+                    grouped[key].detailCount += data.detailCount || 0;
+                });
+                
+                // 사용 기록이 있는 회원 UID 수집
+                const usedUids = new Set(Object.values(grouped).map(g => g.uid));
+                
+                // 포인트 잔액이 있는 회원도 포함 (사용기록 없더라도)
+                users.forEach(user => {
+                    if ((user.points || 0) > 0 && !usedUids.has(user.id)) {
+                        // 이번달 기준으로 추가
+                        const now = new Date();
+                        const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        // 월 필터가 있고 이번달이 아니면 제외
+                        if (usageStatsMonthFilter && usageStatsMonthFilter !== thisMonth) return;
+                        
+                        const key = `${user.id}_${thisMonth}`;
+                        if (!grouped[key]) {
+                            grouped[key] = {
+                                uid: user.id,
+                                month: thisMonth,
+                                summaryCount: 0,
+                                detailCount: 0
+                            };
+                        }
+                    }
+                });
+                
+                // 배열로 변환하고 정렬
+                const data = Object.values(grouped).sort((a, b) => {
+                    if (a.month !== b.month) return b.month.localeCompare(a.month);
+                    return a.uid.localeCompare(b.uid);
+                });
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">사용 내역이 없습니다.</td></tr>';
+                    return;
                 }
                 
-                if (log.type === 'summary_use') {
-                    grouped[key].summaryCount++;
-                    grouped[key].summaryAmount += 500;
-                } else if (log.type === 'detail_use') {
-                    grouped[key].detailCount++;
-                    grouped[key].detailAmount += 2000;
-                }
-            });
-            
-            // 배열로 변환하고 정렬
-            const data = Object.values(grouped).sort((a, b) => {
-                if (a.month !== b.month) return b.month.localeCompare(a.month);
-                return a.email.localeCompare(b.email);
-            });
-            
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">사용 내역이 없습니다.</td></tr>';
-                return;
+                tbody.innerHTML = data.map(row => {
+                    const userInfo = users.find(u => u.id === row.uid);
+                    const userId = userInfo?.userId || userInfo?.email?.split('@')[0] || '(삭제됨)';
+                    const userName = userInfo?.name || '삭제회원';
+                    const points = userInfo?.points || 0;
+                    const summaryAmount = row.summaryCount * 500;
+                    const detailAmount = row.detailCount * 2000;
+                    const total = summaryAmount + detailAmount;
+                    
+                    return `<tr>
+                        <td>${userId}<br><small style="color:#666">${userName}</small></td>
+                        <td>${row.month}</td>
+                        <td style="text-align:center">${row.summaryCount}회</td>
+                        <td style="text-align:right;color:red">${summaryAmount.toLocaleString()}P</td>
+                        <td style="text-align:center">${row.detailCount}회</td>
+                        <td style="text-align:right;color:red">${detailAmount.toLocaleString()}P</td>
+                        <td style="text-align:right;font-weight:bold;color:red">${total.toLocaleString()}P</td>
+                        <td style="text-align:right;color:blue">${points.toLocaleString()}P</td>
+                    </tr>`;
+                }).join('');
+                
+            } catch (error) {
+                console.error('사용 분석 로드 오류:', error);
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">데이터 로드 실패</td></tr>';
             }
-            
-            tbody.innerHTML = data.map(row => {
-                const userInfo = users.find(u => u.id === row.uid);
-                const userId = userInfo ? ((row.email || '').split('@')[0] || row.uid) : '(삭제됨)';
-                const userName = row.name || userInfo?.name || '삭제회원';
-                const total = row.summaryAmount + row.detailAmount;
-                
-                return `<tr>
-                    <td>${userId}<br><small style="color:#666">${userName}</small></td>
-                    <td>${row.month}</td>
-                    <td style="text-align:center">${row.summaryCount}회</td>
-                    <td style="text-align:right;color:red">${row.summaryAmount.toLocaleString()}P</td>
-                    <td style="text-align:center">${row.detailCount}회</td>
-                    <td style="text-align:right;color:red">${row.detailAmount.toLocaleString()}P</td>
-                    <td style="text-align:right;font-weight:bold;color:red">${total.toLocaleString()}P</td>
-                </tr>`;
-            }).join('');
+        }
+        
+        function renderUsageStats() {
+            // 기존 호환성을 위해 유지 - 실제로는 loadUsageStatsData 사용
+            loadUsageStatsData();
         }
         
         function goToPage(stateKey, page) {
