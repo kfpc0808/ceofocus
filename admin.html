@@ -2635,36 +2635,16 @@
                 // 모든 공고 가져오기
                 const snapshot = await db.collection('bizinfo_cache').get();
                 
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
                 let closedIds = [];
                 
                 snapshot.forEach(doc => {
                     if (doc.id === '_meta') return;
                     
                     const data = doc.data();
-                    const period = data.applicationPeriod || '';
                     
-                    // 기간이 없거나 ~ 없으면 삭제 안 함 (안전)
-                    if (!period || !period.includes('~')) {
-                        return; // 스킵
-                    }
-                    
-                    const endDateStr = period.split('~')[1].trim();
-                    
-                    // 종료일이 8자리 이상이어야 파싱 가능
-                    if (endDateStr.length >= 8) {
-                        const endDate = new Date(
-                            endDateStr.substring(0, 4) + '-' +
-                            endDateStr.substring(4, 6) + '-' +
-                            endDateStr.substring(6, 8)
-                        );
-                        
-                        // 유효한 날짜이고 오늘보다 이전이면 마감
-                        if (!isNaN(endDate.getTime()) && endDate < today) {
-                            closedIds.push(doc.id);
-                        }
+                    // isOpen 필드가 명확히 false인 경우만 마감으로 판단
+                    if (data.isOpen === false) {
+                        closedIds.push(doc.id);
                     }
                 });
                 
