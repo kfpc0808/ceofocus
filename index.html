@@ -864,6 +864,7 @@
           <p>사용하실 프로그램을 선택해주세요.</p>
         </div>
         <div class="top-right-buttons">
+          <button class="btn btn-mypage" onclick="showSuggestionModal()">제휴/건의</button>
           <button class="btn btn-mypage" onclick="showMyPage()">My Page</button>
           <button class="btn btn-mypage" onclick="showNoticesPopup()">공지사항</button>
           <button class="btn btn-logout" onclick="logout()">로그아웃</button>
@@ -1101,6 +1102,71 @@
       <div class="sns-modal-footer">
         <button class="sns-btn-close" onclick="closeNoticesPopup()">닫기</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 제휴/건의 팝업 -->
+  <div id="suggestionModal" class="sns-modal">
+    <div class="sns-modal-content" style="max-width: 600px;">
+      <span class="sns-modal-close" onclick="closeSuggestionModal()">&times;</span>
+      <h2>📮 제휴/건의</h2>
+      <p style="color: #666; font-size: 0.9rem; margin-bottom: 1.5rem;">제휴 문의나 서비스 개선 의견을 보내주세요.</p>
+      
+      <form id="suggestionForm" onsubmit="submitSuggestion(event)">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">유형 <span style="color: #e74c3c;">*</span></label>
+          <select id="suggestType" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            <option value="">선택해주세요</option>
+            <option value="제휴 문의">제휴 문의</option>
+            <option value="건의사항">건의사항</option>
+            <option value="불편사항">불편사항</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">제목 <span style="color: #e74c3c;">*</span></label>
+          <input type="text" id="suggestTitle" required placeholder="제목을 입력해주세요" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">성명 <span style="color: #e74c3c;">*</span></label>
+            <input type="text" id="suggestName" required placeholder="성명" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">회사명/소속 <span style="color: #e74c3c;">*</span></label>
+            <input type="text" id="suggestCompany" required placeholder="회사명 또는 소속" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">연락처 <span style="color: #e74c3c;">*</span></label>
+            <input type="tel" id="suggestPhone" required placeholder="010-0000-0000" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">이메일</label>
+            <input type="email" id="suggestEmail" placeholder="email@example.com" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">내용 <span style="color: #e74c3c;">*</span></label>
+          <textarea id="suggestContent" required placeholder="문의 내용을 상세히 작성해주세요" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; min-height: 150px; resize: vertical; box-sizing: border-box;"></textarea>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">첨부파일</label>
+          <input type="file" id="suggestFile" accept=".pdf,.doc,.docx,.hwp,.jpg,.jpeg,.png,.gif,.zip" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
+          <p style="color: #999; font-size: 0.8rem; margin-top: 0.3rem;">PDF, DOC, HWP, 이미지, ZIP (최대 10MB)</p>
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+          <button type="button" onclick="closeSuggestionModal()" style="padding: 0.7rem 1.5rem; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer;">취소</button>
+          <button type="submit" id="suggestSubmitBtn" style="padding: 0.7rem 1.5rem; background: #3182ce; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">제출하기</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1504,6 +1570,105 @@
     // 영상자료실 팝업 닫기
     function closeVideoLibraryPopup() {
       document.getElementById('videoLibraryModal').style.display = 'none';
+    }
+    
+    // ==================== 제휴/건의 ====================
+    function showSuggestionModal() {
+      console.log('📮 제휴/건의 팝업 표시');
+      const modal = document.getElementById('suggestionModal');
+      modal.style.display = 'flex';
+      
+      // 로그인 사용자 정보 자동 입력
+      if (currentUser && currentUserData) {
+        document.getElementById('suggestName').value = currentUserData.name || '';
+        document.getElementById('suggestPhone').value = currentUserData.phone || '';
+        document.getElementById('suggestEmail').value = currentUserData.email || currentUser.email || '';
+        document.getElementById('suggestCompany').value = currentUserData.company || '';
+      }
+    }
+    
+    function closeSuggestionModal() {
+      document.getElementById('suggestionModal').style.display = 'none';
+      document.getElementById('suggestionForm').reset();
+    }
+    
+    async function submitSuggestion(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('suggestSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '제출 중...';
+      
+      try {
+        const type = document.getElementById('suggestType').value;
+        const title = document.getElementById('suggestTitle').value.trim();
+        const name = document.getElementById('suggestName').value.trim();
+        const company = document.getElementById('suggestCompany').value.trim();
+        const phone = document.getElementById('suggestPhone').value.trim();
+        const email = document.getElementById('suggestEmail').value.trim();
+        const content = document.getElementById('suggestContent').value.trim();
+        const fileInput = document.getElementById('suggestFile');
+        
+        // 필수값 검증
+        if (!type || !title || !name || !company || !phone || !content) {
+          alert('필수 항목을 모두 입력해주세요.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = '제출하기';
+          return;
+        }
+        
+        // 첨부파일 처리
+        let fileUrl = '';
+        let fileName = '';
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          
+          // 파일 크기 검증 (10MB)
+          if (file.size > 10 * 1024 * 1024) {
+            alert('파일 크기는 10MB 이하만 가능합니다.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '제출하기';
+            return;
+          }
+          
+          // Firebase Storage에 업로드
+          const timestamp = Date.now();
+          const storageRef = firebase.storage().ref();
+          const fileRef = storageRef.child(`suggestions/${timestamp}_${file.name}`);
+          await fileRef.put(file);
+          fileUrl = await fileRef.getDownloadURL();
+          fileName = file.name;
+        }
+        
+        // Firestore에 저장
+        const suggestionData = {
+          type: type,
+          title: title,
+          name: name,
+          company: company,
+          phone: phone,
+          email: email || '',
+          content: content,
+          fileUrl: fileUrl,
+          fileName: fileName,
+          status: '대기',
+          userId: currentUser ? currentUser.uid : '',
+          userLoginId: currentUserData ? currentUserData.userId : '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await firebase.firestore().collection('suggestions').add(suggestionData);
+        
+        alert('✅ 제출이 완료되었습니다.\n검토 후 연락드리겠습니다.');
+        closeSuggestionModal();
+        
+      } catch (err) {
+        console.error('제휴/건의 제출 오류:', err);
+        alert('오류가 발생했습니다: ' + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '제출하기';
+      }
     }
     
     // 공지사항 팝업 표시

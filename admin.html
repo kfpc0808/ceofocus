@@ -201,7 +201,7 @@
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="users" onclick="switchTab('users')"><i class="ph ph-users"></i> 회원 관리</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="payment" onclick="switchTab('payment')"><i class="ph ph-credit-card"></i> 결제·포인트</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="prompts" onclick="switchTab('prompts')"><i class="ph ph-robot"></i> AI 프롬프트</a></li>
-            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="suggestions" onclick="switchTab('suggestions')"><i class="ph ph-mailbox"></i> 제안/건의</a></li>
+            <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="suggestions" onclick="switchTab('suggestions')"><i class="ph ph-mailbox"></i> 제휴/건의</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="notices" onclick="switchTab('notices')"><i class="ph ph-megaphone"></i> 공지사항</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="admins" onclick="switchTab('admins')"><i class="ph ph-user-gear"></i> 관리자 관리</a></li>
             <li class="nav-item"><a href="javascript:void(0)" class="nav-link" data-tab="terms" onclick="switchTab('terms')"><i class="ph ph-scroll"></i> 약관 및 정책</a></li>
@@ -446,12 +446,23 @@
             </div>
         </div>
 
-        <!-- 5. 제안/건의 -->
+        <!-- 5. 제휴/건의 -->
         <div id="suggestions" class="tab-content">
-            <div class="page-header"><h1 class="page-title">제안 / 건의사항</h1></div>
+            <div class="page-header"><h1 class="page-title">제휴 / 건의</h1></div>
             <div class="card">
-                <div class="table-controls"><h3>목록</h3><button class="btn btn-success btn-sm" onclick="exportTableToExcel('suggestTable', '제안건의')">엑셀</button></div>
-                <div class="table-container"><table id="suggestTable"><thead><tr><th>No</th><th>제목</th><th>작성자</th><th>작성일</th><th>상태</th><th>관리</th></tr></thead><tbody id="suggestionTableBody"></tbody></table></div>
+                <div class="table-controls">
+                    <h3>목록</h3>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="suggestionStatusFilter" onchange="renderSuggestions()" style="padding: 0.4rem 0.8rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">전체 상태</option>
+                            <option value="대기">대기</option>
+                            <option value="검토중">검토중</option>
+                            <option value="완료">완료</option>
+                        </select>
+                        <button class="btn btn-success btn-sm" onclick="exportTableToExcel('suggestTable', '제휴건의')">엑셀</button>
+                    </div>
+                </div>
+                <div class="table-container"><table id="suggestTable"><thead><tr><th>No</th><th>유형</th><th>제목</th><th>성명</th><th>회사명</th><th>연락처</th><th>작성일</th><th>상태</th><th>관리</th></tr></thead><tbody id="suggestionTableBody"></tbody></table></div>
                 <div id="suggestionPagination" class="pagination"></div>
             </div>
         </div>
@@ -1039,6 +1050,7 @@
                 
                 // ★ 추가 리스너들
                 initNoticesListener();  // 공지사항
+                initSuggestionsListener(); // 제휴/건의
                 initAdminsListener();   // 관리자
                 loadPrompts();          // AI 프롬프트 로드
                 initPaymentsListener(); // 결제 내역
@@ -2203,6 +2215,156 @@
             }
         }
 
+        // ==================== 제휴/건의 관리 ====================
+        let suggestions = [];
+        let suggestionPage = 1;
+        const suggestionPerPage = 15;
+        
+        // 제휴/건의 리스너
+        function initSuggestionsListener() {
+            db.collection('suggestions').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+                suggestions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderSuggestions();
+            }, (error) => {
+                console.error('suggestions 리스너 오류:', error);
+            });
+        }
+        
+        // 제휴/건의 렌더링
+        function renderSuggestions() {
+            const tbody = document.getElementById('suggestionTableBody');
+            if (!tbody) return;
+            
+            // 상태 필터
+            const statusFilter = document.getElementById('suggestionStatusFilter')?.value || '';
+            let filtered = suggestions;
+            if (statusFilter) {
+                filtered = suggestions.filter(s => s.status === statusFilter);
+            }
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">등록된 제휴/건의가 없습니다.</td></tr>';
+                document.getElementById('suggestionPagination').innerHTML = '';
+                return;
+            }
+            
+            // 페이지네이션
+            const totalPages = Math.ceil(filtered.length / suggestionPerPage);
+            const start = (suggestionPage - 1) * suggestionPerPage;
+            const pageData = filtered.slice(start, start + suggestionPerPage);
+            
+            tbody.innerHTML = pageData.map((s, idx) => {
+                const no = filtered.length - start - idx;
+                const date = s.createdAt ? new Date(s.createdAt.seconds * 1000).toLocaleDateString('ko-KR') : '-';
+                const statusBadge = {
+                    '대기': '<span class="badge badge-warning">대기</span>',
+                    '검토중': '<span class="badge badge-info">검토중</span>',
+                    '완료': '<span class="badge badge-success">완료</span>'
+                }[s.status] || '<span class="badge">대기</span>';
+                
+                return `<tr>
+                    <td>${no}</td>
+                    <td><span class="badge" style="background:#6c757d;">${s.type || '-'}</span></td>
+                    <td style="text-align:left; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.title || '-'}</td>
+                    <td>${s.name || '-'}</td>
+                    <td>${s.company || '-'}</td>
+                    <td>${s.phone || '-'}</td>
+                    <td>${date}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewSuggestion('${s.id}')">상세</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSuggestion('${s.id}')">삭제</button>
+                    </td>
+                </tr>`;
+            }).join('');
+            
+            // 페이지네이션 렌더링
+            let paginationHtml = '';
+            if (totalPages > 1) {
+                paginationHtml += `<button ${suggestionPage === 1 ? 'disabled' : ''} onclick="suggestionPage = ${suggestionPage - 1}; renderSuggestions();">Prev</button>`;
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHtml += `<button class="${suggestionPage === i ? 'active' : ''}" onclick="suggestionPage = ${i}; renderSuggestions();">${i}</button>`;
+                }
+                paginationHtml += `<button ${suggestionPage === totalPages ? 'disabled' : ''} onclick="suggestionPage = ${suggestionPage + 1}; renderSuggestions();">Next</button>`;
+            }
+            document.getElementById('suggestionPagination').innerHTML = paginationHtml;
+        }
+        
+        // 제휴/건의 상세보기
+        function viewSuggestion(docId) {
+            const s = suggestions.find(item => item.id === docId);
+            if (!s) return;
+            
+            const date = s.createdAt ? new Date(s.createdAt.seconds * 1000).toLocaleString('ko-KR') : '-';
+            const fileLink = s.fileUrl ? `<a href="${s.fileUrl}" target="_blank" style="color:#3182ce;">${s.fileName || '첨부파일 보기'}</a>` : '없음';
+            
+            const html = `
+                <div style="padding: 1rem;">
+                    <table style="width:100%; border-collapse: collapse;">
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600; width:100px;">유형</td><td style="padding:0.5rem;">${s.type || '-'}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600;">제목</td><td style="padding:0.5rem;">${s.title || '-'}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600;">성명</td><td style="padding:0.5rem;">${s.name || '-'}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600;">회사명</td><td style="padding:0.5rem;">${s.company || '-'}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600;">연락처</td><td style="padding:0.5rem;">${s.phone || '-'}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600;">이메일</td><td style="padding:0.5rem;">${s.email || '-'}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600;">작성일</td><td style="padding:0.5rem;">${date}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600;">첨부파일</td><td style="padding:0.5rem;">${fileLink}</td></tr>
+                        <tr><td style="padding:0.5rem; background:#f8f9fa; font-weight:600; vertical-align:top;">내용</td><td style="padding:0.5rem;"><pre style="white-space:pre-wrap; font-family:inherit; margin:0;">${s.content || '-'}</pre></td></tr>
+                    </table>
+                    <div style="margin-top:1rem; display:flex; gap:0.5rem; align-items:center;">
+                        <label style="font-weight:600;">상태 변경:</label>
+                        <select id="suggestionStatusSelect" style="padding:0.4rem; border:1px solid #ddd; border-radius:4px;">
+                            <option value="대기" ${s.status === '대기' ? 'selected' : ''}>대기</option>
+                            <option value="검토중" ${s.status === '검토중' ? 'selected' : ''}>검토중</option>
+                            <option value="완료" ${s.status === '완료' ? 'selected' : ''}>완료</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="updateSuggestionStatus('${docId}')">저장</button>
+                    </div>
+                </div>
+            `;
+            
+            openAlertModal('📮 제휴/건의 상세', html);
+        }
+        
+        // 상태 업데이트
+        async function updateSuggestionStatus(docId) {
+            const newStatus = document.getElementById('suggestionStatusSelect').value;
+            try {
+                await db.collection('suggestions').doc(docId).update({ 
+                    status: newStatus,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert('✅ 상태가 변경되었습니다.');
+                closeAlertModal();
+            } catch (err) {
+                console.error('상태 변경 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
+        // 제휴/건의 삭제
+        async function deleteSuggestion(docId) {
+            if (!confirm('이 항목을 삭제하시겠습니까?')) return;
+            try {
+                // 첨부파일이 있으면 Storage에서도 삭제
+                const s = suggestions.find(item => item.id === docId);
+                if (s && s.fileUrl) {
+                    try {
+                        const fileRef = firebase.storage().refFromURL(s.fileUrl);
+                        await fileRef.delete();
+                    } catch (e) {
+                        console.log('파일 삭제 실패 (이미 삭제됨):', e);
+                    }
+                }
+                
+                await db.collection('suggestions').doc(docId).delete();
+                alert('✅ 삭제되었습니다.');
+            } catch (err) {
+                console.error('삭제 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
         // ==================== 공지사항 관리 ====================
         let notices = [];
         
