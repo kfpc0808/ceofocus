@@ -297,6 +297,35 @@
                 </div>
                 <div id="userPagination" class="pagination"></div>
             </div>
+            
+            <!-- 탈퇴 관리 -->
+            <div class="card" style="border-left: 4px solid #dc3545;">
+                <div class="table-controls">
+                    <h3>🚪 탈퇴 요청 회원</h3>
+                    <div style="display:flex; gap:0.5rem; align-items: center;">
+                        <span id="withdrawnCount" style="color: #dc3545; font-weight: 600;">0명</span>
+                        <button class="btn btn-success btn-sm" onclick="exportTableToExcel('withdrawnTable', '탈퇴요청회원')" style="margin-left: 1rem;"><i class="ph ph-file-xls"></i> 엑셀</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="withdrawnTable">
+                        <thead>
+                            <tr>
+                                <th>탈퇴요청일</th>
+                                <th>아이디</th>
+                                <th>성명</th>
+                                <th>이메일</th>
+                                <th>잔여포인트</th>
+                                <th>가입일</th>
+                                <th>처리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="withdrawnTableBody">
+                            <tr><td colspan="7" style="text-align:center; color:#999; padding:2rem;">탈퇴 요청 내역이 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- 3. 결제 및 포인트 관리 -->
@@ -1141,8 +1170,8 @@
             // 2. 전체 회원 목록 (관리자 제외)
             state.users.search = userSearchEl ? userSearchEl.value : '';
             
-            // ★ 관리자(admin)는 회원 목록에서 제외
-            const nonAdminUsers = users.filter(u => u.type !== 'admin' && u.role !== 'admin' && !u.isAdmin);
+            // ★ 관리자(admin)와 탈퇴 회원은 회원 목록에서 제외
+            const nonAdminUsers = users.filter(u => u.type !== 'admin' && u.role !== 'admin' && !u.isAdmin && u.status !== 'withdrawn');
             const uRes = filterAndPaginate(nonAdminUsers, 'users');
             
             uBody.innerHTML = uRes.paged.map((u, idx) => {
@@ -1155,13 +1184,15 @@
                 }
                 
                 // ★ 상태 한글 표시
-                const statusMap = {'active': '활성', 'inactive': '비활성', 'suspended': '정지'};
+                const statusMap = {'active': '활성', 'inactive': '비활성', 'suspended': '정지', 'withdrawn': '탈퇴'};
                 const statusText = statusMap[u.status] || u.status || '-';
                 let statusBadge = '<span class="badge badge-green">' + statusText + '</span>';
                 if (u.status === 'inactive') {
                     statusBadge = '<span class="badge badge-gray">' + statusText + '</span>';
                 } else if (u.status === 'suspended') {
                     statusBadge = '<span class="badge badge-red">' + statusText + '</span>';
+                } else if (u.status === 'withdrawn') {
+                    statusBadge = '<span class="badge" style="background:#333;color:#fff;">' + statusText + '</span>';
                 }
                 
                 // ★ 유형 표시 (한글 그대로 또는 매핑)
@@ -1203,6 +1234,76 @@
             
             // 대시보드 회원 수 업데이트 (관리자 제외)
             document.getElementById('statTotalUsers').innerText = nonAdminUsers.length;
+            
+            // 탈퇴 요청 회원 렌더링
+            renderWithdrawnUsers();
+        }
+        
+        // --- 탈퇴 요청 회원 렌더링 ---
+        function renderWithdrawnUsers() {
+            const tbody = document.getElementById('withdrawnTableBody');
+            if (!tbody) return;
+            
+            // 탈퇴 요청 회원 필터 (status === 'withdrawn')
+            const withdrawnUsers = users.filter(u => u.status === 'withdrawn');
+            
+            // 카운트 업데이트
+            const countEl = document.getElementById('withdrawnCount');
+            if (countEl) countEl.textContent = withdrawnUsers.length + '명';
+            
+            if (withdrawnUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999; padding:2rem;">탈퇴 요청 내역이 없습니다.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = withdrawnUsers.map(u => {
+                const withdrawnDate = u.withdrawnAt ? new Date(u.withdrawnAt.seconds * 1000).toLocaleDateString('ko-KR') : '-';
+                const createdDate = u.createdAt ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('ko-KR') : '-';
+                const balance = u.paidBalance ? u.paidBalance.toLocaleString() : '0';
+                
+                return `<tr>
+                    <td>${withdrawnDate}</td>
+                    <td>${u.userId || '-'}</td>
+                    <td>${u.name || '-'}</td>
+                    <td>${u.withdrawnEmail || u.email || '-'}</td>
+                    <td style="color:#dc3545; font-weight:600;">${balance} P</td>
+                    <td>${createdDate}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="confirmDeleteUser('${u.id}', '${u.userId}')" style="color:#dc3545; border-color:#dc3545;">
+                            <i class="ph ph-trash"></i> 완전삭제
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        // --- 탈퇴 회원 완전 삭제 확인 ---
+        async function confirmDeleteUser(docId, userId) {
+            if (!confirm(`정말로 "${userId}" 회원의 모든 데이터를 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+            
+            try {
+                // Firestore에서 회원 문서 삭제
+                await db.collection('users').doc(docId).delete();
+                
+                // pointLogs에서 해당 회원의 기록도 삭제 (선택적)
+                const logsSnapshot = await db.collection('pointLogs').where('uid', '==', docId).get();
+                const batch = db.batch();
+                logsSnapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                
+                alert(`"${userId}" 회원의 데이터가 완전히 삭제되었습니다.`);
+                
+                // 목록 새로고침
+                location.reload();
+                
+            } catch (error) {
+                console.error('회원 삭제 오류:', error);
+                alert('회원 삭제 중 오류가 발생했습니다: ' + error.message);
+            }
         }
 
         // --- 5. 로직 함수: 승인 및 등록 ---
