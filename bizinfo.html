@@ -903,6 +903,7 @@
         <button class="btn-main btn-small" onclick="signOut()">로그아웃</button>
       </div>
       <h1 style="flex: 1; text-align: center;">🏢 기업 지원사업 AI 매칭</h1>
+      <button class="btn-main btn-small" onclick="showUsageGuide()">이용가이드</button>
       <button class="btn-main btn-small" onclick="goHome()">메인</button>
     </div>
 
@@ -4970,8 +4971,9 @@
       const countText = document.getElementById('program-count');
       if (bar) bar.style.width = percent + '%';
       if (text) text.textContent = Math.round(percent) + '%';
-      if (countText && analyzed !== undefined) {
-        countText.textContent = `📋 ${analyzed || 0}/${total || 0}개 공고 분석 완료`;
+      // total이 0이면 "불러오는 중" 유지, 0보다 크면 진행 상황 표시
+      if (countText && analyzed !== undefined && total > 0) {
+        countText.textContent = `📋 ${analyzed || 0}/${total}개 공고 분석 완료`;
       }
     }
     
@@ -5449,6 +5451,41 @@
       });
       
       console.log('✅ AI 상세분석 결과 표시 완료:', detailResults.length, '개');
+    }
+    
+    // 이용가이드 표시
+    async function showUsageGuide() {
+      try {
+        const doc = await db.collection('settings').doc('terms').get();
+        let guideContent = '';
+        
+        if (doc.exists && doc.data().usageGuide) {
+          guideContent = doc.data().usageGuide;
+        } else {
+          guideContent = '이용가이드가 아직 등록되지 않았습니다.\n\n관리자에게 문의해 주세요.';
+        }
+        
+        // 모달 생성
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+        modal.innerHTML = `
+          <div style="background:white;border-radius:12px;max-width:800px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="padding:1rem 1.5rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;background:#f8f9fa;">
+              <h2 style="margin:0;font-size:1.2rem;color:#333;">📖 이용가이드</h2>
+              <button onclick="this.closest('div[style*=\"position:fixed\"]').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>
+            </div>
+            <div style="padding:1.5rem;overflow-y:auto;flex:1;line-height:1.8;white-space:pre-wrap;font-size:0.95rem;">${guideContent.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
+            <div style="padding:1rem 1.5rem;border-top:1px solid #eee;text-align:center;background:#f8f9fa;">
+              <button onclick="this.closest('div[style*=\"position:fixed\"]').remove()" style="background:#FF8802;color:white;border:none;padding:0.6rem 2rem;border-radius:6px;font-size:0.95rem;cursor:pointer;">확인</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        
+      } catch (error) {
+        console.error('이용가이드 로드 오류:', error);
+        alert('이용가이드를 불러오는 중 오류가 발생했습니다.');
+      }
     }
     
     function goHome() {
@@ -6628,10 +6665,10 @@
             </div>
           </div>
           
-          <!-- 한국에프피센터 맞춤 분석 -->
+          <!-- 한국산업 맞춤 분석 -->
           <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #f59e0b;">
             <h4 style="color: #d97706; margin: 0 0 1rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span>🏢</span> 한국에프피센터 맞춤 분석
+              <span>🏢</span> 한국산업 맞춤 분석
             </h4>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -6667,7 +6704,7 @@
               <span>💡</span> 추천 의견
             </h4>
             <p style="color: #333; margin: 0; line-height: 1.9; font-size: 0.95rem;">
-              추천. 한국에프피센터는 본 사업의 필수 자격요건(수도권 소재, 중소기업)을 모두 충족하며, 재무 상태 및 기업부설연구소 보유 등 기본적인 강점을 가지고 있습니다. 다만, 사회적기업이나 장애인기업이 아니므로 우선 모집 대상에 해당하지 않아 선착순 경쟁에서 불리할 수 있습니다. 따라서 신청 기간 시작과 동시에 신속하게 접수하는 것이 매우 중요합니다. 또한, 컨설팅 신청서의 '컨설팅 요청내용'을 당사의 전문 서비스와 공공조달 시장의 연계성을 명확히 보여줄 수 있도록 구체적이고 전략적으로 작성하여, 컨설팅을 통해 얻고자 하는 목표와 기대 효과를 강력하게 어필해야 합니다. 이러한 준비를 통해 충분히 선정 가능성이 있으며, 무료로 제공되는 공공조달 전문가 컨설팅은 기업의 새로운 성장 동력을 확보하는 데 큰 도움이 될 것입니다.
+              추천. 한국산업은 본 사업의 필수 자격요건(수도권 소재, 중소기업)을 모두 충족하며, 재무 상태 및 기업부설연구소 보유 등 기본적인 강점을 가지고 있습니다. 다만, 사회적기업이나 장애인기업이 아니므로 우선 모집 대상에 해당하지 않아 선착순 경쟁에서 불리할 수 있습니다. 따라서 신청 기간 시작과 동시에 신속하게 접수하는 것이 매우 중요합니다. 또한, 컨설팅 신청서의 '컨설팅 요청내용'을 당사의 전문 서비스와 공공조달 시장의 연계성을 명확히 보여줄 수 있도록 구체적이고 전략적으로 작성하여, 컨설팅을 통해 얻고자 하는 목표와 기대 효과를 강력하게 어필해야 합니다. 이러한 준비를 통해 충분히 선정 가능성이 있으며, 무료로 제공되는 공공조달 전문가 컨설팅은 기업의 새로운 성장 동력을 확보하는 데 큰 도움이 될 것입니다.
             </p>
           </div>
           

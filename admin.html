@@ -450,7 +450,7 @@
         <div id="terms" class="tab-content">
             <div class="page-header"><h1 class="page-title">약관 및 정책 관리</h1></div>
             <div class="card">
-                <div class="tab-btn-group"><button class="btn btn-primary active" id="btn-term-service" onclick="loadTerm('service')">서비스 이용약관</button><button class="btn btn-outline" id="btn-term-privacy" onclick="loadTerm('privacy')">개인정보 처리방침</button><button class="btn btn-outline" id="btn-term-marketing" onclick="loadTerm('marketing')">마케팅 수신동의</button></div>
+                <div class="tab-btn-group"><button class="btn btn-primary active" id="btn-term-service" onclick="loadTerm('service')">서비스 이용약관</button><button class="btn btn-outline" id="btn-term-privacy" onclick="loadTerm('privacy')">개인정보 처리방침</button><button class="btn btn-outline" id="btn-term-marketing" onclick="loadTerm('marketing')">마케팅 수신동의</button><button class="btn btn-outline" id="btn-term-guide" onclick="loadTerm('usageGuide')">이용가이드</button></div>
                 <div class="form-group"><textarea class="form-control" id="termEditor" style="min-height: 500px; font-family: monospace; line-height: 1.6;"></textarea></div>
                 <button class="btn btn-primary" onclick="saveTerms()">저장</button>
             </div>
@@ -1560,6 +1560,7 @@
             document.getElementById('btn-term-service').className = t === 'service' ? 'btn btn-primary' : 'btn btn-outline';
             document.getElementById('btn-term-privacy').className = t === 'privacy' ? 'btn btn-primary' : 'btn btn-outline';
             document.getElementById('btn-term-marketing').className = t === 'marketing' ? 'btn btn-primary' : 'btn btn-outline';
+            document.getElementById('btn-term-guide').className = t === 'usageGuide' ? 'btn btn-primary' : 'btn btn-outline';
             
             try {
                 const doc = await db.collection('settings').doc('terms').get();
