@@ -721,7 +721,7 @@
                     <h4 style="margin-bottom:0.5rem; font-size:0.9rem; color:var(--accent-color);">[관리자 설정]</h4>
                     <div class="form-row"><div class="form-group"><label>아이디 (생성)</label><input type="text" id="newUserId" class="form-control" placeholder="예: FP2025001" required></div><div class="form-group"><label>비밀번호 (6자 이상)</label><input type="text" id="newUserPw" class="form-control" value="123456" required minlength="6"></div></div>
                     <div class="form-row">
-                        <div class="form-group"><label>회원 유형</label><select id="newUserType" class="form-control"><option value="inner">이너</option><option value="branch">지사장</option><option value="consultant_home">컨홈</option><option value="non_member">비회원</option></select></div>
+                        <div class="form-group"><label>회원 유형</label><select id="newUserType" class="form-control"><option value="inner">이너</option><option value="branch">지사장</option><option value="consultant_home">컨홈</option><option value="non_member">비회원</option><option value="freeuser">무료사용자 (API 무제한)</option></select></div>
                         <div class="form-group"><label>가입비</label><select id="regFeeStatus" class="form-control"><option value="unpaid" selected style="color:red;">미입금</option><option value="paid" style="color:green;">입금완료</option></select></div>
                     </div>
                     <div class="form-group"><label>월 결제액</label><input type="number" id="newUserFee" class="form-control" value="10000"></div>
@@ -877,6 +877,7 @@
                                 <option value="이너">이너</option>
                                 <option value="컨홈">컨홈</option>
                                 <option value="비회원">비회원</option>
+                                <option value="무료사용자">무료사용자 (API 무제한)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1409,6 +1410,21 @@
                 // UID를 문서 ID로 사용하여 저장 (login.html과 연동)
                 await db.collection('users').doc(uid).set(newUser);
                 console.log('✅ Firestore users 저장 완료');
+                
+                // ★ 무료사용자면 admins 컬렉션에도 추가
+                if (newUser.type === 'freeuser') {
+                    const adminData = {
+                        userId: userId,
+                        name: newUser.name,
+                        password: password,
+                        role: 'freeuser',
+                        isAdmin: false,
+                        expireDate: null,  // 관리자 관리에서 설정
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    await db.collection('admins').doc(uid).set(adminData);
+                    console.log('✅ admins 컬렉션에 무료사용자 추가');
+                }
 
                 // ★ 3. 승인 건이면 요청 내역 삭제
                 if(docId) {
@@ -1945,6 +1961,36 @@
                 
                 // Firestore 업데이트
                 await db.collection('users').doc(docId).update(updateData);
+                
+                // ★ 무료사용자 ↔ admins 컬렉션 동기화
+                const newType = updateData.type;
+                const user = users.find(u => u.id === docId);
+                const oldType = user ? user.type : '';
+                
+                if (newType === '무료사용자' && oldType !== '무료사용자') {
+                    // 무료사용자로 변경됨 → admins에 추가
+                    const adminData = {
+                        userId: user.userId,
+                        name: updateData.name,
+                        password: updateData.password || user.password || '',
+                        role: 'freeuser',
+                        isAdmin: false,
+                        expireDate: null,  // 관리자 관리에서 설정
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    await db.collection('admins').doc(docId).set(adminData);
+                    console.log('✅ admins 컬렉션에 무료사용자 추가:', user.userId);
+                } else if (newType !== '무료사용자' && oldType === '무료사용자') {
+                    // 무료사용자에서 다른 유형으로 변경됨 → admins에서 제거
+                    await db.collection('admins').doc(docId).delete().catch(() => {});
+                    console.log('✅ admins 컬렉션에서 제거:', user.userId);
+                } else if (newType === '무료사용자') {
+                    // 무료사용자 유지 → admins 정보 업데이트
+                    await db.collection('admins').doc(docId).update({
+                        name: updateData.name,
+                        password: updateData.password || user.password || ''
+                    }).catch(() => {});
+                }
                 
                 alert('✅ 회원 정보가 저장되었습니다.');
                 closeUserEditModal();
