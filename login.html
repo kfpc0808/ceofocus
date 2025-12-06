@@ -405,6 +405,22 @@
                 <div class="account-info-detail">예금주: (주)한국FP센터</div>
             </div>
 
+            <!-- 약관 동의 -->
+            <div class="terms-agreement" style="margin: 1.5rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="margin-bottom: 0.8rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="agreeTerms" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-size: 0.9rem;">[필수] <a href="javascript:void(0)" onclick="showTermsPopup('service')" style="color: #4a90d9; text-decoration: underline;">서비스 이용약관</a>에 동의합니다</span>
+                    </label>
+                </div>
+                <div>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="agreePrivacy" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-size: 0.9rem;">[필수] <a href="javascript:void(0)" onclick="showTermsPopup('privacy')" style="color: #4a90d9; text-decoration: underline;">개인정보 처리방침</a>에 동의합니다</span>
+                    </label>
+                </div>
+            </div>
+
             <button type="submit" class="btn">신청서 제출</button>
             <button type="button" class="btn btn-back" onclick="switchView('login')">로그인 화면으로</button>
         </form>
@@ -563,6 +579,12 @@
             const position = document.getElementById('regPosition').value.trim();
             const region = document.getElementById('regRegion').value;
 
+            // 약관 동의 체크
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+            const agreePrivacy = document.getElementById('agreePrivacy').checked;
+            if (!agreeTerms) { showCustomAlert("서비스 이용약관에 동의해주세요.", "agreeTerms"); return; }
+            if (!agreePrivacy) { showCustomAlert("개인정보 처리방침에 동의해주세요.", "agreePrivacy"); return; }
+
             if (!name) { showCustomAlert("성명을 입력해주세요.", "regName"); return; }
             if (!company) { showCustomAlert("소속을 입력해주세요.", "regCompany"); return; }
             if (!position) { showCustomAlert("직함을 입력해주세요.", "regPosition"); return; }
@@ -678,6 +700,47 @@
                 showMessage('pwMessage', '오류가 발생했습니다.', 'error');
             }
         });
+
+        // 약관 팝업 표시
+        async function showTermsPopup(type) {
+            const title = type === 'service' ? '서비스 이용약관' : '개인정보 처리방침';
+            let content = '';
+            
+            try {
+                const doc = await db.collection('settings').doc('terms').get();
+                if (doc.exists) {
+                    content = doc.data()[type] || '약관 내용이 등록되지 않았습니다.';
+                } else {
+                    content = '약관 내용이 등록되지 않았습니다.';
+                }
+            } catch (error) {
+                console.error('약관 로드 오류:', error);
+                content = '약관을 불러오는 중 오류가 발생했습니다.';
+            }
+            
+            // 팝업 생성
+            const popup = document.createElement('div');
+            popup.id = 'termsPopup';
+            popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;';
+            popup.innerHTML = `
+                <div style="background:#fff;border-radius:12px;max-width:600px;width:100%;max-height:80vh;display:flex;flex-direction:column;">
+                    <div style="padding:1.2rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="margin:0;color:#1a2a3a;font-size:1.1rem;">${title}</h3>
+                        <button onclick="closeTermsPopup()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>
+                    </div>
+                    <div style="padding:1.2rem;overflow-y:auto;flex:1;white-space:pre-wrap;line-height:1.8;color:#333;font-size:0.9rem;">${content}</div>
+                    <div style="padding:1rem;border-top:1px solid #eee;text-align:center;">
+                        <button onclick="closeTermsPopup()" style="background:#1a2a3a;color:#fff;border:none;padding:0.7rem 2rem;border-radius:6px;cursor:pointer;">확인</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+        }
+        
+        function closeTermsPopup() {
+            const popup = document.getElementById('termsPopup');
+            if (popup) popup.remove();
+        }
     </script>
 </body>
 </html>

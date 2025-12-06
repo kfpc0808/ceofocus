@@ -999,6 +999,10 @@
         <h2>📦 SNS백업</h2>
         <p>소셜미디어 콘텐츠 보관</p>
       </div>
+      <div class="program-card" onclick="showVideoLibraryPopup()">
+        <h2>🎬 영상자료실</h2>
+        <p>교육 및 참고 영상</p>
+      </div>
     </div>
 
     <!-- AI 생성형 도구 -->
@@ -1061,6 +1065,23 @@
       <div class="sns-modal-footer">
         <button class="sns-btn-start" onclick="startSNSBackup()">지금 바로 백업하세요! 🚀</button>
         <button class="sns-btn-close" onclick="closeSNSBackupPopup()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 영상자료실 팝업 -->
+  <div id="videoLibraryModal" class="sns-modal">
+    <div class="sns-modal-content" style="max-width: 700px;">
+      <div class="sns-modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h2>🎬 영상자료실</h2>
+      </div>
+      <div class="sns-modal-body" style="padding: 1.5rem;">
+        <div id="videoLibraryList" style="min-height: 200px;">
+          <p style="color: #666; text-align: center;">영상 목록을 불러오는 중...</p>
+        </div>
+      </div>
+      <div class="sns-modal-footer">
+        <button class="sns-btn-close" onclick="closeVideoLibraryPopup()">닫기</button>
       </div>
     </div>
   </div>
@@ -1355,11 +1376,48 @@
       window.location.href = 'snsbackup.html';
     }
     
+    // 영상자료실 팝업 표시
+    async function showVideoLibraryPopup() {
+      console.log('🎬 영상자료실 팝업 표시');
+      const modal = document.getElementById('videoLibraryModal');
+      modal.style.display = 'flex';
+      
+      // Firebase에서 영상 목록 로드
+      try {
+        const doc = await db.collection('settings').doc('videoLibrary').get();
+        const listContainer = document.getElementById('videoLibraryList');
+        
+        if (doc.exists && doc.data().links && doc.data().links.length > 0) {
+          const links = doc.data().links;
+          listContainer.innerHTML = links.map(link => `
+            <a href="${link.url}" target="_blank" style="display:block;padding:1rem;margin-bottom:0.8rem;background:#f8f9fa;border-radius:8px;text-decoration:none;color:#333;transition:all 0.2s;border-left:4px solid #667eea;">
+              <div style="font-weight:600;font-size:1rem;margin-bottom:0.3rem;">🎥 ${link.title}</div>
+              <div style="font-size:0.8rem;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${link.url}</div>
+            </a>
+          `).join('');
+        } else {
+          listContainer.innerHTML = '<p style="color:#666;text-align:center;padding:2rem;">등록된 영상이 없습니다.</p>';
+        }
+      } catch (error) {
+        console.error('영상자료 로드 오류:', error);
+        document.getElementById('videoLibraryList').innerHTML = '<p style="color:#e74c3c;text-align:center;">영상 목록을 불러오는 중 오류가 발생했습니다.</p>';
+      }
+    }
+    
+    // 영상자료실 팝업 닫기
+    function closeVideoLibraryPopup() {
+      document.getElementById('videoLibraryModal').style.display = 'none';
+    }
+    
     // 팝업 외부 클릭 시 닫기
     window.onclick = function(event) {
-      const modal = document.getElementById('snsBackupModal');
-      if (event.target === modal) {
+      const snsModal = document.getElementById('snsBackupModal');
+      const videoModal = document.getElementById('videoLibraryModal');
+      if (event.target === snsModal) {
         closeSNSBackupPopup();
+      }
+      if (event.target === videoModal) {
+        closeVideoLibraryPopup();
       }
     }
     

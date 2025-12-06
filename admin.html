@@ -454,6 +454,17 @@
                 <div class="form-group"><textarea class="form-control" id="termEditor" style="min-height: 500px; font-family: monospace; line-height: 1.6;"></textarea></div>
                 <button class="btn btn-primary" onclick="saveTerms()">저장</button>
             </div>
+            
+            <!-- 영상자료실 관리 -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="ph ph-video"></i> 영상자료실 관리</h3>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">사용자 메인화면의 '영상자료실' 버튼 클릭 시 표시될 영상 링크를 관리합니다.</p>
+                
+                <div id="videoLinksContainer" style="margin-bottom: 1rem;"></div>
+                
+                <button class="btn btn-outline" onclick="addVideoLink()" style="margin-bottom: 1rem;"><i class="ph ph-plus"></i> 영상 추가</button>
+                <button class="btn btn-primary" onclick="saveVideoLinks()">영상자료 저장</button>
+            </div>
         </div>
 
         <!-- 기업마당 캐시 관리 -->
@@ -1473,8 +1484,101 @@
             else if (stateKey === 'dailyUsage') renderDailyUsage();
         }
         function runBatchSimulation() { alert('결제 시뮬레이션'); }
-        function loadTerm(t) { document.getElementById('termEditor').value = t + ' 내용...'; }
-        function saveTerms() { alert('저장됨'); }
+        let currentTermType = 'service';
+        async function loadTerm(t) {
+            currentTermType = t;
+            // 버튼 스타일 업데이트
+            document.getElementById('btn-term-service').className = t === 'service' ? 'btn btn-primary' : 'btn btn-outline';
+            document.getElementById('btn-term-privacy').className = t === 'privacy' ? 'btn btn-primary' : 'btn btn-outline';
+            document.getElementById('btn-term-marketing').className = t === 'marketing' ? 'btn btn-primary' : 'btn btn-outline';
+            
+            try {
+                const doc = await db.collection('settings').doc('terms').get();
+                if (doc.exists && doc.data()[t]) {
+                    document.getElementById('termEditor').value = doc.data()[t];
+                } else {
+                    document.getElementById('termEditor').value = '';
+                }
+            } catch (error) {
+                console.error('약관 로드 오류:', error);
+                document.getElementById('termEditor').value = '약관을 불러오는 중 오류가 발생했습니다.';
+            }
+        }
+        async function saveTerms() {
+            const content = document.getElementById('termEditor').value;
+            try {
+                await db.collection('settings').doc('terms').set({
+                    [currentTermType]: content
+                }, { merge: true });
+                alert('저장되었습니다.');
+            } catch (error) {
+                console.error('약관 저장 오류:', error);
+                alert('저장 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 영상자료실 관리
+        let videoLinks = [];
+        
+        async function loadVideoLinks() {
+            try {
+                const doc = await db.collection('settings').doc('videoLibrary').get();
+                if (doc.exists && doc.data().links) {
+                    videoLinks = doc.data().links;
+                } else {
+                    videoLinks = [];
+                }
+                renderVideoLinks();
+            } catch (error) {
+                console.error('영상자료 로드 오류:', error);
+            }
+        }
+        
+        function renderVideoLinks() {
+            const container = document.getElementById('videoLinksContainer');
+            if (videoLinks.length === 0) {
+                container.innerHTML = '<p style="color:#999;font-size:0.9rem;">등록된 영상이 없습니다. "영상 추가" 버튼을 클릭하여 추가해주세요.</p>';
+                return;
+            }
+            container.innerHTML = videoLinks.map((link, index) => `
+                <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center;">
+                    <input type="text" class="form-control" placeholder="영상 제목" value="${link.title || ''}" onchange="updateVideoLink(${index}, 'title', this.value)" style="flex:1;">
+                    <input type="text" class="form-control" placeholder="YouTube/영상 URL" value="${link.url || ''}" onchange="updateVideoLink(${index}, 'url', this.value)" style="flex:2;">
+                    <button class="btn btn-outline" onclick="removeVideoLink(${index})" style="padding:0.4rem 0.8rem;color:#e74c3c;border-color:#e74c3c;"><i class="ph ph-trash"></i></button>
+                </div>
+            `).join('');
+        }
+        
+        function addVideoLink() {
+            videoLinks.push({ title: '', url: '' });
+            renderVideoLinks();
+        }
+        
+        function updateVideoLink(index, field, value) {
+            videoLinks[index][field] = value;
+        }
+        
+        function removeVideoLink(index) {
+            videoLinks.splice(index, 1);
+            renderVideoLinks();
+        }
+        
+        async function saveVideoLinks() {
+            // 빈 항목 제거
+            const validLinks = videoLinks.filter(link => link.title && link.url);
+            try {
+                await db.collection('settings').doc('videoLibrary').set({
+                    links: validLinks,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                videoLinks = validLinks;
+                renderVideoLinks();
+                alert('영상자료가 저장되었습니다.');
+            } catch (error) {
+                console.error('영상자료 저장 오류:', error);
+                alert('저장 중 오류가 발생했습니다.');
+            }
+        }
         
         // ★ 전체 선택/해제
         function toggleSelectAllUsers() {
@@ -3144,6 +3248,9 @@
                 
                 // ★ 회원 수정 폼 이벤트 핸들러
                 document.getElementById('userEditForm').addEventListener('submit', saveUserEdit);
+                
+                // ★ 영상자료실 로드
+                loadVideoLinks();
                 
             } catch(e) {
                 console.error('window.onload 오류:', e);
