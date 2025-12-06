@@ -884,7 +884,6 @@
                             <select id="editUserStatus" class="form-control">
                                 <option value="active">활성</option>
                                 <option value="inactive">비활성</option>
-                                <option value="suspended">정지</option>
                             </select>
                         </div>
                     </div>
@@ -1170,8 +1169,8 @@
             // 2. 전체 회원 목록 (관리자 제외)
             state.users.search = userSearchEl ? userSearchEl.value : '';
             
-            // ★ 관리자(admin)와 탈퇴 회원은 회원 목록에서 제외
-            const nonAdminUsers = users.filter(u => u.type !== 'admin' && u.role !== 'admin' && !u.isAdmin && u.status !== 'withdrawn');
+            // ★ 관리자(admin)만 회원 목록에서 제외 (탈퇴 회원은 표시)
+            const nonAdminUsers = users.filter(u => u.type !== 'admin' && u.role !== 'admin' && !u.isAdmin);
             const uRes = filterAndPaginate(nonAdminUsers, 'users');
             
             uBody.innerHTML = uRes.paged.map((u, idx) => {
@@ -1183,14 +1182,12 @@
                     feeBadge = '<span class="badge badge-gray">면제</span>';
                 }
                 
-                // ★ 상태 한글 표시
-                const statusMap = {'active': '활성', 'inactive': '비활성', 'suspended': '정지', 'withdrawn': '탈퇴'};
+                // ★ 상태 한글 표시 (활성, 비활성, 탈퇴)
+                const statusMap = {'active': '활성', 'inactive': '비활성', 'withdrawn': '탈퇴'};
                 const statusText = statusMap[u.status] || u.status || '-';
                 let statusBadge = '<span class="badge badge-green">' + statusText + '</span>';
                 if (u.status === 'inactive') {
                     statusBadge = '<span class="badge badge-gray">' + statusText + '</span>';
-                } else if (u.status === 'suspended') {
-                    statusBadge = '<span class="badge badge-red">' + statusText + '</span>';
                 } else if (u.status === 'withdrawn') {
                     statusBadge = '<span class="badge" style="background:#333;color:#fff;">' + statusText + '</span>';
                 }
@@ -1279,30 +1276,39 @@
         
         // --- 탈퇴 회원 완전 삭제 확인 ---
         async function confirmDeleteUser(docId, userId) {
-            if (!confirm(`정말로 "${userId}" 회원의 모든 데이터를 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+            if (!confirm(`정말로 "${userId}" 회원의 모든 데이터를 완전히 삭제하시겠습니까?\n\n⚠️ 삭제되는 데이터:\n- Firebase 계정 (로그인 정보)\n- 회원 정보\n- 포인트 이용 내역\n\n이 작업은 되돌릴 수 없습니다.`)) {
                 return;
             }
             
             try {
-                // Firestore에서 회원 문서 삭제
-                await db.collection('users').doc(docId).delete();
+                // Cloud Functions 호출하여 완전 삭제 (asia-northeast3 region 사용)
+                const deleteUserCompletely = functions.httpsCallable('deleteUserCompletely');
+                const result = await deleteUserCompletely({ uid: docId, userId: userId });
                 
-                // pointLogs에서 해당 회원의 기록도 삭제 (선택적)
-                const logsSnapshot = await db.collection('pointLogs').where('uid', '==', docId).get();
-                const batch = db.batch();
-                logsSnapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                
-                alert(`"${userId}" 회원의 데이터가 완전히 삭제되었습니다.`);
-                
-                // 목록 새로고침
-                location.reload();
+                if (result.data.success) {
+                    alert(`✅ "${userId}" 회원의 모든 데이터가 완전히 삭제되었습니다.\n\n- Firebase 계정 삭제 완료\n- 회원 정보 삭제 완료\n- 포인트 기록 삭제 완료`);
+                    location.reload();
+                }
                 
             } catch (error) {
                 console.error('회원 삭제 오류:', error);
-                alert('회원 삭제 중 오류가 발생했습니다: ' + error.message);
+                
+                // Cloud Functions 미배포 시 기존 방식으로 fallback
+                if (error.code === 'functions/not-found' || error.message.includes('not found')) {
+                    alert('⚠️ Cloud Functions가 배포되지 않았습니다.\n\nFirestore 데이터만 삭제합니다.\nFirebase Auth 계정은 Firebase Console에서 수동 삭제가 필요합니다.');
+                    
+                    // 기존 방식으로 Firestore만 삭제
+                    await db.collection('users').doc(docId).delete();
+                    const logsSnapshot = await db.collection('pointLogs').where('uid', '==', docId).get();
+                    const batch = db.batch();
+                    logsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    
+                    alert(`"${userId}" 회원의 Firestore 데이터가 삭제되었습니다.`);
+                    location.reload();
+                } else {
+                    alert('회원 삭제 중 오류가 발생했습니다: ' + (error.message || error));
+                }
             }
         }
 
@@ -1767,29 +1773,44 @@
                 return;
             }
             
-            const userIds = Array.from(checkboxes).map(cb => cb.dataset.userid).join(', ');
+            const userList = Array.from(checkboxes).map(cb => ({
+                uid: cb.value,
+                userId: cb.dataset.userid
+            }));
+            const userIds = userList.map(u => u.userId).join(', ');
             
-            if (!confirm(`선택한 ${checkboxes.length}명의 회원을 삭제하시겠습니까?\n\n대상: ${userIds}`)) return;
+            if (!confirm(`선택한 ${checkboxes.length}명의 회원을 완전히 삭제하시겠습니까?\n\n대상: ${userIds}\n\n⚠️ 삭제되는 데이터:\n- Firebase 계정 (로그인 정보)\n- 회원 정보\n- 포인트 이용 내역`)) return;
             if (!confirm(`⚠️ 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
             
             try {
-                const batch = db.batch();
+                // Cloud Functions 호출하여 완전 삭제 (asia-northeast3 region 사용)
+                const deleteUsersCompletely = functions.httpsCallable('deleteUsersCompletely');
+                const result = await deleteUsersCompletely({ users: userList });
                 
-                checkboxes.forEach(cb => {
-                    const docRef = db.collection('users').doc(cb.value);
-                    batch.delete(docRef);
-                });
+                if (result.data.success) {
+                    alert(`✅ ${result.data.message}\n\n모든 데이터가 완전히 삭제되었습니다.`);
+                    location.reload();
+                }
                 
-                await batch.commit();
+            } catch (error) {
+                console.error('일괄 삭제 오류:', error);
                 
-                alert(`✅ ${checkboxes.length}명의 회원이 삭제되었습니다.\n\n⚠️ Firebase Auth 계정은 Console에서 직접 삭제해주세요.`);
-                
-                // 전체 선택 해제
-                document.getElementById('selectAllUsers').checked = false;
-                
-            } catch (err) {
-                console.error('일괄 삭제 오류:', err);
-                alert('오류 발생: ' + err.message);
+                // Cloud Functions 미배포 시 기존 방식으로 fallback
+                if (error.code === 'functions/not-found' || error.message.includes('not found')) {
+                    alert('⚠️ Cloud Functions가 배포되지 않았습니다.\n\nFirestore 데이터만 삭제합니다.\nFirebase Auth 계정은 Firebase Console에서 수동 삭제가 필요합니다.');
+                    
+                    const batch = db.batch();
+                    checkboxes.forEach(cb => {
+                        const docRef = db.collection('users').doc(cb.value);
+                        batch.delete(docRef);
+                    });
+                    await batch.commit();
+                    
+                    alert(`✅ ${checkboxes.length}명의 Firestore 데이터가 삭제되었습니다.`);
+                    location.reload();
+                } else {
+                    alert('오류 발생: ' + (error.message || error));
+                }
             }
         }
         

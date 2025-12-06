@@ -680,6 +680,14 @@
 
                 const userData = userDoc.data();
                 
+                // ★ 회원 상태 체크 (비활성, 탈퇴 회원 로그인 차단)
+                if (userData.status === 'inactive' || userData.status === 'withdrawn') {
+                    await auth.signOut();
+                    hideLoading();
+                    showMessage('loginMessage', '이용이 정지되었습니다. 관리자에게 문의하여 주시기 바랍니다.', 'error');
+                    return;
+                }
+                
                 if (userData.role === 'admin') {
                     localStorage.setItem('adminLoggedIn', 'true');
                     window.location.href = 'admin.html';
