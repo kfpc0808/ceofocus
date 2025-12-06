@@ -1586,7 +1586,8 @@
             tbody.innerHTML = pageData.map(u => {
                 const userId = u.id;
                 const userInfo = users.find(user => user.id === userId);
-                const userName = userInfo?.name || userId;
+                const userName = userInfo?.name || '삭제회원';
+                const displayId = userInfo ? userId : '(삭제됨)';
                 const summaryUsed = u.summaryCount || 0;
                 const summaryRemain = Math.max(0, DAILY_LIMIT - summaryUsed);
                 const detailUsed = u.detailCount || 0;
@@ -1594,7 +1595,7 @@
                 const lastUsed = u.date || '-';
                 
                 return `<tr>
-                    <td>${userId}</td>
+                    <td>${displayId}</td>
                     <td>${userName}</td>
                     <td><span style="color:${summaryUsed >= DAILY_LIMIT ? 'red' : 'blue'}">${summaryUsed}회</span></td>
                     <td>${summaryRemain}회</td>
@@ -1673,8 +1674,9 @@
             }
             
             tbody.innerHTML = data.map(row => {
-                const userId = (row.email || '').split('@')[0] || row.uid;
-                const userName = row.name || users.find(u => u.id === row.uid)?.name || userId;
+                const userInfo = users.find(u => u.id === row.uid);
+                const userId = userInfo ? ((row.email || '').split('@')[0] || row.uid) : '(삭제됨)';
+                const userName = row.name || userInfo?.name || '삭제회원';
                 const total = row.summaryAmount + row.detailAmount;
                 
                 return `<tr>
@@ -3555,8 +3557,8 @@
                     const data = doc.data();
                     
                     // users 컬렉션에서 회원 정보 가져오기
-                    let userName = '-';
-                    let userEmail = uid;  // 기본값은 UID
+                    let userName = '삭제회원';
+                    let userEmail = '(삭제됨)';
                     
                     try {
                         const userDoc = await db.collection('users').doc(uid).get();
