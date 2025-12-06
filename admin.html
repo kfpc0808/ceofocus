@@ -2624,14 +2624,10 @@
         
         // 마감 공고 삭제 함수
         async function deleteClosedPrograms() {
-            if (!confirm('마감된 공고를 모두 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
-                return;
-            }
-            
             const btn = document.getElementById('btn-delete-closed');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 삭제 중...';
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 확인 중...';
             
             try {
                 addCacheLog('마감 공고 조회 중...', 'info');
@@ -2650,12 +2646,14 @@
                     const data = doc.data();
                     const period = data.applicationPeriod || '';
                     
+                    // 기간이 없거나 ~ 없으면 삭제 안 함 (안전)
                     if (!period || !period.includes('~')) {
-                        closedIds.push(doc.id); // 기간 없으면 마감으로 간주
-                        return;
+                        return; // 스킵
                     }
                     
                     const endDateStr = period.split('~')[1].trim();
+                    
+                    // 종료일이 8자리 이상이어야 파싱 가능
                     if (endDateStr.length >= 8) {
                         const endDate = new Date(
                             endDateStr.substring(0, 4) + '-' +
@@ -2663,17 +2661,30 @@
                             endDateStr.substring(6, 8)
                         );
                         
-                        if (endDate < today) {
+                        // 유효한 날짜이고 오늘보다 이전이면 마감
+                        if (!isNaN(endDate.getTime()) && endDate < today) {
                             closedIds.push(doc.id);
                         }
                     }
                 });
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
                 
                 if (closedIds.length === 0) {
                     addCacheLog('삭제할 마감 공고가 없습니다.', 'info');
                     alert('삭제할 마감 공고가 없습니다.');
                     return;
                 }
+                
+                // 삭제 전 확인 (개수 표시)
+                if (!confirm(`마감된 공고 ${closedIds.length}개를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                    addCacheLog('삭제 취소됨', 'info');
+                    return;
+                }
+                
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> 삭제 중...';
                 
                 addCacheLog(`마감 공고 ${closedIds.length}개 삭제 시작...`, 'info');
                 
