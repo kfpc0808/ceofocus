@@ -373,6 +373,20 @@
       grid-column: 1 / -1;
     }
     
+    /* 모바일에서만 full-width 적용 */
+    @media (max-width: 599px) {
+      .form-grid .mobile-full-width {
+        grid-column: 1 / -1;
+      }
+    }
+    
+    /* PC/태블릿에서 헤더 버튼 우측 정렬 */
+    @media (min-width: 600px) {
+      .header-buttons {
+        justify-content: flex-end !important;
+      }
+    }
+    
     @media (min-width: 600px) {
       .form-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -897,7 +911,7 @@
 
   <div class="container" id="main-content" style="display: none;">
     <div class="header" style="flex-direction: column; gap: 0; align-items: center;">
-      <div style="display: flex; justify-content: center; gap: 0.5rem; width: 100%;">
+      <div class="header-buttons" style="display: flex; justify-content: center; gap: 0.5rem; width: 100%;">
         <button id="connection-status-btn" class="btn-main btn-small" style="background: #28a745;">
           <span style="font-size: 0.9rem;">✓</span> 로컬저장
         </button>
@@ -999,7 +1013,7 @@
           </div>
         </div>
         
-        <div class="form-group full-width">
+        <div class="form-group mobile-full-width">
           <label>개업연월일(사업자등록증) <span class="required">*</span></label>
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <input type="date" id="establish-date" required onchange="calculateBusinessAge()" style="flex: 1; min-width: 150px;">
