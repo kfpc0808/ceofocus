@@ -5457,31 +5457,58 @@
     // 이용가이드 표시
     async function showUsageGuide() {
       try {
+        console.log('📖 이용가이드 로드 시작...');
         const doc = await firebase.firestore().collection('settings').doc('terms').get();
+        console.log('📖 문서 존재:', doc.exists);
+        
         let guideContent = '';
         
         if (doc.exists && doc.data().usageGuide) {
           guideContent = doc.data().usageGuide;
+          console.log('📖 이용가이드 내용 길이:', guideContent.length);
         } else {
           guideContent = '이용가이드가 아직 등록되지 않았습니다.\n\n관리자에게 문의해 주세요.';
+          console.log('📖 이용가이드 없음 - 기본 메시지 표시');
         }
         
         // 모달 생성
         const modal = document.createElement('div');
+        modal.id = 'usage-guide-modal';
         modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;';
-        modal.innerHTML = `
-          <div style="background:white;border-radius:12px;max-width:800px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;">
-            <div style="padding:1rem 1.5rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;background:#f8f9fa;">
-              <h2 style="margin:0;font-size:1.2rem;color:#333;">📖 이용가이드</h2>
-              <button onclick="this.closest('div[style*=\"position:fixed\"]').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>
-            </div>
-            <div style="padding:1.5rem;overflow-y:auto;flex:1;line-height:1.8;white-space:pre-wrap;font-size:0.95rem;">${guideContent.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
-            <div style="padding:1rem 1.5rem;border-top:1px solid #eee;text-align:center;background:#f8f9fa;">
-              <button onclick="this.closest('div[style*=\"position:fixed\"]').remove()" style="background:#FF8802;color:white;border:none;padding:0.6rem 2rem;border-radius:6px;font-size:0.95rem;cursor:pointer;">확인</button>
-            </div>
-          </div>
-        `;
+        
+        // 내용 HTML 이스케이프 및 줄바꿈 처리
+        const safeContent = guideContent
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br>');
+        
+        modal.innerHTML = '<div style="background:white;border-radius:12px;max-width:800px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;">' +
+          '<div style="padding:1rem 1.5rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;background:#f8f9fa;">' +
+          '<h2 style="margin:0;font-size:1.2rem;color:#333;">📖 이용가이드</h2>' +
+          '<button id="guide-close-x" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>' +
+          '</div>' +
+          '<div style="padding:1.5rem;overflow-y:auto;flex:1;line-height:1.8;font-size:0.95rem;">' + safeContent + '</div>' +
+          '<div style="padding:1rem 1.5rem;border-top:1px solid #eee;text-align:center;background:#f8f9fa;">' +
+          '<button id="guide-close-btn" style="background:#FF8802;color:white;border:none;padding:0.6rem 2rem;border-radius:6px;font-size:0.95rem;cursor:pointer;">확인</button>' +
+          '</div>' +
+          '</div>';
+        
         document.body.appendChild(modal);
+        
+        // 닫기 버튼 이벤트 등록
+        document.getElementById('guide-close-x').onclick = function() {
+          document.getElementById('usage-guide-modal').remove();
+        };
+        document.getElementById('guide-close-btn').onclick = function() {
+          document.getElementById('usage-guide-modal').remove();
+        };
+        // 배경 클릭 시 닫기
+        modal.onclick = function(e) {
+          if (e.target === modal) {
+            modal.remove();
+          }
+        };
         
       } catch (error) {
         console.error('이용가이드 로드 오류:', error);
