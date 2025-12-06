@@ -185,20 +185,20 @@
       margin:0;
     }
     
-    /* 정부지원자금조회 버튼 특별 스타일 */
-    .program-card-bizinfo {
-      background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(56, 142, 60, 0.15) 100%);
-      border: 1px solid rgba(76, 175, 80, 0.4);
+    /* 강조 버튼 스타일 (정부지원자금조회, 재무계산기, 영상자료실) */
+    .program-card-highlight {
+      background: linear-gradient(135deg, rgba(255, 152, 0, 0.25) 0%, rgba(255, 183, 77, 0.2) 100%);
+      border: 1px solid rgba(255, 167, 38, 0.5);
     }
-    .program-card-bizinfo:hover {
-      background: linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(56, 142, 60, 0.25) 100%);
-      border-color: rgba(76, 175, 80, 0.6);
+    .program-card-highlight:hover {
+      background: linear-gradient(135deg, rgba(255, 152, 0, 0.35) 0%, rgba(255, 183, 77, 0.3) 100%);
+      border-color: rgba(255, 167, 38, 0.7);
       transform: translateY(-4px);
-      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+      box-shadow: 0 6px 20px rgba(255, 152, 0, 0.35);
     }
-    .program-card-bizinfo:active {
+    .program-card-highlight:active {
       transform: translateY(-2px);
-      background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(56, 142, 60, 0.3) 100%);
+      background: linear-gradient(135deg, rgba(255, 152, 0, 0.4) 0%, rgba(255, 183, 77, 0.35) 100%);
     }
 
     .dropdown-wrapper {
@@ -864,7 +864,7 @@
           <p>사용하실 프로그램을 선택해주세요.</p>
         </div>
         <div class="top-right-buttons">
-          <button class="btn btn-mypage" onclick="goToMyPage()">My page</button>
+          <button class="btn btn-mypage" onclick="showNoticesPopup()">공지사항</button>
           <button class="btn btn-logout" onclick="logout()">로그아웃</button>
         </div>
       </div>
@@ -890,7 +890,7 @@
       </div>
       
       <div class="dropdown-wrapper">
-        <div class="program-card" onclick="toggleDropdown(event)">
+        <div class="program-card program-card-highlight" onclick="toggleDropdown(event)">
           <h2>재무계산기</h2>
           <p>복리·은퇴·연금·세금 등</p>
         </div>
@@ -991,7 +991,7 @@
         <h2>회원관리</h2>
         <p>고객 Database</p>
       </div>
-      <div class="program-card program-card-bizinfo" onclick="go('bizinfo.html')">
+      <div class="program-card program-card-highlight" onclick="go('bizinfo.html')">
         <h2>🏢 정부지원자금조회</h2>
         <p>AI 맞춤 기업마당 검색</p>
       </div>
@@ -999,7 +999,7 @@
         <h2>📦 SNS백업</h2>
         <p>소셜미디어 콘텐츠 보관</p>
       </div>
-      <div class="program-card" onclick="showVideoLibraryPopup()">
+      <div class="program-card program-card-highlight" onclick="showVideoLibraryPopup()">
         <h2>🎬 영상자료실</h2>
         <p>교육 및 참고 영상</p>
       </div>
@@ -1082,6 +1082,23 @@
       </div>
       <div class="sns-modal-footer">
         <button class="sns-btn-close" onclick="closeVideoLibraryPopup()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공지사항 팝업 -->
+  <div id="noticesModal" class="sns-modal">
+    <div class="sns-modal-content" style="max-width: 700px;">
+      <div class="sns-modal-header" style="background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);">
+        <h2>📢 공지사항</h2>
+      </div>
+      <div class="sns-modal-body" style="padding: 1.5rem; max-height: 60vh; overflow-y: auto;">
+        <div id="noticesList" style="min-height: 200px;">
+          <p style="color: #666; text-align: center;">공지사항을 불러오는 중...</p>
+        </div>
+      </div>
+      <div class="sns-modal-footer">
+        <button class="sns-btn-close" onclick="closeNoticesPopup()">닫기</button>
       </div>
     </div>
   </div>
@@ -1409,15 +1426,55 @@
       document.getElementById('videoLibraryModal').style.display = 'none';
     }
     
+    // 공지사항 팝업 표시
+    async function showNoticesPopup() {
+      console.log('📢 공지사항 팝업 표시');
+      const modal = document.getElementById('noticesModal');
+      modal.style.display = 'flex';
+      
+      // Firebase에서 공지사항 로드
+      try {
+        const snapshot = await db.collection('notices').orderBy('createdAt', 'desc').limit(10).get();
+        const listContainer = document.getElementById('noticesList');
+        
+        if (!snapshot.empty) {
+          const notices = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          listContainer.innerHTML = notices.map(notice => `
+            <div style="padding:1rem;margin-bottom:0.8rem;background:#f8f9fa;border-radius:8px;border-left:4px solid #1a2a3a;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <div style="font-weight:600;font-size:1rem;color:#1a2a3a;">${notice.title || '제목 없음'}</div>
+                <div style="font-size:0.75rem;color:#999;">${notice.createdAt ? new Date(notice.createdAt.toDate()).toLocaleDateString('ko-KR') : ''}</div>
+              </div>
+              <div style="font-size:0.9rem;color:#555;line-height:1.6;white-space:pre-wrap;">${notice.content || ''}</div>
+            </div>
+          `).join('');
+        } else {
+          listContainer.innerHTML = '<p style="color:#666;text-align:center;padding:2rem;">등록된 공지사항이 없습니다.</p>';
+        }
+      } catch (error) {
+        console.error('공지사항 로드 오류:', error);
+        document.getElementById('noticesList').innerHTML = '<p style="color:#e74c3c;text-align:center;">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+      }
+    }
+    
+    // 공지사항 팝업 닫기
+    function closeNoticesPopup() {
+      document.getElementById('noticesModal').style.display = 'none';
+    }
+    
     // 팝업 외부 클릭 시 닫기
     window.onclick = function(event) {
       const snsModal = document.getElementById('snsBackupModal');
       const videoModal = document.getElementById('videoLibraryModal');
+      const noticesModal = document.getElementById('noticesModal');
       if (event.target === snsModal) {
         closeSNSBackupPopup();
       }
       if (event.target === videoModal) {
         closeVideoLibraryPopup();
+      }
+      if (event.target === noticesModal) {
+        closeNoticesPopup();
       }
     }
     
