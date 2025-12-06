@@ -87,8 +87,13 @@
     }
     
     .btn-main.btn-small {
-      padding: 0.35rem 0.5rem;
-      font-size: 0.6rem;
+      padding: 0.5rem 0.8rem;
+      font-size: 0.75rem;
+      height: 32px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .btn-main:hover {
@@ -4051,9 +4056,23 @@
       }
       
       try {
-        // Step 1: 맞춤 지원사업 찾기
-        showLoadingOverlay('🔍 지원사업+분석 진행 중...', '① 기업마당에서 맞춤 공고를 가져오고 있습니다...');
+        // Step 0: 먼저 공고 데이터 로드하여 실제 개수 파악
+        showLoadingOverlay('🔍 지원사업+분석 진행 중...', '① 기업마당에서 공고를 불러오고 있습니다...');
         
+        const allPrograms = await fetchBizInfoPrograms();
+        const openProgramCount = allPrograms ? allPrograms.filter(p => p.isOpen !== false).length : 0;
+        
+        // 실제 공고 수로 로딩 오버레이 업데이트
+        const countText = document.getElementById('program-count');
+        if (countText) {
+          countText.textContent = `📋 ${openProgramCount.toLocaleString()}개 공고 분석 중...`;
+        }
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+          overlay.dataset.totalCount = openProgramCount;
+        }
+        
+        // Step 1: 맞춤 지원사업 찾기
         const results = await clientSideMatching(companyData);
         
         // 결과 저장
@@ -4906,7 +4925,7 @@
     function showLoadingOverlay(title, subtitle, analysisCount = null) {
       // AI 분석 시에는 analysisCount 사용, 아니면 전체 공고수
       const isAIAnalysis = analysisCount !== null;
-      const totalPrograms = isAIAnalysis ? analysisCount : (bizInfoPrograms.length || 500);
+      const totalPrograms = isAIAnalysis ? analysisCount : (bizInfoPrograms.length || 0);
       
       const overlay = document.createElement('div');
       overlay.className = 'loading-overlay';
@@ -4919,7 +4938,7 @@
         <h2>${title}</h2>
         <p>${subtitle}</p>
         <p id="program-count" style="font-size: 0.85rem; color: #ffd27f; margin-top: 0.5rem;">
-          ${isAIAnalysis ? `📋 0/${totalPrograms}개 공고 분석 완료` : `📋 ${totalPrograms}개 공고 분석 중...`}
+          ${isAIAnalysis ? `📋 0/${totalPrograms.toLocaleString()}개 공고 분석 완료` : (totalPrograms > 0 ? `📋 ${totalPrograms.toLocaleString()}개 공고 분석 중...` : `📋 공고 불러오는 중...`)}
         </p>
         <div style="width: 200px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin-top: 0.5rem; overflow: hidden;">
           <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #FF8802, #FFB347); border-radius: 4px; transition: width 0.3s;"></div>
@@ -4971,7 +4990,7 @@
         if (isAIAnalysis) {
           updateProgress(100, totalCount, totalCount);
         } else {
-          const totalPrograms = bizInfoPrograms.length || 500;
+          const totalPrograms = parseInt(overlay.dataset.totalCount) || bizInfoPrograms.length || 0;
           updateProgress(100, totalPrograms, totalPrograms);
         }
         
