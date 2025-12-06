@@ -265,6 +265,41 @@
             cursor: pointer;
             width: 100%;
         }
+        
+        /* 커스텀 체크박스 */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            position: relative;
+        }
+        .checkbox-label input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .checkbox-label .checkmark {
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border: 2px solid #4a90d9;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .checkbox-label input[type="checkbox"]:checked + .checkmark {
+            background: #4a90d9;
+        }
+        .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -408,14 +443,16 @@
             <!-- 약관 동의 -->
             <div class="terms-agreement" style="margin: 1.5rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
                 <div style="margin-bottom: 0.8rem;">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="checkbox" id="agreeTerms" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="agreeTerms">
+                        <span class="checkmark"></span>
                         <span style="font-size: 0.9rem;">[필수] <a href="javascript:void(0)" onclick="showTermsPopup('service')" style="color: #4a90d9; text-decoration: underline;">서비스 이용약관</a>에 동의합니다</span>
                     </label>
                 </div>
                 <div>
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="checkbox" id="agreePrivacy" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="agreePrivacy">
+                        <span class="checkmark"></span>
                         <span style="font-size: 0.9rem;">[필수] <a href="javascript:void(0)" onclick="showTermsPopup('privacy')" style="color: #4a90d9; text-decoration: underline;">개인정보 처리방침</a>에 동의합니다</span>
                     </label>
                 </div>
