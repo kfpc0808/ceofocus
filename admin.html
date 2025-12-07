@@ -400,7 +400,7 @@
                             <button class="btn btn-success btn-sm" onclick="exportTableToExcel('usageTable', '사용분석')"><i class="ph ph-file-xls"></i> 엑셀</button>
                         </div>
                     </div>
-                    <div class="table-container"><table id="usageTable" style="text-align: center;"><thead><tr><th rowspan="2">회원정보</th><th rowspan="2">대상 월</th><th colspan="2" style="background:#e3f2fd">요약분석(500P)</th><th colspan="2" style="background:#e8f5e9">상세분석(2000P)</th><th rowspan="2">총 포인트</th><th rowspan="2">포인트 잔액</th></tr><tr><th>횟수</th><th>차감액</th><th>횟수</th><th>차감액</th></tr></thead><tbody id="usageStatsBody"></tbody></table></div>
+                    <div class="table-container"><table id="usageTable" style="text-align: center; table-layout: fixed; width: 100%;"><colgroup><col style="width:14%"><col style="width:8%"><col style="width:7%"><col style="width:7%"><col style="width:10%"><col style="width:7%"><col style="width:7%"><col style="width:10%"><col style="width:15%"><col style="width:15%"></colgroup><thead><tr><th rowspan="2">회원정보</th><th rowspan="2">대상 월</th><th colspan="3" style="background:#e3f2fd">요약분석(500P)</th><th colspan="3" style="background:#e8f5e9">상세분석(2000P)</th><th rowspan="2">총 차감</th><th rowspan="2">포인트 잔액</th></tr><tr><th>무료</th><th>유료</th><th>차감액</th><th>무료</th><th>유료</th><th>차감액</th></tr></thead><tbody id="usageStatsBody"></tbody></table></div>
                 </div>
             </div>
             <div id="payment-expiration-view" class="sub-tab-content"><div class="card"><p>소멸 예정 목록 (준비중)</p></div></div>
@@ -1688,11 +1688,13 @@
             const tbody = document.getElementById('usageStatsBody');
             if (!tbody) return;
             
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">로딩 중...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#888;">로딩 중...</td></tr>';
             
             try {
                 // userUsage에서 모든 사용 기록 가져오기
                 const usageSnapshot = await db.collection('userUsage').get();
+                
+                const DAILY_FREE_LIMIT = 10; // 일일 무료 한도
                 
                 // 월별, 사용자별로 그룹핑
                 const grouped = {};
@@ -1711,13 +1713,21 @@
                         grouped[key] = {
                             uid: uid,
                             month: month,
-                            summaryCount: 0,
-                            detailCount: 0
+                            summaryFree: 0,
+                            summaryPaid: 0,
+                            detailFree: 0,
+                            detailPaid: 0
                         };
                     }
                     
-                    grouped[key].summaryCount += data.summaryCount || 0;
-                    grouped[key].detailCount += data.detailCount || 0;
+                    // 일별 무료/유료 계산
+                    const dailySummary = data.summaryCount || 0;
+                    const dailyDetail = data.detailCount || 0;
+                    
+                    grouped[key].summaryFree += Math.min(dailySummary, DAILY_FREE_LIMIT);
+                    grouped[key].summaryPaid += Math.max(dailySummary - DAILY_FREE_LIMIT, 0);
+                    grouped[key].detailFree += Math.min(dailyDetail, DAILY_FREE_LIMIT);
+                    grouped[key].detailPaid += Math.max(dailyDetail - DAILY_FREE_LIMIT, 0);
                 });
                 
                 // 사용 기록이 있는 회원 UID 수집
@@ -1738,8 +1748,10 @@
                             grouped[key] = {
                                 uid: user.id,
                                 month: thisMonth,
-                                summaryCount: 0,
-                                detailCount: 0
+                                summaryFree: 0,
+                                summaryPaid: 0,
+                                detailFree: 0,
+                                detailPaid: 0
                             };
                         }
                     }
@@ -1752,7 +1764,7 @@
                 });
                 
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">사용 내역이 없습니다.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#888;">사용 내역이 없습니다.</td></tr>';
                     return;
                 }
                 
@@ -1761,16 +1773,18 @@
                     const userId = userInfo?.userId || userInfo?.email?.split('@')[0] || '(삭제됨)';
                     const userName = userInfo?.name || '삭제회원';
                     const points = userInfo?.points || 0;
-                    const summaryAmount = row.summaryCount * 500;
-                    const detailAmount = row.detailCount * 2000;
+                    const summaryAmount = row.summaryPaid * 500;  // 유료분만 차감
+                    const detailAmount = row.detailPaid * 2000;   // 유료분만 차감
                     const total = summaryAmount + detailAmount;
                     
                     return `<tr>
                         <td>${userId}<br><small style="color:#666">${userName}</small></td>
                         <td>${row.month}</td>
-                        <td style="text-align:center">${row.summaryCount}회</td>
+                        <td style="text-align:center;color:#28a745">${row.summaryFree}회</td>
+                        <td style="text-align:center;color:#dc3545">${row.summaryPaid}회</td>
                         <td style="text-align:right;color:red">${summaryAmount.toLocaleString()}P</td>
-                        <td style="text-align:center">${row.detailCount}회</td>
+                        <td style="text-align:center;color:#28a745">${row.detailFree}회</td>
+                        <td style="text-align:center;color:#dc3545">${row.detailPaid}회</td>
                         <td style="text-align:right;color:red">${detailAmount.toLocaleString()}P</td>
                         <td style="text-align:right;font-weight:bold;color:red">${total.toLocaleString()}P</td>
                         <td style="text-align:right;color:blue">${points.toLocaleString()}P</td>
@@ -1779,7 +1793,7 @@
                 
             } catch (error) {
                 console.error('사용 분석 로드 오류:', error);
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">데이터 로드 실패</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:red;">데이터 로드 실패</td></tr>';
             }
         }
         
