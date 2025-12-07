@@ -1573,7 +1573,7 @@
           🔍 지원사업+분석
         </button>
         <button class="btn-action-primary" onclick="analyzeProgramsDetail()">
-          📊 상세분석(최대10개)
+          📊 상세분석
         </button>
         <button class="btn-action-secondary" onclick="saveCompany()">
           💾 기업정보 저장
@@ -1699,16 +1699,16 @@
           icon: '🟠'
         };
       }
-      // 60 미만: 참고 (협력사 추천)
+      // 60 미만: 낮음
       else {
         return {
-          text: '참고',
+          text: '낮음',
           color: '#333',
           bgColor: 'linear-gradient(135deg, #ffc107, #ffda6a)',
           borderColor: '#ffc107',
           headerBg: '#fff3cd',
           headerText: '#856404',
-          icon: '🟡'
+          icon: '🟠'
         };
       }
     }
@@ -4202,7 +4202,6 @@
           const highCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 80 && (r.fitScore || 0) < 90).length;
           const mediumCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 80).length;
           const lowCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 60 && (r.fitScore || 0) < 70).length;
-          const refCount = allSummaryResults.filter(r => (r.fitScore || 0) < 60).length;
           
           let summaryMsg = '• AI 요약분석: ';
           const parts = [];
@@ -4210,13 +4209,12 @@
           if (highCount > 0) parts.push(`높음 ${highCount}개`);
           if (mediumCount > 0) parts.push(`보통 ${mediumCount}개`);
           if (lowCount > 0) parts.push(`낮음 ${lowCount}개`);
-          if (refCount > 0) parts.push(`참고 ${refCount}개`);
           summaryMsg += parts.join(' + ');
           
           // 🆕 먼저 로딩 닫기
           hideLoadingOverlay();
           
-          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 매우높음/🔵 높음: 신청 권장\n🟣 보통/🟠 낮음: 검토 필요\n🟡 참고: 협력사 추천`);
+          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 매우높음/🔵 높음: 신청 권장\n🟣 보통/🟠 낮음: 검토 필요`);
           
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
           if (newPrograms.length > 0) {
@@ -4432,11 +4430,10 @@
         };
       });
       
-      // 적합도 높은 순으로 정렬 후 PDF 있는 것만 필터링하여 상위 10개
+      // PDF 있는 모든 공고 분석 (관련도 순 정렬)
       const programsWithPDF = programsWithFitScore
         .sort((a, b) => b.fitScore - a.fitScore)
-        .filter(p => p.printFileUrl || p.attachmentUrl)
-        .slice(0, 10);
+        .filter(p => p.printFileUrl || p.attachmentUrl);
       
       console.log('📄 PDF URL 있는 공고 (적합도순):', programsWithPDF.length, '개');
       console.log('📄 상위 3개:', programsWithPDF.slice(0, 3).map(p => ({ name: p.name?.substring(0, 20), fitScore: p.fitScore })));
@@ -4740,10 +4737,9 @@
         `;
         
         // 점수에 따른 등급 및 색상
-        const isEligibleDetail = result.companyFit?.eligible === true;
         const rawScoreDetail = result.companyFit?.fitScore || 0;
-        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
-        const fitScore = isEligibleDetail ? rawScoreDetail : Math.min(rawScoreDetail, 59);
+        // matchScore 기반 관련도 그대로 사용 (강제 변경 없음)
+        const fitScore = rawScoreDetail;
         const grade = getRelevanceGrade(fitScore);
         
         // 🔥 오류 시 제목 변경
@@ -4819,6 +4815,30 @@
           <div style="background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%); padding: 1.2rem; border-radius: 10px; border: 2px solid #667eea;">
             <h6 style="color: #667eea; margin: 0 0 0.8rem 0; font-size: 1rem; font-weight: 700;">🏢 ${lastCompanyData.companyName} 맞춤 분석</h6>
             
+            <!-- 핵심 지표 (가점, 경쟁률) -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+              ${result.companyFit?.expectedBonus ? `<span style="background: #28a745; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">🎁 예상 가점: ${result.companyFit.expectedBonus}</span>` : ''}
+              ${result.companyFit?.competitionLevel ? `<span style="background: #6f42c1; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">📊 경쟁률: ${result.companyFit.competitionLevel}</span>` : ''}
+            </div>
+            
+            <!-- 핵심 어필 포인트 -->
+            ${result.companyFit?.keyAppealPoints?.length > 0 ? `
+            <div style="background: #e8f5e9; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #4caf50;">
+              <p style="color: #2e7d32; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">🎯 평가위원에게 어필할 핵심 포인트</p>
+              <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
+                ${result.companyFit.keyAppealPoints.map(p => `<li>${p}</li>`).join('')}
+              </ul>
+            </div>
+            ` : ''}
+            
+            <!-- 맞춤 심층분석 -->
+            ${result.companyFit?.detailedAnalysis ? `
+            <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #667eea;">
+              <p style="color: #667eea; font-weight: 700; margin: 0 0 0.5rem 0; font-size: 0.95rem;">📋 맞춤 심층분석</p>
+              <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.9rem; white-space: pre-line;">${result.companyFit.detailedAnalysis}</p>
+            </div>
+            ` : ''}
+            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
               <div>
                 <p style="color: #28a745; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">💪 강점</p>
@@ -4834,17 +4854,20 @@
               </div>
             </div>
             
-            <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem;">
-              <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
-                <strong style="color: #667eea;">💡 추천 의견:</strong> ${result.companyFit?.recommendation || '분석 결과를 확인해주세요.'}
-              </p>
-            </div>
-            
-            <div style="background: #fff8e6; padding: 0.8rem; border-radius: 8px;">
-              <p style="color: #856404; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.85rem;">📌 선정 가능성 높이는 팁</p>
+            <!-- 필수 준비 서류 -->
+            ${result.companyFit?.requiredDocuments?.length > 0 ? `
+            <div style="background: #fff3e0; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ff9800;">
+              <p style="color: #e65100; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">📋 반드시 준비할 서류</p>
               <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
-                ${result.companyFit?.preparationTips?.map(t => `<li>${t}</li>`).join('') || '<li>공고문을 상세히 확인하세요</li>'}
+                ${result.companyFit.requiredDocuments.map(d => `<li>${d}</li>`).join('')}
               </ul>
+            </div>
+            ` : ''}
+            
+            <!-- 종합 추천의견 (확대) -->
+            <div style="background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%); padding: 1.2rem; border-radius: 10px; border: 2px solid #667eea; margin-top: 1rem;">
+              <p style="color: #667eea; font-weight: 700; margin: 0 0 0.8rem 0; font-size: 1rem;">💡 종합 추천의견</p>
+              <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.95rem; white-space: pre-line;">${result.companyFit?.recommendation || '분석 결과를 확인해주세요.'}</p>
             </div>
           </div>
         `;
@@ -5142,13 +5165,11 @@
           existingSummary.remove();
         }
         
-        // 적합/부적합 여부 및 관련도 등급 결정
-        const isEligible = result.eligible === true;
-        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
-        const rawScore = result.fitScore || (isEligible ? 85 : 55);
-        const fitScore = isEligible ? rawScore : Math.min(rawScore, 59);
+        // 관련도 등급 결정 (matchScore 기반, 강제 변경 없음)
+        const rawScore = result.fitScore || 70;
+        const fitScore = rawScore;
         
-        // 🔥 수정된 점수를 result 객체에 저장 (정렬에 사용)
+        // 점수를 result 객체에 저장 (정렬에 사용)
         result.fitScore = fitScore;
         
         const grade = getRelevanceGrade(fitScore);
@@ -5174,21 +5195,13 @@
           animation: slideIn 0.5s ease-out;
         `;
         
-        // 분석 이유 HTML 생성
+        // 분석 이유 HTML 생성 (reason 필드 사용)
         let reasonHtml = '';
-        if (isEligible && result.eligibleReason) {
+        if (result.reason) {
           reasonHtml = `
             <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
               <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ${grade.icon} 분석: <span style="font-weight: normal;">${result.eligibleReason}</span>
-              </p>
-            </div>
-          `;
-        } else if (!isEligible && result.ineligibleReason) {
-          reasonHtml = `
-            <div style="background: ${grade.headerBg}; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid ${grade.borderColor};">
-              <p style="color: ${grade.headerText}; margin: 0; font-weight: 600; font-size: 0.9rem;">
-                ${grade.icon} 분석: <span style="font-weight: normal;">${result.ineligibleReason}</span>
+                ${grade.icon} 분석: <span style="font-weight: normal;">${result.reason}</span>
               </p>
             </div>
           `;
@@ -5196,6 +5209,15 @@
         
         // 상태 텍스트 = 관련도 등급
         const statusText = grade.text;
+        
+        // 핵심 정보 박스 (마감일, 지원금액, 핵심요건)
+        const keyInfoHtml = `
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem; flex-wrap: wrap;">
+            ${result.deadline ? `<span style="background: #ff6b6b; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">📅 ${result.deadline}</span>` : ''}
+            ${result.maxAmount ? `<span style="background: #4ecdc4; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">💰 ${result.maxAmount}</span>` : ''}
+            ${result.keyRequirement ? `<span style="background: #667eea; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">🎯 ${result.keyRequirement}</span>` : ''}
+          </div>
+        `;
         
         summaryDiv.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px solid #eee; flex-wrap: wrap; gap: 0.5rem;">
@@ -5212,6 +5234,7 @@
               </button>
             </div>
           </div>
+          ${keyInfoHtml}
           ${reasonHtml}
           <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
             <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.95rem;">
@@ -5341,12 +5364,11 @@
       const headerCard = document.querySelector('#results-section .card');
       if (!headerCard) return;
       
-      // 등급별 개수 계산
+      // 등급별 개수 계산 (4단계: 매우높음/높음/보통/낮음)
       const veryHighCount = summaryResults.filter(r => (r.fitScore || 0) >= 90).length; // 매우높음
       const highCount = summaryResults.filter(r => (r.fitScore || 0) >= 80 && (r.fitScore || 0) < 90).length; // 높음
       const mediumCount = summaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 80).length; // 보통
-      const lowCount = summaryResults.filter(r => (r.fitScore || 0) >= 60 && (r.fitScore || 0) < 70).length; // 낮음
-      const refCount = summaryResults.filter(r => (r.fitScore || 0) < 60).length; // 참고
+      const lowCount = summaryResults.filter(r => (r.fitScore || 0) < 70).length; // 낮음 (70점 미만 모두)
       
       let headerHtml = `<h2>📊 맞춤형 지원사업 추천 결과</h2>`;
       
@@ -5356,7 +5378,6 @@
       if (highCount > 0) grades.push(`🔵 높음 ${highCount}개`);
       if (mediumCount > 0) grades.push(`🟣 보통 ${mediumCount}개`);
       if (lowCount > 0) grades.push(`🟠 낮음 ${lowCount}개`);
-      if (refCount > 0) grades.push(`🟡 참고 ${refCount}개`);
       
       if (grades.length > 0) {
         headerHtml += `
