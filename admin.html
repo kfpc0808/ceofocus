@@ -820,6 +820,17 @@
         </div>
     </div>
 
+    <!-- 모달: 알림/상세보기 -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 id="alertModalTitle" style="margin: 0;"></h3>
+                <button onclick="closeAlertModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="alertModalBody"></div>
+        </div>
+    </div>
+
     <!-- ★ 회원 정보 수정 모달 -->
     <div id="userEditModal" class="modal">
         <div class="modal-content" style="max-width: 700px;">
@@ -1603,8 +1614,10 @@
             let filtered = dailyUsages;
             if (search) {
                 filtered = dailyUsages.filter(u => {
-                    const id = (u.id || '').toLowerCase();
-                    return id.includes(search);
+                    const userInfo = users.find(user => user.id === u.id);
+                    const userId = (userInfo?.userId || '').toLowerCase();
+                    const userName = (userInfo?.name || '').toLowerCase();
+                    return userId.includes(search) || userName.includes(search);
                 });
             }
             
@@ -1616,10 +1629,10 @@
             const DAILY_LIMIT = 10;
             
             tbody.innerHTML = pageData.map(u => {
-                const userId = u.id;
-                const userInfo = users.find(user => user.id === userId);
+                const oderId = u.id;
+                const userInfo = users.find(user => user.id === oderId);
                 const userName = userInfo?.name || '삭제회원';
-                const displayId = userInfo ? userId : '(삭제됨)';
+                const displayId = userInfo?.userId || userInfo?.email?.split('@')[0] || '(삭제됨)';
                 const summaryUsed = u.summaryCount || 0;
                 const summaryRemain = Math.max(0, DAILY_LIMIT - summaryUsed);
                 const detailUsed = u.detailCount || 0;
@@ -1735,7 +1748,7 @@
                 
                 // 포인트 잔액이 있는 회원도 포함 (사용기록 없더라도)
                 users.forEach(user => {
-                    if ((user.points || 0) > 0 && !usedUids.has(user.id)) {
+                    if (((user.paidBalance || 0) + (user.points || 0)) > 0 && !usedUids.has(user.id)) {
                         // 이번달 기준으로 추가
                         const now = new Date();
                         const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1772,7 +1785,7 @@
                     const userInfo = users.find(u => u.id === row.uid);
                     const userId = userInfo?.userId || userInfo?.email?.split('@')[0] || '(삭제됨)';
                     const userName = userInfo?.name || '삭제회원';
-                    const points = userInfo?.points || 0;
+                    const points = (userInfo?.paidBalance || 0) + (userInfo?.points || 0);
                     const summaryAmount = row.summaryPaid * 500;  // 유료분만 차감
                     const detailAmount = row.detailPaid * 2000;   // 유료분만 차감
                     const total = summaryAmount + detailAmount;
@@ -1989,7 +2002,7 @@
             document.getElementById('editUserStatus').value = user.status || 'active';
             document.getElementById('editRegFeeStatus').value = user.regFeeStatus || 'unpaid';
             document.getElementById('editMonthlyFee').value = user.monthlyFee || 0;
-            document.getElementById('editPoints').value = user.points || 0;
+            document.getElementById('editPoints').value = (user.paidBalance || 0) + (user.points || 0);
             
             // 비밀번호 힌트 표시
             let pwHint = '';
@@ -2065,7 +2078,8 @@
                     status: document.getElementById('editUserStatus').value,
                     regFeeStatus: document.getElementById('editRegFeeStatus').value,
                     monthlyFee: parseInt(document.getElementById('editMonthlyFee').value) || 0,
-                    points: parseInt(document.getElementById('editPoints').value) || 0,
+                    paidBalance: parseInt(document.getElementById('editPoints').value) || 0,
+                    points: 0,  // paidBalance로 통일, 기존 points는 0으로 초기화
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
@@ -2368,7 +2382,16 @@
             
             tbody.innerHTML = pageData.map((s, idx) => {
                 const no = filtered.length - start - idx;
-                const date = s.createdAt ? new Date(s.createdAt.seconds * 1000).toLocaleDateString('ko-KR') : '-';
+                let date = '-';
+                if (s.createdAt) {
+                    if (s.createdAt.toDate) {
+                        date = s.createdAt.toDate().toLocaleDateString('ko-KR');
+                    } else if (s.createdAt.seconds) {
+                        date = new Date(s.createdAt.seconds * 1000).toLocaleDateString('ko-KR');
+                    } else if (s.createdAt instanceof Date) {
+                        date = s.createdAt.toLocaleDateString('ko-KR');
+                    }
+                }
                 const statusBadge = {
                     '대기': '<span class="badge badge-warning">대기</span>',
                     '검토중': '<span class="badge badge-info">검토중</span>',
@@ -2403,12 +2426,33 @@
             document.getElementById('suggestionPagination').innerHTML = paginationHtml;
         }
         
+        // 알림 모달 열기
+        function openAlertModal(title, content) {
+            document.getElementById('alertModalTitle').innerHTML = title;
+            document.getElementById('alertModalBody').innerHTML = content;
+            document.getElementById('alertModal').style.display = 'flex';
+        }
+        
+        // 알림 모달 닫기
+        function closeAlertModal() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+        
         // 제휴/건의 상세보기
         function viewSuggestion(docId) {
             const s = suggestions.find(item => item.id === docId);
             if (!s) return;
             
-            const date = s.createdAt ? new Date(s.createdAt.seconds * 1000).toLocaleString('ko-KR') : '-';
+            let date = '-';
+            if (s.createdAt) {
+                if (s.createdAt.toDate) {
+                    date = s.createdAt.toDate().toLocaleString('ko-KR');
+                } else if (s.createdAt.seconds) {
+                    date = new Date(s.createdAt.seconds * 1000).toLocaleString('ko-KR');
+                } else if (s.createdAt instanceof Date) {
+                    date = s.createdAt.toLocaleString('ko-KR');
+                }
+            }
             const fileLink = s.fileUrl ? `<a href="${s.fileUrl}" target="_blank" style="color:#3182ce;">${s.fileName || '첨부파일 보기'}</a>` : '없음';
             
             const html = `
