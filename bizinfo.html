@@ -4817,28 +4817,19 @@
             
             <!-- 핵심 지표 (가점, 경쟁률) -->
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-              ${result.companyFit?.expectedBonus ? `<span style="background: #28a745; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">🎁 예상 가점: ${result.companyFit.expectedBonus}</span>` : ''}
-              ${result.companyFit?.competitionLevel ? `<span style="background: #6f42c1; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">📊 경쟁률: ${result.companyFit.competitionLevel}</span>` : ''}
+              ${result.companyFit?.expectedBonus ? `<span style="background: #28a745; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">🎁 ${result.companyFit.expectedBonus}</span>` : ''}
+              ${result.companyFit?.competitionLevel ? `<span style="background: #6f42c1; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">📊 경쟁: ${result.companyFit.competitionLevel}</span>` : ''}
             </div>
             
-            <!-- 핵심 어필 포인트 -->
-            ${result.companyFit?.keyAppealPoints?.length > 0 ? `
-            <div style="background: #e8f5e9; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #4caf50;">
-              <p style="color: #2e7d32; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">🎯 평가위원에게 어필할 핵심 포인트</p>
-              <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
-                ${result.companyFit.keyAppealPoints.map(p => `<li>${p}</li>`).join('')}
-              </ul>
+            <!-- 자격요건 충족 여부 한눈에 보기 -->
+            ${result.companyFit?.fitSummary ? `
+            <div style="background: #e3f2fd; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #2196f3;">
+              <p style="color: #1565c0; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">✅ 자격요건 충족 현황</p>
+              <p style="color: #333; margin: 0; font-size: 0.85rem; line-height: 1.6;">${result.companyFit.fitSummary}</p>
             </div>
             ` : ''}
             
-            <!-- 맞춤 심층분석 -->
-            ${result.companyFit?.detailedAnalysis ? `
-            <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #667eea;">
-              <p style="color: #667eea; font-weight: 700; margin: 0 0 0.5rem 0; font-size: 0.95rem;">📋 맞춤 심층분석</p>
-              <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.9rem; white-space: pre-line;">${result.companyFit.detailedAnalysis}</p>
-            </div>
-            ` : ''}
-            
+            <!-- 강점/보완점 -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
               <div>
                 <p style="color: #28a745; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">💪 강점</p>
@@ -4853,22 +4844,57 @@
                 </ul>
               </div>
             </div>
+          </div>
+          
+          <!-- 🆕 신청 전략 섹션 -->
+          ${result.applicationStrategy ? `
+          <div style="background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%); padding: 1.2rem; border-radius: 10px; border: 2px solid #ff9800; margin-top: 1rem;">
+            <h6 style="color: #e65100; margin: 0 0 0.8rem 0; font-size: 1rem; font-weight: 700;">🎯 실전 신청 전략</h6>
             
-            <!-- 필수 준비 서류 -->
-            ${result.companyFit?.requiredDocuments?.length > 0 ? `
-            <div style="background: #fff3e0; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ff9800;">
-              <p style="color: #e65100; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">📋 반드시 준비할 서류</p>
+            <!-- 핵심 메시지 -->
+            ${result.applicationStrategy.coreMessage ? `
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ff9800;">
+              <p style="color: #e65100; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.85rem;">💬 사업계획서 핵심 메시지</p>
+              <p style="color: #333; margin: 0; font-size: 0.95rem; font-weight: 500; font-style: italic;">"${result.applicationStrategy.coreMessage}"</p>
+            </div>
+            ` : ''}
+            
+            <!-- 어필 포인트 -->
+            ${result.applicationStrategy.keyAppealPoints?.length > 0 ? `
+            <div style="background: #e8f5e9; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #4caf50;">
+              <p style="color: #2e7d32; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">🎯 평가위원에게 어필할 포인트</p>
               <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
-                ${result.companyFit.requiredDocuments.map(d => `<li>${d}</li>`).join('')}
+                ${result.applicationStrategy.keyAppealPoints.map(p => `<li>${p}</li>`).join('')}
               </ul>
             </div>
             ` : ''}
             
-            <!-- 종합 추천의견 (확대) -->
-            <div style="background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%); padding: 1.2rem; border-radius: 10px; border: 2px solid #667eea; margin-top: 1rem;">
-              <p style="color: #667eea; font-weight: 700; margin: 0 0 0.8rem 0; font-size: 1rem;">💡 종합 추천의견</p>
-              <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.95rem; white-space: pre-line;">${result.companyFit?.recommendation || '분석 결과를 확인해주세요.'}</p>
+            <!-- 흔한 실수 -->
+            ${result.applicationStrategy.commonMistakes?.length > 0 ? `
+            <div style="background: #ffebee; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f44336;">
+              <p style="color: #c62828; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">🚫 피해야 할 실수</p>
+              <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
+                ${result.applicationStrategy.commonMistakes.map(m => `<li>${m}</li>`).join('')}
+              </ul>
             </div>
+            ` : ''}
+            
+            <!-- 준비 체크리스트 -->
+            ${result.applicationStrategy.preparationChecklist?.length > 0 ? `
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #2196f3;">
+              <p style="color: #1565c0; font-weight: 600; margin: 0 0 0.3rem 0; font-size: 0.9rem;">📅 준비 체크리스트</p>
+              <ul style="color: #333; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6;">
+                ${result.applicationStrategy.preparationChecklist.map(c => `<li>${c}</li>`).join('')}
+              </ul>
+            </div>
+            ` : ''}
+          </div>
+          ` : ''}
+          
+          <!-- 종합 추천의견 -->
+          <div style="background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%); padding: 1.2rem; border-radius: 10px; border: 2px solid #667eea; margin-top: 1rem;">
+            <p style="color: #667eea; font-weight: 700; margin: 0 0 0.8rem 0; font-size: 1rem;">💡 최종 추천의견</p>
+            <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.95rem; white-space: pre-line;">${result.recommendation || result.companyFit?.recommendation || '분석 결과를 확인해주세요.'}</p>
           </div>
         `;
         
