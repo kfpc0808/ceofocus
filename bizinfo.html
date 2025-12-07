@@ -6207,6 +6207,9 @@
       // 주문번호 생성
       const moid = 'BIZINFO' + Date.now() + Math.random().toString(36).substr(2, 9);
       
+      // 모바일 여부 확인 (iOS Safari 호환성)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
       // INNOPAY 결제창 호출
       if (typeof innopay === 'undefined') {
         alert('결제 모듈을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
@@ -6223,7 +6226,9 @@
         BuyerName: user.displayName || user.email.split('@')[0],
         BuyerEmail: user.email,
         BuyerTel: '01000000000',
-        ResultYN: 'Y'
+        ResultYN: 'Y',
+        MobileYN: isMobile ? 'Y' : 'N',
+        ReturnURL: isMobile ? window.location.origin + '/bizinfo.html?payment=result' : ''
       });
     }
     
