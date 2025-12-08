@@ -5179,7 +5179,7 @@
     }
     
     /**
-     * 상세분석 후 카드 순서 재정렬 (점수 높은 순)
+     * 상세분석 후 카드 순서 재정렬 (상세분석 있는 것 우선)
      */
     function reorderCardsAfterDetailAnalysis(pdfResults) {
       const resultsSection = document.getElementById('results-section');
@@ -5190,22 +5190,35 @@
       
       if (resultCards.length === 0) return;
       
-      // 모든 카드를 점수와 함께 수집
+      // 모든 카드를 상세분석 여부와 점수와 함께 수집
       const scoredCards = resultCards.map(card => {
         const cardId = card.getAttribute('data-program-id');
         const detailResult = pdfResults.find(r => r.programId === cardId);
+        const hasDetail = !!detailResult;
         
-        // 상세분석 점수 우선, 없으면 기본 매칭 점수
-        const fitScore = detailResult?.companyFit?.fitScore || parseInt(card.getAttribute('data-match-score') || '0');
+        // 상세분석 있으면 fitScore, 없으면 matchScore
+        const score = hasDetail 
+          ? (detailResult?.companyFit?.fitScore || 0)
+          : parseInt(card.getAttribute('data-match-score') || '0');
         
-        return { card, score: fitScore };
+        return { card, score, hasDetail };
       });
       
-      // 점수순 정렬 (높은 점수 → 낮은 점수)
-      scoredCards.sort((a, b) => b.score - a.score);
+      // 🔥 정렬: 상세분석 있는 것 우선 → 그 안에서 점수순
+      scoredCards.sort((a, b) => {
+        // 1순위: 상세분석 있는 것 우선
+        if (a.hasDetail && !b.hasDetail) return -1;
+        if (!a.hasDetail && b.hasDetail) return 1;
+        // 2순위: 점수순
+        return b.score - a.score;
+      });
+      
+      // 상세분석 있는 공고 수 계산
+      const detailCount = scoredCards.filter(c => c.hasDetail).length;
+      const noDetailCount = scoredCards.length - detailCount;
       
       // DOM 재배치 및 순위 업데이트
-      scoredCards.forEach(({ card, score }, index) => {
+      scoredCards.forEach(({ card, score, hasDetail }, index) => {
         resultsSection.appendChild(card);
         
         // 순위 업데이트
@@ -5230,9 +5243,23 @@
         if (index === 0) card.classList.add('rank-1');
         else if (index === 1) card.classList.add('rank-2');
         else if (index === 2) card.classList.add('rank-3');
+        
+        // 🔥 상세분석 없는 카드에 안내 메시지 추가
+        const existingNotice = card.querySelector('.no-detail-notice');
+        if (!hasDetail && !existingNotice) {
+          const noticeDiv = document.createElement('div');
+          noticeDiv.className = 'no-detail-notice';
+          noticeDiv.style.cssText = 'background:#f8f8f8; border:1px solid #ddd; border-radius:8px; padding:12px; margin-top:12px;';
+          noticeDiv.innerHTML = `
+            <p style="margin:0; font-weight:bold; color:#333; font-size:0.9rem;">
+              *공고문이 아래한글 또는 이미지(이미지용 pdf파일 포함)인 경우 AI가 분석할 수 없사오니 공고문을 다운받아 검토하여 주시기 바랍니다.
+            </p>
+          `;
+          card.appendChild(noticeDiv);
+        }
       });
       
-      console.log(`✅ 상세분석 후 카드 재정렬 (점수순): ${scoredCards.length}개`);
+      console.log(`✅ 상세분석 후 카드 재정렬: 상세분석 ${detailCount}개 (상위) + 미분석 ${noDetailCount}개 (하위)`);
     }
     
     function showLoadingOverlay(title, subtitle, analysisCount = null) {
