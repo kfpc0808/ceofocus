@@ -4057,9 +4057,10 @@
           score += 25;
           reasons.push(`✅ ${ksicCategory} 업종 관련`);
         }
-        // 일반적인 중소기업/소상공인 대상 공고는 업종 무관으로 통과
-        else if (combinedText.includes('중소기업') || combinedText.includes('소상공인') || 
-                 combinedText.includes('중소벤처') || combinedText.includes('기업지원')) {
+        // 🔥 명시적으로 "업종 무관"인 경우만 통과
+        else if (combinedText.includes('업종 무관') || combinedText.includes('업종 불문') || 
+                 combinedText.includes('전 업종') || combinedText.includes('모든 업종') ||
+                 combinedText.includes('업종 제한 없') || combinedText.includes('업종에 관계없')) {
           industryMatched = true;
           score += 10;
           reasons.push('✅ 전 업종 대상');
