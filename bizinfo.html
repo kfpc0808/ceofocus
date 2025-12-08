@@ -3977,7 +3977,7 @@
       const sortedPrograms = scoredPrograms
         .filter(p => p.matchScore >= 50) // 50점 미만 제외
         .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 15);
+        .slice(0, 50);
       
       console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램`);
       sortedPrograms.slice(0, 5).forEach((p, i) => {
@@ -4475,19 +4475,23 @@
       } : '없음');
       
       // 🆕 요약분석 적합도(fitScore) 순으로 정렬 후 PDF 있는 것 선택
+      // 🔥 최고위 기준: 요약분석 결과가 있는 공고만 대상
       const programsWithFitScore = lastMatchedPrograms.map(p => {
         const summaryResult = lastSummaryResults.find(s => s.programId === p.id || s.id === p.id);
         return {
           ...p,
-          fitScore: summaryResult ? (summaryResult.fitScore || 0) : 0
+          fitScore: summaryResult ? (summaryResult.fitScore || 0) : 0,
+          eligible: summaryResult ? summaryResult.eligible : null,
+          hasSummary: !!summaryResult
         };
       });
       
-      // 적합도 높은 순으로 정렬 후 PDF 있는 것만 필터링하여 상위 10개
+      // 🔥 최고위 기준: 요약분석 결과 기준, fitScore 순 상위 10개
       const programsWithPDF = programsWithFitScore
-        .sort((a, b) => b.fitScore - a.fitScore)
-        .filter(p => p.printFileUrl || p.attachmentUrl)
-        .slice(0, 10);
+        .filter(p => p.hasSummary)  // 요약분석 결과가 있는 공고만
+        .sort((a, b) => b.fitScore - a.fitScore)  // 점수순 정렬
+        .filter(p => p.printFileUrl || p.attachmentUrl)  // PDF 있는 것만
+        .slice(0, 10);  // 최대 10개
       
       console.log('📄 PDF URL 있는 공고 (적합도순):', programsWithPDF.length, '개');
       console.log('📄 상위 3개:', programsWithPDF.slice(0, 3).map(p => ({ name: p.name?.substring(0, 20), fitScore: p.fitScore })));
@@ -5162,13 +5166,13 @@
       result.recommendations.forEach((rec, index) => {
         const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-        // 🔥 초기값은 "분석 대기"로 표시 (AI 분석 후 업데이트됨)
+        const initialGrade = getRelevanceGrade(rec.matchScore);
         
         html += `
           <div class="result-card ${rankClass}" data-program-id="${rec.id || ''}" data-match-score="${rec.matchScore || 0}">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
               <span class="rank">${rankEmoji} ${index + 1}위</span>
-              <span class="match-score" style="font-size: 1rem; font-weight: bold; background: #9e9e9e; color: white; padding: 0.3rem 0.8rem; border-radius: 20px;">분석 대기</span>
+              <span class="match-score" style="font-size: 1rem; font-weight: bold; background: ${initialGrade.bgColor}; color: ${initialGrade.color}; padding: 0.3rem 0.8rem; border-radius: 20px;">관련도: ${initialGrade.text}</span>
             </div>
             
             <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">${rec.name}</h3>
@@ -5404,7 +5408,7 @@
         }
       });
       
-      // 카드 재배치 및 순위 업데이트
+      // 카드 재배치 및 순위 업데이트 (점수순 정렬, 넘버링 정확히)
       sortedCards.forEach(({ card, result }, index) => {
         // 순위 업데이트
         const rankSpan = card.querySelector('.rank');
@@ -5453,7 +5457,7 @@
       const headerCard = document.querySelector('#results-section .card');
       if (!headerCard) return;
       
-      // 등급별 개수 계산
+      // 등급별 개수 계산 (요약분석 결과 전체)
       const veryHighCount = summaryResults.filter(r => (r.fitScore || 0) >= 85).length; // 매우높음
       const highCount = summaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 85).length; // 높음
       const mediumCount = summaryResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length; // 보통
