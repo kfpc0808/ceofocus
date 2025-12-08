@@ -3830,21 +3830,21 @@
         // -----------------------------------------
         // 벤처기업 필수
         if ((combinedText.includes('벤처기업 필수') || combinedText.includes('벤처기업만') || 
-             combinedText.includes('벤처기업에 한')) && companyData.hasVenture !== 'Y') {
+             combinedText.includes('벤처기업에 한')) && companyData.certVenture !== 'Y') {
           console.log(`❌ [인증] ${programName.substring(0, 30)} - 벤처기업 필수`);
           return false;
         }
         
         // 이노비즈 필수
         if ((combinedText.includes('이노비즈 필수') || combinedText.includes('이노비즈만') ||
-             combinedText.includes('이노비즈 기업에 한')) && companyData.hasInnobiz !== 'Y') {
+             combinedText.includes('이노비즈 기업에 한')) && companyData.certInnobiz !== 'Y') {
           console.log(`❌ [인증] ${programName.substring(0, 30)} - 이노비즈 필수`);
           return false;
         }
         
         // 메인비즈 필수
         if ((combinedText.includes('메인비즈 필수') || combinedText.includes('메인비즈만') ||
-             combinedText.includes('메인비즈 기업에 한')) && companyData.hasMainbiz !== 'Y') {
+             combinedText.includes('메인비즈 기업에 한')) && companyData.certMainbiz !== 'Y') {
           console.log(`❌ [인증] ${programName.substring(0, 30)} - 메인비즈 필수`);
           return false;
         }
@@ -3921,6 +3921,7 @@
       
       // ========================================
       // 매칭 점수 계산 (필터링 통과한 공고만)
+      // 🔥 v3.1: 지역/업종 매칭 필수화
       // ========================================
       
       // 2. 희망 지원분야와 매칭
@@ -3930,78 +3931,94 @@
       // 3. 지역 매칭 준비
       const companyRegion = companyData.locationSido || '';
       
-      // 4. 매칭 점수 계산
+      // 4. 매칭 점수 계산 (🔥 기본 점수 0점으로 변경)
       const scoredPrograms = filteredPrograms.map(program => {
-        let score = 50; // 필터 통과했으므로 기본 점수 50점
+        let score = 0;  // 🔥 기본 점수 0점 시작
         let reasons = [];
+        const programName = program.name || '';
+        const organization = program.organization || '';
+        const target = (program.target || '').toLowerCase();
+        const description = (program.description || '').toLowerCase();
+        const combinedText = (programName + ' ' + target + ' ' + description + ' ' + organization).toLowerCase();
+        const hashTags = (program.hashTags || '').toLowerCase();
         
-        // 분야 매칭 (+25점)
+        // ========== 🔥 필수 조건 1: 지역 매칭 ==========
+        const nationalOrgs = ['중소벤처기업부', '산업통상자원부', '과학기술정보통신부', '고용노동부', 
+                            '중소기업진흥공단', '소상공인시장진흥공단', '한국산업기술진흥원',
+                            '창업진흥원', '정보통신산업진흥원', '한국무역협회', '코트라', 'KOTRA',
+                            '한국콘텐츠진흥원', '한국환경산업기술원', '한국에너지공단'];
+        const isNationalProgram = nationalOrgs.some(org => organization.includes(org));
+        const hasNationalKeyword = combinedText.includes('전국') || hashTags.includes('전국');
+        
+        let regionMatched = false;
+        
+        if (isNationalProgram || hasNationalKeyword) {
+          score += 30;  // 전국 대상
+          reasons.push('✅ 전국 대상 사업');
+          regionMatched = true;
+        } else if (companyRegion && 
+                   (combinedText.includes(companyRegion.toLowerCase()) || 
+                    combinedText.includes(companyRegion.replace('특별시','').replace('광역시','').replace('도','').toLowerCase()))) {
+          score += 40;  // 지역 정확 매칭
+          reasons.push(`✅ ${companyRegion} 지역 대상`);
+          regionMatched = true;
+        }
+        
+        // 🔥 지역 매칭 실패 시 점수 0 유지 (나중에 필터링됨)
+        if (!regionMatched) {
+          return {
+            ...program,
+            matchScore: 0,
+            matchReasons: ['❌ 지역 미매칭'],
+            regionFailed: true
+          };
+        }
+        
+        // ========== 업종 매칭 ==========
+        const ksicCategory = getKsicCategory(companyData.ksicCode);
+        if (ksicCategory && combinedText.includes(ksicCategory.toLowerCase())) {
+          score += 20;
+          reasons.push(`✅ ${ksicCategory} 업종 관련`);
+        } else if (combinedText.includes('중소기업') || combinedText.includes('소상공인')) {
+          score += 10;
+          reasons.push('✅ 중소기업 대상');
+        }
+        
+        // ========== 분야 매칭 ==========
         if (hasAllCategory) {
-          score += 15;
+          score += 10;
           reasons.push('✅ 전체 분야 관심');
         } else if (desiredCategories.length > 0) {
           const programCategory = program.category || '';
           if (desiredCategories.some(cat => programCategory.includes(cat))) {
-            score += 25;
+            score += 15;
             reasons.push(`✅ ${programCategory} 분야 일치`);
           }
         }
         
-        // 지역 매칭 로직
-        const organization = program.organization || '';
-        const programName = program.name || '';
-        
-        // 전국 대상 기관
-        const nationalOrgs = ['중소벤처기업부', '산업통상자원부', '과학기술정보통신부', '고용노동부', 
-                            '중소기업진흥공단', '소상공인시장진흥공단', '한국산업기술진흥원',
-                            '창업진흥원', '정보통신산업진흥원', '한국무역협회', '코트라', 'KOTRA'];
-        const isNationalProgram = nationalOrgs.some(org => organization.includes(org));
-        
-        if (isNationalProgram) {
-          score += 10;
-          reasons.push('✅ 전국 대상 사업');
-        } else {
-          score += 15;
-          reasons.push(`✅ ${companyRegion} 지역 기업 대상`);
-        }
-        
-        // 지원대상 키워드 매칭
-        const target = (program.target || '').toLowerCase();
-        const description = (program.description || '').toLowerCase();
-        const combinedText = target + ' ' + description;
-        
-        // 기업 규모 매칭 (+10점)
+        // ========== 기업 규모 매칭 ==========
         if (combinedText.includes('중소기업') || combinedText.includes('소기업')) {
           if (companyData.companySize === '소기업' || companyData.companySize === '중기업' || companyData.companySize === '중소기업') {
-            score += 10;
-            reasons.push('✅ 중소기업 대상');
+            score += 5;
           }
         }
         
-        // 벤처/이노비즈 우대 (+5점)
-        if (combinedText.includes('벤처') && companyData.hasVenture === 'Y') {
+        // ========== 인증 우대 ==========
+        if (combinedText.includes('벤처') && companyData.certVenture === 'Y') {
           score += 5;
           reasons.push('✅ 벤처기업 우대');
         }
-        if (combinedText.includes('이노비즈') && companyData.hasInnobiz === 'Y') {
+        if (combinedText.includes('이노비즈') && companyData.certInnobiz === 'Y') {
           score += 5;
           reasons.push('✅ 이노비즈 우대');
         }
         
-        // 신청 가능 여부 (+5점)
+        // ========== 신청 가능 여부 ==========
         if (program.isOpen) {
           score += 5;
           reasons.push('✅ 현재 신청 가능');
         }
         
-        // 업종 키워드 매칭 (+5점)
-        const ksicCategory = getKsicCategory(companyData.ksicCode);
-        if (ksicCategory && combinedText.includes(ksicCategory)) {
-          score += 5;
-          reasons.push(`✅ ${ksicCategory} 업종 관련`);
-        }
-        
-        // 기본 이유 추가
         if (reasons.length === 0) {
           reasons.push('기본 요건 충족');
         }
@@ -4013,12 +4030,16 @@
         };
       });
       
-      // 5. 점수순 정렬 및 서버 필터링 결과 반환
+      // 5. 🔥 점수 기준: 40점 이상 + 지역 매칭 성공한 것만
       const sortedPrograms = scoredPrograms
-        .filter(p => p.matchScore >= 50) // 50점 미만 제외
+        .filter(p => !p.regionFailed && p.matchScore >= 40)
         .sort((a, b) => b.matchScore - a.matchScore);
       
-      console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램`);
+      // 🔥 지역 미매칭 통계
+      const regionFailedCount = scoredPrograms.filter(p => p.regionFailed).length;
+      const lowScoreCount = scoredPrograms.filter(p => !p.regionFailed && p.matchScore < 40).length;
+      
+      console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램 (지역 미매칭: ${regionFailedCount}개, 저점수: ${lowScoreCount}개 제외)`);
       sortedPrograms.slice(0, 5).forEach((p, i) => {
         console.log(`  ${i + 1}위. ${p.name} (${p.matchScore}점)`);
       });
@@ -4226,7 +4247,7 @@
             // 기존 결과와 병합하여 저장
             lastSummaryResults = [...lastSummaryResults, ...newSummaryResults];
             
-            console.log(`📊 분석 결과: 총 ${data.totalAnalyzed || 0}개 분석 (전체 ${data.totalSearched || 0}개 중 ${data.matchedCount || 0}개 매칭)`);
+            console.log(`📊 분석 결과: 총 ${data.totalAnalyzed || 0}개 분석 (필터링 통과 ${data.matchedCount || 0}개 중 상위 ${data.analyzedCount || data.totalAnalyzed || 0}개)`);
           }
           
           // 전체 결과 (기존 + 신규)를 화면에 표시
@@ -4258,6 +4279,11 @@
           if (mediumCount > 0) parts.push(`보통 ${mediumCount}개`);
           if (lowCount > 0) parts.push(`낮음 ${lowCount}개`);
           summaryMsg += parts.join(' + ');
+          
+          // 🔥 v3.2: 20개 제한 안내
+          if (data.matchedCount > 20) {
+            summaryMsg += `\n\n※ 적합 공고 ${data.matchedCount}개 중 상위 20개만 분석됨`;
+          }
           
           // 🆕 v3.0: 자동 저장 (분석 결과 보호)
           if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
