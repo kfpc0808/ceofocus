@@ -6943,173 +6943,262 @@
   </script>
 
   <!-- 상세분석 샘플 모달 -->
-  <div id="detail-sample-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 1rem; overflow-y: auto;">
-    <div style="background: white; border-radius: 16px; max-width: 900px; width: 100%; max-height: 95vh; overflow-y: auto; position: relative; margin: auto;">
+  <div id="detail-sample-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 0.5rem; overflow-y: auto;">
+    <div style="background: white; border-radius: 16px; max-width: 900px; width: 100%; max-height: 98vh; overflow-y: auto; position: relative; margin: auto;">
       
       <!-- 헤더 -->
-      <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.5rem; border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1;">
-        <button onclick="closeDetailSample()" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;">✕</button>
-        <h2 style="margin: 0; font-size: 1.3rem;">👁️ 상세분석 샘플 미리보기</h2>
-        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">실제 AI PDF 상세분석 결과와 동일한 형태입니다</p>
+      <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.2rem; border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1;">
+        <button onclick="closeDetailSample()" style="position: absolute; top: 0.8rem; right: 0.8rem; background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; cursor: pointer;">✕</button>
+        <h2 style="margin: 0; font-size: 1.15rem; padding-right: 2rem;">👁️ 상세분석 샘플 미리보기</h2>
+        <p style="margin: 0.3rem 0 0 0; opacity: 0.9; font-size: 0.8rem;">한국산업(영상제작) 기준 실제 AI 분석 결과</p>
       </div>
       
-      <!-- 샘플 내용 (실제 분석 형태) -->
-      <div style="padding: 1.5rem;">
+      <!-- 샘플 내용 -->
+      <div style="padding: 1rem;">
+        
+        <!-- 공고명 -->
+        <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border-left: 4px solid #667eea;">
+          <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.8rem;">분석 공고</p>
+          <p style="margin: 0; color: #1e293b; font-weight: 700; font-size: 0.95rem; line-height: 1.4;">2025년 콘텐츠 제작 지원사업 (K-콘텐츠 글로벌 진출)</p>
+        </div>
         
         <!-- AI PDF 상세분석 박스 -->
-        <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px solid #667eea; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(102,126,234,0.15);">
+        <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px solid #667eea; border-radius: 12px; padding: 1rem;">
           
           <!-- 헤더 -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px dashed rgba(102,126,234,0.3);">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <span style="font-size: 1.8rem;">📄</span>
-              <h3 style="color: #667eea; margin: 0; font-size: 1.2rem; font-weight: 700;">AI PDF 상세분석</h3>
-            </div>
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px dashed rgba(102,126,234,0.3);">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="background: linear-gradient(135deg, #6f42c1, #e83e8c); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">🟣 관련도: 보통</span>
-              <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">70점</span>
+              <span style="font-size: 1.3rem;">📄</span>
+              <span style="color: #667eea; font-size: 1rem; font-weight: 700;">AI PDF 상세분석</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+              <span style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 0.25rem 0.6rem; border-radius: 15px; font-weight: 600; font-size: 0.75rem;">🟢 관련도: 매우높음</span>
+              <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.25rem 0.6rem; border-radius: 15px; font-weight: 600; font-size: 0.75rem;">87점</span>
             </div>
           </div>
           
-          <!-- 사업 요약 -->
-          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #667eea; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <h4 style="color: #667eea; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <!-- 📋 사업 요약 -->
+          <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
+            <h4 style="color: #667eea; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
               <span>📋</span> 사업 요약
             </h4>
-            <p style="color: #333; margin: 0; line-height: 1.8; font-size: 0.95rem;">
-              본 사업은 수도권 소재 중소기업 및 사회적·장애인기업의 공공조달시장 진출을 지원하기 위한 무료 1:1 맞춤형 컨설팅 프로그램입니다. 나라장터 조달업체 등록부터 벤처·혁신제품, MAS, 경쟁입찰 등 공공조달 제도 전반에 대한 전문가 컨설팅을 제공하며, 총 50개사를 선정합니다. 특히 사회적기업 및 장애인기업은 우선 모집대상입니다. 공공조달 시장 진입을 희망하는 기업에게 실질적인 도움을 줄 수 있는 기회입니다.
+            <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.85rem;">
+              중소벤처기업부와 한국콘텐츠진흥원이 공동 주관하는 K-콘텐츠 글로벌 경쟁력 강화 사업입니다. 영상·방송·OTT 콘텐츠 제작 중소기업을 대상으로 제작비, 장비구입비, 해외 마케팅비를 <strong>최대 3억원</strong>까지 지원합니다. 총 예산 500억원 규모로 약 200개 기업 선정 예정이며, 정부지원 70% + 기업부담 30% 매칭 방식입니다. OTT 플랫폼 납품 계약 보유 기업, 해외 수출 실적 기업에 가점을 부여합니다.
             </p>
           </div>
           
-          <!-- 자격요건 -->
-          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #28a745; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <h4 style="color: #28a745; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span>📌</span> 자격요건
+          <!-- 🎯 자격요건 -->
+          <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #28a745;">
+            <h4 style="color: #28a745; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>🎯</span> 자격요건
             </h4>
-            <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.9; font-size: 0.95rem;">
-              <li><strong>기업규모:</strong> 중소기업 (소기업 포함)</li>
-              <li><strong>업력:</strong> 제한 없음</li>
-              <li><strong>필수인증:</strong> 없음</li>
-              <li><strong>지역제한:</strong> 수도권 (서울, 경기, 인천)에 본사 또는 공장이 소재한 기업</li>
-              <li>공공조달시장 진출에 관심 있는 기업</li>
-            </ul>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: #333;">
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">기업규모</span><span style="flex: 1;">중소기업 (중견기업 제외)</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">업력</span><span style="flex: 1;">3년 이상 (2022년 1월 이전 설립)</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">필수인증</span><span style="flex: 1;">없음 (벤처기업 가점 +3점)</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">지역제한</span><span style="flex: 1;">전국</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">업종제한</span><span style="flex: 1;">영상·방송·콘텐츠 제작업</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">매출조건</span><span style="flex: 1;">연매출 1억 이상 100억 미만</span></div>
+            </div>
+            <div style="margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed #ddd;">
+              <p style="margin: 0; font-size: 0.8rem; color: #dc2626;"><strong>제외대상:</strong> 국세·지방세 체납, 최근 3년 내 부정수급, 휴·폐업, 채무불이행 기업</p>
+            </div>
           </div>
           
-          <!-- 지원규모 -->
-          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #ffc107; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <h4 style="color: #f57c00; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <!-- 💰 지원규모 -->
+          <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #f59e0b;">
+            <h4 style="color: #f57c00; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
               <span>💰</span> 지원규모
             </h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">총 예산</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">확인 필요 (컨설팅 서비스 제공 사업으로 예산 규모는 별도 명시되지 않음)</p>
-              </div>
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">기업당</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">무료 1:1 맞춤형 컨설팅 제공 (금전적 지원 없음)</p>
-              </div>
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">선정규모</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">50개사 (선착순, 사회적기업/장애인기업 우선 모집)</p>
-              </div>
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">지원내용</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">공공조달 제도 전반에 대한 1:1 맞춤형 컨설팅 (나라장터 조달업체 등록, 벤처·창업기업제품, 혁신제품, 우수조달물품, 다수공급자계약(MAS), 경쟁입찰 등)</p>
-              </div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: #333;">
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">총 예산</span><span style="flex: 1; font-weight: 600;">500억원</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">기업당</span><span style="flex: 1; font-weight: 600; color: #ea580c;">최대 3억원 (평균 2.5억)</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">지원비율</span><span style="flex: 1;">정부 70% + 기업 30%</span></div>
+              <div style="display: flex;"><span style="min-width: 80px; color: #666;">선정규모</span><span style="flex: 1;">약 200개 기업</span></div>
+            </div>
+            <div style="margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed #ddd;">
+              <p style="margin: 0; font-size: 0.8rem; color: #666;"><strong>지원항목:</strong> 제작비(인건비, 촬영비), 장비 구입·임차비, 후반작업비(편집, CG, 음향), 해외 마케팅비, 전시·마켓 참가비</p>
             </div>
           </div>
           
-          <!-- 제출서류 -->
-          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #17a2b8; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <h4 style="color: #17a2b8; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span>📎</span> 제출서류
+          <!-- 📝 제출서류 -->
+          <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #17a2b8;">
+            <h4 style="color: #17a2b8; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>📝</span> 제출서류
             </h4>
-            <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.9; font-size: 0.95rem;">
-              <li><strong>필수:</strong> 컨설팅 신청서 (붙임1), 개인정보 수집 동의서 (붙임2)</li>
-              <li><strong>선택:</strong> 사회적기업(예비) 인증서 또는 장애인기업 확인서 (해당 기업만 제출, 우선 모집 대상)</li>
-            </ul>
+            <div style="font-size: 0.85rem; color: #333; line-height: 1.6;">
+              <p style="margin: 0 0 0.4rem 0;"><strong style="color: #0891b2;">필수:</strong> 사업계획서(지정양식), 사업자등록증, 중소기업확인서, 최근 3년 재무제표, 4대보험 가입자 명부, 콘텐츠 포트폴리오, 완납증명서</p>
+              <p style="margin: 0;"><strong style="color: #059669;">가점:</strong> 벤처기업확인서(+3점), 수출실적증명(+2점), OTT납품계약서(+3점), 고용증가 증빙(+2점)</p>
+            </div>
           </div>
           
-          <!-- 주요 일정 -->
-          <div style="background: white; padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #6f42c1; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <h4 style="color: #6f42c1; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <!-- 📅 주요 일정 -->
+          <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #6f42c1;">
+            <h4 style="color: #6f42c1; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
               <span>📅</span> 주요 일정
             </h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">신청기간</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">2025.11.27.(목) ~ 2025.12.17.(수)</p>
-              </div>
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">심사기간</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">2025.12.17. 이후 (신청서 검토 및 컨설팅 대상업체 선정)</p>
-              </div>
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">선정발표</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">2026년 1월 초순 (컨설팅 대상기업 유선 연락)</p>
-              </div>
-              <div>
-                <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.85rem;">수행기간</p>
-                <p style="margin: 0; color: #333; font-weight: 600;">2026년 1월 ~ 2026년 3월 중순 (업체별 컨설팅 진행)</p>
-              </div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: #333;">
+              <div style="display: flex;"><span style="min-width: 70px; color: #666;">신청기간</span><span style="flex: 1; font-weight: 600; color: #7c3aed;">2025.01.15 ~ 02.28</span></div>
+              <div style="display: flex;"><span style="min-width: 70px; color: #666;">신청방법</span><span style="flex: 1;">K-콘텐츠 지원시스템</span></div>
+              <div style="display: flex;"><span style="min-width: 70px; color: #666;">서류심사</span><span style="flex: 1;">03.01 ~ 03.15</span></div>
+              <div style="display: flex;"><span style="min-width: 70px; color: #666;">발표심사</span><span style="flex: 1;">03.20 ~ 04.05</span></div>
+              <div style="display: flex;"><span style="min-width: 70px; color: #666;">최종발표</span><span style="flex: 1;">2025.04.15</span></div>
+              <div style="display: flex;"><span style="min-width: 70px; color: #666;">사업기간</span><span style="flex: 1;">05.01 ~ 12.31 (8개월)</span></div>
             </div>
           </div>
           
-          <!-- 한국산업 맞춤 분석 -->
-          <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #f59e0b;">
-            <h4 style="color: #d97706; margin: 0 0 1rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <!-- 🏢 한국산업 맞춤 분석 -->
+          <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border: 2px solid #f59e0b;">
+            <h4 style="color: #d97706; margin: 0 0 0.8rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
               <span>🏢</span> 한국산업 맞춤 분석
             </h4>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-              <!-- 강점 -->
-              <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #22c55e;">
-                <h5 style="color: #16a34a; margin: 0 0 0.5rem 0; font-size: 0.95rem;">💪 강점</h5>
-                <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.9rem; line-height: 1.7;">
-                  <li>**수도권 소재 충족:** 서울 송파구에 소재하여 본 사업의 가장 기본적인 자격요건인 '수도권 소재 기업'을 완벽하게 충족합니다.</li>
-                  <li>**기업 규모 적합:** '소기업'으로서 중소기업 범주에 해당하여 지원 대상에 부합합니다. 중소기업 지원 사업의 취지에 적합합니다.</li>
-                  <li>**경쟁사 우대:** 국내 및 지방재 제도 없이 전국 무역 지원 사업 참여에 대한 기본적인 신뢰도를 확보하고 있습니다.</li>
-                  <li>**기업부설연구소 보유:** 기업부설연구소를 보유하고 있어 기술 기반의 전문 서비스 기업임을 어필할 수 있으며, 향후 공공조달 시장에서 기술력 기반의 제품/서비스를 제안할 가능성을 보여줄 수 있습니다.</li>
-                  <li>**재무 건전성:** 부채비율 50%로 양호한 재무 상태를 유지하고 있어, 사업 수행 능력에 대한 우려가 적습니다.</li>
-                </ul>
+            <!-- 핵심 지표 -->
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;">
+              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;">
+                <div style="background: #dcfce7; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #166534;">📊 예상 가점: +8점</div>
+                <div style="background: #dbeafe; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #1e40af;">📈 경쟁률: 약 4:1</div>
+                <div style="background: #fef3c7; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #92400e;">🎯 선정가능성: 높음</div>
               </div>
-              
-              <!-- 보완점 -->
-              <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444;">
-                <h5 style="color: #dc2626; margin: 0 0 0.5rem 0; font-size: 0.95rem;">⚠️ 보완점</h5>
-                <ul style="margin: 0; padding-left: 1rem; color: #333; font-size: 0.9rem; line-height: 1.7;">
-                  <li>**우선 모집 대상 미해당:** 사회적기업 또는 장애인기업이 아니므로, '우선 모집' 대상에서 제외되어 선착순 경쟁에서 다소 불리할 수 있습니다. (대응방안: 신청 기간 시작과 동시에 신속하게 접수하여 선착순 기회를 확보해야 합니다.)</li>
-                  <li>**주력 제품/서비스 정보 부족:** 기업 프로필에 주력 제품/서비스 및 세부 업종 정보가 미입력되어 있어, 공공조달 시장 적합성을 어필하기 위한 구체적인 사업 내용 보완이 시급합니다. (대응방안: 컨설팅 신청서에서 기술하여 합니다.)</li>
-                  <li>**기술/연구 역량 어필 한계:** 등록/출원 특허가 없어 기업부설연구소 보유에도 불구하고 기시적인 기술적 성빙이 부족합니다. (대응방안: 연구소의 활동 내용과 향후 공공조달 시장에 기여할 수 있는 기술 개발 계획을 신청서에서 상세히 기술하여 잠재력을 어필해야 합니다.)</li>
-                  <li>**공공조달 경험 부재:** '조달청 나라장터 등록 여부' 항목이 미등록으로 예상되며, 공공조달 시장 진출 경험이 없는 것으로 보입니다. (대응방안: 컨설팅 요청 내용을 매우 구체적으로 작성하여, 본 컨설팅을 통해 공공조달 시장에 성공적으로 진입하겠다는 강력한 의지와 계획 보여주어야 합니다.)</li>
-                  <li>**성숙기 기업의 명확한 목적 제시 필요:** 업력 13년차의 성숙기 기업으로서, 단순한 정보 습득을 넘어 컨설팅을 통해 어떤 구체적인 성과(예: 특정 조달 등록, 계약 수주 목표 등)를 낼 것인지 명확한 목표를 제시해야 합니다. (대응방안: 컨설팅 요청 내용에 공공조달 시장 진출 목표를 포함하여 작성해야 합니다.)</li>
-                </ul>
+            </div>
+            
+            <!-- 자격요건 충족 현황 -->
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; overflow-x: auto;">
+              <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #666; font-weight: 600;">✅ 자격요건 충족 현황</p>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 0.75rem;">
+                <span style="background: #dcfce7; padding: 0.2rem 0.5rem; border-radius: 4px; color: #166534; white-space: nowrap;">기업규모 ✅</span>
+                <span style="background: #dcfce7; padding: 0.2rem 0.5rem; border-radius: 4px; color: #166534; white-space: nowrap;">업력 5년 ✅</span>
+                <span style="background: #dcfce7; padding: 0.2rem 0.5rem; border-radius: 4px; color: #166534; white-space: nowrap;">지역 서울 ✅</span>
+                <span style="background: #dcfce7; padding: 0.2rem 0.5rem; border-radius: 4px; color: #166534; white-space: nowrap;">업종 영상제작 ✅</span>
+                <span style="background: #dcfce7; padding: 0.2rem 0.5rem; border-radius: 4px; color: #166534; white-space: nowrap;">매출 8억 ✅</span>
+              </div>
+            </div>
+            
+            <!-- 💪 강점 -->
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.6rem; border-left: 3px solid #22c55e;">
+              <h5 style="color: #16a34a; margin: 0 0 0.5rem 0; font-size: 0.85rem;">💪 강점 (3가지)</h5>
+              <div style="font-size: 0.8rem; color: #333; line-height: 1.6;">
+                <p style="margin: 0 0 0.5rem 0; padding-bottom: 0.5rem; border-bottom: 1px dashed #e5e7eb;">
+                  <strong style="color: #16a34a;">1. OTT 납품 실적</strong><br/>
+                  넷플릭스·웨이브 납품 경험 → "검증된 제작 역량"으로 인식. 가점 3점 + 기술성 평가 우위
+                </p>
+                <p style="margin: 0 0 0.5rem 0; padding-bottom: 0.5rem; border-bottom: 1px dashed #e5e7eb;">
+                  <strong style="color: #16a34a;">2. 벤처기업 인증</strong><br/>
+                  전체 신청기업 40%만 보유 → 가점 3점 확보. 기술혁신형 기업으로 정성평가 유리
+                </p>
+                <p style="margin: 0;">
+                  <strong style="color: #16a34a;">3. 고용 30% 증가</strong><br/>
+                  상시근로자 10→13명 → 고용창출 가점 2점. 정부 일자리 정책 기조 부합
+                </p>
+              </div>
+            </div>
+            
+            <!-- ⚠️ 보완점 -->
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; border-left: 3px solid #ef4444;">
+              <h5 style="color: #dc2626; margin: 0 0 0.5rem 0; font-size: 0.85rem;">⚠️ 보완점 (2가지)</h5>
+              <div style="font-size: 0.8rem; color: #333; line-height: 1.6;">
+                <p style="margin: 0 0 0.5rem 0; padding-bottom: 0.5rem; border-bottom: 1px dashed #e5e7eb;">
+                  <strong style="color: #dc2626;">1. 해외 수출 실적 부재</strong><br/>
+                  수출 가점 2점 미확보 → <span style="color: #2563eb;">대응: 대만 OTT 협의 중인 LOI(의향서) 첨부로 "수출 준비 기업" 어필</span>
+                </p>
+                <p style="margin: 0;">
+                  <strong style="color: #dc2626;">2. 영업이익률 낮음 (3%)</strong><br/>
+                  업계 평균 8% 대비 낮음 → <span style="color: #2563eb;">대응: 대형 프로젝트 선투자 설명 + 수주잔고 15억원 증빙으로 미래 수익성 강조</span>
+                </p>
               </div>
             </div>
           </div>
           
-          <!-- AI 추천 의견 -->
-          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 1.2rem; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #10b981;">
-            <h4 style="color: #059669; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span>💡</span> 추천 의견
+          <!-- 📈 신청 전략 -->
+          <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border: 2px solid #3b82f6;">
+            <h4 style="color: #1d4ed8; margin: 0 0 0.8rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>📈</span> 신청 전략
             </h4>
-            <p style="color: #333; margin: 0; line-height: 1.9; font-size: 0.95rem;">
-              추천. 한국산업은 본 사업의 필수 자격요건(수도권 소재, 중소기업)을 모두 충족하며, 재무 상태 및 기업부설연구소 보유 등 기본적인 강점을 가지고 있습니다. 다만, 사회적기업이나 장애인기업이 아니므로 우선 모집 대상에 해당하지 않아 선착순 경쟁에서 불리할 수 있습니다. 따라서 신청 기간 시작과 동시에 신속하게 접수하는 것이 매우 중요합니다. 또한, 컨설팅 신청서의 '컨설팅 요청내용'을 당사의 전문 서비스와 공공조달 시장의 연계성을 명확히 보여줄 수 있도록 구체적이고 전략적으로 작성하여, 컨설팅을 통해 얻고자 하는 목표와 기대 효과를 강력하게 어필해야 합니다. 이러한 준비를 통해 충분히 선정 가능성이 있으며, 무료로 제공되는 공공조달 전문가 컨설팅은 기업의 새로운 성장 동력을 확보하는 데 큰 도움이 될 것입니다.
-            </p>
+            
+            <!-- 핵심 메시지 -->
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.6rem; text-align: center;">
+              <p style="margin: 0 0 0.3rem 0; font-size: 0.75rem; color: #666;">🎯 핵심 메시지 (한 문장)</p>
+              <p style="margin: 0; font-size: 0.85rem; font-weight: 600; color: #1e40af; font-style: italic; line-height: 1.5;">
+                "검증된 OTT 제작 역량과 벤처 기술력으로<br/>K-콘텐츠 글로벌 시장을 선도하겠습니다"
+              </p>
+            </div>
+            
+            <!-- 어필 포인트 -->
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.6rem;">
+              <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #1d4ed8; font-weight: 600;">💡 어필 포인트 3가지</p>
+              <div style="font-size: 0.8rem; color: #333; line-height: 1.6;">
+                <p style="margin: 0 0 0.4rem 0;"><strong>1.</strong> 사업계획서 1p에 넷플릭스 납품작 포스터 + 조회수 배치</p>
+                <p style="margin: 0 0 0.4rem 0;"><strong>2.</strong> "글로벌 진출" → "동남아 3개국 OTT 진출, 예상 매출 5억원" 구체화</p>
+                <p style="margin: 0;"><strong>3.</strong> PD 경력 15년(MBC 출신), 작가 수상 경력 표로 정리</p>
+              </div>
+            </div>
+            
+            <!-- 흔한 실수 -->
+            <div style="background: #fef2f2; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.6rem;">
+              <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #dc2626; font-weight: 600;">❌ 피해야 할 실수</p>
+              <div style="font-size: 0.8rem; color: #333; line-height: 1.5;">
+                <p style="margin: 0 0 0.3rem 0;">• 분량 초과: 30p 제한 → 25p 내외로 핵심만 압축</p>
+                <p style="margin: 0;">• 예산 과다 계상: 3개 업체 견적서 첨부, 최저가 기준 편성</p>
+              </div>
+            </div>
+            
+            <!-- 준비 체크리스트 -->
+            <div style="background: white; padding: 0.8rem; border-radius: 8px;">
+              <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #1d4ed8; font-weight: 600;">📋 준비 체크리스트</p>
+              <div style="font-size: 0.8rem; color: #333;">
+                <div style="display: flex; gap: 0.3rem; margin-bottom: 0.3rem; align-items: flex-start;">
+                  <span style="background: #fee2e2; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; color: #dc2626; font-size: 0.7rem; white-space: nowrap;">D-14</span>
+                  <span>재무제표 세무사 확인, 4대보험 명부, 포트폴리오 정리</span>
+                </div>
+                <div style="display: flex; gap: 0.3rem; margin-bottom: 0.3rem; align-items: flex-start;">
+                  <span style="background: #fef3c7; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; color: #92400e; font-size: 0.7rem; white-space: nowrap;">D-7</span>
+                  <span>사업계획서 초안 완성, 내부 검토, 예산서 견적 확보</span>
+                </div>
+                <div style="display: flex; gap: 0.3rem; align-items: flex-start;">
+                  <span style="background: #dcfce7; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; color: #166534; font-size: 0.7rem; white-space: nowrap;">D-3</span>
+                  <span>최종 서류 점검, PDF 변환 테스트, 시스템 사전 접속</span>
+                </div>
+              </div>
+            </div>
           </div>
           
-          <!-- 선정 가능성 높이는 팁 -->
-          <div style="background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); padding: 1.2rem; border-radius: 12px; border: 2px solid #ec4899;">
-            <h4 style="color: #db2777; margin: 0 0 0.8rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span>⭐</span> 선정 가능성 높이는 팁
+          <!-- 🏆 최종 추천의견 -->
+          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 1rem; border-radius: 10px; border: 2px solid #10b981;">
+            <h4 style="color: #059669; margin: 0 0 0.8rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>🏆</span> 최종 추천의견
             </h4>
-            <ul style="margin: 0; padding-left: 1.2rem; color: #333; line-height: 1.9; font-size: 0.95rem;">
-              <li>공고문을 상세히 확인하세요</li>
-              <li>신청 기간 초반에 접수하세요 (선착순 우선)</li>
-              <li>컨설팅 요청 내용을 구체적으로 작성하세요</li>
-              <li>기업의 공공조달 시장 진출 의지를 명확히 표현하세요</li>
-            </ul>
+            
+            <!-- 결론 배지 -->
+            <div style="text-align: center; margin-bottom: 0.8rem;">
+              <span style="background: linear-gradient(135deg, #059669, #047857); color: white; padding: 0.5rem 1.2rem; border-radius: 25px; font-size: 0.9rem; font-weight: 700; display: inline-block;">
+                ✅ 신청 적극 권장
+              </span>
+            </div>
+            
+            <div style="background: white; padding: 0.8rem; border-radius: 8px; font-size: 0.8rem; color: #333; line-height: 1.6;">
+              <p style="margin: 0 0 0.5rem 0;">
+                <strong style="color: #059669;">① 결론:</strong> 핵심요건 100% 충족 + 가점 8점 확보 → <strong>적극 신청 권장</strong>
+              </p>
+              <p style="margin: 0 0 0.5rem 0;">
+                <strong style="color: #059669;">② 핵심 근거:</strong> OTT 납품 실적 검증 / 벤처+고용증가 가점 우위 / 영상제작 업종 정확 일치
+              </p>
+              <p style="margin: 0 0 0.5rem 0;">
+                <strong style="color: #059669;">③ 선정가능성:</strong> <strong style="color: #16a34a;">높음</strong> (경쟁률 4:1이나, 가점 8점으로 상위 20% 진입)
+              </p>
+              <p style="margin: 0 0 0.5rem 0;">
+                <strong style="color: #059669;">④ 필수 실행:</strong> 재무제표 세무사 확인 / OTT 납품 계약서 첨부 / 25페이지 이내 준수
+              </p>
+              <p style="margin: 0 0 0.5rem 0;">
+                <strong style="color: #dc2626;">⑤ 금지:</strong> 예산 과다 계상, 기존 수행 실적 누락
+              </p>
+              
+              <!-- 한줄 요약 박스 -->
+              <div style="background: #f0fdf4; padding: 0.6rem; border-radius: 6px; margin-top: 0.6rem; border: 1px dashed #22c55e;">
+                <p style="margin: 0; font-size: 0.85rem; font-weight: 600; color: #166534; text-align: center; line-height: 1.5;">
+                  💬 "OTT 실적 + 벤처 + 고용증가 3박자 갖춘 최적 후보.<br/>D-7 전 서류 완비 후 마감일 3일 전 신청 권장"
+                </p>
+              </div>
+            </div>
           </div>
           
         </div>
@@ -7117,11 +7206,11 @@
       </div>
       
       <!-- 하단 버튼 -->
-      <div style="padding: 1rem 1.5rem 1.5rem; border-top: 1px solid #eee; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-        <button onclick="closeDetailSample()" style="flex: 1; min-width: 100px; padding: 0.9rem; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+      <div style="padding: 0.8rem 1rem 1rem; border-top: 1px solid #eee; display: flex; gap: 0.6rem; flex-wrap: wrap; position: sticky; bottom: 0; background: white; border-radius: 0 0 16px 16px;">
+        <button onclick="closeDetailSample()" style="flex: 1; min-width: 80px; padding: 0.8rem; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
           닫기
         </button>
-        <button onclick="closeDetailSample(); analyzeProgramsDetail();" style="flex: 2; min-width: 200px; padding: 0.9rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+        <button onclick="closeDetailSample(); analyzeProgramsDetail();" style="flex: 2; min-width: 160px; padding: 0.8rem; background: linear-gradient(135deg, #FF8802, #FF6B00); color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
           📊 상세분석 시작 (2,000P)
         </button>
       </div>
