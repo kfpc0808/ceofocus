@@ -4200,7 +4200,7 @@
             const loadingText = document.getElementById('aiLoadingText');
             const loadingDetail = document.getElementById('aiLoadingDetail');
             if (loadingText) loadingText.textContent = '🤖 AI 요약분석 중...';
-            if (loadingDetail) loadingDetail.textContent = '② ' + newPrograms.length + '개 신규 지원사업을 Gemini AI가 분석하고 있습니다...';
+            if (loadingDetail) loadingDetail.textContent = '② Gemini AI가 맞춤 공고를 분석하고 있습니다...';
             
             // Firebase Functions를 통해 Gemini API 호출 (API 키 보호)
             const geminiSummary = functions.httpsCallable('geminiSummary');
@@ -4272,18 +4272,14 @@
           const mediumCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length;
           const lowCount = allSummaryResults.filter(r => (r.fitScore || 0) < 55).length;
           
-          let summaryMsg = '• AI 요약분석: ';
+          // 🔥 v3.2: 단순히 분석된 개수만 표시
+          let summaryMsg = `• 맞춤 공고 ${allSummaryResults.length}개 분석 완료\n• AI 요약분석: `;
           const parts = [];
           if (veryHighCount > 0) parts.push(`매우높음 ${veryHighCount}개`);
           if (highCount > 0) parts.push(`높음 ${highCount}개`);
           if (mediumCount > 0) parts.push(`보통 ${mediumCount}개`);
           if (lowCount > 0) parts.push(`낮음 ${lowCount}개`);
           summaryMsg += parts.join(' + ');
-          
-          // 🔥 v3.2: 20개 제한 안내
-          if (data.matchedCount > 20) {
-            summaryMsg += `\n\n※ 적합 공고 ${data.matchedCount}개 중 상위 20개만 분석됨`;
-          }
           
           // 🆕 v3.0: 자동 저장 (분석 결과 보호)
           if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
