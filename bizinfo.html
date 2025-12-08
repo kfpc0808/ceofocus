@@ -4009,19 +4009,110 @@
           };
         }
         
-        // ========== 업종 매칭 ==========
+        // ========== 🔥 필수 조건 2: 업종 매칭 ==========
+        let industryMatched = false;
         const ksicCategory = getKsicCategory(companyData.ksicCode);
-        if (ksicCategory && combinedText.includes(ksicCategory.toLowerCase())) {
-          score += 20;
+        const ksicCode = companyData.ksicCode || '';
+        const ksicPrefix = ksicCode.substring(0, 2);
+        
+        // 업종 관련 키워드 매핑
+        const industryKeywords = {
+          '농업': ['농업', '농촌', '농산물', '농기계', '스마트팜'],
+          '임업': ['임업', '산림', '목재'],
+          '어업': ['어업', '수산', '양식', '어촌'],
+          '제조': ['제조', '생산', '공장', '산업단지'],
+          '식품': ['식품', '음식', '음료', 'F&B', '푸드'],
+          '섬유': ['섬유', '의류', '패션', '봉제'],
+          '화학': ['화학', '화장품', '소재'],
+          '의약품': ['의약', '바이오', '제약', '헬스케어'],
+          '금속': ['금속', '철강', '주조'],
+          '전자': ['전자', '반도체', 'IT', 'ICT', '정보통신', '소프트웨어', 'SW', '디지털'],
+          '기계': ['기계', '장비', '로봇', '자동화'],
+          '자동차': ['자동차', '모빌리티', '부품'],
+          '건설': ['건설', '건축', '토목', '인테리어'],
+          '도매': ['도매', '유통', '무역'],
+          '소매': ['소매', '판매', '상점', '매장'],
+          '물류': ['물류', '운송', '배송', '택배'],
+          '숙박': ['숙박', '호텔', '펜션', '관광'],
+          '음식점': ['음식점', '외식', '요식업', '카페'],
+          '출판': ['출판', '인쇄', '미디어'],
+          '영상': ['영상', '콘텐츠', '미디어', '방송', '게임'],
+          '통신': ['통신', 'IT', 'ICT'],
+          '소프트웨어': ['소프트웨어', 'SW', 'IT', 'ICT', '플랫폼', 'AI', '인공지능', '빅데이터', '클라우드'],
+          '금융': ['금융', '핀테크'],
+          '연구개발': ['R&D', '연구개발', '기술개발', '연구소'],
+          '디자인': ['디자인', '크리에이티브'],
+          '교육': ['교육', '에듀테크', '학습'],
+          '보건': ['보건', '의료', '병원', '헬스케어'],
+          '문화예술': ['문화', '예술', '공연', '엔터테인먼트'],
+          '스포츠': ['스포츠', '체육', '레저']
+        };
+        
+        // 기업 업종에 해당하는 키워드 찾기
+        const companyIndustryKeywords = industryKeywords[ksicCategory] || [];
+        
+        // 공고가 기업 업종 키워드를 포함하면 매칭
+        if (companyIndustryKeywords.some(kw => combinedText.includes(kw.toLowerCase()))) {
+          industryMatched = true;
+          score += 25;
           reasons.push(`✅ ${ksicCategory} 업종 관련`);
-        } else if (combinedText.includes('중소기업') || combinedText.includes('소상공인')) {
+        }
+        // 일반적인 중소기업/소상공인 대상 공고는 업종 무관으로 통과
+        else if (combinedText.includes('중소기업') || combinedText.includes('소상공인') || 
+                 combinedText.includes('중소벤처') || combinedText.includes('기업지원')) {
+          industryMatched = true;
+          score += 10;
+          reasons.push('✅ 전 업종 대상');
+        }
+        
+        // 🔥 업종 매칭 실패 시 제외
+        if (!industryMatched) {
+          return {
+            ...program,
+            matchScore: 0,
+            matchReasons: ['❌ 업종 미매칭'],
+            industryFailed: true
+          };
+        }
+        
+        // ========== 🔥 필수 조건 3: 규모 매칭 ==========
+        let sizeMatched = false;
+        const companySize = companyData.companySize || '';
+        
+        // 중소기업 대상 공고 + 중소기업
+        if ((combinedText.includes('중소기업') || combinedText.includes('소기업') || combinedText.includes('소상공인')) &&
+            (companySize === '소기업' || companySize === '중기업' || companySize === '중소기업')) {
+          sizeMatched = true;
           score += 10;
           reasons.push('✅ 중소기업 대상');
         }
-        
-        // ========== 분야 매칭 ==========
-        if (hasAllCategory) {
+        // 규모 무관 공고 (규모 언급 없음)
+        else if (!combinedText.includes('대기업') && !combinedText.includes('중견기업') && 
+                 !combinedText.includes('중소기업') && !combinedText.includes('소기업')) {
+          sizeMatched = true;
+          score += 5;
+          reasons.push('✅ 규모 무관');
+        }
+        // 중견기업 포함 공고 + 중견기업
+        else if (combinedText.includes('중견기업') && companySize === '중견기업') {
+          sizeMatched = true;
           score += 10;
+          reasons.push('✅ 중견기업 대상');
+        }
+        
+        // 🔥 규모 매칭 실패 시 제외
+        if (!sizeMatched) {
+          return {
+            ...program,
+            matchScore: 0,
+            matchReasons: ['❌ 규모 미매칭'],
+            sizeFailed: true
+          };
+        }
+        
+        // ========== 분야 매칭 (가점) ==========
+        if (hasAllCategory) {
+          score += 5;
           reasons.push('✅ 전체 분야 관심');
         } else if (desiredCategories.length > 0) {
           const programCategory = program.category || '';
@@ -4031,14 +4122,7 @@
           }
         }
         
-        // ========== 기업 규모 매칭 ==========
-        if (combinedText.includes('중소기업') || combinedText.includes('소기업')) {
-          if (companyData.companySize === '소기업' || companyData.companySize === '중기업' || companyData.companySize === '중소기업') {
-            score += 5;
-          }
-        }
-        
-        // ========== 인증 우대 ==========
+        // ========== 인증 우대 (가점) ==========
         if (combinedText.includes('벤처') && companyData.certVenture === 'Y') {
           score += 5;
           reasons.push('✅ 벤처기업 우대');
@@ -4065,16 +4149,17 @@
         };
       });
       
-      // 5. 🔥 점수 기준: 40점 이상 + 지역 매칭 성공한 것만
+      // 5. 🔥 v3.2: 세 조건(지역, 업종, 규모) 모두 통과한 것만
       const sortedPrograms = scoredPrograms
-        .filter(p => !p.regionFailed && p.matchScore >= 40)
+        .filter(p => !p.regionFailed && !p.industryFailed && !p.sizeFailed)
         .sort((a, b) => b.matchScore - a.matchScore);
       
-      // 🔥 지역 미매칭 통계
+      // 🔥 통계
       const regionFailedCount = scoredPrograms.filter(p => p.regionFailed).length;
-      const lowScoreCount = scoredPrograms.filter(p => !p.regionFailed && p.matchScore < 40).length;
+      const industryFailedCount = scoredPrograms.filter(p => p.industryFailed).length;
+      const sizeFailedCount = scoredPrograms.filter(p => p.sizeFailed).length;
       
-      console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램 (지역 미매칭: ${regionFailedCount}개, 저점수: ${lowScoreCount}개 제외)`);
+      console.log(`🎯 최종 추천: ${sortedPrograms.length}개 (제외: 지역 ${regionFailedCount}개, 업종 ${industryFailedCount}개, 규모 ${sizeFailedCount}개)`);
       sortedPrograms.slice(0, 5).forEach((p, i) => {
         console.log(`  ${i + 1}위. ${p.name} (${p.matchScore}점)`);
       });
