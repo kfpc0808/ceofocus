@@ -2490,6 +2490,18 @@
         // KSIC 데이터 로드
         loadKsicData();
         
+        // 🔥 인증/결격사유 필드 기본값 초기화 (없음)
+        const certFields = ['cert-venture', 'cert-innobiz', 'cert-mainbiz', 'cert-woman', 'cert-disabled', 'cert-social'];
+        certFields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = 'N';
+        });
+        const disqualFields = ['tax-arrears', 'local-tax-arrears', 'insurance-arrears', 'capital-erosion', 'bankruptcy-history'];
+        disqualFields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = 'N';
+        });
+        
         // Firebase 인증 상태 확인 (login.html에서 이미 로그인됨)
         auth.onAuthStateChanged(async (user) => {
           const authLoadingScreen = document.getElementById('auth-loading-screen');
@@ -3057,6 +3069,20 @@
       // 로딩 중 플래그 설정 (KSIC 경고 방지)
       isLoadingCompany = true;
       
+      // 🔥 인증 필드 기본값 초기화 (없음)
+      const certFields = ['cert-venture', 'cert-innobiz', 'cert-mainbiz', 'cert-woman', 'cert-disabled', 'cert-social'];
+      certFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'N';
+      });
+      
+      // 🔥 결격사유 필드 기본값 초기화 (없음/아니오)
+      const disqualFields = ['tax-arrears', 'local-tax-arrears', 'insurance-arrears', 'capital-erosion', 'bankruptcy-history'];
+      disqualFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'N';
+      });
+      
       // 사업자등록번호 분리 (123-45-67890 → 3개 input)
       if (company.businessNumber) {
         const bizParts = company.businessNumber.split('-');
@@ -3473,6 +3499,20 @@
       document.getElementById('company-select').value = '';
       document.getElementById('company-name-search').value = '';
       selectedCompanyId = null;
+      
+      // 🔥 인증 필드 기본값 초기화 (없음)
+      const certFields = ['cert-venture', 'cert-innobiz', 'cert-mainbiz', 'cert-woman', 'cert-disabled', 'cert-social'];
+      certFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'N';
+      });
+      
+      // 🔥 결격사유 필드 기본값 초기화 (없음/아니오)
+      const disqualFields = ['tax-arrears', 'local-tax-arrears', 'insurance-arrears', 'capital-erosion', 'bankruptcy-history'];
+      disqualFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'N';
+      });
       
       // 맞춤지원정보 결과 초기화
       const resultsSection = document.getElementById('results-section');
@@ -4065,10 +4105,10 @@
         const allPrograms = await fetchBizInfoPrograms();
         const openProgramCount = allPrograms ? allPrograms.filter(p => p.isOpen !== false).length : 0;
         
-        // 실제 공고 수로 로딩 오버레이 업데이트
+        // 실제 공고 수로 로딩 오버레이 업데이트 (개수 숨김)
         const countText = document.getElementById('program-count');
         if (countText) {
-          countText.textContent = `📋 ${openProgramCount.toLocaleString()}개 공고 분석 중...`;
+          countText.textContent = `📋 공고 필터링 중...`;
         }
         const overlay = document.getElementById('loading-overlay');
         if (overlay) {
@@ -5068,7 +5108,7 @@
         <h2>${title}</h2>
         <p>${subtitle}</p>
         <p id="program-count" style="font-size: 0.85rem; color: #ffd27f; margin-top: 0.5rem;">
-          ${isAIAnalysis ? `📋 0/${totalPrograms.toLocaleString()}개 공고 분석 완료` : (totalPrograms > 0 ? `📋 ${totalPrograms.toLocaleString()}개 공고 분석 중...` : `📋 공고 불러오는 중...`)}
+          📋 분석 진행 중...
         </p>
         <div style="width: 200px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin-top: 0.5rem; overflow: hidden;">
           <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #FF8802, #FFB347); border-radius: 4px; transition: width 0.3s;"></div>
@@ -5100,9 +5140,9 @@
       const countText = document.getElementById('program-count');
       if (bar) bar.style.width = percent + '%';
       if (text) text.textContent = Math.round(percent) + '%';
-      // total이 0이면 "불러오는 중" 유지, 0보다 크면 진행 상황 표시
-      if (countText && analyzed !== undefined && total > 0) {
-        countText.textContent = `📋 ${analyzed || 0}/${total}개 공고 분석 완료`;
+      // 🔥 v3.0: 개수 표시 제거 - 퍼센트만 표시
+      if (countText && total > 0) {
+        countText.textContent = `📋 분석 진행 중...`;
       }
     }
     
