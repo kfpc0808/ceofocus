@@ -4117,10 +4117,10 @@
             }
             
             alert(
-              '✅ 지원사업+분석이 완료되었습니다!\n\n' +
-              `• 맞춤 지원사업: ${results.length}개 추천\n` +
+              '✅ 지원사업+분석 완료!\n\n' +
+              `• 맞춤 지원사업: ${results.length}개\n` +
               `• 기존 분석 결과: ${allSummaryResults.length}개 (변경 없음)\n\n` +
-              '💰 크레딧이 차감되지 않았습니다.'
+              '💰 크레딧 미차감'
             );
             return;
           }
@@ -4233,7 +4233,7 @@
           // 🆕 먼저 로딩 닫기
           hideLoadingOverlay();
           
-          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 매우높음/🔵 높음: 신청 권장\n🟣 보통/🟠 낮음: 검토 필요\n\n━━━━━━━━━━━━━━━━━━━━━━\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`);
+          alert(`✅ 지원사업+분석 완료!\n\n• 맞춤 지원사업: ${results.length}개\n${summaryMsg}\n\n💾 결과 자동 저장됨`);
           
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
           if (newPrograms.length > 0) {
@@ -5162,13 +5162,13 @@
       result.recommendations.forEach((rec, index) => {
         const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-        const initialGrade = getRelevanceGrade(rec.matchScore);
+        // 🔥 초기값은 "분석 대기"로 표시 (AI 분석 후 업데이트됨)
         
         html += `
           <div class="result-card ${rankClass}" data-program-id="${rec.id || ''}" data-match-score="${rec.matchScore || 0}">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
               <span class="rank">${rankEmoji} ${index + 1}위</span>
-              <span class="match-score" style="font-size: 1rem; font-weight: bold; background: ${initialGrade.bgColor}; color: ${initialGrade.color}; padding: 0.3rem 0.8rem; border-radius: 20px;">관련도: ${initialGrade.text}</span>
+              <span class="match-score" style="font-size: 1rem; font-weight: bold; background: #9e9e9e; color: white; padding: 0.3rem 0.8rem; border-radius: 20px;">분석 대기</span>
             </div>
             
             <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">${rec.name}</h3>
