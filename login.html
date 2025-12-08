@@ -144,6 +144,17 @@
             font-weight: normal;
             padding: 0.5rem;
         }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, #0c2c54 0%, #1a4a7a 50%, #D4AF37 100%);
+            color: white;
+            margin-top: 1rem;
+            border: 2px solid #D4AF37;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #D4AF37 0%, #B8962E 50%, #0c2c54 100%);
+        }
 
         .divider {
             text-align: center;
@@ -345,6 +356,11 @@
         <div style="text-align: center; margin-top: 0.5rem; font-size: 0.75rem; color: #666;">
             * 신청하시면 본사 확인 후 아이디를 발급해드립니다.
         </div>
+        
+        <!-- 상세분석 샘플 조회 버튼 -->
+        <button type="button" class="btn btn-gold" onclick="showDetailSample()">
+            📊 정부지원자금 상세분석 조회
+        </button>
     </div>
 
     <!-- 2. 회원가입 신청 화면 (모바일 최적화) -->
@@ -788,6 +804,218 @@
             const popup = document.getElementById('termsPopup');
             if (popup) popup.remove();
         }
+        
+        // 상세분석 샘플 모달 열기
+        function showDetailSample() {
+            document.getElementById('detail-sample-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 상세분석 샘플 모달 닫기
+        function closeDetailSample() {
+            document.getElementById('detail-sample-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
     </script>
+    
+    <!-- 상세분석 샘플 모달 -->
+    <div id="detail-sample-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 0.5rem; overflow-y: auto;">
+      <div style="background: white; border-radius: 16px; max-width: 900px; width: 100%; max-height: 98vh; overflow-y: auto; position: relative; margin: auto;">
+        
+        <!-- 헤더 -->
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.2rem; border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1;">
+          <button onclick="closeDetailSample()" style="position: absolute; top: 0.8rem; right: 0.8rem; background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; cursor: pointer;">✕</button>
+          <h2 style="margin: 0; font-size: 1.15rem; padding-right: 2rem;">📊 정부지원자금 상세분석 샘플</h2>
+          <p style="margin: 0.3rem 0 0 0; opacity: 0.9; font-size: 0.8rem;">한국산업(영상제작) 기준 실제 AI 분석 결과</p>
+        </div>
+        
+        <!-- 샘플 내용 -->
+        <div style="padding: 1rem;">
+          
+          <!-- 공고명 -->
+          <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border-left: 4px solid #667eea;">
+            <p style="margin: 0 0 0.3rem 0; color: #666; font-size: 0.8rem;">분석 공고</p>
+            <p style="margin: 0; color: #1e293b; font-weight: 700; font-size: 0.95rem; line-height: 1.4;">2025년 콘텐츠 제작 지원사업 (K-콘텐츠 글로벌 진출)</p>
+          </div>
+          
+          <!-- AI PDF 상세분석 박스 -->
+          <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px solid #667eea; border-radius: 12px; padding: 1rem;">
+            
+            <!-- 헤더 -->
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 2px dashed rgba(102,126,234,0.3);">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.3rem;">📄</span>
+                <span style="color: #667eea; font-size: 1rem; font-weight: 700;">AI PDF 상세분석</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                <span style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 0.25rem 0.6rem; border-radius: 15px; font-weight: 600; font-size: 0.75rem;">🟢 관련도: 매우높음</span>
+                <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.25rem 0.6rem; border-radius: 15px; font-weight: 600; font-size: 0.75rem;">87점</span>
+              </div>
+            </div>
+            
+            <!-- 📋 사업 요약 -->
+            <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #667eea;">
+              <h4 style="color: #667eea; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>📋</span> 사업 요약
+              </h4>
+              <p style="color: #333; margin: 0; line-height: 1.7; font-size: 0.85rem;">
+                중소벤처기업부와 한국콘텐츠진흥원이 공동 주관하는 K-콘텐츠 글로벌 경쟁력 강화 사업입니다. 영상·방송·OTT 콘텐츠 제작 중소기업을 대상으로 제작비, 장비구입비, 해외 마케팅비를 <strong>최대 3억원</strong>까지 지원합니다. 총 예산 500억원 규모로 약 200개 기업 선정 예정이며, 정부지원 70% + 기업부담 30% 매칭 방식입니다.
+              </p>
+            </div>
+            
+            <!-- 🎯 자격요건 -->
+            <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #28a745;">
+              <h4 style="color: #28a745; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>🎯</span> 자격요건
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: #333;">
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">기업규모</span><span style="flex: 1;">중소기업 (중견기업 제외)</span></div>
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">업력</span><span style="flex: 1;">3년 이상</span></div>
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">필수인증</span><span style="flex: 1;">없음 (벤처기업 가점 +3점)</span></div>
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">지역제한</span><span style="flex: 1;">전국</span></div>
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">업종제한</span><span style="flex: 1;">영상·방송·콘텐츠 제작업</span></div>
+              </div>
+            </div>
+            
+            <!-- 💰 지원규모 -->
+            <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #f59e0b;">
+              <h4 style="color: #f57c00; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>💰</span> 지원규모
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: #333;">
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">총 예산</span><span style="flex: 1; font-weight: 600;">500억원</span></div>
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">기업당</span><span style="flex: 1; font-weight: 600; color: #ea580c;">최대 3억원 (평균 2.5억)</span></div>
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">지원비율</span><span style="flex: 1;">정부 70% + 기업 30%</span></div>
+                <div style="display: flex;"><span style="min-width: 80px; color: #666;">선정규모</span><span style="flex: 1;">약 200개 기업</span></div>
+              </div>
+            </div>
+            
+            <!-- 📅 주요 일정 -->
+            <div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border-left: 4px solid #6f42c1;">
+              <h4 style="color: #6f42c1; margin: 0 0 0.6rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>📅</span> 주요 일정
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: #333;">
+                <div style="display: flex;"><span style="min-width: 70px; color: #666;">신청기간</span><span style="flex: 1; font-weight: 600; color: #7c3aed;">2025.01.15 ~ 02.28</span></div>
+                <div style="display: flex;"><span style="min-width: 70px; color: #666;">최종발표</span><span style="flex: 1;">2025.04.15</span></div>
+                <div style="display: flex;"><span style="min-width: 70px; color: #666;">사업기간</span><span style="flex: 1;">05.01 ~ 12.31 (8개월)</span></div>
+              </div>
+            </div>
+            
+            <!-- 🏢 한국산업 맞춤 분석 -->
+            <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border: 2px solid #f59e0b;">
+              <h4 style="color: #d97706; margin: 0 0 0.8rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>🏢</span> 한국산업 맞춤 분석
+              </h4>
+              
+              <!-- 핵심 지표 -->
+              <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;">
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;">
+                  <div style="background: #dcfce7; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #166534;">📊 예상 가점: +8점</div>
+                  <div style="background: #dbeafe; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #1e40af;">📈 경쟁률: 약 4:1</div>
+                  <div style="background: #fef3c7; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #92400e;">🎯 선정가능성: 높음</div>
+                </div>
+              </div>
+              
+              <!-- 💪 강점 -->
+              <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.6rem; border-left: 3px solid #22c55e;">
+                <h5 style="color: #16a34a; margin: 0 0 0.5rem 0; font-size: 0.85rem;">💪 강점 (3가지)</h5>
+                <div style="font-size: 0.8rem; color: #333; line-height: 1.6;">
+                  <p style="margin: 0 0 0.4rem 0;"><strong style="color: #16a34a;">1. OTT 납품 실적</strong> → 가점 3점 + 기술성 평가 우위</p>
+                  <p style="margin: 0 0 0.4rem 0;"><strong style="color: #16a34a;">2. 벤처기업 인증</strong> → 가점 3점 확보</p>
+                  <p style="margin: 0;"><strong style="color: #16a34a;">3. 고용 30% 증가</strong> → 고용창출 가점 2점</p>
+                </div>
+              </div>
+              
+              <!-- ⚠️ 보완점 -->
+              <div style="background: white; padding: 0.8rem; border-radius: 8px; border-left: 3px solid #ef4444;">
+                <h5 style="color: #dc2626; margin: 0 0 0.5rem 0; font-size: 0.85rem;">⚠️ 보완점 (2가지)</h5>
+                <div style="font-size: 0.8rem; color: #333; line-height: 1.6;">
+                  <p style="margin: 0 0 0.4rem 0;"><strong style="color: #dc2626;">1. 해외 수출 실적 부재</strong> → <span style="color: #2563eb;">LOI 첨부로 대응</span></p>
+                  <p style="margin: 0;"><strong style="color: #dc2626;">2. 영업이익률 낮음</strong> → <span style="color: #2563eb;">수주잔고 15억 증빙</span></p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 📈 신청 전략 -->
+            <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 1rem; border-radius: 10px; margin-bottom: 0.8rem; border: 2px solid #3b82f6;">
+              <h4 style="color: #1d4ed8; margin: 0 0 0.6rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>📈</span> 신청 전략
+              </h4>
+              
+              <!-- 핵심 메시지 -->
+              <div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.6rem; text-align: center;">
+                <p style="margin: 0 0 0.3rem 0; font-size: 0.75rem; color: #666;">🎯 핵심 메시지</p>
+                <p style="margin: 0; font-size: 0.85rem; font-weight: 600; color: #1e40af; font-style: italic; line-height: 1.5;">
+                  "검증된 OTT 제작 역량과 벤처 기술력으로 K-콘텐츠 글로벌 시장을 선도하겠습니다"
+                </p>
+              </div>
+              
+              <!-- 준비 체크리스트 -->
+              <div style="background: white; padding: 0.8rem; border-radius: 8px;">
+                <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #1d4ed8; font-weight: 600;">📋 준비 체크리스트</p>
+                <div style="font-size: 0.8rem; color: #333;">
+                  <div style="display: flex; gap: 0.3rem; margin-bottom: 0.3rem; align-items: flex-start;">
+                    <span style="background: #fee2e2; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; color: #dc2626; font-size: 0.7rem; white-space: nowrap;">D-14</span>
+                    <span>재무제표 세무사 확인, 포트폴리오 정리</span>
+                  </div>
+                  <div style="display: flex; gap: 0.3rem; margin-bottom: 0.3rem; align-items: flex-start;">
+                    <span style="background: #fef3c7; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; color: #92400e; font-size: 0.7rem; white-space: nowrap;">D-7</span>
+                    <span>사업계획서 초안, 예산서 견적 확보</span>
+                  </div>
+                  <div style="display: flex; gap: 0.3rem; align-items: flex-start;">
+                    <span style="background: #dcfce7; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; color: #166534; font-size: 0.7rem; white-space: nowrap;">D-3</span>
+                    <span>최종 서류 점검, 시스템 접속 확인</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 🏆 최종 추천의견 -->
+            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 1rem; border-radius: 10px; border: 2px solid #10b981;">
+              <h4 style="color: #059669; margin: 0 0 0.6rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>🏆</span> 최종 추천의견
+              </h4>
+              
+              <!-- 결론 배지 -->
+              <div style="text-align: center; margin-bottom: 0.6rem;">
+                <span style="background: linear-gradient(135deg, #059669, #047857); color: white; padding: 0.5rem 1.2rem; border-radius: 25px; font-size: 0.9rem; font-weight: 700; display: inline-block;">
+                  ✅ 신청 적극 권장
+                </span>
+              </div>
+              
+              <div style="background: white; padding: 0.8rem; border-radius: 8px; font-size: 0.8rem; color: #333; line-height: 1.6;">
+                <p style="margin: 0 0 0.4rem 0;">
+                  <strong style="color: #059669;">선정가능성:</strong> <strong style="color: #16a34a;">높음</strong> (가점 8점으로 상위 20% 진입)
+                </p>
+                <p style="margin: 0 0 0.4rem 0;">
+                  <strong style="color: #059669;">핵심 근거:</strong> OTT 납품 검증 / 벤처+고용 가점 / 업종 정확 일치
+                </p>
+                
+                <!-- 한줄 요약 박스 -->
+                <div style="background: #f0fdf4; padding: 0.6rem; border-radius: 6px; margin-top: 0.5rem; border: 1px dashed #22c55e;">
+                  <p style="margin: 0; font-size: 0.8rem; font-weight: 600; color: #166534; text-align: center; line-height: 1.4;">
+                    💬 "OTT 실적 + 벤처 + 고용증가 3박자 갖춘 최적 후보"
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+          
+        </div>
+        
+        <!-- 하단 버튼 -->
+        <div style="padding: 0.8rem 1rem 1rem; border-top: 1px solid #eee; display: flex; gap: 0.6rem; flex-wrap: wrap; position: sticky; bottom: 0; background: white; border-radius: 0 0 16px 16px;">
+          <button onclick="closeDetailSample()" style="flex: 1; min-width: 80px; padding: 0.8rem; background: linear-gradient(135deg, #0c2c54, #1a4a7a); color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+            닫기
+          </button>
+          <button onclick="closeDetailSample(); switchView('signup');" style="flex: 2; min-width: 160px; padding: 0.8rem; background: linear-gradient(135deg, #D4AF37, #B8962E); color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+            🚀 회원가입 신청하기
+          </button>
+        </div>
+        
+      </div>
+    </div>
 </body>
 </html>
