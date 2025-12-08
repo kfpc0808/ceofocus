@@ -3976,8 +3976,7 @@
       // 5. 점수순 정렬 및 서버 필터링 결과 반환
       const sortedPrograms = scoredPrograms
         .filter(p => p.matchScore >= 50) // 50점 미만 제외
-        .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 50);
+        .sort((a, b) => b.matchScore - a.matchScore);
       
       console.log(`🎯 최종 추천: ${sortedPrograms.length}개 프로그램`);
       sortedPrograms.slice(0, 5).forEach((p, i) => {
@@ -4118,7 +4117,6 @@
             
             alert(
               '✅ 지원사업+분석 완료!\n\n' +
-              `• 맞춤 지원사업: ${results.length}개\n` +
               `• 기존 분석 결과: ${allSummaryResults.length}개 (변경 없음)\n\n` +
               '💰 크레딧 미차감'
             );
@@ -4233,7 +4231,7 @@
           // 🆕 먼저 로딩 닫기
           hideLoadingOverlay();
           
-          alert(`✅ 지원사업+분석 완료!\n\n• 맞춤 지원사업: ${results.length}개\n${summaryMsg}\n\n💾 결과 자동 저장됨`);
+          alert(`✅ 지원사업+분석 완료!\n\n${summaryMsg}\n\n💾 결과 자동 저장됨`);
           
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
           if (newPrograms.length > 0) {
@@ -5408,15 +5406,25 @@
         }
       });
       
-      // 카드 재배치 및 순위 업데이트 (점수순 정렬, 넘버링 정확히)
+      // 🔥 적합 공고만 표시, 부적합/분석없음 공고 제외
+      let visibleRank = 0;
       sortedCards.forEach(({ card, result }, index) => {
+        // 🔥 분석 결과 없거나 부적합(eligible: false) → 숨김
+        if (!result || result.eligible === false) {
+          card.style.display = 'none';
+          return;
+        }
+        card.style.display = '';  // 적합 공고는 표시
+        
+        visibleRank++;  // 표시되는 공고만 순위 증가
+        
         // 순위 업데이트
         const rankSpan = card.querySelector('.rank');
         const scoreSpan = card.querySelector('.match-score');
         const fitScore = result?.fitScore || 0;
         
-        if (rankSpan && result) {
-          const rank = index + 1;
+        if (rankSpan) {
+          const rank = visibleRank;
           const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
           rankSpan.innerHTML = `${rankEmoji} ${rank}위`;
           rankSpan.style.background = '';
@@ -5433,18 +5441,16 @@
         
         // rank 클래스 업데이트
         card.classList.remove('rank-1', 'rank-2', 'rank-3');
-        if (result) {
-          const rank = index + 1;
-          if (rank === 1) card.classList.add('rank-1');
-          else if (rank === 2) card.classList.add('rank-2');
-          else if (rank === 3) card.classList.add('rank-3');
-        }
+        const rank = visibleRank;
+        if (rank === 1) card.classList.add('rank-1');
+        else if (rank === 2) card.classList.add('rank-2');
+        else if (rank === 3) card.classList.add('rank-3');
         
         // DOM에서 순서 변경
         resultsSection.appendChild(card);
       });
       
-      console.log('✅ 카드 순서 재정렬 완료 (점수순):', sortedCards.length, '개');
+      console.log('✅ 카드 순서 재정렬 완료 (적합 공고만):', visibleRank, '개');
       
       // 헤더 카드 문구 업데이트
       updateResultsHeader(summaryResults);
@@ -5457,11 +5463,14 @@
       const headerCard = document.querySelector('#results-section .card');
       if (!headerCard) return;
       
-      // 등급별 개수 계산 (요약분석 결과 전체)
-      const veryHighCount = summaryResults.filter(r => (r.fitScore || 0) >= 85).length; // 매우높음
-      const highCount = summaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 85).length; // 높음
-      const mediumCount = summaryResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length; // 보통
-      const lowCount = summaryResults.filter(r => (r.fitScore || 0) < 55).length; // 낮음
+      // 🔥 적합 공고만 카운트 (eligible: true)
+      const eligibleResults = summaryResults.filter(r => r.eligible === true);
+      
+      // 등급별 개수 계산 (적합 공고만)
+      const veryHighCount = eligibleResults.filter(r => (r.fitScore || 0) >= 85).length; // 매우높음
+      const highCount = eligibleResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 85).length; // 높음
+      const mediumCount = eligibleResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length; // 보통
+      const lowCount = eligibleResults.filter(r => (r.fitScore || 0) < 55).length; // 낮음
       
       let headerHtml = `<h2>📊 맞춤형 지원사업 추천 결과</h2>`;
       
@@ -5475,13 +5484,13 @@
       if (grades.length > 0) {
         headerHtml += `
           <p style="color: #666; margin-top: 0.5rem;">
-            ${grades.join(' | ')} (총 ${summaryResults.length}개)
+            ${grades.join(' | ')} (총 ${eligibleResults.length}개)
           </p>
         `;
       } else {
         headerHtml += `
           <p style="color: #666; margin-top: 0.5rem;">
-            총 <strong style="color: #FF8802;">${summaryResults.length}개</strong>의 지원사업을 분석했습니다.
+            총 <strong style="color: #FF8802;">${eligibleResults.length}개</strong>의 지원사업을 분석했습니다.
           </p>
         `;
       }
