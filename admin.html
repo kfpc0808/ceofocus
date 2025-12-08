@@ -847,7 +847,7 @@
                         <option value="freeuser">무료사용자</option>
                     </select>
                 </div>
-                <div class="form-group" id="editExpireDateGroup">
+                <div class="form-group" id="editExpireDateGroup" style="display: none;">
                     <label>유효기간</label>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <input type="date" id="editAdminExpireDate" class="form-control" style="flex: 1;">
@@ -2931,6 +2931,7 @@
                 
                 // 유효기간 필드 표시 여부
                 toggleEditExpireDateField();
+                toggleEditExpireDateInput();  // disabled 상태도 설정
                 
                 // 모달 열기
                 document.getElementById('adminEditModal').style.display = 'flex';
@@ -2990,11 +2991,17 @@
             }
             
             try {
+                // 관리자/최고관리자는 expireDate 항상 null
+                let finalExpireDate = newExpireDate;
+                if (newRole !== 'freeuser') {
+                    finalExpireDate = null;
+                }
+                
                 // admins 컬렉션 업데이트
                 const updateData = {
                     name: newName,
                     role: newRole,
-                    expireDate: newExpireDate,
+                    expireDate: finalExpireDate,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
@@ -3005,11 +3012,11 @@
                 
                 await db.collection('admins').doc(docId).update(updateData);
                 
-                // users 컬렉션에도 반영 (무료사용자인 경우)
+                // users 컬렉션에도 반영
                 try {
                     const userUpdateData = {
                         name: newName,
-                        expireDate: newExpireDate
+                        expireDate: finalExpireDate
                     };
                     if (newPassword) {
                         userUpdateData.password = newPassword;
@@ -3017,6 +3024,9 @@
                     // 권한 변경 시 type도 업데이트
                     if (newRole === 'freeuser') {
                         userUpdateData.type = '무료사용자';
+                    } else {
+                        // 관리자로 변경 시 type을 이너로 되돌림 (선택사항)
+                        // userUpdateData.type = '이너';
                     }
                     await db.collection('users').doc(docId).update(userUpdateData);
                 } catch (e) {
