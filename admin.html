@@ -820,6 +820,51 @@
         </div>
     </div>
 
+    <!-- 모달: 관리자/무료사용자 수정 -->
+    <div id="adminEditModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3>✏️ 관리자/무료사용자 수정</h3>
+            <form id="adminEditForm" onsubmit="saveAdminEdit(event)">
+                <input type="hidden" id="editAdminDocId">
+                <div class="form-group">
+                    <label>아이디</label>
+                    <input type="text" id="editAdminUserId" class="form-control" readonly style="background: #f5f5f5;">
+                </div>
+                <div class="form-group">
+                    <label>이름 *</label>
+                    <input type="text" id="editAdminName" class="form-control" placeholder="이름 입력" required>
+                </div>
+                <div class="form-group">
+                    <label>비밀번호 (6자 이상)</label>
+                    <input type="text" id="editAdminPassword" class="form-control" placeholder="비밀번호">
+                    <small style="color: #888;">현재 비밀번호가 표시됩니다. 수정 시 변경됩니다.</small>
+                </div>
+                <div class="form-group">
+                    <label>권한 *</label>
+                    <select id="editAdminRole" class="form-control" onchange="toggleEditExpireDateField()">
+                        <option value="super_admin">최고관리자</option>
+                        <option value="admin">일반관리자</option>
+                        <option value="freeuser">무료사용자</option>
+                    </select>
+                </div>
+                <div class="form-group" id="editExpireDateGroup">
+                    <label>유효기간</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="date" id="editAdminExpireDate" class="form-control" style="flex: 1;">
+                        <label style="display: flex; align-items: center; gap: 0.3rem; margin: 0; cursor: pointer;">
+                            <input type="checkbox" id="editAdminNoExpire" onchange="toggleEditExpireDateInput()"> 무제한
+                        </label>
+                    </div>
+                    <small style="color: #888; margin-top: 0.3rem; display: block;">무료사용자: 유효기간이 지나면 10회/일 제한 적용</small>
+                </div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                    <button type="button" class="btn btn-outline" onclick="closeAdminEditModal()">취소</button>
+                    <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 모달: 알림/상세보기 -->
     <div id="alertModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
@@ -2098,13 +2143,15 @@
                     }
                 }
                 
+                // ★ 무료사용자 동기화를 위해 업데이트 전에 oldType 저장
+                const user = users.find(u => u.id === docId);
+                const oldType = user ? user.type : '';
+                
                 // Firestore 업데이트
                 await db.collection('users').doc(docId).update(updateData);
                 
                 // ★ 무료사용자 ↔ admins 컬렉션 동기화
                 const newType = updateData.type;
-                const user = users.find(u => u.id === docId);
-                const oldType = user ? user.type : '';
                 
                 if (newType === '무료사용자' && oldType !== '무료사용자') {
                     // 무료사용자로 변경됨 → admins에 추가
@@ -2864,43 +2911,133 @@
                 }
                 
                 const data = doc.data();
-                const currentRole = data.role || 'admin';
-                const currentExpire = data.expireDate || '';
                 
-                // 수정할 내용 확인
-                let newExpire = currentExpire;
+                // 모달에 데이터 채우기
+                document.getElementById('editAdminDocId').value = docId;
+                document.getElementById('editAdminUserId').value = userId || data.userId || '';
+                document.getElementById('editAdminName').value = data.name || '';
+                document.getElementById('editAdminPassword').value = data.password || ''; // 현재 비밀번호 표시
+                document.getElementById('editAdminPassword').placeholder = data.password ? '현재: ' + data.password : '비밀번호 입력';
+                document.getElementById('editAdminRole').value = data.role || 'admin';
                 
-                if (currentRole === 'freeuser') {
-                    const choice = prompt(
-                        `[${userId}] 무료사용자 수정\n\n` +
-                        `현재 유효기간: ${currentExpire || '무제한'}\n\n` +
-                        `새 유효기간을 입력하세요 (YYYY-MM-DD 형식)\n` +
-                        `무제한으로 설정하려면 "무제한" 입력:`
-                    );
-                    
-                    if (choice === null) return; // 취소
-                    
-                    if (choice === '무제한' || choice === '') {
-                        newExpire = null;
-                    } else if (/^\d{4}-\d{2}-\d{2}$/.test(choice)) {
-                        newExpire = choice;
-                    } else {
-                        alert('날짜 형식이 올바르지 않습니다. (예: 2025-12-31)');
-                        return;
-                    }
-                    
-                    // 업데이트
-                    await db.collection('admins').doc(docId).update({ expireDate: newExpire });
-                    await db.collection('users').doc(docId).update({ expireDate: newExpire }).catch(() => {});
-                    
-                    alert(`✅ 유효기간이 ${newExpire || '무제한'}으로 변경되었습니다.`);
+                // 유효기간 설정
+                if (data.expireDate) {
+                    document.getElementById('editAdminExpireDate').value = data.expireDate;
+                    document.getElementById('editAdminNoExpire').checked = false;
                 } else {
-                    // 관리자는 비밀번호 수정
-                    editAdminPassword(docId, userId, data.password || '');
+                    document.getElementById('editAdminExpireDate').value = '';
+                    document.getElementById('editAdminNoExpire').checked = true;
                 }
+                
+                // 유효기간 필드 표시 여부
+                toggleEditExpireDateField();
+                
+                // 모달 열기
+                document.getElementById('adminEditModal').style.display = 'flex';
                 
             } catch (err) {
                 console.error('수정 오류:', err);
+                alert('오류 발생: ' + err.message);
+            }
+        }
+        
+        // 관리자 수정 모달 닫기
+        function closeAdminEditModal() {
+            document.getElementById('adminEditModal').style.display = 'none';
+        }
+        
+        // 유효기간 필드 표시/숨김 (수정 모달용)
+        function toggleEditExpireDateField() {
+            const role = document.getElementById('editAdminRole').value;
+            const group = document.getElementById('editExpireDateGroup');
+            if (role === 'freeuser') {
+                group.style.display = 'block';
+            } else {
+                group.style.display = 'none';
+                document.getElementById('editAdminNoExpire').checked = true;
+            }
+        }
+        
+        // 유효기간 입력 토글 (수정 모달용)
+        function toggleEditExpireDateInput() {
+            const noExpire = document.getElementById('editAdminNoExpire').checked;
+            document.getElementById('editAdminExpireDate').disabled = noExpire;
+            if (noExpire) {
+                document.getElementById('editAdminExpireDate').value = '';
+            }
+        }
+        
+        // 관리자 수정 저장
+        async function saveAdminEdit(e) {
+            e.preventDefault();
+            
+            const docId = document.getElementById('editAdminDocId').value;
+            const newName = document.getElementById('editAdminName').value.trim();
+            const newPassword = document.getElementById('editAdminPassword').value.trim();
+            const newRole = document.getElementById('editAdminRole').value;
+            const noExpire = document.getElementById('editAdminNoExpire').checked;
+            const newExpireDate = noExpire ? null : document.getElementById('editAdminExpireDate').value;
+            
+            if (!newName) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            // 비밀번호가 입력되었고 6자 미만이면 에러
+            if (newPassword && newPassword.length < 6) {
+                alert('비밀번호는 6자 이상이어야 합니다.');
+                return;
+            }
+            
+            try {
+                // admins 컬렉션 업데이트
+                const updateData = {
+                    name: newName,
+                    role: newRole,
+                    expireDate: newExpireDate,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // 비밀번호가 입력된 경우에만 업데이트
+                if (newPassword) {
+                    updateData.password = newPassword;
+                }
+                
+                await db.collection('admins').doc(docId).update(updateData);
+                
+                // users 컬렉션에도 반영 (무료사용자인 경우)
+                try {
+                    const userUpdateData = {
+                        name: newName,
+                        expireDate: newExpireDate
+                    };
+                    if (newPassword) {
+                        userUpdateData.password = newPassword;
+                    }
+                    // 권한 변경 시 type도 업데이트
+                    if (newRole === 'freeuser') {
+                        userUpdateData.type = '무료사용자';
+                    }
+                    await db.collection('users').doc(docId).update(userUpdateData);
+                } catch (e) {
+                    console.log('users 컬렉션 업데이트 생략 (해당 문서 없음)');
+                }
+                
+                // 비밀번호가 변경된 경우 Firebase Auth도 업데이트 시도
+                if (newPassword) {
+                    try {
+                        const changePassword = functions.httpsCallable('changeUserPassword');
+                        await changePassword({ uid: docId, newPassword: newPassword, adminSecret: ADMIN_SECRET });
+                    } catch (pwErr) {
+                        console.warn('Firebase Auth 비밀번호 변경 실패 (무시):', pwErr);
+                    }
+                }
+                
+                alert('✅ 수정이 완료되었습니다.');
+                closeAdminEditModal();
+                
+            } catch (err) {
+                console.error('관리자 수정 오류:', err);
                 alert('오류 발생: ' + err.message);
             }
         }
