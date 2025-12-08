@@ -1651,8 +1651,8 @@
      * @returns {object} { text: '매우높음', color: '#28a745', bgColor: '...' }
      */
     function getRelevanceGrade(score) {
-      // 90~100: 매우높음 (강력 추천)
-      if (score >= 90) {
+      // 85~100: 매우높음 (강력 추천)
+      if (score >= 85) {
         return {
           text: '매우높음',
           color: '#fff',
@@ -1663,8 +1663,8 @@
           icon: '🟢'
         };
       }
-      // 80~89: 높음 (추천)
-      else if (score >= 80) {
+      // 70~84: 높음 (추천)
+      else if (score >= 70) {
         return {
           text: '높음',
           color: '#fff',
@@ -1675,8 +1675,8 @@
           icon: '🔵'
         };
       }
-      // 70~79: 보통 (검토 권장)
-      else if (score >= 70) {
+      // 55~69: 보통 (검토 권장)
+      else if (score >= 55) {
         return {
           text: '보통',
           color: '#fff',
@@ -1687,8 +1687,8 @@
           icon: '🟣'
         };
       }
-      // 60~69: 낮음 (조건 확인 필요)
-      else if (score >= 60) {
+      // 55 미만: 낮음 (조건 확인 필요)
+      else {
         return {
           text: '낮음',
           color: '#333',
@@ -1697,18 +1697,6 @@
           headerBg: '#fff3cd',
           headerText: '#856404',
           icon: '🟠'
-        };
-      }
-      // 60 미만: 참고 (협력사 추천)
-      else {
-        return {
-          text: '참고',
-          color: '#333',
-          bgColor: 'linear-gradient(135deg, #ffc107, #ffda6a)',
-          borderColor: '#ffc107',
-          headerBg: '#fff3cd',
-          headerText: '#856404',
-          icon: '🟡'
         };
       }
     }
@@ -3315,7 +3303,7 @@
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
         ...companyData,
-        // 맞춤찾기 결과 저장 (상위 15개)
+        // 맞춤찾기 결과 저장 (서버 필터링 결과)
         matchedPrograms: lastMatchedPrograms.slice(0, 15),
         // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
         aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
@@ -3390,7 +3378,7 @@
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
         ...companyData,
-        // 맞춤찾기 결과 저장 (상위 15개)
+        // 맞춤찾기 결과 저장 (서버 필터링 결과)
         matchedPrograms: lastMatchedPrograms.slice(0, 15),
         // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
         aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
@@ -3985,7 +3973,7 @@
         };
       });
       
-      // 5. 점수순 정렬 및 상위 15개 반환
+      // 5. 점수순 정렬 및 서버 필터링 결과 반환
       const sortedPrograms = scoredPrograms
         .filter(p => p.matchScore >= 50) // 50점 미만 제외
         .sort((a, b) => b.matchScore - a.matchScore)
@@ -4169,6 +4157,28 @@
               throw new Error(data.error || 'AI 분석 실패');
             }
             
+            // 🆕 v3.0: 매칭 0개 처리
+            if (data.noMatch) {
+              hideLoadingOverlay();
+              const conditions = data.searchConditions || {};
+              const excluded = data.excludedStats || {};
+              
+              alert(
+                `😔 현재 조건에 맞는 지원사업이 없습니다.\n\n` +
+                `📍 검색 조건:\n` +
+                `• 지역: ${conditions.region || '미입력'}\n` +
+                `• 업종: ${conditions.industry || '미입력'} (KSIC: ${conditions.ksicCode || '-'})\n` +
+                `• 규모: ${conditions.size || '미입력'}\n\n` +
+                `📊 제외된 공고:\n` +
+                `• 지역 불일치: ${excluded.region || 0}개\n` +
+                `• 업종 불일치: ${excluded.industry || 0}개\n` +
+                `• 규모 불일치: ${excluded.size || 0}개\n\n` +
+                `✅ 포인트가 차감되지 않았습니다.\n\n` +
+                `💡 기업 정보를 수정하거나 다른 조건으로 다시 시도해보세요.`
+              );
+              return;
+            }
+            
             // 신규 결과에 programId 추가
             newSummaryResults = data.results.map(r => ({
               ...r,
@@ -4178,7 +4188,7 @@
             // 기존 결과와 병합하여 저장
             lastSummaryResults = [...lastSummaryResults, ...newSummaryResults];
             
-            console.log(`📊 분석 결과: 적합 ${data.eligibleCount || 0}개, 부적합 ${data.ineligibleCount || 0}개`);
+            console.log(`📊 분석 결과: 총 ${data.totalAnalyzed || 0}개 분석 (전체 ${data.totalSearched || 0}개 중 ${data.matchedCount || 0}개 매칭)`);
           }
           
           // 전체 결과 (기존 + 신규)를 화면에 표시
@@ -4197,12 +4207,11 @@
           
           hideLoadingOverlay();
           
-          // 완료 메시지 (등급별 구분)
-          const veryHighCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 90).length;
-          const highCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 80 && (r.fitScore || 0) < 90).length;
-          const mediumCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 80).length;
-          const lowCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 60 && (r.fitScore || 0) < 70).length;
-          const refCount = allSummaryResults.filter(r => (r.fitScore || 0) < 60).length;
+          // 🆕 v3.0: 완료 메시지 (등급별 구분 - 참고 삭제)
+          const veryHighCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 85).length;
+          const highCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 85).length;
+          const mediumCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length;
+          const lowCount = allSummaryResults.filter(r => (r.fitScore || 0) < 55).length;
           
           let summaryMsg = '• AI 요약분석: ';
           const parts = [];
@@ -4210,13 +4219,21 @@
           if (highCount > 0) parts.push(`높음 ${highCount}개`);
           if (mediumCount > 0) parts.push(`보통 ${mediumCount}개`);
           if (lowCount > 0) parts.push(`낮음 ${lowCount}개`);
-          if (refCount > 0) parts.push(`참고 ${refCount}개`);
           summaryMsg += parts.join(' + ');
+          
+          // 🆕 v3.0: 자동 저장 (분석 결과 보호)
+          if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
+            savedCompanies[selectedCompanyId].matchedPrograms = lastMatchedPrograms.slice(0, 15);
+            savedCompanies[selectedCompanyId].aiSummary = lastSummaryResults;
+            savedCompanies[selectedCompanyId].savedAt = new Date().toISOString();
+            await saveToDrive(savedCompanies);
+            console.log('💾 요약분석 결과 자동 저장 완료');
+          }
           
           // 🆕 먼저 로딩 닫기
           hideLoadingOverlay();
           
-          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 매우높음/🔵 높음: 신청 권장\n🟣 보통/🟠 낮음: 검토 필요\n🟡 참고: 협력사 추천`);
+          alert(`✅ 지원사업+분석이 완료되었습니다!\n\n• 맞춤 지원사업: ${results.length}개 추천\n${summaryMsg}\n\n각 공고 카드에 AI 분석 결과가 추가되었습니다.\n\n🟢 매우높음/🔵 높음: 신청 권장\n🟣 보통/🟠 낮음: 검토 필요\n\n━━━━━━━━━━━━━━━━━━━━━━\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`);
           
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
           if (newPrograms.length > 0) {
@@ -4374,7 +4391,41 @@
           throw new Error(data.error || 'AI 분석 실패');
         }
         
+        // 🆕 v3.0: 매칭 0개 처리
+        if (data.noMatch) {
+          hideLoadingOverlay();
+          const conditions = data.searchConditions || {};
+          const excluded = data.excludedStats || {};
+          
+          alert(
+            `😔 현재 조건에 맞는 지원사업이 없습니다.\n\n` +
+            `📍 검색 조건:\n` +
+            `• 지역: ${conditions.region || '미입력'}\n` +
+            `• 업종: ${conditions.industry || '미입력'} (KSIC: ${conditions.ksicCode || '-'})\n` +
+            `• 규모: ${conditions.size || '미입력'}\n\n` +
+            `📊 제외된 공고:\n` +
+            `• 지역 불일치: ${excluded.region || 0}개\n` +
+            `• 업종 불일치: ${excluded.industry || 0}개\n` +
+            `• 규모 불일치: ${excluded.size || 0}개\n\n` +
+            `✅ 포인트가 차감되지 않았습니다.\n\n` +
+            `💡 기업 정보를 수정하거나 다른 조건으로 다시 시도해보세요.`
+          );
+          return;
+        }
+        
         const summaryResults = data.results;
+        
+        // 🆕 전역 변수에 저장 (자동 저장용)
+        lastSummaryResults = summaryResults;
+        
+        // 🆕 v3.0: 자동 저장 (분석 결과 보호)
+        if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
+          savedCompanies[selectedCompanyId].matchedPrograms = lastMatchedPrograms.slice(0, 15);
+          savedCompanies[selectedCompanyId].aiSummary = lastSummaryResults;
+          savedCompanies[selectedCompanyId].savedAt = new Date().toISOString();
+          await saveToDrive(savedCompanies);
+          console.log('💾 요약분석 결과 자동 저장 완료');
+        }
         
         // 100% 완료 표시 후 닫기
         updateProgress(100, allPrograms.length, allPrograms.length);
@@ -4650,6 +4701,14 @@
           detailMsg += `\n(✅ 성공 ${successCount}개 / ⚠️ 실패 ${failCount}개)`;
         }
         
+        // 🆕 v3.0: 자동 저장 (상세분석 결과 보호)
+        if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
+          savedCompanies[selectedCompanyId].aiDetail = lastDetailResults;
+          savedCompanies[selectedCompanyId].savedAt = new Date().toISOString();
+          await saveToDrive(savedCompanies);
+          console.log('💾 상세분석 결과 자동 저장 완료');
+        }
+        
         // 🆕 신규 분석이 있었을 때만 크레딧 차감
         if (newCount > 0) {
           await deductCredits('detail');
@@ -4660,10 +4719,14 @@
             `총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n` +
             (failCount > 0 ? `⚠️ 실패한 ${failCount}개는 공고문을 직접 확인해주세요.\n\n` : '') +
             `💳 차감 포인트: 2,000P\n` +
-            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P`
+            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `💾 분석 결과가 자동 저장되었습니다.\n` +
+            `⚠️ 데이터 안전을 위해 [저장] 버튼으로\n` +
+            `   수동 저장도 권장드립니다.`
           );
         } else {
-          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.`);
+          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n━━━━━━━━━━━━━━━━━━━━━━\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`);
         }
         
       } catch (error) {
@@ -4742,8 +4805,8 @@
         // 점수에 따른 등급 및 색상
         const isEligibleDetail = result.companyFit?.eligible === true;
         const rawScoreDetail = result.companyFit?.fitScore || 0;
-        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
-        const fitScore = isEligibleDetail ? rawScoreDetail : Math.min(rawScoreDetail, 59);
+        // 🔥 v3.0: 서버 필터링으로 부적합 공고 제외됨 (예외 처리용)
+        const fitScore = isEligibleDetail ? rawScoreDetail : Math.min(rawScoreDetail, 54);
         const grade = getRelevanceGrade(fitScore);
         
         // 🔥 오류 시 제목 변경
@@ -5193,9 +5256,9 @@
         
         // 적합/부적합 여부 및 관련도 등급 결정
         const isEligible = result.eligible === true;
-        // 🔥 부적합이면 관련도를 "참고"(60점 미만)로 강제 표시
+        // 🔥 v3.0: 서버 필터링으로 부적합 공고 제외됨 (예외 처리용)
         const rawScore = result.fitScore || (isEligible ? 85 : 55);
-        const fitScore = isEligible ? rawScore : Math.min(rawScore, 59);
+        const fitScore = isEligible ? rawScore : Math.min(rawScore, 54);
         
         // 🔥 수정된 점수를 result 객체에 저장 (정렬에 사용)
         result.fitScore = fitScore;
@@ -5391,11 +5454,10 @@
       if (!headerCard) return;
       
       // 등급별 개수 계산
-      const veryHighCount = summaryResults.filter(r => (r.fitScore || 0) >= 90).length; // 매우높음
-      const highCount = summaryResults.filter(r => (r.fitScore || 0) >= 80 && (r.fitScore || 0) < 90).length; // 높음
-      const mediumCount = summaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 80).length; // 보통
-      const lowCount = summaryResults.filter(r => (r.fitScore || 0) >= 60 && (r.fitScore || 0) < 70).length; // 낮음
-      const refCount = summaryResults.filter(r => (r.fitScore || 0) < 60).length; // 참고
+      const veryHighCount = summaryResults.filter(r => (r.fitScore || 0) >= 85).length; // 매우높음
+      const highCount = summaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 85).length; // 높음
+      const mediumCount = summaryResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length; // 보통
+      const lowCount = summaryResults.filter(r => (r.fitScore || 0) < 55).length; // 낮음
       
       let headerHtml = `<h2>📊 맞춤형 지원사업 추천 결과</h2>`;
       
@@ -5405,7 +5467,6 @@
       if (highCount > 0) grades.push(`🔵 높음 ${highCount}개`);
       if (mediumCount > 0) grades.push(`🟣 보통 ${mediumCount}개`);
       if (lowCount > 0) grades.push(`🟠 낮음 ${lowCount}개`);
-      if (refCount > 0) grades.push(`🟡 참고 ${refCount}개`);
       
       if (grades.length > 0) {
         headerHtml += `
@@ -6616,6 +6677,8 @@
      * @param {string} type - 'summary' | 'detail'
      */
     function showCompletionWithCredits(type, resultCount) {
+      const saveNotice = `\n\n━━━━━━━━━━━━━━━━━━━━━━\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`;
+      
       if (type === 'summary') {
         const freeMsg = userCredits.freeRemaining > 0 
           ? `📊 이번 달 무료 잔여: ${userCredits.freeRemaining}회`
@@ -6625,14 +6688,16 @@
           `✅ 요약분석이 완료되었습니다!\n\n` +
           `• 분석 완료: ${resultCount}개 공고\n\n` +
           `${freeMsg}\n` +
-          `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P`
+          `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P` +
+          saveNotice
         );
       } else if (type === 'detail') {
         alert(
           `✅ 상세분석이 완료되었습니다!\n\n` +
           `• 분석 완료: ${resultCount}개 공고\n` +
           `• 차감 포인트: 2,000P\n\n` +
-          `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P`
+          `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P` +
+          saveNotice
         );
       }
     }
