@@ -5014,6 +5014,15 @@
             </div>
           </div>
           
+          ${hasError ? `
+          <!-- 🔥 PDF 분석 실패 안내 메시지 -->
+          <div style="background:#f8f8f8; border:1px solid #ddd; border-radius:8px; padding:12px; margin-bottom:1rem;">
+            <p style="margin:0; font-weight:bold; color:#333; font-size:0.9rem;">
+              *공고문이 아래한글 또는 이미지(이미지용 pdf파일 포함)인 경우 AI가 분석할 수 없사오니 공고문을 다운받아 검토하여 주시기 바랍니다.
+            </p>
+          </div>
+          ` : ''}
+          
           <!-- 사업 요약 -->
           <div style="background: ${hasError ? '#fff8e6' : '#f0fff4'}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid ${hasError ? '#ffc107' : '#28a745'};">
             <h6 style="color: ${hasError ? '#856404' : '#155724'}; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">📋 사업 요약</h6>
