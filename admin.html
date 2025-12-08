@@ -2147,6 +2147,11 @@
                 const user = users.find(u => u.id === docId);
                 const oldType = user ? user.type : '';
                 
+                // user 객체가 없으면 에러
+                if (!user) {
+                    console.error('users 배열에서 회원을 찾을 수 없음:', docId);
+                }
+                
                 // Firestore 업데이트
                 await db.collection('users').doc(docId).update(updateData);
                 
@@ -2156,26 +2161,43 @@
                 if (newType === '무료사용자' && oldType !== '무료사용자') {
                     // 무료사용자로 변경됨 → admins에 추가
                     const adminData = {
-                        userId: user.userId,
+                        userId: user ? user.userId : docId,
                         name: updateData.name,
-                        password: updateData.password || user.password || '',
+                        password: updateData.password || (user ? user.password : '') || '',
                         role: 'freeuser',
                         isAdmin: false,
                         expireDate: null,  // 관리자 관리에서 설정
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     };
                     await db.collection('admins').doc(docId).set(adminData);
-                    console.log('✅ admins 컬렉션에 무료사용자 추가:', user.userId);
+                    console.log('✅ admins 컬렉션에 무료사용자 추가:', adminData.userId);
                 } else if (newType !== '무료사용자' && oldType === '무료사용자') {
                     // 무료사용자에서 다른 유형으로 변경됨 → admins에서 제거
                     await db.collection('admins').doc(docId).delete().catch(() => {});
-                    console.log('✅ admins 컬렉션에서 제거:', user.userId);
+                    console.log('✅ admins 컬렉션에서 제거:', user ? user.userId : docId);
                 } else if (newType === '무료사용자') {
-                    // 무료사용자 유지 → admins 정보 업데이트
-                    await db.collection('admins').doc(docId).update({
-                        name: updateData.name,
-                        password: updateData.password || user.password || ''
-                    }).catch(() => {});
+                    // 무료사용자 유지 → admins에 없으면 추가, 있으면 업데이트
+                    const adminDoc = await db.collection('admins').doc(docId).get();
+                    if (adminDoc.exists) {
+                        // 있으면 업데이트
+                        await db.collection('admins').doc(docId).update({
+                            name: updateData.name,
+                            password: updateData.password || (user ? user.password : '') || ''
+                        }).catch(() => {});
+                    } else {
+                        // 없으면 새로 추가
+                        const adminData = {
+                            userId: user ? user.userId : docId,
+                            name: updateData.name,
+                            password: updateData.password || (user ? user.password : '') || '',
+                            role: 'freeuser',
+                            isAdmin: false,
+                            expireDate: null,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        await db.collection('admins').doc(docId).set(adminData);
+                        console.log('✅ admins 컬렉션에 누락된 무료사용자 추가:', adminData.userId);
+                    }
                 }
                 
                 alert('✅ 회원 정보가 저장되었습니다.');
@@ -3034,16 +3056,24 @@
                 }
                 
                 // 비밀번호가 변경된 경우 Firebase Auth도 업데이트 시도
+                let authPasswordChanged = false;
                 if (newPassword) {
                     try {
                         const changePassword = functions.httpsCallable('changeUserPassword');
                         await changePassword({ uid: docId, newPassword: newPassword, adminSecret: ADMIN_SECRET });
+                        authPasswordChanged = true;
                     } catch (pwErr) {
-                        console.warn('Firebase Auth 비밀번호 변경 실패 (무시):', pwErr);
+                        console.warn('Firebase Auth 비밀번호 변경 실패:', pwErr);
+                        // Cloud Functions 없으면 경고 표시
+                        alert('⚠️ 주의: Firestore 비밀번호는 변경되었으나,\nFirebase Auth 비밀번호 변경에 실패했습니다.\n\n실제 로그인을 위해 Firebase Console에서\n직접 비밀번호를 변경해주세요.');
                     }
                 }
                 
-                alert('✅ 수정이 완료되었습니다.');
+                if (newPassword && authPasswordChanged) {
+                    alert('✅ 수정이 완료되었습니다.\n비밀번호가 정상적으로 변경되었습니다.');
+                } else {
+                    alert('✅ 수정이 완료되었습니다.');
+                }
                 closeAdminEditModal();
                 
             } catch (err) {
