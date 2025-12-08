@@ -2778,6 +2778,41 @@
       }
     }
     
+    // 🔥 v3.2: 등록일자 포맷 (YYYYMMDD... 또는 다양한 형식 지원)
+    function formatRegisteredDate(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        // "20250101120000" 또는 "2025-01-01" 등 다양한 형식 처리
+        const cleaned = dateStr.replace(/[^0-9]/g, '');
+        if (cleaned.length >= 8) {
+          return `${cleaned.substring(0,4)}.${cleaned.substring(4,6)}.${cleaned.substring(6,8)}`;
+        }
+        return dateStr.substring(0, 10);
+      } catch {
+        return dateStr || '-';
+      }
+    }
+    
+    // 🔥 v3.2: 신청기간 포맷 (20250101~20250331 → 25.01.01~25.03.31)
+    function formatApplicationPeriod(periodStr) {
+      if (!periodStr) return '공고문 확인';
+      // 숫자가 아닌 문자열이면 그대로 반환 (예: "예산소진시까지", "상시모집")
+      if (!/\d{8}/.test(periodStr)) return periodStr;
+      try {
+        const parts = periodStr.split('~').map(s => s.trim());
+        const formatted = parts.map(p => {
+          const cleaned = p.replace(/[^0-9]/g, '');
+          if (cleaned.length >= 8) {
+            return `${cleaned.substring(2,4)}.${cleaned.substring(4,6)}.${cleaned.substring(6,8)}`;
+          }
+          return p;
+        });
+        return formatted.join(' ~ ');
+      } catch {
+        return periodStr;
+      }
+    }
+    
     function selectCompanyFromList(companyId) {
       selectedCompanyId = companyId;
       
@@ -5236,9 +5271,13 @@
             </div>
             
             <h3 style="color: #0c2c54; margin-bottom: 0.5rem;">${rec.name}</h3>
-            <p style="color:#666;font-size:0.9rem;margin-bottom:0.75rem;">
+            <p style="color:#666;font-size:0.9rem;margin-bottom:0.5rem;">
               <strong>주관:</strong> ${rec.organization} | 
               <strong>분야:</strong> ${rec.category}
+            </p>
+            <p style="color:#888;font-size:0.85rem;margin-bottom:0.75rem;">
+              <strong>등록:</strong> ${formatRegisteredDate(rec.registeredDate)} | 
+              <strong>신청기간:</strong> ${formatApplicationPeriod(rec.applicationPeriod)}
             </p>
             
             <div style="margin-top:1rem;padding-top:1rem;border-top:2px solid #e0e0e0;">
