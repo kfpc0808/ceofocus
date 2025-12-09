@@ -2070,7 +2070,7 @@
                 await batch.commit();
                 
                 alert(`✅ ${checkboxes.length}명의 회원 데이터가 삭제되었습니다.\n\n※ Firebase Auth 계정 삭제가 필요하면\nFirebase Console > Authentication에서 삭제해주세요.`);
-                location.reload();
+                // onSnapshot 리스너가 자동으로 화면 업데이트함 (location.reload 불필요)
                 
             } catch (error) {
                 console.error('일괄 삭제 오류:', error);
