@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Executive Consulting Solution</title>
+    <title>Fin. Master - 로그인</title>
     <style>
         * { 
             margin: 0; 
@@ -332,7 +332,8 @@
     <!-- 1. 로그인 화면 -->
     <div id="loginView" class="container-box">
         <h1>🔐 로그인</h1>
-        <p class="subtitle">Executive Consulting Solution</p>
+        <h1 style="margin-top: 0.3rem; font-size: inherit;">Fin. Master</h1>
+        <p class="subtitle">'기업마당' 정부지원자금 분석시스템</p>
         
         <div id="loginMessage" class="message"></div>
         
@@ -358,9 +359,14 @@
         </div>
         
         <!-- 상세분석 샘플 조회 버튼 -->
-        <button type="button" class="btn btn-gold" onclick="showDetailSample()">
-            📊 정부지원자금 상세분석(샘플)
-        </button>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+            <button type="button" class="btn btn-gold" onclick="showDetailSample()">
+                📊 AI상세분석(샘플)
+            </button>
+            <a href="https://www.youtube.com/watch?v=sM7I_GKo9UA&feature=youtu.be" target="_blank" class="btn btn-gold" style="text-decoration: none;">
+                🎬 분석화면 바로보기(영상)
+            </a>
+        </div>
     </div>
 
     <!-- 2. 회원가입 신청 화면 (모바일 최적화) -->
