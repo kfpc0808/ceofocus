@@ -2057,38 +2057,24 @@
             }));
             const userIds = userList.map(u => u.userId).join(', ');
             
-            if (!confirm(`선택한 ${checkboxes.length}명의 회원을 완전히 삭제하시겠습니까?\n\n대상: ${userIds}\n\n⚠️ 삭제되는 데이터:\n- Firebase 계정 (로그인 정보)\n- 회원 정보\n- 포인트 이용 내역`)) return;
+            if (!confirm(`선택한 ${checkboxes.length}명의 회원을 삭제하시겠습니까?\n\n대상: ${userIds}\n\n⚠️ 삭제되는 데이터:\n- 회원 정보 (Firestore)\n- 포인트 이용 내역\n\n※ Firebase Auth 계정은 Firebase Console에서 별도 삭제 필요`)) return;
             if (!confirm(`⚠️ 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
             
             try {
-                // Cloud Functions 호출하여 완전 삭제 (asia-northeast3 region 사용)
-                const deleteUsersCompletely = functions.httpsCallable('deleteUsersCompletely');
-                const result = await deleteUsersCompletely({ users: userList });
+                // Firestore에서 직접 삭제 (Cloud Function 호출 없음)
+                const batch = db.batch();
+                checkboxes.forEach(cb => {
+                    const docRef = db.collection('users').doc(cb.value);
+                    batch.delete(docRef);
+                });
+                await batch.commit();
                 
-                if (result.data.success) {
-                    alert(`✅ ${result.data.message}\n\n모든 데이터가 완전히 삭제되었습니다.`);
-                    location.reload();
-                }
+                alert(`✅ ${checkboxes.length}명의 회원 데이터가 삭제되었습니다.\n\n※ Firebase Auth 계정 삭제가 필요하면\nFirebase Console > Authentication에서 삭제해주세요.`);
+                location.reload();
                 
             } catch (error) {
                 console.error('일괄 삭제 오류:', error);
-                
-                // Cloud Functions 미배포 시 기존 방식으로 fallback
-                if (error.code === 'functions/not-found' || error.message.includes('not found')) {
-                    alert('⚠️ Cloud Functions가 배포되지 않았습니다.\n\nFirestore 데이터만 삭제합니다.\nFirebase Auth 계정은 Firebase Console에서 수동 삭제가 필요합니다.');
-                    
-                    const batch = db.batch();
-                    checkboxes.forEach(cb => {
-                        const docRef = db.collection('users').doc(cb.value);
-                        batch.delete(docRef);
-                    });
-                    await batch.commit();
-                    
-                    alert(`✅ ${checkboxes.length}명의 Firestore 데이터가 삭제되었습니다.`);
-                    location.reload();
-                } else {
-                    alert('오류 발생: ' + (error.message || error));
-                }
+                alert('오류 발생: ' + (error.message || error));
             }
         }
         
