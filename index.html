@@ -872,10 +872,7 @@
       </div>
     </div>
 
-    <div id="driveNotice" class="notice">
-      모든 고객정보는 사용자의 <b>구글드라이브</b>에 안전하게 보관됩니다. 공급자는 사용자의 고객정보를 보관하지 않습니다.<br/>
-      간단하게 본인의 <b>'드라이브 연동'</b>을 먼저 하신 후 이용바랍니다.
-    </div>
+
 
     <div class="program-list">
       <div class="program-card" onclick="go('ceofocus.html')">
@@ -1615,7 +1612,6 @@
     const elLoadingText = document.getElementById('loadingText');
     const elLoadingDetails = document.getElementById('loadingDetails');
     const elMainContent = document.getElementById('mainContent');
-    const elNotice = document.getElementById('driveNotice');
     const elWelcome = document.getElementById('welcomeTitle');
     
     let auth = null;
@@ -1817,7 +1813,6 @@
       }
       
       // 드라이브 설정 확인
-      refreshDriveNotice(user);
     }
     
     // UI 업데이트 및 표시
@@ -1836,33 +1831,7 @@
       }, 300);
     }
     
-    // 드라이브 설정 확인
-    async function refreshDriveNotice(user) {
-      if (!user) {
-        elNotice.classList.remove('show');
-        return;
-      }
-      
-      let enabled = localStorage.getItem('driveEnabled') === 'true';
-      
-      try {
-        if (db) {
-          const snap = await db.collection('users').doc(user.uid).get();
-          if (snap.exists && typeof snap.data().driveEnabled === 'boolean') {
-            enabled = snap.data().driveEnabled;
-            localStorage.setItem('driveEnabled', String(enabled));
-          }
-        }
-      } catch (e) {
-        console.warn('⚠️ 드라이브 설정 확인 실패:', e.message);
-      }
-      
-      if (enabled) {
-        elNotice.classList.remove('show');
-      } else {
-        elNotice.classList.add('show');
-      }
-    }
+
     
     // 페이지 이동
     function go(path) {
@@ -2259,8 +2228,7 @@
         
         alert('구글 드라이브 연동이 완료되었습니다!\n\nCEO Focus와 Financial Master에서\n고객 데이터를 구글 시트에 저장할 수 있습니다.');
         
-        refreshDriveNotice(user);
-        
+          
       } catch (error) {
         console.error('❌ 드라이브 설정 오류:', error);
         alert('드라이브 연동 설정에 실패했습니다.\n\n' + error.message);
