@@ -6951,6 +6951,9 @@
       // 🆕 서버에서 확인된 무제한 사용자는 차감 안 함
       if (userCredits.unlimited) {
         console.log('👑 무제한 사용자: 포인트 차감 없음 -', userCredits.unlimitedReason);
+        // ★ 무제한 사용자도 마지막 사용 정보 저장 (메시지 표시용)
+        userCredits.lastUsedFree = true;
+        userCredits.lastCost = 0;
         return true;
       }
       
@@ -6961,6 +6964,8 @@
       
       if (user && adminUserIds.includes(currentUserId)) {
         console.log('👑 관리자 모드: 포인트 차감 없음');
+        userCredits.lastUsedFree = true;
+        userCredits.lastCost = 0;
         return true;
       }
       
@@ -6974,9 +6979,15 @@
             ...result.data.credits,
             isLoaded: true,
             unlimited: userCredits.unlimited,           // 🆕 기존 무제한 상태 유지
-            unlimitedReason: userCredits.unlimitedReason
+            unlimitedReason: userCredits.unlimitedReason,
+            // ★ 서버에서 받은 실제 사용 정보 저장
+            lastUsedFree: result.data.usedFree,         // 무료 사용 여부
+            lastCost: result.data.cost,                 // 실제 차감 포인트
+            // 월간 무료 제공 횟수 유지
+            freeSummaryPerMonth: userCredits.freeSummaryPerMonth || 20,
+            freeDetailPerMonth: userCredits.freeDetailPerMonth || 10
           };
-          console.log(`💰 크레딧 차감 완료:`, userCredits);
+          console.log(`💰 크레딧 차감 완료:`, userCredits, `무료사용: ${result.data.usedFree}, 차감: ${result.data.cost}P`);
           return true;
         } else {
           console.error('❌ 크레딧 차감 실패:', result.data.error);
@@ -7002,27 +7013,59 @@
       const freeSummaryRemaining = userCredits.freeSummaryRemaining ?? userCredits.freeRemaining ?? freeSummaryPerMonth;
       const freeDetailRemaining = userCredits.freeDetailRemaining ?? freeDetailPerMonth;
       
+      // ★ 서버에서 받은 실제 사용 정보 (정확한 표시용)
+      const usedFree = userCredits.lastUsedFree;
+      const cost = userCredits.lastCost || 0;
+      
       if (type === 'summary') {
-        const freeMsg = freeSummaryRemaining > 0 
-          ? `📊 이번 달 무료 요약분석 잔여: ${freeSummaryRemaining}/${freeSummaryPerMonth}회`
-          : `📊 무료 요약분석 소진 (다음 달 리셋)`;
+        // ★ 요약분석: 서버 응답 기반으로 정확하게 표시
+        let freeMsg, costMsg;
+        
+        if (usedFree === true) {
+          // 무료 사용
+          freeMsg = `📊 이번 달 무료 요약분석 잔여: ${freeSummaryRemaining}/${freeSummaryPerMonth}회`;
+          costMsg = '';
+        } else if (cost > 0) {
+          // 유료 사용
+          freeMsg = `📊 무료 요약분석 소진 (다음 달 리셋)`;
+          costMsg = `• 차감 포인트: ${cost.toLocaleString()}P\n`;
+        } else {
+          // 무제한 사용자
+          freeMsg = `👑 ${userCredits.unlimitedReason || '무제한 사용'}`;
+          costMsg = '';
+        }
         
         alert(
           `✅ 요약분석이 완료되었습니다!\n\n` +
-          `• 분석 완료: ${resultCount}개 공고\n\n` +
-          `${freeMsg}\n` +
+          `• 분석 완료: ${resultCount}개 공고\n` +
+          costMsg +
+          `\n${freeMsg}\n` +
           `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P` +
           saveNotice
         );
       } else if (type === 'detail') {
-        const freeMsg = freeDetailRemaining > 0 
-          ? `📊 이번 달 무료 상세분석 잔여: ${freeDetailRemaining}/${freeDetailPerMonth}회`
-          : `📊 무료 상세분석 소진 (다음 달 리셋)`;
+        // ★ 상세분석: 서버 응답 기반으로 정확하게 표시
+        let freeMsg, costMsg;
+        
+        if (usedFree === true) {
+          // 무료 사용
+          freeMsg = `📊 이번 달 무료 상세분석 잔여: ${freeDetailRemaining}/${freeDetailPerMonth}회`;
+          costMsg = '';
+        } else if (cost > 0) {
+          // 유료 사용
+          freeMsg = `📊 무료 상세분석 소진 (다음 달 리셋)`;
+          costMsg = `• 차감 포인트: ${cost.toLocaleString()}P\n`;
+        } else {
+          // 무제한 사용자
+          freeMsg = `👑 ${userCredits.unlimitedReason || '무제한 사용'}`;
+          costMsg = '';
+        }
         
         alert(
           `✅ 상세분석이 완료되었습니다!\n\n` +
-          `• 분석 완료: ${resultCount}개 공고\n\n` +
-          `${freeMsg}\n` +
+          `• 분석 완료: ${resultCount}개 공고\n` +
+          costMsg +
+          `\n${freeMsg}\n` +
           `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P` +
           saveNotice
         );
