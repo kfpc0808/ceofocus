@@ -1194,16 +1194,37 @@
         }
         
         // 선택한 날짜로 일일 사용량 조회
-        function loadDailyUsageByDate() {
+        // ★ 무료사용자 제한 정보 캐시
+        let freeUserLimits = {};
+        
+        async function loadDailyUsageByDate() {
             const dateFilter = document.getElementById('dailyUsageDateFilter');
             const selectedDate = dateFilter?.value || new Date().toISOString().split('T')[0];
             
-            db.collection('userUsage').where('date', '==', selectedDate).get().then((snapshot) => {
-                dailyUsages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            try {
+                // 1. 무료사용자 제한 정보 먼저 로드
+                const adminsSnapshot = await db.collection('admins').where('role', '==', 'freeuser').get();
+                freeUserLimits = {};
+                adminsSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (data.userId) {
+                        freeUserLimits[data.userId] = {
+                            summaryLimit: data.summaryLimit !== undefined ? data.summaryLimit : 999,
+                            detailLimit: data.detailLimit !== undefined ? data.detailLimit : 999,
+                            expireDate: data.expireDate || null
+                        };
+                    }
+                });
+                console.log('📋 무료사용자 제한 정보:', freeUserLimits);
+                
+                // 2. 일일 사용량 로드
+                const usageSnapshot = await db.collection('userUsage').where('date', '==', selectedDate).get();
+                dailyUsages = usageSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
                 renderDailyUsage();
-            }).catch((error) => {
-                console.error('userUsage 조회 오류:', error);
-            });
+            } catch (error) {
+                console.error('일일 사용량 조회 오류:', error);
+            }
         }
         
         // 오늘 날짜로 조회
@@ -1701,26 +1722,46 @@
             const start = (page - 1) * PAGE_SIZE;
             const pageData = filtered.slice(start, start + PAGE_SIZE);
             
-            const DAILY_LIMIT = 10;
+            const DEFAULT_DAILY_LIMIT = 10;  // 일반 사용자 기본 제한
             
             tbody.innerHTML = pageData.map(u => {
                 const oderId = u.id;
                 const userInfo = users.find(user => user.id === oderId);
                 const userName = userInfo?.name || '삭제회원';
                 const displayId = userInfo?.userId || userInfo?.email?.split('@')[0] || '(삭제됨)';
+                
+                // ★ 무료사용자 개별 제한 확인
+                const freeLimit = freeUserLimits[displayId];
+                let summaryLimit = DEFAULT_DAILY_LIMIT;
+                let detailLimit = DEFAULT_DAILY_LIMIT;
+                let isFreeUser = false;
+                
+                if (freeLimit) {
+                    isFreeUser = true;
+                    summaryLimit = freeLimit.summaryLimit !== 999 ? freeLimit.summaryLimit : DEFAULT_DAILY_LIMIT;
+                    detailLimit = freeLimit.detailLimit !== 999 ? freeLimit.detailLimit : DEFAULT_DAILY_LIMIT;
+                }
+                
                 const summaryUsed = u.summaryCount || 0;
-                const summaryRemain = Math.max(0, DAILY_LIMIT - summaryUsed);
+                const summaryRemain = Math.max(0, summaryLimit - summaryUsed);
                 const detailUsed = u.detailCount || 0;
-                const detailRemain = Math.max(0, DAILY_LIMIT - detailUsed);
+                const detailRemain = Math.max(0, detailLimit - detailUsed);
                 const lastUsed = u.date || '-';
                 
+                // ★ 무료사용자는 뱃지 표시
+                const userBadge = isFreeUser ? ' <span style="font-size:0.75rem;color:#e67e22;">[무료]</span>' : '';
+                
+                // ★ 제한 표시 (무료사용자는 개별 제한 표시)
+                const summaryLimitText = isFreeUser && freeLimit.summaryLimit !== 999 ? `/${summaryLimit}` : `/${DEFAULT_DAILY_LIMIT}`;
+                const detailLimitText = isFreeUser && freeLimit.detailLimit !== 999 ? `/${detailLimit}` : `/${DEFAULT_DAILY_LIMIT}`;
+                
                 return `<tr>
-                    <td>${displayId}</td>
+                    <td>${displayId}${userBadge}</td>
                     <td>${userName}</td>
-                    <td><span style="color:${summaryUsed >= DAILY_LIMIT ? 'red' : 'blue'}">${summaryUsed}회</span></td>
-                    <td>${summaryRemain}회</td>
-                    <td><span style="color:${detailUsed >= DAILY_LIMIT ? 'red' : 'blue'}">${detailUsed}회</span></td>
-                    <td>${detailRemain}회</td>
+                    <td><span style="color:${summaryUsed >= summaryLimit ? 'red' : 'blue'}">${summaryUsed}회</span></td>
+                    <td><span style="color:${summaryRemain === 0 ? 'red' : 'inherit'}">${summaryRemain}회${summaryLimitText}</span></td>
+                    <td><span style="color:${detailUsed >= detailLimit ? 'red' : 'blue'}">${detailUsed}회</span></td>
+                    <td><span style="color:${detailRemain === 0 ? 'red' : 'inherit'}">${detailRemain}회${detailLimitText}</span></td>
                     <td>${lastUsed}</td>
                 </tr>`;
             }).join('');
