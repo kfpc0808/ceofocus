@@ -4769,10 +4769,12 @@
             
             for (let retry = 0; retry < 2; retry++) {
               try {
+                // 🔥 첫 번째 PDF에서만 제한 체크, 나머지는 스킵
                 const result = await analyzeProgramPDF({
                   pdfUrl: pdfUrl,
                   companyData: lastCompanyData,
-                  agentId: agentId
+                  agentId: agentId,
+                  skipLimitCheck: i > 0  // 첫 번째(i=0)만 체크, 나머지는 스킵
                 });
                 data = result.data;
                 if (data.success && data.analysis) {
