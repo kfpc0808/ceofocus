@@ -780,7 +780,7 @@
     <div id="adminModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <h3>🔐 관리자/무료사용자 추가</h3>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:1rem;">관리자는 모든 기능 사용, 무료사용자는 <b style="color:#27ae60;">API 무제한</b> (유효기간 내)</p>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:1rem;">관리자는 모든 기능 사용, 무료사용자는 <b style="color:#27ae60;">1일 제한 설정 가능</b></p>
             <form id="adminForm">
                 <div class="form-group">
                     <label>아이디 *</label>
@@ -799,7 +799,7 @@
                     <select id="adminRole" class="form-control" onchange="toggleExpireDateField()">
                         <option value="super_admin">최고관리자 (모든 권한 + 무제한)</option>
                         <option value="admin">일반관리자 (관리 권한 + 무제한)</option>
-                        <option value="freeuser">무료사용자 (API 무제한만)</option>
+                        <option value="freeuser">무료사용자 (1일 제한 설정)</option>
                     </select>
                 </div>
                 <div class="form-group" id="expireDateGroup" style="display: none;">
@@ -811,6 +811,21 @@
                         </label>
                     </div>
                     <small style="color: #888; margin-top: 0.3rem; display: block;">유효기간이 지나면 일반 회원처럼 10회/일 제한이 적용됩니다.</small>
+                </div>
+                <!-- ★ 1일 사용 제한 설정 (무료사용자용) -->
+                <div class="form-group" id="dailyLimitGroup" style="display: none;">
+                    <label>1일 사용 제한</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <div style="flex: 1;">
+                            <small style="color: #666;">요약분석</small>
+                            <input type="number" id="adminSummaryLimit" class="form-control" placeholder="무제한" min="0" max="999" style="margin-top: 0.2rem;">
+                        </div>
+                        <div style="flex: 1;">
+                            <small style="color: #666;">상세분석</small>
+                            <input type="number" id="adminDetailLimit" class="form-control" placeholder="무제한" min="0" max="999" style="margin-top: 0.2rem;">
+                        </div>
+                    </div>
+                    <small style="color: #888; margin-top: 0.3rem; display: block;">비워두면 무제한, 숫자 입력 시 해당 횟수로 1일 제한</small>
                 </div>
                 <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
                     <button type="button" class="btn btn-outline" onclick="closeAdminModal()">취소</button>
@@ -856,6 +871,21 @@
                         </label>
                     </div>
                     <small style="color: #888; margin-top: 0.3rem; display: block;">무료사용자: 유효기간이 지나면 10회/일 제한 적용</small>
+                </div>
+                <!-- ★ 1일 사용 제한 설정 (무료사용자용) -->
+                <div class="form-group" id="editDailyLimitGroup" style="display: none;">
+                    <label>1일 사용 제한</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <div style="flex: 1;">
+                            <small style="color: #666;">요약분석</small>
+                            <input type="number" id="editAdminSummaryLimit" class="form-control" placeholder="무제한" min="0" max="999" style="margin-top: 0.2rem;">
+                        </div>
+                        <div style="flex: 1;">
+                            <small style="color: #666;">상세분석</small>
+                            <input type="number" id="editAdminDetailLimit" class="form-control" placeholder="무제한" min="0" max="999" style="margin-top: 0.2rem;">
+                        </div>
+                    </div>
+                    <small style="color: #888; margin-top: 0.3rem; display: block;">비워두면 무제한, 숫자 입력 시 해당 횟수로 1일 제한</small>
                 </div>
                 <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
                     <button type="button" class="btn btn-outline" onclick="closeAdminEditModal()">취소</button>
@@ -2179,11 +2209,16 @@
                     // 무료사용자 유지 → admins에 없으면 추가, 있으면 업데이트
                     const adminDoc = await db.collection('admins').doc(docId).get();
                     if (adminDoc.exists) {
-                        // 있으면 업데이트
-                        await db.collection('admins').doc(docId).update({
-                            name: updateData.name,
-                            password: updateData.password || (user ? user.password : '') || ''
-                        }).catch(() => {});
+                        // 있으면 업데이트 (비밀번호 포함)
+                        const adminUpdateData = {
+                            name: updateData.name
+                        };
+                        // ★ 비밀번호가 변경된 경우에만 추가
+                        if (updateData.password) {
+                            adminUpdateData.password = updateData.password;
+                        }
+                        await db.collection('admins').doc(docId).update(adminUpdateData);
+                        console.log('✅ admins 컬렉션 동기화 완료:', docId, adminUpdateData);
                     } else {
                         // 없으면 새로 추가
                         const adminData = {
@@ -2848,10 +2883,16 @@
                 const changePassword = functions.httpsCallable('changeUserPassword');
                 await changePassword({ uid: docId, newPassword: newPassword, adminSecret: ADMIN_SECRET });
                 
-                // admins 컬렉션도 업데이트
+                // admins 컬렉션 업데이트
                 await db.collection('admins').doc(docId).update({
                     password: newPassword
                 }).catch(() => {});
+                
+                // ★ users 컬렉션도 동기화
+                await db.collection('users').doc(docId).update({
+                    password: newPassword,
+                    isPasswordChanged: true
+                }).catch(() => console.log('ℹ️ users 컬렉션에 해당 문서 없음'));
                 
                 alert(`✅ 비밀번호가 "${newPassword}"로 변경되었습니다.`);
                 
@@ -2861,13 +2902,23 @@
                 // Cloud Functions 없으면 Firestore만 업데이트
                 if (err.code === 'functions/not-found' || err.message.includes('not found')) {
                     try {
-                        await db.collection('admins').doc(docId).update({ password: newPassword }).catch(() => {});
-                        await db.collection('users').doc(docId).update({ password: newPassword }).catch(() => {});
+                        await db.collection('admins').doc(docId).update({ password: newPassword });
+                        console.log('✅ admins 컬렉션 비밀번호 업데이트 완료');
                         
-                        alert(`⚠️ Cloud Functions가 배포되지 않아 Firestore만 업데이트되었습니다.\n\n` +
-                              `실제 로그인을 위해 Firebase Console에서 비밀번호를 변경해주세요.`);
+                        // ★ users 컬렉션도 동기화
+                        await db.collection('users').doc(docId).update({ 
+                            password: newPassword,
+                            isPasswordChanged: true
+                        });
+                        console.log('✅ users 컬렉션 비밀번호 동기화 완료');
+                        
+                        alert(`✅ Firestore 비밀번호가 변경되었습니다.\n\n` +
+                              `⚠️ Firebase Auth 비밀번호는 Cloud Functions 배포 후 변경 가능합니다.`);
                     } catch (e) {
-                        alert('오류 발생: ' + e.message);
+                        // users에 문서가 없는 경우
+                        console.log('ℹ️ users 컬렉션에 해당 문서 없음:', e.message);
+                        alert(`✅ Firestore 비밀번호가 변경되었습니다.\n\n` +
+                              `⚠️ Firebase Auth 비밀번호는 Cloud Functions 배포 후 변경 가능합니다.`);
                     }
                 } else {
                     alert('오류 발생: ' + (err.message || err));
@@ -2881,8 +2932,11 @@
             document.getElementById('adminUserPw').value = 'admin123';
             document.getElementById('adminRole').value = 'super_admin';
             document.getElementById('expireDateGroup').style.display = 'none';
+            document.getElementById('dailyLimitGroup').style.display = 'none';  // ★ 추가
             document.getElementById('adminExpireDate').value = '';
             document.getElementById('adminNoExpire').checked = false;
+            document.getElementById('adminSummaryLimit').value = '';  // ★ 추가
+            document.getElementById('adminDetailLimit').value = '';   // ★ 추가
             document.getElementById('adminModal').style.display = 'flex';
         }
         
@@ -2890,15 +2944,18 @@
         function toggleExpireDateField() {
             const role = document.getElementById('adminRole').value;
             const expireGroup = document.getElementById('expireDateGroup');
+            const limitGroup = document.getElementById('dailyLimitGroup');  // ★ 추가
             
             if (role === 'freeuser') {
                 expireGroup.style.display = 'block';
+                limitGroup.style.display = 'block';  // ★ 추가
                 // 기본값: 30일 후
                 const defaultDate = new Date();
                 defaultDate.setDate(defaultDate.getDate() + 30);
                 document.getElementById('adminExpireDate').value = defaultDate.toISOString().split('T')[0];
             } else {
                 expireGroup.style.display = 'none';
+                limitGroup.style.display = 'none';  // ★ 추가
             }
         }
         
@@ -2942,6 +2999,10 @@
                 document.getElementById('editAdminPassword').placeholder = data.password ? '현재: ' + data.password : '비밀번호 입력';
                 document.getElementById('editAdminRole').value = data.role || 'admin';
                 
+                // ★ 1일 제한 설정 로드
+                document.getElementById('editAdminSummaryLimit').value = data.summaryLimit !== undefined && data.summaryLimit !== 999 ? data.summaryLimit : '';
+                document.getElementById('editAdminDetailLimit').value = data.detailLimit !== undefined && data.detailLimit !== 999 ? data.detailLimit : '';
+                
                 // 유효기간 설정
                 if (data.expireDate) {
                     document.getElementById('editAdminExpireDate').value = data.expireDate;
@@ -2973,10 +3034,13 @@
         function toggleEditExpireDateField() {
             const role = document.getElementById('editAdminRole').value;
             const group = document.getElementById('editExpireDateGroup');
+            const limitGroup = document.getElementById('editDailyLimitGroup');  // ★ 추가
             if (role === 'freeuser') {
                 group.style.display = 'block';
+                limitGroup.style.display = 'block';  // ★ 추가
             } else {
                 group.style.display = 'none';
+                limitGroup.style.display = 'none';  // ★ 추가
                 document.getElementById('editAdminNoExpire').checked = true;
             }
         }
@@ -3001,6 +3065,12 @@
             const noExpire = document.getElementById('editAdminNoExpire').checked;
             const newExpireDate = noExpire ? null : document.getElementById('editAdminExpireDate').value;
             
+            // ★ 1일 제한 설정 (비어있으면 999 = 무제한)
+            const summaryLimitInput = document.getElementById('editAdminSummaryLimit').value.trim();
+            const detailLimitInput = document.getElementById('editAdminDetailLimit').value.trim();
+            const newSummaryLimit = summaryLimitInput === '' ? 999 : parseInt(summaryLimitInput);
+            const newDetailLimit = detailLimitInput === '' ? 999 : parseInt(detailLimitInput);
+            
             if (!newName) {
                 alert('이름을 입력해주세요.');
                 return;
@@ -3013,10 +3083,15 @@
             }
             
             try {
-                // 관리자/최고관리자는 expireDate 항상 null
+                // 관리자/최고관리자는 expireDate 항상 null, 제한도 무제한
                 let finalExpireDate = newExpireDate;
+                let finalSummaryLimit = newSummaryLimit;
+                let finalDetailLimit = newDetailLimit;
+                
                 if (newRole !== 'freeuser') {
                     finalExpireDate = null;
+                    finalSummaryLimit = 999;  // 관리자는 무제한
+                    finalDetailLimit = 999;
                 }
                 
                 // admins 컬렉션 업데이트
@@ -3024,6 +3099,8 @@
                     name: newName,
                     role: newRole,
                     expireDate: finalExpireDate,
+                    summaryLimit: finalSummaryLimit,  // ★ 추가
+                    detailLimit: finalDetailLimit,    // ★ 추가
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
@@ -3042,6 +3119,7 @@
                     };
                     if (newPassword) {
                         userUpdateData.password = newPassword;
+                        userUpdateData.isPasswordChanged = true;  // ★ 추가
                     }
                     // 권한 변경 시 type도 업데이트
                     if (newRole === 'freeuser') {
@@ -3051,8 +3129,9 @@
                         // userUpdateData.type = '이너';
                     }
                     await db.collection('users').doc(docId).update(userUpdateData);
+                    console.log('✅ users 컬렉션 동기화 완료:', docId, userUpdateData);
                 } catch (e) {
-                    console.log('users 컬렉션 업데이트 생략 (해당 문서 없음)');
+                    console.log('ℹ️ users 컬렉션 업데이트 생략 (해당 문서 없음):', docId);
                 }
                 
                 // 비밀번호가 변경된 경우 Firebase Auth도 업데이트 시도
@@ -3111,6 +3190,12 @@
             const noExpire = document.getElementById('adminNoExpire').checked;
             const expireDate = document.getElementById('adminExpireDate').value;
             
+            // ★ 1일 제한 설정 (비어있으면 999 = 무제한)
+            const summaryLimitInput = document.getElementById('adminSummaryLimit').value.trim();
+            const detailLimitInput = document.getElementById('adminDetailLimit').value.trim();
+            const summaryLimit = summaryLimitInput === '' ? 999 : parseInt(summaryLimitInput);
+            const detailLimit = detailLimitInput === '' ? 999 : parseInt(detailLimitInput);
+            
             if (!userId || !name) {
                 alert('아이디와 이름을 입력해주세요.');
                 return;
@@ -3149,9 +3234,15 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                // 무료사용자인 경우 유효기간 추가
+                // 무료사용자인 경우 유효기간 및 제한 추가
                 if (role === 'freeuser') {
                     adminData.expireDate = noExpire ? null : expireDate;
+                    adminData.summaryLimit = summaryLimit;  // ★ 추가
+                    adminData.detailLimit = detailLimit;    // ★ 추가
+                } else {
+                    // 관리자는 무제한
+                    adminData.summaryLimit = 999;
+                    adminData.detailLimit = 999;
                 }
                 
                 await db.collection('admins').doc(uid).set(adminData);
@@ -3183,7 +3274,10 @@
                 
                 if (role === 'freeuser') {
                     successMsg += `\n유효기간: ${noExpire ? '무제한' : expireDate}`;
-                    successMsg += `\n\n이 계정은 유효기간 내 API를 무제한으로 사용할 수 있습니다.`;
+                    // ★ 제한 정보 추가
+                    const summaryLimitText = summaryLimit === 999 ? '무제한' : `${summaryLimit}회/일`;
+                    const detailLimitText = detailLimit === 999 ? '무제한' : `${detailLimit}회/일`;
+                    successMsg += `\n요약분석: ${summaryLimitText}, 상세분석: ${detailLimitText}`;
                 } else {
                     successMsg += `\n\n이 계정은 모든 프로그램을 무료/무제한으로 사용할 수 있습니다.`;
                 }
