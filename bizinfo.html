@@ -6780,23 +6780,41 @@
           ? (userCredits.dailyUsage?.summaryCount || 0)
           : (userCredits.dailyUsage?.detailCount || 0);
         const customLimit = type === 'summary' ? userCredits.summaryLimit : userCredits.detailLimit;
-        const limitText = customLimit === 999 ? '무제한' : `${customLimit}회/일`;
         
-        // 제한이 999가 아닌 경우만 체크
-        if (customLimit !== 999 && dailyUsed >= customLimit) {
-          alert(
-            `❌ 오늘 ${type === 'summary' ? '요약분석' : '상세분석'} 횟수를 모두 사용했습니다.\n\n` +
-            `📅 오늘 사용: ${dailyUsed}/${customLimit}회\n` +
-            `⏰ 내일 다시 이용해주세요.`
+        // ★★★ 디버깅 로그 ★★★
+        console.log(`📋 [${type}] 무료사용자 제한 체크`);
+        console.log(`📋 dailyUsed: ${dailyUsed}, customLimit: ${customLimit}`);
+        
+        // 제한이 설정된 경우만 체크 (999가 아니고, 값이 있는 경우)
+        if (customLimit !== undefined && customLimit !== null && customLimit !== 999) {
+          // 한도 초과 체크
+          if (dailyUsed >= customLimit) {
+            alert(
+              `❌ 오늘 ${type === 'summary' ? '요약분석' : '상세분석'} 횟수를 모두 사용했습니다.\n\n` +
+              `📊 1일 제한: ${customLimit}회\n` +
+              `📅 오늘 사용: ${dailyUsed}/${customLimit}회\n` +
+              `⏰ 내일 다시 이용해주세요.`
+            );
+            return false;
+          }
+          
+          // 진행 확인 (제한 있는 경우)
+          const confirmed = confirm(
+            `👑 ${userCredits.unlimitedReason || '무료사용자'}\n\n` +
+            `${type === 'summary' ? '요약분석' : '상세분석'}을 시작합니다.\n` +
+            `📊 1일 제한: ${customLimit}회\n` +
+            `📅 오늘 사용: ${dailyUsed + 1}/${customLimit}회\n` +
+            `(포인트 차감 없음)\n\n` +
+            `계속 진행하시겠습니까?`
           );
-          return false;
+          return confirmed;
         }
         
+        // 제한이 없는 무료사용자 (999인 경우)
         const confirmed = confirm(
           `👑 ${userCredits.unlimitedReason || '무료사용자'}\n\n` +
           `${type === 'summary' ? '요약분석' : '상세분석'}을 시작합니다.\n` +
-          `📊 1일 제한: ${limitText}\n` +
-          `📅 오늘 사용: ${dailyUsed + 1}/${customLimit === 999 ? '∞' : customLimit}회\n` +
+          `📊 1일 제한: 무제한\n` +
           `(포인트 차감 없음)\n\n` +
           `계속 진행하시겠습니까?`
         );
