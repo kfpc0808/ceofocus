@@ -6356,22 +6356,24 @@
     
     // 로컬 캐시 (화면 표시용, 실제 데이터는 Firestore에서 관리)
     let userCredits = {
-      freeRemaining: 10,
-      freeSummaryRemaining: 20,   // ★ 요약 무료 잔여
-      freeDetailRemaining: 10,    // ★ 상세 무료 잔여
+      freeSummaryRemaining: 20,  // ★ 요약 무료 20회/월
+      freeDetailRemaining: 10,   // ★ 상세 무료 10회/월
+      freeRemaining: 20,         // 호환성
       paidBalance: 0,
       lastResetMonth: '',
       isLoaded: false,
-      unlimited: false,           // 🆕 무제한 사용자 여부
-      unlimitedReason: '',        // 🆕 무제한 사유
+      unlimited: false,        // 🆕 무제한 사용자 여부
+      unlimitedReason: '',     // 🆕 무제한 사유
       // ★ 무료사용자 개별 제한
-      summaryLimit: null,         // 요약분석 1일 제한 (null=무제한)
-      detailLimit: null,          // 상세분석 1일 제한 (null=무제한)
-      hasCustomLimit: false       // 개별 제한 여부
+      summaryLimit: null,
+      detailLimit: null,
+      hasCustomLimit: false
     };
     
     /**
      * Firestore에서 크레딧 조회 (Firebase Functions 통해)
+     * ★ 일반회원: 요약 20회/월, 상세 10회/월 무료
+     * ★ 무료사용자: 개별 제한 적용
      */
     async function loadCreditsFromServer() {
       try {
@@ -6384,23 +6386,23 @@
             isLoaded: true,
             unlimited: result.data.unlimited || false,
             unlimitedReason: result.data.unlimitedReason || '',
-            // 🆕 일일 사용량 정보
-            dailyUsage: result.data.dailyUsage || { summaryCount: 0, detailCount: 0 },
-            dailyLimit: result.data.dailyLimit || 10,
-            // ★ 무료사용자 개별 제한 정보
+            // ★ 월간 무료 제공 횟수
+            freeSummaryPerMonth: result.data.freeSummaryPerMonth || 20,
+            freeDetailPerMonth: result.data.freeDetailPerMonth || 10,
+            // ★ 무료사용자 개별 제한
             summaryLimit: result.data.summaryLimit || null,
             detailLimit: result.data.detailLimit || null,
             hasCustomLimit: result.data.hasCustomLimit || false,
-            // ★ 월간 무료 제공 횟수
-            freeSummaryPerMonth: result.data.freeSummaryPerMonth || 20,
-            freeDetailPerMonth: result.data.freeDetailPerMonth || 10
+            // 🆕 일일 사용량 정보
+            dailyUsage: result.data.dailyUsage || { summaryCount: 0, detailCount: 0 },
+            dailyLimit: result.data.dailyLimit || 10
           };
           console.log('💰 크레딧 로드:', userCredits);
           if (userCredits.unlimited) {
             console.log('👑 무제한 사용자:', userCredits.unlimitedReason);
-            if (userCredits.hasCustomLimit) {
-              console.log(`📋 개별 제한: 요약 ${userCredits.summaryLimit}회/일, 상세 ${userCredits.detailLimit}회/일`);
-            }
+          }
+          if (userCredits.hasCustomLimit) {
+            console.log('📊 개별 제한:', `요약 ${userCredits.summaryLimit}회/일, 상세 ${userCredits.detailLimit}회/일`);
           }
           return true;
         }
@@ -6463,17 +6465,28 @@
         const pointsDisplay = document.getElementById('current-points-display');
         pointsDisplay.textContent = `${(userCredits?.paidBalance || 0).toLocaleString()} P`;
         
-        // 무료 사용 현황 표시
+        // ★ 무료 사용 현황 표시 (요약 20회/월, 상세 10회/월)
         const now = new Date();
         const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
         const displayMonth = monthNames[now.getMonth()];
-        const freeUsed = 10 - userCredits.freeRemaining;
-        const freeStatus = userCredits.freeRemaining > 0 
-          ? `✅ ${freeUsed}/10회 사용 (잔여 ${userCredits.freeRemaining}회)`
-          : `❌ 10/10회 소진`;
+        
+        const freeSummaryPerMonth = userCredits.freeSummaryPerMonth || 20;
+        const freeDetailPerMonth = userCredits.freeDetailPerMonth || 10;
+        const freeSummaryRemaining = userCredits.freeSummaryRemaining ?? userCredits.freeRemaining ?? freeSummaryPerMonth;
+        const freeDetailRemaining = userCredits.freeDetailRemaining ?? freeDetailPerMonth;
+        
+        const summaryUsed = freeSummaryPerMonth - freeSummaryRemaining;
+        const detailUsed = freeDetailPerMonth - freeDetailRemaining;
+        
+        const summaryStatus = freeSummaryRemaining > 0 
+          ? `✅ ${summaryUsed}/${freeSummaryPerMonth}회 (잔여 ${freeSummaryRemaining}회)`
+          : `❌ ${freeSummaryPerMonth}/${freeSummaryPerMonth}회 소진`;
+        const detailStatus = freeDetailRemaining > 0 
+          ? `✅ ${detailUsed}/${freeDetailPerMonth}회 (잔여 ${freeDetailRemaining}회)`
+          : `❌ ${freeDetailPerMonth}/${freeDetailPerMonth}회 소진`;
         
         const freeDisplay = document.getElementById('free-usage-display');
-        freeDisplay.innerHTML = `📊 ${displayMonth} 무료 요약분석: ${freeStatus}`;
+        freeDisplay.innerHTML = `📊 ${displayMonth} 무료: 요약 ${summaryStatus} | 상세 ${detailStatus}`;
         
       } catch (error) {
         console.error('❌ 포인트 조회 오류:', error);
@@ -6743,6 +6756,8 @@
     
     /**
      * 크레딧 확인 및 확인 팝업 표시
+     * ★ 일반회원: 요약 20회/월, 상세 10회/월 무료
+     * ★ 무료사용자: 개별 제한 적용
      * @param {string} type - 'summary' | 'detail'
      * @returns {Promise<boolean>} - 진행 여부
      */
@@ -6759,67 +6774,36 @@
         await loadCreditsFromServer();
       }
       
-      // ★★★ 무료사용자 개별 제한 처리 (핵심 수정) ★★★
+      // ★ 무료사용자 개별 제한이 있는 경우
       if (userCredits.unlimited && userCredits.hasCustomLimit) {
-        const dailySummaryUsed = userCredits.dailyUsage?.summaryCount || 0;
-        const dailyDetailUsed = userCredits.dailyUsage?.detailCount || 0;
+        const dailyUsed = type === 'summary' 
+          ? (userCredits.dailyUsage?.summaryCount || 0)
+          : (userCredits.dailyUsage?.detailCount || 0);
+        const customLimit = type === 'summary' ? userCredits.summaryLimit : userCredits.detailLimit;
+        const limitText = customLimit === 999 ? '무제한' : `${customLimit}회/일`;
         
-        if (type === 'summary') {
-          const summaryLimit = userCredits.summaryLimit || 999;
-          
-          // 제한 초과 체크
-          if (summaryLimit !== 999 && dailySummaryUsed >= summaryLimit) {
-            alert(
-              `❌ 오늘 요약분석 횟수를 모두 사용했습니다.\n\n` +
-              `👑 ${userCredits.unlimitedReason}\n` +
-              `📅 오늘 사용: ${dailySummaryUsed}/${summaryLimit}회\n` +
-              `⏰ 내일 다시 이용해주세요.`
-            );
-            return false;
-          }
-          
-          // 진행 확인
-          const limitText = summaryLimit === 999 ? '무제한' : `${summaryLimit}회`;
-          const usedText = summaryLimit === 999 ? '' : `\n📅 오늘 사용: ${dailySummaryUsed + 1}/${summaryLimit}회`;
-          const confirmed = confirm(
-            `✅ 요약분석을 시작합니다.\n\n` +
-            `👑 ${userCredits.unlimitedReason}` +
-            usedText + `\n` +
-            `(포인트 차감 없음)\n\n` +
-            `계속 진행하시겠습니까?`
+        // 제한이 999가 아닌 경우만 체크
+        if (customLimit !== 999 && dailyUsed >= customLimit) {
+          alert(
+            `❌ 오늘 ${type === 'summary' ? '요약분석' : '상세분석'} 횟수를 모두 사용했습니다.\n\n` +
+            `📅 오늘 사용: ${dailyUsed}/${customLimit}회\n` +
+            `⏰ 내일 다시 이용해주세요.`
           );
-          return confirmed;
-          
-        } else if (type === 'detail') {
-          const detailLimit = userCredits.detailLimit || 999;
-          
-          // 제한 초과 체크
-          if (detailLimit !== 999 && dailyDetailUsed >= detailLimit) {
-            alert(
-              `❌ 오늘 상세분석 횟수를 모두 사용했습니다.\n\n` +
-              `👑 ${userCredits.unlimitedReason}\n` +
-              `📅 오늘 사용: ${dailyDetailUsed}/${detailLimit}회\n` +
-              `⏰ 내일 다시 이용해주세요.`
-            );
-            return false;
-          }
-          
-          // 진행 확인
-          const limitText = detailLimit === 999 ? '무제한' : `${detailLimit}회`;
-          const usedText = detailLimit === 999 ? '' : `\n📅 오늘 사용: ${dailyDetailUsed + 1}/${detailLimit}회`;
-          const confirmed = confirm(
-            `✅ 상세분석을 시작합니다.\n\n` +
-            `PDF 공고문 최대 10개를 AI가 상세 분석합니다.\n\n` +
-            `👑 ${userCredits.unlimitedReason}` +
-            usedText + `\n` +
-            `(포인트 차감 없음)\n\n` +
-            `계속 진행하시겠습니까?`
-          );
-          return confirmed;
+          return false;
         }
+        
+        const confirmed = confirm(
+          `👑 ${userCredits.unlimitedReason || '무료사용자'}\n\n` +
+          `${type === 'summary' ? '요약분석' : '상세분석'}을 시작합니다.\n` +
+          `📊 1일 제한: ${limitText}\n` +
+          `📅 오늘 사용: ${dailyUsed + 1}/${customLimit === 999 ? '∞' : customLimit}회\n` +
+          `(포인트 차감 없음)\n\n` +
+          `계속 진행하시겠습니까?`
+        );
+        return confirmed;
       }
       
-      // 🆕 서버에서 확인된 무제한 사용자 (관리자 또는 제한 없는 무료사용자)
+      // 🆕 서버에서 확인된 무제한 사용자 (관리자/무료사용자 - 개별 제한 없음)
       if (userCredits.unlimited) {
         const confirmed = confirm(
           `👑 ${userCredits.unlimitedReason || '무제한 사용자'}\n\n` +
@@ -6841,13 +6825,15 @@
         return confirmed;
       }
       
+      // ★ 월간 무료 제공 횟수
+      const freeSummaryPerMonth = userCredits.freeSummaryPerMonth || 20;
+      const freeDetailPerMonth = userCredits.freeDetailPerMonth || 10;
+      
       if (type === 'summary') {
-        // 요약분석: 무료 20회, 이후 500P
+        // ★ 요약분석: 무료 20회/월, 이후 500P
         const dailySummaryUsed = userCredits.dailyUsage?.summaryCount || 0;
         const dailySummaryRemaining = (userCredits.dailyLimit || 10) - dailySummaryUsed;
-        const freeSummaryRemaining = userCredits.freeSummaryRemaining ?? userCredits.freeRemaining ?? 0;
-        const freeSummaryPerMonth = userCredits.freeSummaryPerMonth || 20;
-        const freeSummaryUsed = freeSummaryPerMonth - freeSummaryRemaining;
+        const freeSummaryRemaining = userCredits.freeSummaryRemaining ?? userCredits.freeRemaining ?? freeSummaryPerMonth;
         
         // 일일 제한 체크
         if (dailySummaryRemaining <= 0) {
@@ -6861,9 +6847,10 @@
         
         if (freeSummaryRemaining > 0) {
           // 무료 사용 가능
+          const usedCount = freeSummaryPerMonth - freeSummaryRemaining + 1;
           const confirmed = confirm(
             `✅ 요약분석을 시작합니다.\n\n` +
-            `📊 이번 달 무료 사용: ${freeSummaryUsed + 1}/${freeSummaryPerMonth}회\n` +
+            `📊 이번 달 무료 사용: ${usedCount}/${freeSummaryPerMonth}회\n` +
             `📅 오늘 사용: ${dailySummaryUsed + 1}/${userCredits.dailyLimit || 10}회 (잔여 ${dailySummaryRemaining - 1}회)\n` +
             `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
             `계속 진행하시겠습니까?`
@@ -6893,12 +6880,10 @@
           }
         }
       } else if (type === 'detail') {
-        // 상세분석: 무료 10회, 이후 2,000P
+        // ★ 상세분석: 무료 10회/월, 이후 2,000P
         const dailyDetailUsed = userCredits.dailyUsage?.detailCount || 0;
         const dailyDetailRemaining = (userCredits.dailyLimit || 10) - dailyDetailUsed;
-        const freeDetailRemaining = userCredits.freeDetailRemaining ?? 0;
-        const freeDetailPerMonth = userCredits.freeDetailPerMonth || 10;
-        const freeDetailUsed = freeDetailPerMonth - freeDetailRemaining;
+        const freeDetailRemaining = userCredits.freeDetailRemaining ?? freeDetailPerMonth;
         
         // 일일 제한 체크
         if (dailyDetailRemaining <= 0) {
@@ -6911,35 +6896,36 @@
         }
         
         if (freeDetailRemaining > 0) {
-          // 무료 사용 가능
+          // ★ 무료 사용 가능
+          const usedCount = freeDetailPerMonth - freeDetailRemaining + 1;
           const confirmed = confirm(
             `✅ 상세분석을 시작합니다.\n\n` +
             `PDF 공고문 최대 10개를 AI가 상세 분석합니다.\n\n` +
-            `📊 이번 달 무료 사용: ${freeDetailUsed + 1}/${freeDetailPerMonth}회\n` +
+            `📊 이번 달 무료 사용: ${usedCount}/${freeDetailPerMonth}회\n` +
             `📅 오늘 사용: ${dailyDetailUsed + 1}/${userCredits.dailyLimit || 10}회 (잔여 ${dailyDetailRemaining - 1}회)\n` +
             `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
             `계속 진행하시겠습니까?`
           );
           return confirmed;
+        } else if (userCredits.paidBalance >= 2000) {
+          // 무료 소진, 유료 사용
+          const confirmed = confirm(
+            `⚠️ 이번 달 무료 ${freeDetailPerMonth}회를 모두 사용했습니다.\n\n` +
+            `PDF 공고문 최대 10개를 AI가 상세 분석합니다.\n\n` +
+            `💳 차감 포인트: 2,000P\n` +
+            `📅 오늘 사용: ${dailyDetailUsed + 1}/${userCredits.dailyLimit || 10}회 (잔여 ${dailyDetailRemaining - 1}회)\n` +
+            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n` +
+            `    → 분석 후: ${((userCredits?.paidBalance || 0) - 2000).toLocaleString()}P\n\n` +
+            `계속 진행하시겠습니까?`
+          );
+          return confirmed;
         } else {
-          // 무료 소진, 유료 필요
-          if (userCredits.paidBalance >= 2000) {
-            const confirmed = confirm(
-              `⚠️ 이번 달 무료 ${freeDetailPerMonth}회를 모두 사용했습니다.\n\n` +
-              `💳 차감 포인트: 2,000P\n` +
-              `📅 오늘 사용: ${dailyDetailUsed + 1}/${userCredits.dailyLimit || 10}회 (잔여 ${dailyDetailRemaining - 1}회)\n` +
-              `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n` +
-              `    → 분석 후: ${((userCredits?.paidBalance || 0) - 2000).toLocaleString()}P\n\n` +
-              `계속 진행하시겠습니까?`
-            );
-            return confirmed;
-          } else {
-            // 샘플 보기 유도
-            const showSample = confirm(
-              `❌ 포인트가 부족합니다.\n\n` +
-              `📊 무료 사용: ${freeDetailPerMonth}/${freeDetailPerMonth}회 (소진)\n` +
-              `💳 필요 포인트: 2,000P\n` +
-              `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
+          // 샘플 보기 유도
+          const showSample = confirm(
+            `❌ 포인트가 부족합니다.\n\n` +
+            `📊 무료 사용: ${freeDetailPerMonth}/${freeDetailPerMonth}회 (소진)\n` +
+            `💳 필요 포인트: 2,000P\n` +
+            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
             `[확인] 상세분석 샘플 보기\n` +
             `[취소] 닫기`
           );
@@ -6962,6 +6948,9 @@
       // 🆕 서버에서 확인된 무제한 사용자는 차감 안 함
       if (userCredits.unlimited) {
         console.log('👑 무제한 사용자: 포인트 차감 없음 -', userCredits.unlimitedReason);
+        // ★ 무제한 사용자도 마지막 사용 정보 저장 (메시지 표시용)
+        userCredits.lastUsedFree = true;
+        userCredits.lastCost = 0;
         return true;
       }
       
@@ -6972,6 +6961,8 @@
       
       if (user && adminUserIds.includes(currentUserId)) {
         console.log('👑 관리자 모드: 포인트 차감 없음');
+        userCredits.lastUsedFree = true;
+        userCredits.lastCost = 0;
         return true;
       }
       
@@ -6985,9 +6976,15 @@
             ...result.data.credits,
             isLoaded: true,
             unlimited: userCredits.unlimited,           // 🆕 기존 무제한 상태 유지
-            unlimitedReason: userCredits.unlimitedReason
+            unlimitedReason: userCredits.unlimitedReason,
+            // ★ 서버에서 받은 실제 사용 정보 저장
+            lastUsedFree: result.data.usedFree,         // 무료 사용 여부
+            lastCost: result.data.cost,                 // 실제 차감 포인트
+            // 월간 무료 제공 횟수 유지
+            freeSummaryPerMonth: userCredits.freeSummaryPerMonth || 20,
+            freeDetailPerMonth: userCredits.freeDetailPerMonth || 10
           };
-          console.log(`💰 크레딧 차감 완료:`, userCredits);
+          console.log(`💰 크레딧 차감 완료:`, userCredits, `무료사용: ${result.data.usedFree}, 차감: ${result.data.cost}P`);
           return true;
         } else {
           console.error('❌ 크레딧 차감 실패:', result.data.error);
@@ -7007,23 +7004,65 @@
     function showCompletionWithCredits(type, resultCount) {
       const saveNotice = `\n\n━━━━━━━━━━━━━━━━━━━━━━\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`;
       
+      // ★ 월간 무료 제공 횟수
+      const freeSummaryPerMonth = userCredits.freeSummaryPerMonth || 20;
+      const freeDetailPerMonth = userCredits.freeDetailPerMonth || 10;
+      const freeSummaryRemaining = userCredits.freeSummaryRemaining ?? userCredits.freeRemaining ?? freeSummaryPerMonth;
+      const freeDetailRemaining = userCredits.freeDetailRemaining ?? freeDetailPerMonth;
+      
+      // ★ 서버에서 받은 실제 사용 정보 (정확한 표시용)
+      const usedFree = userCredits.lastUsedFree;
+      const cost = userCredits.lastCost || 0;
+      
       if (type === 'summary') {
-        const freeMsg = userCredits.freeRemaining > 0 
-          ? `📊 이번 달 무료 잔여: ${userCredits.freeRemaining}회`
-          : `📊 무료 사용 소진 (다음 달 리셋)`;
+        // ★ 요약분석: 서버 응답 기반으로 정확하게 표시
+        let freeMsg, costMsg;
+        
+        if (usedFree === true) {
+          // 무료 사용
+          freeMsg = `📊 이번 달 무료 요약분석 잔여: ${freeSummaryRemaining}/${freeSummaryPerMonth}회`;
+          costMsg = '';
+        } else if (cost > 0) {
+          // 유료 사용
+          freeMsg = `📊 무료 요약분석 소진 (다음 달 리셋)`;
+          costMsg = `• 차감 포인트: ${cost.toLocaleString()}P\n`;
+        } else {
+          // 무제한 사용자
+          freeMsg = `👑 ${userCredits.unlimitedReason || '무제한 사용'}`;
+          costMsg = '';
+        }
         
         alert(
           `✅ 요약분석이 완료되었습니다!\n\n` +
-          `• 분석 완료: ${resultCount}개 공고\n\n` +
-          `${freeMsg}\n` +
+          `• 분석 완료: ${resultCount}개 공고\n` +
+          costMsg +
+          `\n${freeMsg}\n` +
           `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P` +
           saveNotice
         );
       } else if (type === 'detail') {
+        // ★ 상세분석: 서버 응답 기반으로 정확하게 표시
+        let freeMsg, costMsg;
+        
+        if (usedFree === true) {
+          // 무료 사용
+          freeMsg = `📊 이번 달 무료 상세분석 잔여: ${freeDetailRemaining}/${freeDetailPerMonth}회`;
+          costMsg = '';
+        } else if (cost > 0) {
+          // 유료 사용
+          freeMsg = `📊 무료 상세분석 소진 (다음 달 리셋)`;
+          costMsg = `• 차감 포인트: ${cost.toLocaleString()}P\n`;
+        } else {
+          // 무제한 사용자
+          freeMsg = `👑 ${userCredits.unlimitedReason || '무제한 사용'}`;
+          costMsg = '';
+        }
+        
         alert(
           `✅ 상세분석이 완료되었습니다!\n\n` +
           `• 분석 완료: ${resultCount}개 공고\n` +
-          `• 차감 포인트: 2,000P\n\n` +
+          costMsg +
+          `\n${freeMsg}\n` +
           `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P` +
           saveNotice
         );
