@@ -926,6 +926,30 @@
       <strong>* 표시 항목은 필수 입력 사항입니다</strong>
     </div>
 
+    <!-- 📊 기업마당 공고 현황 -->
+    <div id="bizinfo-stats-box" style="background: linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%); border: 1px solid rgba(102,126,234,0.3); border-radius: 10px; padding: 0.8rem; margin-bottom: 1rem; display: none;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.1rem;">📊</span>
+          <span style="color: #ffd27f; font-weight: 600; font-size: 0.85rem;">기업마당 공고 현황</span>
+        </div>
+        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+          <div style="text-align: center;">
+            <span style="color: #27ae60; font-weight: 700; font-size: 1rem;" id="stats-total-count">-</span>
+            <span style="color: rgba(255,255,255,0.7); font-size: 0.7rem; margin-left: 0.2rem;">전체</span>
+          </div>
+          <div style="text-align: center;">
+            <span style="color: #9c27b0; font-weight: 700; font-size: 1rem;" id="stats-month-count">-</span>
+            <span style="color: rgba(255,255,255,0.7); font-size: 0.7rem; margin-left: 0.2rem;">당월</span>
+          </div>
+          <div style="text-align: center;">
+            <span style="color: #e53935; font-weight: 700; font-size: 1rem;" id="stats-today-count">-</span>
+            <span style="color: rgba(255,255,255,0.7); font-size: 0.7rem; margin-left: 0.2rem;">당일</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. 고객사 선택 -->
     <div class="card">
       <h2>1. 고객사 관리</h2>
@@ -2281,6 +2305,7 @@
           bizInfoLoaded = true;
           console.log('✅ 기업마당 데이터 로드 완료:', bizInfoPrograms.length, '개 공고');
           console.log('📊 분야별:', data.stats?.byCategory);
+          updateBizInfoStats();
           return bizInfoPrograms;
         } else {
           throw new Error(data.error || '데이터 로드 실패');
@@ -2289,6 +2314,30 @@
         console.error('❌ 기업마당 API 오류:', error);
         throw error;
       }
+    }
+    
+    // 공고 현황 통계 업데이트
+    function updateBizInfoStats() {
+      const statsBox = document.getElementById('bizinfo-stats-box');
+      if (!statsBox) return;
+      
+      const today = new Date().toISOString().substring(0, 10);  // "2025-12-10"
+      const thisMonth = today.substring(0, 7);  // "2025-12"
+      
+      const totalCount = bizInfoPrograms.length;
+      const monthCount = bizInfoPrograms.filter(p => 
+        p.registeredDate && p.registeredDate.startsWith(thisMonth)
+      ).length;
+      const todayCount = bizInfoPrograms.filter(p => 
+        p.registeredDate && p.registeredDate.startsWith(today)
+      ).length;
+      
+      document.getElementById('stats-total-count').textContent = totalCount.toLocaleString();
+      document.getElementById('stats-month-count').textContent = monthCount.toLocaleString();
+      document.getElementById('stats-today-count').textContent = todayCount.toLocaleString();
+      
+      statsBox.style.display = 'block';
+      console.log(`📊 공고 통계: 전체 ${totalCount}개, 당월 ${monthCount}개, 당일 ${todayCount}개`);
     }
     
     // ==================== 삭제된 MOCK_PROGRAMS ====================
@@ -2549,6 +2598,9 @@
                 await loadFromDrive();
                 updateConnectionStatus('connected');
                 console.log('✅ 데이터 로드 완료:', Object.keys(savedCompanies).length, '개 기업');
+                
+                // 🆕 공고 현황 통계 자동 로드
+                fetchBizInfoPrograms().catch(err => console.log('📊 통계 로드 실패:', err.message));
               } catch (error) {
                 console.error('로컬 로드 실패:', error);
                 updateConnectionStatus('connected'); // 데이터 없어도 연결됨

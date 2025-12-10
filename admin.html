@@ -532,6 +532,14 @@
                         <div style="font-size: 2rem; font-weight: 700; color: #27ae60;" id="cache-total-count">-</div>
                         <div style="font-size: 0.85rem; color: #666;">저장된 공고 수</div>
                     </div>
+                    <div style="background: #f3e5f5; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #9c27b0;" id="cache-month-count">-</div>
+                        <div style="font-size: 0.85rem; color: #666;">당월 등록</div>
+                    </div>
+                    <div style="background: #ffebee; padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #e53935;" id="cache-today-count">-</div>
+                        <div style="font-size: 0.85rem; color: #666;">당일 등록</div>
+                    </div>
                     <div style="background: #e3f2fd; padding: 1.2rem; border-radius: 8px; text-align: center;">
                         <div style="font-size: 1rem; font-weight: 600; color: #1976d2;" id="cache-last-updated">-</div>
                         <div style="font-size: 0.85rem; color: #666;">마지막 수집 시간</div>
@@ -3670,6 +3678,7 @@
                     cacheProgramsPage = 1;
                     renderCacheProgramsTable();
                     updateFilterInfo();
+                    updateMonthTodayStats();
                     addCacheLog(`✅ 공고 목록 로드 완료: ${allCachePrograms.length}개`, 'success');
                 } else {
                     document.getElementById('cache-programs-tbody').innerHTML = 
@@ -3741,6 +3750,23 @@
             infoText += ` (접수중: ${openCount}개, 마감: ${closedCount}개)`;
             
             document.getElementById('cache-filter-info').innerHTML = infoText;
+        }
+        
+        // 당월/당일 통계 업데이트
+        function updateMonthTodayStats() {
+            const today = new Date().toISOString().substring(0, 10);  // "2025-12-10"
+            const thisMonth = today.substring(0, 7);  // "2025-12"
+            
+            const monthCount = allCachePrograms.filter(p => 
+                p.registeredDate && p.registeredDate.startsWith(thisMonth)
+            ).length;
+            
+            const todayCount = allCachePrograms.filter(p => 
+                p.registeredDate && p.registeredDate.startsWith(today)
+            ).length;
+            
+            document.getElementById('cache-month-count').textContent = monthCount.toLocaleString() + '개';
+            document.getElementById('cache-today-count').textContent = todayCount.toLocaleString() + '개';
         }
         
         function renderCacheProgramsTable() {
