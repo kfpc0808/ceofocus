@@ -864,8 +864,22 @@
                     return;
                 }
 
-                // ★ 무료사용자는 비밀번호 변경 없이 바로 진입
-                if (userData.type === '무료사용자') {
+                // ★ 무료사용자 유효기간 체크
+                if (userData.type === '무료사용자' || userData.type === 'freeuser' || userData.role === 'freeuser') {
+                    // 유효기간 체크 (expireDate가 있는 경우)
+                    if (userData.expireDate) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);  // 오늘 자정 기준
+                        const expireDate = new Date(userData.expireDate);
+                        expireDate.setHours(23, 59, 59, 999);  // 만료일 끝까지 허용
+                        
+                        if (today > expireDate) {
+                            await auth.signOut();
+                            hideLoading();
+                            showMessage('loginMessage', `이용 기간이 만료되었습니다. (만료일: ${userData.expireDate})\n관리자에게 문의하여 주시기 바랍니다.`, 'error');
+                            return;
+                        }
+                    }
                     window.location.href = 'index.html';
                     return;
                 }
