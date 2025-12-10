@@ -3439,11 +3439,15 @@
         
         document.getElementById('company-name-search').value = companyData.companyName;
         
+        // 🔥 v3.3: 적합 공고만 카운트 (eligible !== false)
+        const eligibleSummaryCount = summaryResultsToSave.filter(r => r.eligible !== false).length;
+        const eligibleDetailCount = detailResultsToSave.filter(r => r.eligible !== false).length;
+        
         const savedItems = [];
         savedItems.push('기업정보');
-        savedItems.push(`맞춤 지원사업 ${lastMatchedPrograms.length}건`);
-        if (summaryResultsToSave.length > 0) savedItems.push(`AI 요약분석 ${summaryResultsToSave.length}건`);
-        if (detailResultsToSave.length > 0) savedItems.push(`AI 맞춤형분석 ${detailResultsToSave.length}건`);
+        savedItems.push(`맞춤 지원사업 ${eligibleSummaryCount}건`);
+        if (eligibleSummaryCount > 0) savedItems.push(`AI 요약분석 ${eligibleSummaryCount}건`);
+        if (eligibleDetailCount > 0) savedItems.push(`AI 맞춤형분석 ${eligibleDetailCount}건`);
         
         alert(`✅ 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
         console.log('💾 기업정보+지원사업 저장 완료:', savedItems);
@@ -3514,11 +3518,15 @@
         
         document.getElementById('company-name-search').value = companyData.companyName;
         
+        // 🔥 v3.3: 적합 공고만 카운트 (eligible !== false)
+        const eligibleSummaryCount = summaryResultsToSave.filter(r => r.eligible !== false).length;
+        const eligibleDetailCount = detailResultsToSave.filter(r => r.eligible !== false).length;
+        
         const savedItems = [];
         savedItems.push('기업정보');
-        savedItems.push(`맞춤 지원사업 ${lastMatchedPrograms.length}건`);
-        if (summaryResultsToSave.length > 0) savedItems.push(`AI 요약분석 ${summaryResultsToSave.length}건`);
-        if (detailResultsToSave.length > 0) savedItems.push(`AI 맞춤형분석 ${detailResultsToSave.length}건`);
+        savedItems.push(`맞춤 지원사업 ${eligibleSummaryCount}건`);
+        if (eligibleSummaryCount > 0) savedItems.push(`AI 요약분석 ${eligibleSummaryCount}건`);
+        if (eligibleDetailCount > 0) savedItems.push(`AI 맞춤형분석 ${eligibleDetailCount}건`);
         
         alert(`✅ 맞춤형분석 포함 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
         console.log('💾 맞춤형분석 포함 저장 완료:', savedItems);
@@ -4449,13 +4457,15 @@
           hideLoadingOverlay();
           
           // 🆕 v3.0: 완료 메시지 (등급별 구분 - 참고 삭제)
-          const veryHighCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 85).length;
-          const highCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 85).length;
-          const mediumCount = allSummaryResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length;
-          const lowCount = allSummaryResults.filter(r => (r.fitScore || 0) < 55).length;
+          // 🔥 v3.3: 적합 공고만 카운트 (eligible !== false)
+          const eligibleResults = allSummaryResults.filter(r => r.eligible !== false);
+          const veryHighCount = eligibleResults.filter(r => (r.fitScore || 0) >= 85).length;
+          const highCount = eligibleResults.filter(r => (r.fitScore || 0) >= 70 && (r.fitScore || 0) < 85).length;
+          const mediumCount = eligibleResults.filter(r => (r.fitScore || 0) >= 55 && (r.fitScore || 0) < 70).length;
+          const lowCount = eligibleResults.filter(r => (r.fitScore || 0) < 55).length;
           
-          // 🔥 v3.2: 단순히 분석된 개수만 표시
-          let summaryMsg = `• 맞춤 공고 ${allSummaryResults.length}개 분석 완료\n• AI 요약분석: `;
+          // 🔥 v3.3: 적합 공고 개수만 표시
+          let summaryMsg = `• 맞춤 공고 ${eligibleResults.length}개 분석 완료\n• AI 요약분석: `;
           const parts = [];
           if (veryHighCount > 0) parts.push(`매우높음 ${veryHighCount}개`);
           if (highCount > 0) parts.push(`높음 ${highCount}개`);
@@ -4755,6 +4765,7 @@
       // 🔥 최고위 기준: 요약분석 결과 기준, fitScore 순 상위 10개
       const programsWithPDF = programsWithFitScore
         .filter(p => p.hasSummary)  // 요약분석 결과가 있는 공고만
+        .filter(p => p.eligible !== false)  // 🔥 v3.3: 적합 공고만!
         .sort((a, b) => b.fitScore - a.fitScore)  // 점수순 정렬
         .filter(p => p.printFileUrl || p.attachmentUrl)  // PDF 있는 것만
         .slice(0, 10);  // 최대 10개
@@ -5329,13 +5340,22 @@
       const noDetailCount = scoredCards.length - detailCount;
       
       // DOM 재배치 및 순위 업데이트
+      // 🔥 v3.3: 숨겨진 카드(display:none) 제외하고 순위 계산
+      let visibleRank = 0;
       scoredCards.forEach(({ card, score, hasDetail }, index) => {
         resultsSection.appendChild(card);
+        
+        // 🔥 숨겨진 카드는 순위 계산에서 제외
+        if (card.style.display === 'none') {
+          return;
+        }
+        
+        visibleRank++;  // 표시되는 카드만 순위 증가
         
         // 순위 업데이트
         const rankSpan = card.querySelector('.rank');
         if (rankSpan) {
-          const rank = index + 1;
+          const rank = visibleRank;
           const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
           rankSpan.innerHTML = `${rankEmoji} ${rank}위`;
         }
@@ -5351,9 +5371,9 @@
         
         // rank 클래스 업데이트
         card.classList.remove('rank-1', 'rank-2', 'rank-3');
-        if (index === 0) card.classList.add('rank-1');
-        else if (index === 1) card.classList.add('rank-2');
-        else if (index === 2) card.classList.add('rank-3');
+        if (visibleRank === 1) card.classList.add('rank-1');
+        else if (visibleRank === 2) card.classList.add('rank-2');
+        else if (visibleRank === 3) card.classList.add('rank-3');
         
         // 🔥 상세분석 없는 카드에 안내 메시지 추가
         const existingNotice = card.querySelector('.no-detail-notice');
