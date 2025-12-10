@@ -4427,9 +4427,25 @@
           let creditMsg = '';
           if (newPrograms.length > 0) {
             await deductCredits('summary');
-            creditMsg = '\n💰 포인트 차감 완료';
+            
+            const freeSummaryPerMonth = userCredits.freeSummaryPerMonth || 20;
+            const freeSummaryRemaining = userCredits.freeSummaryRemaining ?? freeSummaryPerMonth;
+            const summaryUsed = freeSummaryPerMonth - freeSummaryRemaining;
+            
+            creditMsg = '\n\n━━━━━━━━━━━━━━━━━━━━━━';
+            if (userCredits.lastUsedFree) {
+              creditMsg += `\n🎁 무료 분석 사용 (${summaryUsed}/${freeSummaryPerMonth}회)`;
+              creditMsg += `\n   잔여: ${freeSummaryRemaining}회`;
+            } else {
+              creditMsg += `\n🎁 무료 분석: 소진 (${freeSummaryPerMonth}/${freeSummaryPerMonth}회)`;
+              creditMsg += `\n💳 포인트 차감: ${(userCredits.lastCost || 0).toLocaleString()}P`;
+            }
+            if (userCredits.paidBalance > 0 || !userCredits.lastUsedFree) {
+              creditMsg += `\n💰 충전 잔액: ${(userCredits.paidBalance || 0).toLocaleString()}P`;
+            }
+            creditMsg += '\n━━━━━━━━━━━━━━━━━━━━━━';
           } else {
-            creditMsg = '\n💰 기존 분석 결과 사용 (포인트 차감 없음)';
+            creditMsg = '\n\n━━━━━━━━━━━━━━━━━━━━━━\n💰 기존 분석 결과 사용 (포인트 차감 없음)\n━━━━━━━━━━━━━━━━━━━━━━';
           }
           
           // 🆕 alert 전에 로딩 오버레이 강제 제거 (setTimeout 블로킹 방지)
@@ -4917,20 +4933,35 @@
         if (newCount > 0) {
           await deductCredits('detail');
           
+          const freeDetailPerMonth = userCredits.freeDetailPerMonth || 10;
+          const freeDetailRemaining = userCredits.freeDetailRemaining ?? freeDetailPerMonth;
+          const detailUsed = freeDetailPerMonth - freeDetailRemaining;
+          
+          let creditInfo = '━━━━━━━━━━━━━━━━━━━━━━\n';
+          if (userCredits.lastUsedFree) {
+            creditInfo += `🎁 무료 분석 사용 (${detailUsed}/${freeDetailPerMonth}회)\n`;
+            creditInfo += `   잔여: ${freeDetailRemaining}회\n`;
+          } else {
+            creditInfo += `🎁 무료 분석: 소진 (${freeDetailPerMonth}/${freeDetailPerMonth}회)\n`;
+            creditInfo += `💳 포인트 차감: ${(userCredits.lastCost || 0).toLocaleString()}P\n`;
+          }
+          if (userCredits.paidBalance > 0 || !userCredits.lastUsedFree) {
+            creditInfo += `💰 충전 잔액: ${(userCredits.paidBalance || 0).toLocaleString()}P\n`;
+          }
+          creditInfo += '━━━━━━━━━━━━━━━━━━━━━━';
+          
           alert(
             `✅ AI PDF 상세분석이 완료되었습니다!\n\n` +
             `${detailMsg}\n` +
             `총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n` +
             (failCount > 0 ? `⚠️ 실패한 ${failCount}개는 공고문을 직접 확인해주세요.\n\n` : '') +
-            `💳 차감 포인트: 2,000P\n` +
-            `💰 보유 포인트: ${(userCredits?.paidBalance || 0).toLocaleString()}P\n\n` +
-            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `${creditInfo}\n\n` +
             `💾 분석 결과가 자동 저장되었습니다.\n` +
             `⚠️ 데이터 안전을 위해 [저장] 버튼으로\n` +
             `   수동 저장도 권장드립니다.`
           );
         } else {
-          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n━━━━━━━━━━━━━━━━━━━━━━\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`);
+          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n━━━━━━━━━━━━━━━━━━━━━━\n💰 기존 분석 결과 사용 (포인트 차감 없음)\n━━━━━━━━━━━━━━━━━━━━━━\n\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`);
         }
         
       } catch (error) {
