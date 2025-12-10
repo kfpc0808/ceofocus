@@ -4240,6 +4240,17 @@
         return;
       }
       
+      // 🆕 시작 전 1회 확인 (공고 불러오기 + 요약분석 동시 진행 안내)
+      const proceedConfirm = confirm(
+        '🔍 지원사업+분석을 시작합니다.\n\n' +
+        '① 기업마당에서 맞춤 공고를 불러옵니다.\n' +
+        '② AI 요약분석이 자동으로 진행됩니다.\n\n' +
+        '💰 분석 완료 시 포인트가 차감됩니다.\n' +
+        '(매칭 공고가 없으면 차감되지 않습니다)\n\n' +
+        '계속 진행하시겠습니까?'
+      );
+      if (!proceedConfirm) return;
+      
       try {
         // Step 0: 먼저 공고 데이터 로드하여 실제 개수 파악
         showLoadingOverlay('🔍 지원사업+분석 진행 중...', '① 기업마당에서 공고를 불러오고 있습니다...');
@@ -4305,13 +4316,11 @@
             return;
           }
           
-          // 🆕 크레딧 확인 (신규 공고가 있을 때만)
-          hideLoadingOverlay(); // 일단 로딩 숨기고
-          const canProceed = await checkAndConfirmCredits('summary');
-          if (!canProceed) return;
-          
-          // 다시 로딩 표시
-          showLoadingOverlay('🔍 지원사업+분석 진행 중...', '② AI 요약분석을 진행합니다...');
+          // 🆕 요약분석 자동 진행 (기존 오버레이 유지, 메시지만 업데이트)
+          const overlayTitle = document.querySelector('#loading-overlay h2');
+          const overlaySubtitle = document.querySelector('#loading-overlay p');
+          if (overlayTitle) overlayTitle.textContent = '🤖 AI 요약분석 진행 중...';
+          if (overlaySubtitle) overlaySubtitle.textContent = '② Gemini AI가 맞춤 공고를 분석합니다...';
           
           let newSummaryResults = [];
           
@@ -4414,12 +4423,20 @@
           // 🆕 먼저 로딩 닫기
           hideLoadingOverlay();
           
-          alert(`✅ 지원사업+분석 완료!\n\n${summaryMsg}\n\n💾 결과 자동 저장됨`);
-          
           // 🆕 크레딧 차감 (신규 분석이 있었을 때만)
+          let creditMsg = '';
           if (newPrograms.length > 0) {
             await deductCredits('summary');
+            creditMsg = '\n💰 포인트 차감 완료';
+          } else {
+            creditMsg = '\n💰 기존 분석 결과 사용 (포인트 차감 없음)';
           }
+          
+          // 🆕 alert 전에 로딩 오버레이 강제 제거 (setTimeout 블로킹 방지)
+          const overlay = document.getElementById('loading-overlay');
+          if (overlay) overlay.remove();
+          
+          alert(`✅ 지원사업+분석 완료!\n\n${summaryMsg}${creditMsg}\n\n💾 결과 자동 저장됨`);
         } else {
           hideLoadingOverlay();
           alert('매칭되는 지원사업이 없습니다.\n입력 정보를 확인하시거나 다른 조건으로 시도해보세요.');
@@ -5242,7 +5259,7 @@
         
         // 관련도 업데이트
         const scoreSpan = card.querySelector('.match-score');
-        if (scoreSpan) {
+        if (scoreSpan && !hasDetail) {
           const grade = getRelevanceGrade(score);
           scoreSpan.style.background = grade.bgColor;
           scoreSpan.style.color = grade.color;
@@ -6765,7 +6782,7 @@
      */
     async function checkAndConfirmCredits(type) {
       // 관리자 ID (무제한 사용 가능) - login.html에서 로그인한 userId 기준
-      const adminUserIds = ['admin', 'kfpcenter', 'polarislkh'];
+      const adminUserIds = ['admin', 'kfpcenter'];
       const user = firebase.auth().currentUser;
       
       // 현재 로그인한 userId 추출 (admin@system.local → admin)
@@ -6975,7 +6992,7 @@
       }
       
       // 하드코딩된 관리자 ID 체크 (백업)
-      const adminUserIds = ['admin', 'kfpcenter', 'polarislkh'];
+      const adminUserIds = ['admin', 'kfpcenter'];
       const user = firebase.auth().currentUser;
       const currentUserId = user ? user.email.split('@')[0] : '';
       
