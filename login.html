@@ -678,6 +678,17 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // ★ 로그인 상태 유지 설정 (브라우저 닫아도 유지)
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+        // ★ 자동 로그인 체크 (이미 로그인된 사용자는 바로 이동)
+        auth.onAuthStateChanged(async (user) => {
+            if (user && !user.isAnonymous) {
+                // 이미 로그인된 사용자 → 유효기간 체크 후 메인으로 이동
+                await checkUserStatus(user);
+            }
+        });
+
         // --- 2. 상태 관리 및 UI 제어 ---
         const views = {
             login: document.getElementById('loginView'),
