@@ -1624,6 +1624,58 @@
       <p style="text-align: right; font-size: 0.7rem; color: #aaa; margin: 0.3rem 0 0 0;">※ 기업정보는 목록에서 삭제</p>
     </div>
 
+    <!-- 컨설팅 메모 영역 -->
+    <div class="card" style="margin-top: 1rem; background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,136,2,0.1) 100%); border: 1px solid rgba(255,215,0,0.3);">
+      <h3 style="color: #FFD700; margin-bottom: 0.8rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        📝 컨설팅/지원사업 진행 메모
+      </h3>
+      <p style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-bottom: 0.8rem;">
+        해당 기업의 컨설팅 진행 내역, 지원사업 신청/선정 결과, 주요 상담 내용 등을 기록하세요. (기업정보 저장 시 함께 저장됩니다)
+      </p>
+      <p style="color: #ff9800; font-size: 0.8rem; margin-bottom: 0.8rem; background: rgba(255,152,0,0.15); padding: 0.5rem 0.8rem; border-radius: 6px; border-left: 3px solid #ff9800;">
+        ⚠️ 입력내용 저장시 오류가 있을 수 있습니다. 중요한 내용들은 별도로 복사하여 저장 바랍니다.
+      </p>
+      <textarea 
+        id="consulting-memo" 
+        placeholder="예시)&#10;• 2025.01.15 - 중소벤처기업부 스마트공장 사업 신청 완료&#10;• 2025.01.20 - 1차 서류심사 통과&#10;• 2025.02.05 - 현장실사 예정&#10;• 담당자: 김철수 과장 (010-1234-5678)"
+        style="
+          width: 100%;
+          min-height: 120px;
+          padding: 0.8rem;
+          border: 1px solid rgba(255,255,255,0.2);
+          border-radius: 8px;
+          background: rgba(255,255,255,0.95);
+          color: #333;
+          font-size: 0.9rem;
+          line-height: 1.6;
+          resize: vertical;
+          font-family: inherit;
+        "
+      ></textarea>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <span style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">💡 Tip: 날짜별로 기록하면 이력 관리에 편리합니다</span>
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+          <span id="memo-char-count" style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">0자</span>
+          <button onclick="saveCompanyWithMemo()" style="
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #FF8802 0%, #FF6B00 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,136,2,0.4)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+            💾 저장
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 결과 표시 영역 -->
     <div id="results-section" style="display: none;"></div>
     
@@ -2795,7 +2847,10 @@
         exportCountries: getVal('export-countries'),
         
         // Section 7: 희망 지원분야
-        supportNeeds: getChecked('#support-finance, #support-tech, #support-manpower, #support-export, #support-domestic, #support-startup, #support-management, #support-etc, #support-all')
+        supportNeeds: getChecked('#support-finance, #support-tech, #support-manpower, #support-export, #support-domestic, #support-startup, #support-management, #support-etc, #support-all'),
+        
+        // Section 8: 컨설팅 메모
+        consultingMemo: getVal('consulting-memo')
       };
       
       return data;
@@ -3289,6 +3344,13 @@
       
       console.log('✅ 고객사 정보 로드:', company.companyName);
       
+      // 컨설팅 메모 로드
+      const memoEl = document.getElementById('consulting-memo');
+      if (memoEl) {
+        memoEl.value = company.consultingMemo || '';
+        updateMemoCharCount();
+      }
+      
       // 로딩 완료 플래그 해제
       isLoadingCompany = false;
       
@@ -3378,6 +3440,55 @@
         
         alert('✅ 기업정보가 저장되었습니다.');
         console.log('💾 고객사 저장 완료 (로컬 저장소 + 암호화)');
+      } else {
+        alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+    
+    /**
+     * 기업정보 + 메모 저장 (메모 영역 저장 버튼용)
+     */
+    async function saveCompanyWithMemo() {
+      const companyData = collectFormData();
+      
+      if (!companyData.companyName) {
+        alert('회사명을 입력해주세요.');
+        return;
+      }
+      
+      if (!companyData.businessNumber) {
+        alert('사업자등록번호를 입력해주세요.');
+        return;
+      }
+      
+      // 즉시 저장 중 표시
+      showSavingIndicator('기업정보와 메모 저장 중...');
+      
+      // 기존 기업 수정인지 신규인지 확인
+      const companyId = selectedCompanyId || Date.now().toString();
+      savedCompanies[companyId] = {
+        ...companyData,
+        savedAt: new Date().toISOString()
+      };
+      
+      // 로컬 저장소에 암호화하여 저장
+      const success = await saveToDrive(savedCompanies);
+      
+      // 저장 중 표시 제거
+      hideSavingIndicator();
+      
+      if (success) {
+        selectedCompanyId = companyId;
+        updateCompanySelect();
+        
+        // 연결 상태 업데이트
+        updateConnectionStatus('connected');
+        
+        // 회사명 입력창 업데이트
+        document.getElementById('company-name-search').value = companyData.companyName;
+        
+        alert('✅ 기업정보와 메모내용이 저장되었습니다.');
+        console.log('💾 고객사+메모 저장 완료 (로컬 저장소 + 암호화)');
       } else {
         alert('❌ 저장에 실패했습니다. 다시 시도해주세요.');
       }
@@ -3617,6 +3728,13 @@
       }
       lastMatchedPrograms = [];
       hasCompletedSearch = false;
+      
+      // 컨설팅 메모 초기화
+      const memoEl = document.getElementById('consulting-memo');
+      if (memoEl) {
+        memoEl.value = '';
+        updateMemoCharCount();
+      }
     }
     
     // ==================== 클라이언트 사이드 매칭 엔진 ====================
@@ -6067,7 +6185,22 @@
       initializeApp();
       // 결제 결과 확인 (returnUrl에서 돌아온 경우)
       checkPaymentResult();
+      
+      // 컨설팅 메모 글자수 표시 이벤트
+      const memoTextarea = document.getElementById('consulting-memo');
+      if (memoTextarea) {
+        memoTextarea.addEventListener('input', updateMemoCharCount);
+      }
     });
+    
+    // 메모 글자수 업데이트 함수
+    function updateMemoCharCount() {
+      const memoEl = document.getElementById('consulting-memo');
+      const countEl = document.getElementById('memo-char-count');
+      if (memoEl && countEl) {
+        countEl.textContent = memoEl.value.length + '자';
+      }
+    }
     
     // ============================================
     // AI 분석 메인 함수
