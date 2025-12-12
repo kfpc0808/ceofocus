@@ -1085,7 +1085,7 @@
         </div>
         
         <div class="form-group full-width">
-          <label>업종(KSIC 코드_11차) <span class="required">*</span></label>
+          <label>표준산업분류(KSIC 코드_11차) <span class="required">*</span></label>
           <div style="display: flex; gap: 0.3rem; align-items: flex-start; flex-wrap: wrap;">
             <!-- 계층형 KSIC 선택 -->
             <select id="ksic-level-2" onchange="onKsicLevel2Change()" style="flex: 1; min-width: 150px;">
@@ -2116,7 +2116,7 @@
     function showKsicWarning() {
       // 고객사 로드 중이면 경고 표시 안 함
       if (isLoadingCompany) return;
-      
+      어
       const hasShownWarning = sessionStorage.getItem('ksicWarningShown');
       if (!hasShownWarning) {
         alert('⚠️ KSIC 코드는 AI 분석에 가장 중요한 역할을 합니다!\n\n해당 기업의 정확한 업종 코드 5자리를 모두 입력해주세요.\n\n정확한 코드를 모르시면 🔍 검색 버튼을 눌러 확인하세요.');
