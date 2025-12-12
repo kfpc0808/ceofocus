@@ -1383,12 +1383,19 @@
         </div>
         
         <div class="form-group">
-          <label>ESG 추진 여부</label>
+          <label>ESG 경영 현황</label>
           <select id="esg-status">
-            <option value="N">아니오</option>
-            <option value="Y">예</option>
+            <option value="N">해당없음</option>
+            <option value="추진중">추진 중 (등급 미취득)</option>
+            <option value="S">S등급 (탁월)</option>
+            <option value="A+">A+등급 (우수)</option>
+            <option value="A">A등급 (양호)</option>
+            <option value="B+">B+등급</option>
+            <option value="B">B등급</option>
+            <option value="C">C등급</option>
+            <option value="D">D등급</option>
           </select>
-          <span class="info-text">ESG 관련 사업 가점</span>
+          <span class="info-text">한국ESG기준원(KCGS) 평가 등급</span>
         </div>
       </div>
       
@@ -3519,21 +3526,33 @@
       // 🆕 즉시 저장 중 표시
       showSavingIndicator('기업정보+지원사업 저장 중...');
       
-      // AI 분석 결과는 전역 변수에서 가져옴 (HTML 파싱 대신 - 정확한 데이터 보존)
-      const summaryResultsToSave = lastSummaryResults.length > 0 ? lastSummaryResults : [];
-      const detailResultsToSave = lastDetailResults.length > 0 ? lastDetailResults : [];
+      // 🔥 v3.4: 화면에 보이는 적합 공고만 저장 (부적합 공고 제외)
+      // 1. 적합한 요약분석 결과만 필터링 (eligible !== false)
+      const eligibleSummary = lastSummaryResults.filter(s => s.eligible !== false);
+      
+      // 2. 적합한 요약분석에 해당하는 공고만 필터링
+      const eligibleProgramIds = eligibleSummary.map(s => s.programId || s.id);
+      const eligiblePrograms = lastMatchedPrograms.filter(p => 
+        eligibleProgramIds.includes(p.id)
+      );
+      
+      // 3. 적합한 상세분석 결과만 필터링
+      const eligibleDetail = lastDetailResults.filter(d => 
+        d.eligible !== false && eligibleProgramIds.includes(d.programId || d.id)
+      );
       
       // 기존 기업 수정인지 신규인지 확인
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
         ...companyData,
-        // 맞춤찾기 결과 저장 (서버 필터링 결과)
-        matchedPrograms: lastMatchedPrograms.slice(0, 15),
-        // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
-        aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
-        aiDetail: detailResultsToSave.length > 0 ? detailResultsToSave : null,
+        // 적합 공고만 저장
+        matchedPrograms: eligiblePrograms,
+        aiSummary: eligibleSummary.length > 0 ? eligibleSummary : null,
+        aiDetail: eligibleDetail.length > 0 ? eligibleDetail : null,
         savedAt: new Date().toISOString()
       };
+      
+      console.log('💾 저장 데이터 - 적합 공고:', eligiblePrograms.length, '개, 요약:', eligibleSummary.length, '개, 상세:', eligibleDetail.length, '개');
       
       // 로컬 저장소에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
@@ -3550,15 +3569,11 @@
         
         document.getElementById('company-name-search').value = companyData.companyName;
         
-        // 🔥 v3.3: 적합 공고만 카운트 (eligible !== false)
-        const eligibleSummaryCount = summaryResultsToSave.filter(r => r.eligible !== false).length;
-        const eligibleDetailCount = detailResultsToSave.filter(r => r.eligible !== false).length;
-        
         const savedItems = [];
         savedItems.push('기업정보');
-        savedItems.push(`맞춤 지원사업 ${eligibleSummaryCount}건`);
-        if (eligibleSummaryCount > 0) savedItems.push(`AI 요약분석 ${eligibleSummaryCount}건`);
-        if (eligibleDetailCount > 0) savedItems.push(`AI 맞춤형분석 ${eligibleDetailCount}건`);
+        savedItems.push(`맞춤 지원사업 ${eligiblePrograms.length}건`);
+        if (eligibleSummary.length > 0) savedItems.push(`AI 요약분석 ${eligibleSummary.length}건`);
+        if (eligibleDetail.length > 0) savedItems.push(`AI 맞춤형분석 ${eligibleDetail.length}건`);
         
         alert(`✅ 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
         console.log('💾 기업정보+지원사업 저장 완료:', savedItems);
@@ -3589,12 +3604,8 @@
         return;
       }
       
-      // AI 분석 결과는 전역 변수에서 가져옴 (HTML 파싱 대신 - 정확한 데이터 보존)
-      const summaryResultsToSave = lastSummaryResults.length > 0 ? lastSummaryResults : [];
-      const detailResultsToSave = lastDetailResults.length > 0 ? lastDetailResults : [];
-      
       // AI 분석 결과가 하나도 없으면 저장 불가
-      if (summaryResultsToSave.length === 0 && detailResultsToSave.length === 0) {
+      if (lastSummaryResults.length === 0 && lastDetailResults.length === 0) {
         alert('⚠️ AI 분석 결과가 없습니다!\n\n"지원사업+분석" 또는 "맞춤형분석"을 먼저 실행해주세요.\n\nAI 분석 결과가 있어야 이 버튼으로 저장할 수 있습니다.');
         return;
       }
@@ -3602,17 +3613,33 @@
       // 🆕 즉시 저장 중 표시
       showSavingIndicator('분석결과 포함 저장 중...');
       
+      // 🔥 v3.4: 화면에 보이는 적합 공고만 저장 (부적합 공고 제외)
+      // 1. 적합한 요약분석 결과만 필터링 (eligible !== false)
+      const eligibleSummary = lastSummaryResults.filter(s => s.eligible !== false);
+      
+      // 2. 적합한 요약분석에 해당하는 공고만 필터링
+      const eligibleProgramIds = eligibleSummary.map(s => s.programId || s.id);
+      const eligiblePrograms = lastMatchedPrograms.filter(p => 
+        eligibleProgramIds.includes(p.id)
+      );
+      
+      // 3. 적합한 상세분석 결과만 필터링
+      const eligibleDetail = lastDetailResults.filter(d => 
+        d.eligible !== false && eligibleProgramIds.includes(d.programId || d.id)
+      );
+      
       // 기존 기업 수정인지 신규인지 확인
       const companyId = selectedCompanyId || Date.now().toString();
       savedCompanies[companyId] = {
         ...companyData,
-        // 맞춤찾기 결과 저장 (서버 필터링 결과)
-        matchedPrograms: lastMatchedPrograms.slice(0, 15),
-        // AI 분석 결과 저장 (전역 변수에서 가져와 원본 보존)
-        aiSummary: summaryResultsToSave.length > 0 ? summaryResultsToSave : null,
-        aiDetail: detailResultsToSave.length > 0 ? detailResultsToSave : null,
+        // 적합 공고만 저장
+        matchedPrograms: eligiblePrograms,
+        aiSummary: eligibleSummary.length > 0 ? eligibleSummary : null,
+        aiDetail: eligibleDetail.length > 0 ? eligibleDetail : null,
         savedAt: new Date().toISOString()
       };
+      
+      console.log('💾 저장 데이터 - 적합 공고:', eligiblePrograms.length, '개, 요약:', eligibleSummary.length, '개, 상세:', eligibleDetail.length, '개');
       
       // 로컬 저장소에 암호화하여 저장
       const success = await saveToDrive(savedCompanies);
@@ -3629,15 +3656,11 @@
         
         document.getElementById('company-name-search').value = companyData.companyName;
         
-        // 🔥 v3.3: 적합 공고만 카운트 (eligible !== false)
-        const eligibleSummaryCount = summaryResultsToSave.filter(r => r.eligible !== false).length;
-        const eligibleDetailCount = detailResultsToSave.filter(r => r.eligible !== false).length;
-        
         const savedItems = [];
         savedItems.push('기업정보');
-        savedItems.push(`맞춤 지원사업 ${eligibleSummaryCount}건`);
-        if (eligibleSummaryCount > 0) savedItems.push(`AI 요약분석 ${eligibleSummaryCount}건`);
-        if (eligibleDetailCount > 0) savedItems.push(`AI 맞춤형분석 ${eligibleDetailCount}건`);
+        savedItems.push(`맞춤 지원사업 ${eligiblePrograms.length}건`);
+        if (eligibleSummary.length > 0) savedItems.push(`AI 요약분석 ${eligibleSummary.length}건`);
+        if (eligibleDetail.length > 0) savedItems.push(`AI 맞춤형분석 ${eligibleDetail.length}건`);
         
         alert(`✅ 맞춤형분석 포함 저장 완료!\n\n저장된 항목:\n• ${savedItems.join('\n• ')}`);
         console.log('💾 맞춤형분석 포함 저장 완료:', savedItems);
@@ -4591,15 +4614,6 @@
           if (lowCount > 0) parts.push(`낮음 ${lowCount}개`);
           summaryMsg += parts.join(' + ');
           
-          // 🆕 v3.0: 자동 저장 (분석 결과 보호)
-          if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
-            savedCompanies[selectedCompanyId].matchedPrograms = lastMatchedPrograms.slice(0, 15);
-            savedCompanies[selectedCompanyId].aiSummary = lastSummaryResults;
-            savedCompanies[selectedCompanyId].savedAt = new Date().toISOString();
-            await saveToDrive(savedCompanies);
-            console.log('💾 요약분석 결과 자동 저장 완료');
-          }
-          
           // 🆕 먼저 로딩 닫기
           hideLoadingOverlay();
           
@@ -4632,7 +4646,7 @@
           const overlay = document.getElementById('loading-overlay');
           if (overlay) overlay.remove();
           
-          alert(`✅ 지원사업+분석 완료!\n\n${summaryMsg}${creditMsg}\n\n💾 결과 자동 저장됨`);
+          alert(`✅ 지원사업+분석 완료!\n\n${summaryMsg}${creditMsg}\n\n⚠️ 결과를 유지하려면 [저장] 버튼을 눌러주세요.`);
         } else {
           hideLoadingOverlay();
           alert('매칭되는 지원사업이 없습니다.\n입력 정보를 확인하시거나 다른 조건으로 시도해보세요.');
@@ -4809,17 +4823,8 @@
         
         const summaryResults = data.results;
         
-        // 🆕 전역 변수에 저장 (자동 저장용)
+        // 🆕 전역 변수에 저장
         lastSummaryResults = summaryResults;
-        
-        // 🆕 v3.0: 자동 저장 (분석 결과 보호)
-        if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
-          savedCompanies[selectedCompanyId].matchedPrograms = lastMatchedPrograms.slice(0, 15);
-          savedCompanies[selectedCompanyId].aiSummary = lastSummaryResults;
-          savedCompanies[selectedCompanyId].savedAt = new Date().toISOString();
-          await saveToDrive(savedCompanies);
-          console.log('💾 요약분석 결과 자동 저장 완료');
-        }
         
         // 100% 완료 표시 후 닫기
         updateProgress(100, allPrograms.length, allPrograms.length);
@@ -5102,14 +5107,6 @@
           detailMsg += `\n(✅ 성공 ${successCount}개 / ⚠️ 실패 ${failCount}개)`;
         }
         
-        // 🆕 v3.0: 자동 저장 (상세분석 결과 보호)
-        if (selectedCompanyId && savedCompanies[selectedCompanyId]) {
-          savedCompanies[selectedCompanyId].aiDetail = lastDetailResults;
-          savedCompanies[selectedCompanyId].savedAt = new Date().toISOString();
-          await saveToDrive(savedCompanies);
-          console.log('💾 상세분석 결과 자동 저장 완료');
-        }
-        
         // 🆕 신규 분석이 있었을 때만 크레딧 차감
         if (newCount > 0) {
           await deductCredits('detail');
@@ -5134,15 +5131,13 @@
           alert(
             `✅ AI PDF 상세분석이 완료되었습니다!\n\n` +
             `${detailMsg}\n` +
-            `총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n` +
+            `총 ${lastDetailResults.length}개 공고의 상세 분석이 완료되었습니다.\n\n` +
             (failCount > 0 ? `⚠️ 실패한 ${failCount}개는 공고문을 직접 확인해주세요.\n\n` : '') +
             `${creditInfo}\n\n` +
-            `💾 분석 결과가 자동 저장되었습니다.\n` +
-            `⚠️ 데이터 안전을 위해 [저장] 버튼으로\n` +
-            `   수동 저장도 권장드립니다.`
+            `⚠️ 결과를 유지하려면 [저장] 버튼을 눌러주세요.`
           );
         } else {
-          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 저장되어 있습니다.\n\n━━━━━━━━━━━━━━━━━━━━━━\n💰 기존 분석 결과 사용 (포인트 차감 없음)\n━━━━━━━━━━━━━━━━━━━━━━\n\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`);
+          alert(`✅ AI PDF 상세분석이 완료되었습니다!\n\n${detailMsg}\n총 ${lastDetailResults.length}개 공고의 상세 분석이 완료되었습니다.\n\n━━━━━━━━━━━━━━━━━━━━━━\n💰 기존 분석 결과 사용 (포인트 차감 없음)\n━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ 결과를 유지하려면 [저장] 버튼을 눌러주세요.`);
         }
         
       } catch (error) {
@@ -6387,7 +6382,8 @@
         hasWomanCert: document.getElementById('cert-woman')?.value === 'Y',
         hasDisabledCert: document.getElementById('cert-disabled')?.value === 'Y',
         hasSocialCert: document.getElementById('cert-social')?.value === 'Y',
-        hasESG: document.getElementById('esg-status')?.value === 'Y',
+        hasESG: document.getElementById('esg-status')?.value !== 'N',
+        esgGrade: document.getElementById('esg-status')?.value || 'N',
         
         // 기술
         patentCount: parseInt(unformatNumber(document.getElementById('patents-registered')?.value)) || 0,
@@ -7275,7 +7271,7 @@
      * @param {string} type - 'summary' | 'detail'
      */
     function showCompletionWithCredits(type, resultCount) {
-      const saveNotice = `\n\n━━━━━━━━━━━━━━━━━━━━━━\n💾 분석 결과가 자동 저장되었습니다.\n⚠️ 데이터 안전을 위해 [저장] 버튼으로\n   수동 저장도 권장드립니다.`;
+      const saveNotice = `\n\n━━━━━━━━━━━━━━━━━━━━━━\n⚠️ 결과를 유지하려면 [저장] 버튼을 눌러주세요.`;
       
       // ★ 월간 무료 제공 횟수
       const freeSummaryPerMonth = userCredits.freeSummaryPerMonth || 20;
